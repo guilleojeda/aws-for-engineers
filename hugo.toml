@@ -1,0 +1,13 @@
+baseURL = 'https://dondeaprendoaws.com/'
+locale = 'es'
+enableRobotsTXT = false
+disableKinds = ['taxonomy', 'term']
+defaultContentLanguage = 'es'
+
+[markup]
+  [markup.goldmark]
+    [markup.goldmark.renderer]
+      unsafe = false
+
+[outputs]
+  home = ['HTML']

@@ -1,0 +1,196 @@
+name: Publish site
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      source_run_id:
+        description: Successful main-branch publish run whose verified site artifact should be restored
+        required: true
+        type: string
+
+concurrency:
+  group: ${{ (github.event_name == 'pull_request' || github.ref != 'refs/heads/main') && format('non-production-check-{0}', github.run_id) || format('production-site-publish-{0}', github.repository) }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    if: github.event_name == 'pull_request' || github.event_name == 'push'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Set up Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.12"
+
+      - name: Set up Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: "22"
+
+      - name: Install checksum-verified Hugo 0.166.0
+        shell: bash
+        run: |
+          set -euo pipefail
+          archive="$RUNNER_TEMP/hugo_0.166.0_linux-amd64.tar.gz"
+          install_dir="$RUNNER_TEMP/hugo-0.166.0"
+          curl --fail --location --silent --show-error \
+            https://github.com/gohugoio/hugo/releases/download/v0.166.0/hugo_0.166.0_linux-amd64.tar.gz \
+            --output "$archive"
+          printf '%s  %s\n' \
+            45228f5a52eb118b0ca168068f01d7df0447314a24056f1d29667ed9fc368308 \
+            "$archive" | sha256sum --check --status
+          mkdir -p "$install_dir"
+          tar -xzf "$archive" -C "$install_dir" hugo
+          echo "$install_dir" >> "$GITHUB_PATH"
+
+      - name: Build and run all local checks
+        env:
+          HUGO: hugo
+        run: scripts/check.sh
+
+      - name: Add build revision marker
+        if: github.event_name == 'push'
+        run: python3 scripts/publish.py prepare --site-dir public --revision "$GITHUB_SHA"
+
+      - name: Save the exact main build for publish and restore
+        if: github.event_name == 'push'
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: site-${{ github.sha }}
+          path: public/
+          if-no-files-found: error
+          retention-days: 90
+
+  publish:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: validate
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    env:
+      AWS_ROLE_ARN: ${{ vars.AWS_ROLE_ARN }}
+      AWS_REGION: ${{ vars.AWS_REGION }}
+      S3_BUCKET: ${{ vars.S3_BUCKET }}
+      CLOUDFRONT_DISTRIBUTION_ID: ${{ vars.CLOUDFRONT_DISTRIBUTION_ID }}
+      SITE_URL: ${{ vars.SITE_URL }}
+    steps:
+      - name: Check out publisher code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Download this run's exact built site
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: site-${{ github.sha }}
+          path: public
+
+      - name: Require deployment configuration and AWS CLI v2
+        shell: bash
+        run: |
+          set -euo pipefail
+          for name in AWS_ROLE_ARN AWS_REGION S3_BUCKET CLOUDFRONT_DISTRIBUTION_ID SITE_URL; do
+            if [[ -z "${!name:-}" ]]; then
+              echo "Missing repository variable: $name" >&2
+              exit 1
+            fi
+          done
+          aws --version
+          aws --version | grep -Eq '^aws-cli/2\.'
+
+      - name: Configure temporary AWS credentials
+        uses: aws-actions/configure-aws-credentials@e1253824e5c10ff9df46874f81ed3ec929e19cfd # v6.3.0
+        with:
+          role-to-assume: ${{ env.AWS_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+          role-session-name: site-publish-${{ github.run_id }}
+
+      - name: Publish and verify current main revision
+        run: python3 scripts/publish.py publish --site-dir public --revision "$GITHUB_SHA"
+
+  reject-restore-from-other-branch:
+    if: github.event_name == 'workflow_dispatch' && github.ref != 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Require restore workflow to run from main
+        run: |
+          echo "Restore must be dispatched from main." >&2
+          exit 1
+
+  restore:
+    if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      actions: read
+      contents: read
+      id-token: write
+    env:
+      AWS_ROLE_ARN: ${{ vars.AWS_ROLE_ARN }}
+      AWS_REGION: ${{ vars.AWS_REGION }}
+      S3_BUCKET: ${{ vars.S3_BUCKET }}
+      CLOUDFRONT_DISTRIBUTION_ID: ${{ vars.CLOUDFRONT_DISTRIBUTION_ID }}
+      SITE_URL: ${{ vars.SITE_URL }}
+    steps:
+      - name: Check out current publisher code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Confirm source is a verified successful main publish
+        id: source
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SOURCE_RUN_ID: ${{ inputs.source_run_id }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ ! "$SOURCE_RUN_ID" =~ ^[0-9]+$ ]]; then
+            echo "source_run_id must be a numeric Actions run ID." >&2
+            exit 1
+          fi
+          source_sha="$(gh run view "$SOURCE_RUN_ID" --repo "$GITHUB_REPOSITORY" \
+            --json headSha,headBranch,event,status,conclusion,workflowName \
+            --jq 'select(.headBranch == "main" and .event == "push" and .status == "completed" and .conclusion == "success" and .workflowName == "Publish site") | .headSha')"
+          if [[ ! "$source_sha" =~ ^[0-9a-f]{40}$ ]]; then
+            echo "Run $SOURCE_RUN_ID is not a successful main-branch Publish site run." >&2
+            exit 1
+          fi
+          echo "sha=$source_sha" >> "$GITHUB_OUTPUT"
+
+      - name: Download the selected verified build artifact
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: site-${{ steps.source.outputs.sha }}
+          path: public
+          run-id: ${{ inputs.source_run_id }}
+          repository: ${{ github.repository }}
+          github-token: ${{ github.token }}
+
+      - name: Require deployment configuration and AWS CLI v2
+        shell: bash
+        run: |
+          set -euo pipefail
+          for name in AWS_ROLE_ARN AWS_REGION S3_BUCKET CLOUDFRONT_DISTRIBUTION_ID SITE_URL; do
+            if [[ -z "${!name:-}" ]]; then
+              echo "Missing repository variable: $name" >&2
+              exit 1
+            fi
+          done
+          aws --version
+          aws --version | grep -Eq '^aws-cli/2\.'
+
+      - name: Configure temporary AWS credentials
+        uses: aws-actions/configure-aws-credentials@e1253824e5c10ff9df46874f81ed3ec929e19cfd # v6.3.0
+        with:
+          role-to-assume: ${{ env.AWS_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+          role-session-name: site-restore-${{ github.run_id }}
+
+      - name: Restore and verify the selected revision
+        run: python3 scripts/publish.py publish --site-dir public --revision "${{ steps.source.outputs.sha }}" --restore
