@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import tempfile
+import threading
 import unittest
 from pathlib import Path
 from unittest.mock import patch
@@ -117,6 +118,28 @@ class PublishTests(unittest.TestCase):
         self.assertFalse(any(call[:2] == ["s3api", "list-objects-v2"] for call in fake_aws.calls))
         self.assertFalse(any(call[0] == "cloudfront" for call in fake_aws.calls))
         self.assertEqual(fake_aws.deleted, [])
+
+    def test_blog_media_uploads_in_parallel_before_pages(self) -> None:
+        site = self.make_site()
+        media = site / "assets" / "blog"
+        media.mkdir()
+        names = [f"{number:064x}.png" for number in range(4)]
+        for name in names:
+            (media / name).write_bytes(b"image")
+        gate = threading.Barrier(len(names))
+        completed: set[str] = set()
+
+        def upload(_path: Path, key: str, _bucket: str) -> None:
+            if key.startswith("assets/blog/"):
+                gate.wait(timeout=3)
+                completed.add(key)
+            if key == "index.html":
+                self.assertEqual(completed, {f"assets/blog/{name}" for name in names})
+
+        self.install_successful_site_verification()
+        with patch.object(publisher, "aws", side_effect=FakeAWS()):
+            with patch.object(publisher, "upload_file", side_effect=upload):
+                publisher.publish_site(site, "site-bucket", "D123", "https://d123.cloudfront.net", REVISION)
 
     def test_partial_s3_delete_response_fails_before_invalidation(self) -> None:
         site = self.make_site()
