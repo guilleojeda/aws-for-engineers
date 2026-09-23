@@ -1,0 +1,9 @@
+{{- $source := strings.TrimSpace (.Get "src") -}}
+{{- $videoURL := urls.Parse $source -}}
+{{- $allowedHost := in (slice "www.youtube-nocookie.com" "www.youtube.com") $videoURL.Hostname -}}
+{{- $validEmbedPath := gt (len (findRE `^/embed/[A-Za-z0-9_-]{11}$` $videoURL.Path 1)) 0 -}}
+{{- if and (eq $videoURL.Scheme "https") $allowedHost $validEmbedPath -}}
+  {{- printf `<div class="blog-video"><iframe src="%s" width="560" height="315" title="Video de YouTube" loading="lazy" allow="accelerometer; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe></div>` ($source | htmlEscape) | safeHTML -}}
+{{- else -}}
+  {{- errorf "blog-video shortcode accepts only HTTPS YouTube /embed/<11-character-id> URLs; got %q" $source -}}
+{{- end -}}

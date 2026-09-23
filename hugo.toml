@@ -1,6 +1,5 @@
 baseURL = 'https://dondeaprendoaws.com/'
 locale = 'es'
-enableRobotsTXT = false
 disableKinds = ['taxonomy', 'term']
 defaultContentLanguage = 'es'
 
@@ -8,6 +7,10 @@ defaultContentLanguage = 'es'
   [markup.goldmark]
     [markup.goldmark.renderer]
       unsafe = false
+    [markup.goldmark.extensions]
+      linkify = false
+    [markup.goldmark.extensions.typographer]
+      disable = true
 
 [outputs]
   home = ['HTML']

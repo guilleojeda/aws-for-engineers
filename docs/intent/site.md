@@ -1,6 +1,6 @@
-# Site content and directory behavior
+# Site content and behavior
 
-This phase publishes the Spanish-language resource directory as a static Hugo homepage. The original blog remains at `https://dondeaprendoaws.com/blog/` until the blog migration replaces that link. The homepage does not load Google Analytics on the CloudFront preview, and it has no content submission form, submission CTA, reCAPTCHA, spreadsheet fetch, former-platform runtime, or SEObot integration. The general “¿Es gratis?” FAQ remains; the entries that promise content submissions or paid promotion were removed with that capability.
+The Spanish-language resource directory and blog are static Hugo pages whose authored content lives in Markdown. The CloudFront preview does not load Google Analytics, and it has no content submission form, submission CTA, reCAPTCHA, spreadsheet fetch, former-platform runtime, or SEObot integration. The general “¿Es gratis?” FAQ remains; the entries that promise content submissions or paid promotion were removed with that capability. The production domain stays on the original platform until a separate domain cutover.
 
 ## Editing directory entries
 
@@ -26,8 +26,30 @@ The homepage initially shows eight resources. “Mostrar Todos” expands the fu
 
 Build and validate the site with the commands in the repository README. The site validator compares generated cards and category controls against the current Markdown, so content can be added, removed, and recategorized without changing fixed expected counts. The dependency-free interaction tests use `node --test tests/directory*.mjs`.
 
-## Visual assets and phase boundary
+## Blog articles
 
-The page uses locally hosted Fira Sans 400 and 700 font files. The SIL Open Font License text is included at `assets/fonts/OFL.txt`; image and font origins and processing are recorded in `assets/ASSETS.md`. Hugo fingerprints all published images, fonts, CSS, and JavaScript under `/assets/` so the publisher can retain them safely across page updates.
+Each article is a Markdown file under `content/blog/` with TOML front matter. The blog archive and article routes are generated from these files; there is no second authored feed. A typical front matter shape is:
 
-The current title, description, partner section, retained FAQ, and footer copy and links live in `content/_index.md`. The production GA4 property remains a phase 3 integration; no analytics requests are sent from this preview.
+```toml
++++
+title = "Título del artículo"
+description = "Resumen breve para el archivo y los buscadores."
+url = "/blog/slug-existente/"
+date = "2025-09-08T14:45:28Z"
+lastmod = "2025-09-11"
+image = "/assets/blog/<content-hash>.webp"
+archive_order = 1
++++
+```
+
+`url` keeps a stable public route when the filename or title changes. `date` is the original publication timestamp; `lastmod` is the separate source sitemap modification date and should change for substantive later edits. `archive_order` preserves the source archive order, with smaller values shown first. Optional `image_alt` and `author` fields describe the cover and byline; optional `[[related]]` tables hold related-card `title`, `url`, and local `image` values. Keep body prose, links, lists, tables, image alt text, and captions in Markdown. Existing headings with old incoming fragment URLs carry quoted `{id="exact-source-id"}` attributes; do not let a title edit silently change those IDs.
+
+The observed YouTube embeds use `{{< blog-video src="https://www.youtube-nocookie.com/embed/VIDEO_ID" >}}` in Markdown. This narrow shortcode renders the video without enabling raw HTML in article bodies. Its URL is restricted to observed HTTPS YouTube embed hosts and paths; other embed shapes need explicit review rather than pasted iframe markup.
+
+Article and card images are served locally from `static/assets/blog/`. Use a content hash in each filename so the publisher can give it immutable caching; changing image bytes requires a new filename and a corresponding Markdown reference. Ordinary external learning-resource links remain external. The archive, canonical URLs, social metadata, `BlogPosting` data, and sitemap derive from the same article files. The preview hostname remains excluded from indexing by a CloudFront response header; the canonical links point at the production domain for later cutover.
+
+## Visual assets
+
+The page uses locally hosted Fira Sans 400 and 700 font files. The SIL Open Font License text is included at `assets/fonts/OFL.txt`; image and font origins and processing are recorded in `assets/ASSETS.md`. Hugo fingerprints the homepage image, fonts, CSS, and JavaScript under `/assets/`. Blog image filenames carry their own content hashes. Both forms let the publisher retain immutable assets safely across page updates.
+
+The homepage title, description, partner section, retained FAQ, and footer copy and links live in `content/_index.md`. The production GA4 property will be connected at domain cutover; no analytics requests are sent from this preview.

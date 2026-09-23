@@ -1,0 +1,42 @@
+{{ define "head" }}
+  {{ partial "blog/article-meta.html" . }}
+  {{ partial "blog/article-jsonld.html" . }}
+{{ end }}
+
+{{ define "main" }}
+  <main class="blog-article">
+    <article>
+      <header class="blog-article__header">
+        <h1>{{ .Title }}</h1>
+        <hr>
+        <p class="blog-article__date">
+          <span>published on </span><time datetime="{{ .Date.Format "2006-01-02T15:04:05.999999Z07:00" }}">{{ partial "blog/date-en.html" .Date }}</time>
+        </p>
+      </header>
+      <div class="blog-article__body post-body">
+        {{ .Content }}
+      </div>
+      {{ with .Params.related }}
+        <section class="blog-related" aria-labelledby="related-title">
+          <div class="blog-related__header">
+            <h2 id="related-title">Read more</h2>
+            <a class="blog-related__archive-link" href="/blog/" aria-label="Volver al archivo del blog">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m3 10.7 9-7.5 9 7.5v9.8a1.5 1.5 0 0 1-1.5 1.5h-5.2v-7h-4.6v7H4.5A1.5 1.5 0 0 1 3 18.5v-7.8Zm2-.9v8.7h2.7v-7h8.6v7H19v-8.7l-7-5.8-7 5.8Z"/></svg>
+              <span>Volver al blog</span>
+            </a>
+          </div>
+          <div class="blog-related__grid">
+            {{ range . }}
+              <article class="blog-related__card">
+                <a href="{{ .url }}">
+                  {{ with .image }}<img src="{{ . | relURL }}" alt="" loading="lazy">{{ end }}
+                  <h3>{{ .title }}</h3>
+                </a>
+              </article>
+            {{ end }}
+          </div>
+        </section>
+      {{ end }}
+    </article>
+  </main>
+{{ end }}

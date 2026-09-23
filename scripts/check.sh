@@ -8,5 +8,6 @@ hugo_bin="${HUGO:-hugo}"
 "$hugo_bin" --minify --cleanDestinationDir --destination public
 python3 scripts/check_site.py public
 node --test tests/directory*.mjs
+python3 -m unittest discover -s tests -p 'test_blog_*.py'
 python3 -m unittest discover -s tests -p 'test_publish*.py'
 python3 -m unittest discover -s tests -p 'test_infra*.py'

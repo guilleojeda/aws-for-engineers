@@ -1,6 +1,9 @@
 import unittest
 from pathlib import Path
 import re
+import json
+import shutil
+import subprocess
 
 
 TEMPLATE = Path(__file__).resolve().parents[1] / "infra" / "cloudformation.yaml"
@@ -30,8 +33,18 @@ class InfrastructureContractTests(unittest.TestCase):
         self.assertIn("ResponseHeadersPolicyId: !Ref NoIndexResponseHeaders", distribution)
         self.assertIn("ResponsePagePath: /404.html", distribution)
         self.assertIn("ResponseCode: 404", distribution)
-        self.assertNotIn("FunctionAssociations:", distribution)
+        default_behavior = distribution.split("DefaultCacheBehavior:\n", 1)[1].split("\n        CacheBehaviors:", 1)[0]
+        self.assertIn("FunctionAssociations:", default_behavior)
+        self.assertIn("EventType: viewer-request", default_behavior)
+        self.assertIn("FunctionARN: !GetAtt BlogRoutingFunction.FunctionARN", default_behavior)
         self.assertIn("Value: noindex, nofollow, noarchive", self.template)
+
+    def test_blog_function_is_inline_and_auto_published(self) -> None:
+        function = self.template.split("  BlogRoutingFunction:\n", 1)[1].split("\n  SiteDistribution:\n", 1)[0]
+        self.assertIn("Type: AWS::CloudFront::Function", function)
+        self.assertIn("Runtime: cloudfront-js-2.0", function)
+        self.assertIn("AutoPublish: true", function)
+        self.assertIn("FunctionCode: |", function)
 
     def test_publisher_trust_and_permissions_are_scoped_to_repo_main_and_site(self) -> None:
         self.assertIn("GitHubOidcProviderArn:", self.template)
@@ -80,6 +93,80 @@ class WorkflowContractTests(unittest.TestCase):
         self.assertIn("actions/download-artifact", restore)
         self.assertIn("run-id: ${{ inputs.source_run_id }}", restore)
         self.assertIn("--restore", restore)
+
+
+class BlogRoutingBehaviorTests(unittest.TestCase):
+    @unittest.skipUnless(shutil.which("node"), "Node.js is required to execute the CloudFront Function locally")
+    def test_cloudfront_function_redirects_and_rewrites_only_canonical_blog_paths(self) -> None:
+        template = TEMPLATE.read_text(encoding="utf-8")
+        lines = template.splitlines()
+        marker = "      FunctionCode: |"
+        start = lines.index(marker) + 1
+        code_lines = []
+        for line in lines[start:]:
+            if line.strip() and not line.startswith("        "):
+                break
+            code_lines.append(line[8:] if line.startswith("        ") else "")
+        function_code = "\n".join(code_lines).rstrip()
+        self.assertIn("function handler(event)", function_code)
+
+        harness = r"""
+const assert = require('node:assert/strict');
+const vm = require('node:vm');
+let input = '';
+process.stdin.setEncoding('utf8');
+process.stdin.on('data', (chunk) => { input += chunk; });
+process.stdin.on('end', () => {
+  const handler = vm.runInNewContext(JSON.parse(input).source + '\nhandler', {});
+  function request(uri, rawQueryString, querystring) {
+    return {uri, rawQueryString: () => rawQueryString, querystring};
+  }
+  function assertRewrite(uri, expectedUri, rawQueryString, querystring) {
+    const originalQuery = JSON.parse(JSON.stringify(querystring));
+    const current = request(uri, rawQueryString, querystring);
+    const result = handler({request: current});
+    assert.equal(result, current);
+    assert.equal(result.uri, expectedUri);
+    assert.deepEqual(result.querystring, originalQuery);
+  }
+  function assertRedirect(uri, location, rawQueryString) {
+    const result = handler({request: request(uri, rawQueryString, {})});
+    assert.equal(result.statusCode, 301);
+    assert.equal(result.statusDescription, 'Moved Permanently');
+    assert.equal(result.headers.location.value, location);
+  }
+
+  assertRewrite('/blog/', '/blog/index.html', 'probe=1', {probe: {value: '1'}});
+  assertRewrite('/blog/como-reducir-costos-de-transferencia-intra-region-en-aws/', '/blog/como-reducir-costos-de-transferencia-intra-region-en-aws/index.html', '', {});
+  assertRedirect('/blog', '/blog/', undefined);
+  assertRedirect('/blog', '/blog/?probe=1', 'probe=1');
+  assertRedirect('/blog/como-reducir-costos-de-transferencia-intra-region-en-aws', '/blog/como-reducir-costos-de-transferencia-intra-region-en-aws/?probe=1&tag=a%2Fb&tag=dos', 'probe=1&tag=a%2Fb&tag=dos');
+
+  for (const uri of [
+    '/',
+    '/assets/site.css',
+    '/blog/post.jpg',
+    '/blog/post/index.html',
+    '/blog/index.html',
+    '/blog/post.json',
+    '/blog/Not-Lower/',
+    '/blog/año/',
+    '/blog/with_under/',
+    '/blog/nested/path/',
+    '/blog//'
+  ]) {
+    assertRewrite(uri, uri, 'keep=this', {keep: {value: 'this'}});
+  }
+});
+"""
+        result = subprocess.run(
+            [shutil.which("node"), "-e", harness],
+            input=json.dumps({"source": function_code}),
+            text=True,
+            capture_output=True,
+            check=False,
+        )
+        self.assertEqual(result.returncode, 0, result.stderr)
 
 
 if __name__ == "__main__":

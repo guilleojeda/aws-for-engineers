@@ -2,7 +2,7 @@
 
 The repository is the source of truth. Hugo builds `public/`; pull requests run the same local checks without AWS credentials. Each push to `main` saves that exact build, assumes a short-lived AWS role through GitHub OIDC, publishes it to the private S3 bucket, invalidates CloudFront, waits for completion, and checks both `/` and `/revision.json` over HTTPS.
 
-The automatic publisher verifies that its commit is still `origin/main` before its first AWS request. It uploads content-hashed files under `assets/` first with immutable caching, uploads other assets before pages with short revalidation caching, then removes obsolete non-asset keys. It never deletes keys under `assets/`. Any upload, delete, invalidation, or served-revision failure fails the workflow. Publishing is not an atomic whole-site swap; after a partial publish failure, restore a successful build artifact or publish the current main revision before treating the site as healthy.
+The automatic publisher verifies that its commit is still `origin/main` before its first AWS request. It uploads content-hashed files under `assets/` first with immutable caching, uploads other assets before pages with short revalidation caching, then removes obsolete non-asset keys. It never deletes keys under `assets/`. Blog image filenames carry a content hash for that caching rule. Any upload, delete, invalidation, or served-revision failure fails the workflow. Publishing is not an atomic whole-site swap; after a partial publish failure, restore a successful build artifact or publish the current main revision before treating the site as healthy.
 
 ## Local checks
 
@@ -18,7 +18,7 @@ With the Hugo binary in `PATH`, use `scripts/check.sh`. The command clears stale
 python3 scripts/publish.py prepare --site-dir public --revision "$(git rev-parse HEAD)"
 ```
 
-For the resource entry format and homepage behavior, see [site behavior and content conventions](site.md). Preview the current content and layout locally with `hugo server`; validate it with `scripts/check.sh`. Commit a content change on a branch, open a pull request against `main`, then merge after its checks pass. The push to `main` runs the production publisher automatically.
+For resource and article formats and site behavior, see [site behavior and content conventions](site.md). Preview the current content and layout locally with `hugo server`; validate it with `scripts/check.sh`. Commit a content change on a branch, open a pull request against `main`, then merge after its checks pass. The push to `main` runs the production publisher automatically. An article body, front matter, or image edit follows the same path as a resource edit.
 
 ## GitHub publishing configuration
 
@@ -56,7 +56,7 @@ Infrastructure changes are applied manually; GitHub Actions never applies CloudF
 ```sh
 aws sts get-caller-identity --region us-east-1
 CHANGE_SET_TYPE=CREATE # Use UPDATE when the stack already exists.
-CHANGE_SET_NAME="dondeaprendoaws-phase1-$(date +%Y%m%d%H%M%S)"
+CHANGE_SET_NAME="dondeaprendoaws-$(date +%Y%m%d%H%M%S)"
 aws cloudformation create-change-set \
   --stack-name dondeaprendoaws \
   --change-set-name "$CHANGE_SET_NAME" \
@@ -95,4 +95,4 @@ aws cloudformation wait "$STACK_WAITER" \
   --region us-east-1
 ```
 
-Read `SiteBucketName`, `DistributionId`, `DistributionDomainName`, and `PublisherRoleArn` from the stack outputs and set the repository variables above. Keep the bucket and its publication when deleting or replacing the stack; CloudFormation is configured to retain the bucket. This phase uses the CloudFront hostname and default CloudFront certificate. It does not configure a custom domain or nested-path rewrite.
+Read `SiteBucketName`, `DistributionId`, `DistributionDomainName`, and `PublisherRoleArn` from the stack outputs and set the repository variables above. Keep the bucket and its publication when deleting or replacing the stack; CloudFormation is configured to retain the bucket. The current preview uses the CloudFront hostname and default certificate. A viewer-request CloudFront Function maps `/blog/` and `/blog/<slug>/` to their generated `index.html` objects in private S3. It redirects the observed slashless variants to trailing-slash URLs while preserving query strings; direct file and asset paths bypass this rewrite. The function is part of the manually managed stack and is not applied by GitHub Actions. A custom production domain and its certificate are separate later work.
