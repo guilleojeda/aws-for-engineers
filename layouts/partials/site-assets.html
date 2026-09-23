@@ -1,0 +1,12 @@
+{{ $iconSource := resources.Get "images/site-icon.png" }}
+{{ $icon := resources.Copy "assets/images/site-icon.png" $iconSource | resources.Fingerprint "sha256" }}
+{{ $regularSource := resources.Get "fonts/fira-sans-400.woff2" }}
+{{ $regular := resources.Copy "assets/fonts/fira-sans-400.woff2" $regularSource | resources.Fingerprint "sha256" }}
+{{ $boldSource := resources.Get "fonts/fira-sans-700.woff2" }}
+{{ $bold := resources.Copy "assets/fonts/fira-sans-700.woff2" $boldSource | resources.Fingerprint "sha256" }}
+{{ $styleSource := resources.Get "css/site.css" }}
+{{ $styleTemplate := resources.ExecuteAsTemplate "assets/css/site.css" (dict "FiraRegular" $regular.RelPermalink "FiraBold" $bold.RelPermalink) $styleSource }}
+{{ $style := $styleTemplate | resources.Minify | resources.Fingerprint "sha256" }}
+{{ $scriptSource := resources.Get "js/directory.mjs" }}
+{{ $script := resources.Copy "assets/js/directory.mjs" $scriptSource | resources.Fingerprint "sha256" }}
+{{ return (dict "icon" $icon "style" $style "script" $script) }}

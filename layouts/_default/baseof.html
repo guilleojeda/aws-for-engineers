@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{{ if .IsHome }}{{ .Site.Home.Title }}{{ else }}{{ .Title }} | {{ .Site.Home.Title }}{{ end }}</title>
+    <meta name="description" content="{{ .Description | default .Site.Home.Description }}">
+    <link rel="canonical" href="{{ .Permalink }}">
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="{{ if .IsHome }}{{ .Site.Home.Title }}{{ else }}{{ .Title }}{{ end }}">
+    <meta property="og:description" content="{{ .Description | default .Site.Home.Description }}">
+    <meta property="og:url" content="{{ .Permalink }}">
+    {{ $assets := partial "site-assets.html" . }}
+    {{ $icon := $assets.icon }}
+    <link rel="icon" type="image/png" href="{{ $icon.RelPermalink }}" sizes="120x120">
+    {{ $style := $assets.style }}
+    <link rel="stylesheet" href="{{ $style.RelPermalink }}" integrity="{{ $style.Data.Integrity }}" crossorigin="anonymous">
+    {{ block "head" . }}{{ end }}
+  </head>
+  <body>
+    {{ $home := .Site.Home }}
+    <header class="site-header">
+      <a class="site-brand" href="/" aria-label="Inicio: {{ .Site.Home.Title }}">{{ .Site.Home.Title }}</a>
+      <button class="menu-toggle" type="button" aria-controls="site-navigation" aria-expanded="false" aria-label="Abrir menú" data-menu-toggle>
+        <span></span><span></span><span></span>
+      </button>
+      <nav class="site-navigation" id="site-navigation" aria-label="Navegación principal">
+        <a href="/">Inicio</a>
+        <a href="https://dondeaprendoaws.com/blog/">Blog</a>
+      </nav>
+    </header>
+    {{ block "main" . }}{{ end }}
+    <footer class="site-footer">
+      <div class="site-footer__inner">
+        <div class="site-footer__about">
+          <p>{{ $home.Params.footer_description }}</p>
+        </div>
+        <div>
+          <h2>{{ $home.Params.footer_resources_title }}</h2>
+          <ul>
+            {{ range $home.Params.footer_resources }}
+              <li><a href="{{ .url }}" target="_blank" rel="noopener noreferrer">{{ .label }}</a></li>
+            {{ end }}
+          </ul>
+        </div>
+        <div>
+          <h2>{{ $home.Params.footer_social_title }}</h2>
+          <ul class="social-links">
+            {{ range $home.Params.social_links }}
+              <li><a href="{{ .url }}" aria-label="{{ .label }}" target="_blank" rel="noopener noreferrer">
+                {{ if eq .icon "linkedin" }}<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5.2 3.5a1.9 1.9 0 1 1 0 3.8 1.9 1.9 0 0 1 0-3.8ZM3.6 9h3.2v11.4H3.6V9Zm5.2 0h3.1v1.6h.1a3.4 3.4 0 0 1 3.1-1.9c3.3 0 3.9 2.1 3.9 4.8v6.9h-3.2v-6.1c0-1.5 0-3.3-2-3.3s-2.3 1.6-2.3 3.2v6.2H8.8V9Z"/></svg>
+                {{ else if eq .icon "x" }}<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18.9 2H22l-6.8 7.8L23.2 22h-6.3L12 14.5 5.5 22H2.4l7.3-8.4L1.8 2h6.5l4.5 6.9L18.9 2Zm-1.1 17.8h1.7L7.3 4.1H5.5l12.3 15.7Z"/></svg>
+                {{ else }}{{ .label }}{{ end }}
+              </a></li>
+            {{ end }}
+          </ul>
+        </div>
+      </div>
+      <div class="site-footer__bottom"><a href="{{ $home.Params.footer_contact_url }}">{{ $home.Params.footer_contact_label }}</a></div>
+    </footer>
+    {{ $directoryScript := $assets.script }}
+    <script type="module" src="{{ $directoryScript.RelPermalink }}" integrity="{{ $directoryScript.Data.Integrity }}" crossorigin="anonymous"></script>
+  </body>
+</html>
