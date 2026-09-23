@@ -256,6 +256,8 @@ Aquí tienes los pasos esenciales para configurarlos:
 
 Siguiendo estos pasos, no solo reducirás el tráfico saliente y los costes asociados, sino que también reforzarás la seguridad al mantener el tráfico dentro de la red privada de AWS.
 
+Verificación temporal de publicación de Markdown en la vista previa.
+
 ## Publicaciones de blog relacionadas
 
 - [10 Estrategias para Optimizar Costos de Red en AWS](/blog/10-estrategias-para-optimizar-costos-de-red-en-aws/)
