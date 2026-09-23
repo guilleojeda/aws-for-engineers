@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import argparse
+from concurrent.futures import ThreadPoolExecutor, as_completed
 import json
 import mimetypes
 import os
@@ -151,6 +152,13 @@ def upload_file(path: Path, key: str, bucket: str) -> None:
     )
 
 
+def upload_batch(files: list[tuple[str, Path]], bucket: str) -> None:
+    with ThreadPoolExecutor(max_workers=8) as pool:
+        uploads = [pool.submit(upload_file, path, key, bucket) for key, path in files]
+        for upload in as_completed(uploads):
+            upload.result()
+
+
 def remote_keys(bucket: str) -> set[str]:
     response = json.loads(aws("s3api", "list-objects-v2", "--bucket", bucket, "--output", "json"))
     return {item["Key"] for item in response.get("Contents", []) if "Key" in item}
@@ -272,8 +280,10 @@ def publish_site(
     hashed_assets = [(key, path) for key, path in assets if is_hashed_asset(key)]
     mutable_assets = [(key, path) for key, path in assets if not is_hashed_asset(key)]
 
-    for key, path in [*hashed_assets, *mutable_assets, *pages]:
-        upload_file(path, key, bucket)
+    # Finish immutable assets before mutable files and pages. Independent uploads within
+    # each group can run together; a failure still stops before deletion or invalidation.
+    for group in (hashed_assets, mutable_assets, pages):
+        upload_batch(group, bucket)
 
     existing = remote_keys(bucket)
     desired = {key for key, _ in keyed_files}
