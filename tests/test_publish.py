@@ -106,7 +106,19 @@ class PublishTests(unittest.TestCase):
         self.assertEqual(uploads[0][uploads[0].index("--cache-control") + 1], publisher.ASSET_CACHE_CONTROL)
         self.assertEqual(uploads[1][uploads[1].index("--cache-control") + 1], publisher.MUTABLE_CACHE_CONTROL)
 
-    def test_upload_failure_stops_before_listing_deleting_or_invalidating(self) -> None:
+    def test_existing_content_hashed_asset_is_not_reuploaded(self) -> None:
+        site = self.make_site()
+        fake_aws = FakeAWS(existing={"assets/app.0123456789abcdef.js"})
+        self.install_successful_site_verification()
+        with patch.object(publisher, "aws", side_effect=fake_aws):
+            publisher.publish_site(site, "site-bucket", "D123", "https://d123.cloudfront.net", REVISION)
+
+        uploads = [call[3].split("/", 3)[-1] for call in fake_aws.calls if call[:2] == ["s3", "cp"]]
+        self.assertNotIn("assets/app.0123456789abcdef.js", uploads)
+        self.assertIn("assets/theme.css", uploads)
+        self.assertIn("index.html", uploads)
+
+    def test_upload_failure_stops_before_deleting_or_invalidating(self) -> None:
         site = self.make_site()
         fake_aws = FakeAWS(existing={"old.html"}, fail_upload_key="assets/theme.css")
         self.install_successful_site_verification()
@@ -115,7 +127,7 @@ class PublishTests(unittest.TestCase):
                 publisher.publish_site(site, "site-bucket", "D123", "https://d123.cloudfront.net", REVISION)
 
         self.assertEqual(len([call for call in fake_aws.calls if call[:2] == ["s3", "cp"]]), 2)
-        self.assertFalse(any(call[:2] == ["s3api", "list-objects-v2"] for call in fake_aws.calls))
+        self.assertEqual(len([call for call in fake_aws.calls if call[:2] == ["s3api", "list-objects-v2"]]), 1)
         self.assertFalse(any(call[0] == "cloudfront" for call in fake_aws.calls))
         self.assertEqual(fake_aws.deleted, [])
 

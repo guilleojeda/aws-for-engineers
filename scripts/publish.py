@@ -279,13 +279,17 @@ def publish_site(
     pages = [(key, path) for key, path in keyed_files if not is_asset(key)]
     hashed_assets = [(key, path) for key, path in assets if is_hashed_asset(key)]
     mutable_assets = [(key, path) for key, path in assets if not is_hashed_asset(key)]
+    existing = remote_keys(bucket)
+    missing_hashed_assets = [(key, path) for key, path in hashed_assets if key not in existing]
+    skipped = len(hashed_assets) - len(missing_hashed_assets)
+    if skipped:
+        print(f"Skipping {skipped} existing content-hashed asset(s).", flush=True)
 
     # Finish immutable assets before mutable files and pages. Independent uploads within
     # each group can run together; a failure still stops before deletion or invalidation.
-    for group in (hashed_assets, mutable_assets, pages):
+    for group in (missing_hashed_assets, mutable_assets, pages):
         upload_batch(group, bucket)
 
-    existing = remote_keys(bucket)
     desired = {key for key, _ in keyed_files}
     deleted = delete_obsolete_pages(bucket, existing, desired)
     if deleted:
