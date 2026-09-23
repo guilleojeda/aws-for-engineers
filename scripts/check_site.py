@@ -11,6 +11,11 @@ from html.parser import HTMLParser
 from pathlib import Path
 from urllib.parse import urlsplit
 
+try:
+    from .check_blog import validate_blog
+except ImportError:
+    from check_blog import validate_blog
+
 
 FORBIDDEN_RUNTIME_HOSTS = (
     "unicornplatform",
@@ -23,7 +28,10 @@ FORBIDDEN_RUNTIME_HOSTS = (
     "fonts.gstatic.com",
     "recaptcha",
 )
-ASSET_PATH = re.compile(r"^/assets/.+\.[0-9a-f]{64}\.[a-z0-9]+$", re.IGNORECASE)
+ASSET_PATH = re.compile(
+    r"^/assets/(?:blog/[0-9a-f]{64}|.+\.[0-9a-f]{64})\.[a-z0-9]+$",
+    re.IGNORECASE,
+)
 
 
 class SiteParser(HTMLParser):
@@ -191,7 +199,8 @@ def validate_assets(site_dir: Path, references: list[str]) -> None:
                 fail(f"Stylesheet asset is missing from generated output: {url}")
 
     for path in (site_dir / "assets").rglob("*"):
-        if path.is_file() and not re.search(r"\.[0-9a-f]{64}\.[a-z0-9]+$", path.name, re.IGNORECASE):
+        relative_asset = "/" + path.relative_to(site_dir).as_posix()
+        if path.is_file() and not ASSET_PATH.fullmatch(relative_asset):
             fail(f"Generated asset is not fingerprinted: {path.relative_to(site_dir)}")
 
 
@@ -213,8 +222,8 @@ def validate_site(site_dir: Path, repository: Path) -> None:
         fail("Generated homepage contains a form")
     if parser.inline_scripts:
         fail("Generated homepage contains inline JavaScript")
-    if "https://dondeaprendoaws.com/blog/" not in parser.nav_hrefs:
-        fail("The navigation must link to the existing blog until its migration phase")
+    if "/blog/" not in parser.nav_hrefs:
+        fail("The navigation must link to the locally generated blog archive at /blog/")
     if any("cta_form" in href.lower() for href in parser.anchor_hrefs):
         fail("Generated homepage contains a link to the removed submission form")
     if len(parser.categories) != len(set(parser.categories)):
@@ -272,6 +281,8 @@ def validate_site(site_dir: Path, repository: Path) -> None:
     sitemap_path = site_dir / "sitemap.xml"
     if sitemap_path.exists() and "/resources/" in sitemap_path.read_text(encoding="utf-8"):
         fail("Generated sitemap contains unpublished directory resource routes")
+
+    validate_blog(site_dir, repository)
 
     query_string_urls = sum("&" in str(record["external_url"]) for record in source_records)
     print(

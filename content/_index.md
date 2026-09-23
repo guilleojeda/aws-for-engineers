@@ -3,6 +3,7 @@ title = '¿Dónde Aprendo AWS?'
 description = 'El más completo directorio de contenido de AWS en Español. Blogs, artículos, videos, y todo tipo de contenido.'
 summary = 'El más completo directorio de contenido de AWS en Español. Blogs, artículos, videos, y todo tipo de contenido.'
 type = 'home'
+lastmod = '2026-09-23'
 
 [params]
 partner_title = 'Nuestros socios'

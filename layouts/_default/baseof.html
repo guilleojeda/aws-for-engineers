@@ -3,13 +3,29 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>{{ if .IsHome }}{{ .Site.Home.Title }}{{ else }}{{ .Title }} | {{ .Site.Home.Title }}{{ end }}</title>
-    <meta name="description" content="{{ .Description | default .Site.Home.Description }}">
+    {{ $pageTitle := .Title }}
+    {{ if .IsHome }}{{ $pageTitle = .Site.Home.Title }}{{ end }}
+    {{ $description := .Description | default .Site.Home.Description }}
+    <title>{{ if .IsHome }}{{ $pageTitle }}{{ else }}{{ $pageTitle }} | {{ .Site.Home.Title }}{{ end }}</title>
+    <meta name="description" content="{{ $description }}">
     <link rel="canonical" href="{{ .Permalink }}">
-    <meta property="og:type" content="website">
-    <meta property="og:title" content="{{ if .IsHome }}{{ .Site.Home.Title }}{{ else }}{{ .Title }}{{ end }}">
-    <meta property="og:description" content="{{ .Description | default .Site.Home.Description }}">
+    <meta property="og:type" content="{{ if and .IsPage (eq .Section "blog") }}article{{ else }}website{{ end }}">
+    <meta property="og:site_name" content="{{ .Site.Home.Title }}">
+    <meta property="og:title" content="{{ $pageTitle }}">
+    <meta property="og:description" content="{{ $description }}">
     <meta property="og:url" content="{{ .Permalink }}">
+    <meta name="twitter:card" content="{{ if and (eq .Section "blog") .Params.image }}summary_large_image{{ else }}summary{{ end }}">
+    <meta name="twitter:title" content="{{ $pageTitle }}">
+    <meta name="twitter:description" content="{{ $description }}">
+    {{ if and (eq .Section "blog") .Params.image }}
+      {{ $socialImage := .Params.image | absURL }}
+      <meta property="og:image" content="{{ $socialImage }}">
+      <meta name="twitter:image" content="{{ $socialImage }}">
+      {{ with .Params.image_alt }}
+        <meta property="og:image:alt" content="{{ . }}">
+        <meta name="twitter:image:alt" content="{{ . }}">
+      {{ end }}
+    {{ end }}
     {{ $assets := partial "site-assets.html" . }}
     {{ $icon := $assets.icon }}
     <link rel="icon" type="image/png" href="{{ $icon.RelPermalink }}" sizes="120x120">
@@ -26,23 +42,25 @@
       </button>
       <nav class="site-navigation" id="site-navigation" aria-label="Navegación principal">
         <a href="/">Inicio</a>
-        <a href="https://dondeaprendoaws.com/blog/">Blog</a>
+        {{ if ne .Section "blog" }}<a href="/blog/">Blog</a>{{ end }}
       </nav>
     </header>
     {{ block "main" . }}{{ end }}
-    <footer class="site-footer">
+    <footer class="site-footer{{ if eq .Section "blog" }} site-footer--blog{{ end }}">
       <div class="site-footer__inner">
         <div class="site-footer__about">
           <p>{{ $home.Params.footer_description }}</p>
         </div>
-        <div>
-          <h2>{{ $home.Params.footer_resources_title }}</h2>
-          <ul>
-            {{ range $home.Params.footer_resources }}
-              <li><a href="{{ .url }}" target="_blank" rel="noopener noreferrer">{{ .label }}</a></li>
-            {{ end }}
-          </ul>
-        </div>
+        {{ if ne .Section "blog" }}
+          <div>
+            <h2>{{ $home.Params.footer_resources_title }}</h2>
+            <ul>
+              {{ range $home.Params.footer_resources }}
+                <li><a href="{{ .url }}" target="_blank" rel="noopener noreferrer">{{ .label }}</a></li>
+              {{ end }}
+            </ul>
+          </div>
+        {{ end }}
         <div>
           <h2>{{ $home.Params.footer_social_title }}</h2>
           <ul class="social-links">

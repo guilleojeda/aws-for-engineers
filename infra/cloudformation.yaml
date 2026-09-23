@@ -77,6 +77,39 @@ Resources:
               Value: noindex, nofollow, noarchive
               Override: true
 
+  BlogRoutingFunction:
+    Type: AWS::CloudFront::Function
+    Properties:
+      Name: !Sub "${AWS::StackName}-blog-routing"
+      FunctionConfig:
+        Comment: Canonicalize blog paths and map them to static index files.
+        Runtime: cloudfront-js-2.0
+      FunctionCode: |
+        function handler(event) {
+            var request = event.request;
+            var uri = request.uri;
+
+            if (uri === '/blog' || /^\/blog\/[a-z0-9-]+$/.test(uri)) {
+                var query = request.rawQueryString();
+                return {
+                    statusCode: 301,
+                    statusDescription: 'Moved Permanently',
+                    headers: {
+                        location: { value: uri + '/' + (query === undefined ? '' : '?' + query) }
+                    }
+                };
+            }
+
+            if (uri === '/blog/') {
+                request.uri = '/blog/index.html';
+            } else if (/^\/blog\/[a-z0-9-]+\/$/.test(uri)) {
+                request.uri = uri + 'index.html';
+            }
+
+            return request;
+        }
+      AutoPublish: true
+
   SiteDistribution:
     Type: AWS::CloudFront::Distribution
     Properties:
@@ -100,6 +133,9 @@ Resources:
           Compress: true
           CachePolicyId: !Ref MutableSiteCachePolicy
           ResponseHeadersPolicyId: !Ref NoIndexResponseHeaders
+          FunctionAssociations:
+            - EventType: viewer-request
+              FunctionARN: !GetAtt BlogRoutingFunction.FunctionARN
         CacheBehaviors:
           - PathPattern: assets/*
             TargetOriginId: private-site-bucket
