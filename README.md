@@ -4,6 +4,8 @@ A Spanish-language AWS resource directory generated from Markdown with Hugo. Git
 
 The AWS copy currently covers the resource directory. Its Blog link opens the existing blog at https://dondeaprendoaws.com/blog/. The migration hostname is excluded from indexing and does not send visits to Google Analytics. Content submissions and SEObot are not part of this site.
 
+[Open the AWS preview](https://dwhs21rzi7jgg.cloudfront.net/).
+
 ## Edit and preview
 
 Install [Hugo 0.166.0](https://github.com/gohugoio/hugo/releases/tag/v0.166.0), Python 3.11 or newer, and Node.js for the small JavaScript test suite. No npm packages or frontend framework are required.
