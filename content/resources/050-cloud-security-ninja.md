@@ -5,6 +5,6 @@ external_url = "https://www.acloudsecurity.ninja/"
 description = "Una plataforma de aprendizaje GRATUITA para desarrollar habilidades en Cloud Security"
 category = "Seguridad"
 order = 190589
-featured = true
+featured = "yes"
 source_row = 50
 +++
