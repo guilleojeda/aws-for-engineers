@@ -200,7 +200,7 @@ html.js .directory__controls {
 }
 
 .category-pill[aria-pressed="true"] {
-  background: var(--accent);
+  background: #303030;
   color: #fff;
 }
 
