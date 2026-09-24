@@ -1,6 +1,6 @@
 # Site content and behavior
 
-The Spanish-language resource directory and blog are static Hugo pages whose authored content lives in Markdown. The CloudFront preview sends no Google Analytics visits and has no content submission form, submission CTA, reCAPTCHA, spreadsheet fetch, former-platform runtime, or SEObot integration. The general “¿Es gratis?” FAQ remains; the entries that promise content submissions or paid promotion were removed with that capability. During migration, the production domain stays on the original platform until the website-record cutover.
+The Spanish-language resource directory and blog are static Hugo pages whose authored content lives in Markdown. The production domain is `dondeaprendoaws.com`; `www` redirects to it. The CloudFront preview sends no Google Analytics visits. The site has no content submission form, submission CTA, reCAPTCHA, spreadsheet fetch, former-platform runtime, or SEObot integration. The general “¿Es gratis?” FAQ remains; the entries that promise content submissions or paid promotion were removed with that capability. The owner approved launching without ads, so no ad tags, slots, consent manager, or `ads.txt` are configured.
 
 ## Editing directory entries
 
