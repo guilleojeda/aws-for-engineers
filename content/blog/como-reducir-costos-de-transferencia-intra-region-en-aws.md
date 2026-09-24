@@ -239,7 +239,7 @@ Adoptar estas prácticas no solo ayuda a controlar los costos, sino que también
 
 Para averiguar qué servicios están generando los mayores costes de transferencia de datos dentro de una región en AWS, puedes recurrir a **[AWS Cost Explorer](https://aws.amazon.com/aws-cost-management/aws-cost-explorer/)**. Esta herramienta es ideal para analizar patrones de costes y uso, incluyendo aquellos vinculados a la transferencia de datos intra-región.
 
-Otra opción es aprovechar los **Informes de Costes y Uso (CUR)**. Procesa estos informes utilizando consultas en **Athena** y crea visualizaciones con **QuickSight**. Esto te permitirá identificar con precisión los recursos que están generando esos costes, ayudándote a priorizar la optimización de los servicios que más impactan en tu factura.
+También puedes aprovechar los **Informes de Costes y Uso (CUR)**. Procesa estos informes utilizando consultas en **Athena** y crea visualizaciones con **QuickSight**. Esto te permitirá identificar con precisión los recursos que están generando esos costes, ayudándote a priorizar la optimización de los servicios que más impactan en tu factura.
 
 Con estas estrategias, podrás gestionar de manera más eficaz los costes relacionados con la transferencia de datos en tu infraestructura de AWS.
 
