@@ -6,6 +6,7 @@ import threading
 import unittest
 from pathlib import Path
 from unittest.mock import patch
+from urllib.parse import urlsplit
 
 import scripts.publish as publisher
 
@@ -87,6 +88,94 @@ class PublishTests(unittest.TestCase):
         patcher.start()
         patcher2 = patch.object(publisher, "check_main_head")
         patcher2.start()
+
+    def install_successful_dual_host_verification(self, requested_urls: list[str]) -> None:
+        def response(url: str) -> tuple[int, dict[str, str], bytes]:
+            requested_urls.append(url)
+            parsed = urlsplit(url)
+            is_production = parsed.hostname == publisher.PRODUCTION_HOST
+            if parsed.path == "/revision.json":
+                return 200, {"Content-Type": "application/json"}, json.dumps({"revision": REVISION}).encode()
+            if parsed.path == "/__publish_check_missing__":
+                return 404, {"Content-Type": "text/html", "X-Robots-Tag": "noindex, nofollow"}, b"404"
+            if "/assets/" in parsed.path:
+                return 200, {"Content-Type": "text/css"}, b"body{}"
+            headers = {"Content-Type": "text/html; charset=utf-8"}
+            if not is_production:
+                headers["X-Robots-Tag"] = "noindex, nofollow"
+            canonical = (
+                '<link rel="canonical" href="https://dondeaprendoaws.com/">' if is_production else ""
+            )
+            return 200, headers, (
+                f'<html>{canonical}<link rel="stylesheet" href="/assets/app.0123456789abcdef.css"></html>'
+            ).encode()
+
+        self.addCleanup(patch.stopall)
+        patch.object(publisher, "request_bytes", side_effect=response).start()
+        patch.object(publisher, "check_main_head").start()
+
+    def test_preview_only_verification_does_not_request_production(self) -> None:
+        requested_urls: list[str] = []
+
+        def response(url: str) -> tuple[int, dict[str, str], bytes]:
+            requested_urls.append(url)
+            if url.endswith("/revision.json"):
+                return 200, {"Content-Type": "application/json"}, json.dumps({"revision": REVISION}).encode()
+            if "/assets/" in url:
+                return 200, {"Content-Type": "text/css"}, b"body{}"
+            if url.endswith("/__publish_check_missing__"):
+                return 404, {"Content-Type": "text/html", "X-Robots-Tag": "noindex, nofollow"}, b"404"
+            return (
+                200,
+                {"Content-Type": "text/html; charset=utf-8", "X-Robots-Tag": "noindex, nofollow"},
+                b'<html><link rel="stylesheet" href="/assets/app.0123456789abcdef.css"></html>',
+            )
+
+        with patch.object(publisher, "request_bytes", side_effect=response):
+            publisher.verify_served_site("https://dwhs21rzi7jgg.cloudfront.net", REVISION)
+
+        self.assertTrue(requested_urls)
+        self.assertTrue(all(urlsplit(url).hostname == "dwhs21rzi7jgg.cloudfront.net" for url in requested_urls))
+
+    def test_publish_verifies_preview_and_production_when_configured(self) -> None:
+        site = self.make_site()
+        requested_urls: list[str] = []
+        self.install_successful_dual_host_verification(requested_urls)
+
+        with patch.object(publisher, "aws", side_effect=FakeAWS()):
+            publisher.publish_site(
+                site,
+                "site-bucket",
+                "D123",
+                "https://dwhs21rzi7jgg.cloudfront.net",
+                REVISION,
+                production_site_url="https://dondeaprendoaws.com",
+            )
+
+        hosts = {urlsplit(url).hostname for url in requested_urls}
+        self.assertEqual(hosts, {"dwhs21rzi7jgg.cloudfront.net", "dondeaprendoaws.com"})
+        self.assertIn("https://dondeaprendoaws.com/revision.json", requested_urls)
+        self.assertIn("https://dondeaprendoaws.com/__publish_check_missing__", requested_urls)
+
+    def test_production_verification_rejects_redirect_to_wrong_host(self) -> None:
+        with patch.object(
+            publisher,
+            "request_bytes",
+            return_value=(301, {"Location": "https://www.dondeaprendoaws.com/"}, b""),
+        ):
+            with self.assertRaisesRegex(publisher.PublishError, "redirected to wrong host www.dondeaprendoaws.com"):
+                publisher.verify_production_site("https://dondeaprendoaws.com", REVISION)
+
+    def test_production_url_must_be_the_https_apex_origin(self) -> None:
+        for url in (
+            "http://dondeaprendoaws.com",
+            "https://www.dondeaprendoaws.com",
+            "https://dondeaprendoaws.com/blog/",
+            "https://dondeaprendoaws.com:invalid",
+        ):
+            with self.subTest(url=url):
+                with self.assertRaisesRegex(publisher.PublishError, "HTTPS apex"):
+                    publisher.validate_production_site_url(url)
 
     def test_hashed_assets_upload_first_and_obsolete_pages_delete_without_assets(self) -> None:
         site = self.make_site()

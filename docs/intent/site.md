@@ -1,6 +1,6 @@
 # Site content and behavior
 
-The Spanish-language resource directory and blog are static Hugo pages whose authored content lives in Markdown. The CloudFront preview does not load Google Analytics, and it has no content submission form, submission CTA, reCAPTCHA, spreadsheet fetch, former-platform runtime, or SEObot integration. The general “¿Es gratis?” FAQ remains; the entries that promise content submissions or paid promotion were removed with that capability. The production domain stays on the original platform until a separate domain cutover.
+The Spanish-language resource directory and blog are static Hugo pages whose authored content lives in Markdown. The CloudFront preview sends no Google Analytics visits and has no content submission form, submission CTA, reCAPTCHA, spreadsheet fetch, former-platform runtime, or SEObot integration. The general “¿Es gratis?” FAQ remains; the entries that promise content submissions or paid promotion were removed with that capability. During migration, the production domain stays on the original platform until the website-record cutover.
 
 ## Editing directory entries
 
@@ -46,10 +46,12 @@ archive_order = 1
 
 The observed YouTube embeds use `{{< blog-video src="https://www.youtube-nocookie.com/embed/VIDEO_ID" >}}` in Markdown. This narrow shortcode renders the video without enabling raw HTML in article bodies. Its URL is restricted to observed HTTPS YouTube embed hosts and paths; other embed shapes need explicit review rather than pasted iframe markup.
 
-Article and card images are served locally from `static/assets/blog/`. Use a content hash in each filename so the publisher can give it immutable caching; changing image bytes requires a new filename and a corresponding Markdown reference. Ordinary external learning-resource links remain external. The archive, canonical URLs, social metadata, `BlogPosting` data, and sitemap derive from the same article files. The preview hostname remains excluded from indexing by a CloudFront response header; the canonical links point at the production domain for later cutover.
+Article and card images are served locally from `static/assets/blog/`. Use a content hash in each filename so the publisher can give it immutable caching; changing image bytes requires a new filename and a corresponding Markdown reference. Ordinary external learning-resource links remain external. The archive, canonical URLs, social metadata, `BlogPosting` data, and sitemap derive from the same article files. The preview hostname remains excluded from indexing by a CloudFront response header; canonical links point at the production domain.
+
+The same distribution serves the preview, production apex, and `www`. A viewer-request function redirects `www` to the apex and retains the blog's clean-path routing. The default response-header policy marks pages `noindex`; a viewer-response function removes that header from successful apex pages only, so preview pages and not-found responses remain excluded from indexing. This hostname-specific rule runs after CloudFront's response-header policy and does not require separate content builds or distributions.
 
 ## Visual assets
 
 The page uses locally hosted Fira Sans 400 and 700 font files. The SIL Open Font License text is included at `assets/fonts/OFL.txt`; image and font origins and processing are recorded in `assets/ASSETS.md`. Hugo fingerprints the homepage image, fonts, CSS, and JavaScript under `/assets/`. Blog image filenames carry their own content hashes. Both forms let the publisher retain immutable assets safely across page updates.
 
-The homepage title, description, partner section, retained FAQ, and footer copy and links live in `content/_index.md`. The production GA4 property will be connected at domain cutover; no analytics requests are sent from this preview.
+The homepage title, description, partner section, retained FAQ, and footer copy and links live in `content/_index.md`. One fingerprinted local analytics module is shared across the generated pages. It loads the existing GA4 property `G-3NXS6QFKHZ` only when the browser hostname is exactly `dondeaprendoaws.com`; localhost, `www`, and the CloudFront preview make no GA network request.
