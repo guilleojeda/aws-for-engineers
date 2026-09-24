@@ -78,5 +78,7 @@
     </footer>
     {{ $directoryScript := $assets.script }}
     <script type="module" src="{{ $directoryScript.RelPermalink }}" integrity="{{ $directoryScript.Data.Integrity }}" crossorigin="anonymous"></script>
+    {{ $analyticsScript := $assets.analytics }}
+    <script type="module" src="{{ $analyticsScript.RelPermalink }}" integrity="{{ $analyticsScript.Data.Integrity }}" crossorigin="anonymous"></script>
   </body>
 </html>

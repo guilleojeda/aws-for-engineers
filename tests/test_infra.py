@@ -10,6 +10,14 @@ TEMPLATE = Path(__file__).resolve().parents[1] / "infra" / "cloudformation.yaml"
 WORKFLOW = Path(__file__).resolve().parents[1] / ".github" / "workflows" / "publish.yml"
 
 
+def function_source(template: str, name: str) -> str:
+    block = re.split(r"\n  [A-Za-z][A-Za-z0-9]*:\n", template.split(f"  {name}:\n", 1)[1], maxsplit=1)[0]
+    lines = block.splitlines()
+    start = lines.index("      FunctionCode: |") + 1
+    end = lines.index("      AutoPublish: true")
+    return "\n".join(line[8:] for line in lines[start:end]).rstrip()
+
+
 class InfrastructureContractTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
@@ -40,11 +48,26 @@ class InfrastructureContractTests(unittest.TestCase):
         self.assertIn("Value: noindex, nofollow, noarchive", self.template)
 
     def test_blog_function_is_inline_and_auto_published(self) -> None:
-        function = self.template.split("  BlogRoutingFunction:\n", 1)[1].split("\n  SiteDistribution:\n", 1)[0]
+        function = self.template.split("  BlogRoutingFunction:\n", 1)[1].split("\n  ProductionIndexingFunction:\n", 1)[0]
         self.assertIn("Type: AWS::CloudFront::Function", function)
         self.assertIn("Runtime: cloudfront-js-2.0", function)
         self.assertIn("AutoPublish: true", function)
         self.assertIn("FunctionCode: |", function)
+
+    def test_production_certificate_and_host_specific_indexing_are_in_place(self) -> None:
+        certificate = self.template.split("  SiteCertificate:\n", 1)[1].split("\n  BlogRoutingFunction:\n", 1)[0]
+        self.assertIn("Type: AWS::CertificateManager::Certificate", certificate)
+        self.assertIn("DomainName: dondeaprendoaws.com", certificate)
+        self.assertIn("www.dondeaprendoaws.com", certificate)
+        self.assertIn("ValidationMethod: DNS", certificate)
+        self.assertIn("HostedZoneId: !Ref HostedZoneId", certificate)
+        distribution = self.template.split("  SiteDistribution:\n", 1)[1].split("\n  SiteBucketPolicy:\n", 1)[0]
+        self.assertIn("AcmCertificateArn: !Ref SiteCertificate", distribution)
+        self.assertIn("SslSupportMethod: sni-only", distribution)
+        self.assertIn("MinimumProtocolVersion: TLSv1.2_2021", distribution)
+        self.assertIn("EventType: viewer-response", distribution)
+        self.assertIn("FunctionARN: !GetAtt ProductionIndexingFunction.FunctionARN", distribution)
+        self.assertNotIn("CloudFrontDefaultCertificate: true", distribution)
 
     def test_publisher_trust_and_permissions_are_scoped_to_repo_main_and_site(self) -> None:
         self.assertIn("GitHubOidcProviderArn:", self.template)
@@ -99,15 +122,7 @@ class BlogRoutingBehaviorTests(unittest.TestCase):
     @unittest.skipUnless(shutil.which("node"), "Node.js is required to execute the CloudFront Function locally")
     def test_cloudfront_function_redirects_and_rewrites_only_canonical_blog_paths(self) -> None:
         template = TEMPLATE.read_text(encoding="utf-8")
-        lines = template.splitlines()
-        marker = "      FunctionCode: |"
-        start = lines.index(marker) + 1
-        code_lines = []
-        for line in lines[start:]:
-            if line.strip() and not line.startswith("        "):
-                break
-            code_lines.append(line[8:] if line.startswith("        ") else "")
-        function_code = "\n".join(code_lines).rstrip()
+        function_code = function_source(template, "BlogRoutingFunction")
         self.assertIn("function handler(event)", function_code)
 
         harness = r"""
@@ -118,8 +133,8 @@ process.stdin.setEncoding('utf8');
 process.stdin.on('data', (chunk) => { input += chunk; });
 process.stdin.on('end', () => {
   const handler = vm.runInNewContext(JSON.parse(input).source + '\nhandler', {});
-  function request(uri, rawQueryString, querystring) {
-    return {uri, rawQueryString: () => rawQueryString, querystring};
+  function request(uri, rawQueryString, querystring, host = 'dwhs21rzi7jgg.cloudfront.net') {
+    return {uri, rawQueryString: () => rawQueryString, querystring, headers: {host: {value: host}}};
   }
   function assertRewrite(uri, expectedUri, rawQueryString, querystring) {
     const originalQuery = JSON.parse(JSON.stringify(querystring));
@@ -135,12 +150,20 @@ process.stdin.on('end', () => {
     assert.equal(result.statusDescription, 'Moved Permanently');
     assert.equal(result.headers.location.value, location);
   }
+  function assertHostRedirect(uri, location, rawQueryString) {
+    const result = handler({request: request(uri, rawQueryString, {}, 'www.dondeaprendoaws.com')});
+    assert.equal(result.statusCode, 301);
+    assert.equal(result.headers.location.value, location);
+  }
 
   assertRewrite('/blog/', '/blog/index.html', 'probe=1', {probe: {value: '1'}});
   assertRewrite('/blog/como-reducir-costos-de-transferencia-intra-region-en-aws/', '/blog/como-reducir-costos-de-transferencia-intra-region-en-aws/index.html', '', {});
   assertRedirect('/blog', '/blog/', undefined);
   assertRedirect('/blog', '/blog/?probe=1', 'probe=1');
   assertRedirect('/blog/como-reducir-costos-de-transferencia-intra-region-en-aws', '/blog/como-reducir-costos-de-transferencia-intra-region-en-aws/?probe=1&tag=a%2Fb&tag=dos', 'probe=1&tag=a%2Fb&tag=dos');
+  assertHostRedirect('/', 'https://dondeaprendoaws.com/', undefined);
+  assertHostRedirect('/blog/como-reducir-costos-de-transferencia-intra-region-en-aws/', 'https://dondeaprendoaws.com/blog/como-reducir-costos-de-transferencia-intra-region-en-aws/?probe=1&tag=a%2Fb', 'probe=1&tag=a%2Fb');
+  assertHostRedirect('/assets/blog/example.webp', 'https://dondeaprendoaws.com/assets/blog/example.webp', undefined);
 
   for (const uri of [
     '/',
@@ -157,6 +180,38 @@ process.stdin.on('end', () => {
   ]) {
     assertRewrite(uri, uri, 'keep=this', {keep: {value: 'this'}});
   }
+});
+"""
+        result = subprocess.run(
+            [shutil.which("node"), "-e", harness],
+            input=json.dumps({"source": function_code}),
+            text=True,
+            capture_output=True,
+            check=False,
+        )
+        self.assertEqual(result.returncode, 0, result.stderr)
+
+    @unittest.skipUnless(shutil.which("node"), "Node.js is required to execute the CloudFront Function locally")
+    def test_preview_keeps_noindex_and_successful_apex_pages_remove_it(self) -> None:
+        function_code = function_source(TEMPLATE.read_text(encoding="utf-8"), "ProductionIndexingFunction")
+        harness = r"""
+const assert = require('node:assert/strict');
+const vm = require('node:vm');
+let input = '';
+process.stdin.setEncoding('utf8');
+process.stdin.on('data', (chunk) => { input += chunk; });
+process.stdin.on('end', () => {
+  const handler = vm.runInNewContext(JSON.parse(input).source + '\nhandler', {});
+  function response(host, statusCode) {
+    const original = {statusCode, headers: {'x-robots-tag': {value: 'noindex, nofollow, noarchive'}, 'content-type': {value: 'text/html'}}};
+    const result = handler({request: {headers: {host: {value: host}}}, response: original});
+    assert.equal(result, original);
+    return result;
+  }
+  assert.equal(response('dondeaprendoaws.com', 200).headers['x-robots-tag'], undefined);
+  assert.equal(response('dondeaprendoaws.com', 404).headers['x-robots-tag'].value, 'noindex, nofollow, noarchive');
+  assert.equal(response('www.dondeaprendoaws.com', 200).headers['x-robots-tag'].value, 'noindex, nofollow, noarchive');
+  assert.equal(response('dwhs21rzi7jgg.cloudfront.net', 200).headers['x-robots-tag'].value, 'noindex, nofollow, noarchive');
 });
 """
         result = subprocess.run(

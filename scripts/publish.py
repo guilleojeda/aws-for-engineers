@@ -17,13 +17,14 @@ import urllib.request
 from html.parser import HTMLParser
 from pathlib import Path
 from typing import Iterable
-from urllib.parse import urljoin
+from urllib.parse import urljoin, urlsplit
 
 
 REVISION_RE = re.compile(r"^[0-9a-f]{40}$")
 HASHED_ASSET_RE = re.compile(r"(?:^|[.-])[0-9a-f]{12,64}(?:[.-]|$)", re.IGNORECASE)
 ASSET_CACHE_CONTROL = "public, max-age=31536000, immutable"
 MUTABLE_CACHE_CONTROL = "public, max-age=0, s-maxage=60, must-revalidate"
+PRODUCTION_HOST = "dondeaprendoaws.com"
 
 
 class PublishError(RuntimeError):
@@ -43,6 +44,26 @@ class _LocalStylesheetParser(HTMLParser):
         href = values.get("href")
         if "stylesheet" in rel and href:
             self.hrefs.append(href)
+
+
+class _CanonicalLinkParser(HTMLParser):
+    def __init__(self) -> None:
+        super().__init__()
+        self.hrefs: list[str] = []
+
+    def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
+        if tag.lower() != "link":
+            return
+        values = {key.lower(): value for key, value in attrs}
+        rel = (values.get("rel") or "").lower().split()
+        href = values.get("href")
+        if "canonical" in rel and href:
+            self.hrefs.append(href)
+
+
+class _NoRedirectHandler(urllib.request.HTTPRedirectHandler):
+    def redirect_request(self, request, response, code, message, headers, new_url):
+        return None
 
 
 def run(command: list[str], *, cwd: Path | None = None) -> str:
@@ -199,8 +220,9 @@ def delete_obsolete_pages(bucket: str, existing: set[str], desired: set[str]) ->
 
 def request_bytes(url: str) -> tuple[int, dict[str, str], bytes]:
     request = urllib.request.Request(url, headers={"User-Agent": "dondeaprendoaws-publisher/1"})
+    opener = urllib.request.build_opener(_NoRedirectHandler)
     try:
-        with urllib.request.urlopen(request, timeout=20) as response:
+        with opener.open(request, timeout=20) as response:
             return response.status, dict(response.headers.items()), response.read()
     except urllib.error.HTTPError as error:
         return error.code, dict(error.headers.items()), error.read()
@@ -208,7 +230,7 @@ def request_bytes(url: str) -> tuple[int, dict[str, str], bytes]:
         raise PublishError(f"Could not verify {url}: {error}") from error
 
 
-def verify_served_site(site_url: str, revision: str) -> None:
+def verify_served_site(site_url: str, revision: str, production_site_url: str = "") -> None:
     base = site_url.rstrip("/")
     root_status, root_headers, root_body = request_bytes(base + "/")
     root_type = _header(root_headers, "content-type")
@@ -247,6 +269,93 @@ def verify_served_site(site_url: str, revision: str) -> None:
     if served != {"revision": revision}:
         raise PublishError(f"CloudFront served revision {served!r}; expected {revision}.")
 
+    if production_site_url:
+        verify_production_site(production_site_url, revision)
+
+
+def validate_production_site_url(site_url: str) -> str:
+    try:
+        parsed = urlsplit(site_url)
+        port = parsed.port
+    except ValueError as error:
+        raise PublishError(f"Production site URL must be the HTTPS apex https://{PRODUCTION_HOST}.") from error
+    if (
+        parsed.scheme.lower() != "https"
+        or parsed.hostname is None
+        or parsed.hostname.lower() != PRODUCTION_HOST
+        or parsed.username is not None
+        or parsed.password is not None
+        or port not in (None, 443)
+        or parsed.path not in ("", "/")
+        or parsed.query
+        or parsed.fragment
+    ):
+        raise PublishError(f"Production site URL must be the HTTPS apex https://{PRODUCTION_HOST}.")
+    return f"https://{PRODUCTION_HOST}"
+
+
+def _reject_wrong_host_redirect(
+    requested_url: str,
+    status: int,
+    headers: dict[str, str],
+    expected_host: str,
+) -> None:
+    if status < 300 or status >= 400:
+        return
+    location = _header(headers, "location")
+    if not location:
+        return
+    destination = urlsplit(urljoin(requested_url, location))
+    if destination.hostname and destination.hostname.lower() != expected_host.lower():
+        raise PublishError(
+            f"Production URL {requested_url} redirected to wrong host {destination.hostname}."
+        )
+
+
+def verify_production_site(site_url: str, revision: str) -> None:
+    base = validate_production_site_url(site_url)
+    root_url = base + "/"
+    root_status, root_headers, root_body = request_bytes(root_url)
+    _reject_wrong_host_redirect(root_url, root_status, root_headers, PRODUCTION_HOST)
+    root_type = _header(root_headers, "content-type")
+    if root_status != 200 or "text/html" not in root_type.lower():
+        raise PublishError(
+            f"Production homepage verification failed: HTTP {root_status}, content type {root_type!r}."
+        )
+    if "noindex" in _header(root_headers, "x-robots-tag").lower():
+        raise PublishError("Production homepage must be indexable and must not have an X-Robots-Tag noindex header.")
+
+    canonicals = _CanonicalLinkParser()
+    canonicals.feed(root_body.decode("utf-8", errors="replace"))
+    expected_canonical = base + "/"
+    if canonicals.hrefs != [expected_canonical]:
+        raise PublishError(
+            f"Production homepage canonical must be exactly {expected_canonical!r}; found {canonicals.hrefs!r}."
+        )
+
+    missing_url = base + "/__publish_check_missing__"
+    missing_status, missing_headers, _ = request_bytes(missing_url)
+    _reject_wrong_host_redirect(missing_url, missing_status, missing_headers, PRODUCTION_HOST)
+    missing_type = _header(missing_headers, "content-type")
+    if missing_status != 404 or "text/html" not in missing_type.lower():
+        raise PublishError(
+            f"Production not-found verification failed: HTTP {missing_status}, content type {missing_type!r}."
+        )
+    if "noindex" not in _header(missing_headers, "x-robots-tag").lower():
+        raise PublishError("Production not-found response is missing the required X-Robots-Tag noindex header.")
+
+    revision_url = base + "/revision.json"
+    revision_status, revision_headers, revision_body = request_bytes(revision_url)
+    _reject_wrong_host_redirect(revision_url, revision_status, revision_headers, PRODUCTION_HOST)
+    if revision_status != 200:
+        raise PublishError(f"Production revision endpoint verification failed: HTTP {revision_status}.")
+    try:
+        served = json.loads(revision_body)
+    except json.JSONDecodeError as error:
+        raise PublishError("The production revision.json is not valid JSON.") from error
+    if served != {"revision": revision}:
+        raise PublishError(f"Production served revision {served!r}; expected {revision}.")
+
 
 def _header(headers: dict[str, str], name: str) -> str:
     expected = name.lower()
@@ -259,6 +368,7 @@ def publish_site(
     distribution_id: str,
     site_url: str,
     revision: str,
+    production_site_url: str = "",
     *,
     restore: bool = False,
 ) -> None:
@@ -267,6 +377,8 @@ def publish_site(
         raise PublishError("Bucket, distribution ID, and site URL are required.")
     if not site_url.startswith("https://"):
         raise PublishError("Site URL must use HTTPS.")
+    if production_site_url:
+        production_site_url = validate_production_site_url(production_site_url)
 
     # This check happens before the first AWS request or mutation. Explicit artifact restores
     # are selected from successful main-branch runs by the workflow and intentionally bypass it.
@@ -318,8 +430,10 @@ def publish_site(
         "--id",
         invalidation_id,
     )
-    verify_served_site(site_url, revision)
+    verify_served_site(site_url, revision, production_site_url)
     print(f"Verified served revision {revision} at {site_url.rstrip('/')}/", flush=True)
+    if production_site_url:
+        print(f"Verified served revision {revision} at {production_site_url}/", flush=True)
 
 
 def parser() -> argparse.ArgumentParser:
@@ -335,6 +449,7 @@ def parser() -> argparse.ArgumentParser:
     publish.add_argument("--bucket", default=os.environ.get("S3_BUCKET", ""))
     publish.add_argument("--distribution-id", default=os.environ.get("CLOUDFRONT_DISTRIBUTION_ID", ""))
     publish.add_argument("--site-url", default=os.environ.get("SITE_URL", ""))
+    publish.add_argument("--production-site-url", default=os.environ.get("PRODUCTION_SITE_URL", ""))
     publish.add_argument("--revision", default=os.environ.get("GITHUB_SHA", ""))
     publish.add_argument(
         "--restore",
@@ -357,6 +472,7 @@ def main(argv: Iterable[str] | None = None) -> int:
                 args.distribution_id,
                 args.site_url,
                 args.revision,
+                args.production_site_url,
                 restore=args.restore,
             )
     except (OSError, PublishError, KeyError, json.JSONDecodeError) as error:

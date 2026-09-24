@@ -15,6 +15,10 @@ Parameters:
     Type: String
     Default: repo:guilleojeda@18320860/aws-for-engineers@1382498072
     Description: Immutable GitHub repository subject prefix; the template adds the main branch suffix.
+  HostedZoneId:
+    Type: String
+    Description: Public Route 53 hosted zone ID for dondeaprendoaws.com, without the /hostedzone/ prefix.
+    AllowedPattern: "^Z[A-Z0-9]+$"
 
 Resources:
   SiteBucket:
@@ -77,25 +81,49 @@ Resources:
               Value: noindex, nofollow, noarchive
               Override: true
 
+  SiteCertificate:
+    Type: AWS::CertificateManager::Certificate
+    Properties:
+      DomainName: dondeaprendoaws.com
+      SubjectAlternativeNames:
+        - www.dondeaprendoaws.com
+      ValidationMethod: DNS
+      DomainValidationOptions:
+        - DomainName: dondeaprendoaws.com
+          HostedZoneId: !Ref HostedZoneId
+        - DomainName: www.dondeaprendoaws.com
+          HostedZoneId: !Ref HostedZoneId
+
   BlogRoutingFunction:
     Type: AWS::CloudFront::Function
     Properties:
       Name: !Sub "${AWS::StackName}-blog-routing"
       FunctionConfig:
-        Comment: Canonicalize blog paths and map them to static index files.
+        Comment: Canonicalize the production host and blog paths, then map blog paths to static files.
         Runtime: cloudfront-js-2.0
       FunctionCode: |
         function handler(event) {
             var request = event.request;
             var uri = request.uri;
+            var query = request.rawQueryString();
+            var querySuffix = query ? '?' + query : '';
 
-            if (uri === '/blog' || /^\/blog\/[a-z0-9-]+$/.test(uri)) {
-                var query = request.rawQueryString();
+            if (request.headers.host && request.headers.host.value === 'www.dondeaprendoaws.com') {
                 return {
                     statusCode: 301,
                     statusDescription: 'Moved Permanently',
                     headers: {
-                        location: { value: uri + '/' + (query === undefined ? '' : '?' + query) }
+                        location: { value: 'https://dondeaprendoaws.com' + uri + querySuffix }
+                    }
+                };
+            }
+
+            if (uri === '/blog' || /^\/blog\/[a-z0-9-]+$/.test(uri)) {
+                return {
+                    statusCode: 301,
+                    statusDescription: 'Moved Permanently',
+                    headers: {
+                        location: { value: uri + '/' + querySuffix }
                     }
                 };
             }
@@ -110,6 +138,25 @@ Resources:
         }
       AutoPublish: true
 
+  ProductionIndexingFunction:
+    Type: AWS::CloudFront::Function
+    Properties:
+      Name: !Sub "${AWS::StackName}-production-indexing"
+      FunctionConfig:
+        Comment: Remove the preview noindex header from successful production pages.
+        Runtime: cloudfront-js-2.0
+      FunctionCode: |
+        function handler(event) {
+            var response = event.response;
+            if (event.request.headers.host &&
+                event.request.headers.host.value === 'dondeaprendoaws.com' &&
+                response.statusCode >= 200 && response.statusCode < 300) {
+                delete response.headers['x-robots-tag'];
+            }
+            return response;
+        }
+      AutoPublish: true
+
   SiteDistribution:
     Type: AWS::CloudFront::Distribution
     Properties:
@@ -119,6 +166,9 @@ Resources:
         DefaultRootObject: index.html
         HttpVersion: http2
         IPV6Enabled: true
+        Aliases:
+          - dondeaprendoaws.com
+          - www.dondeaprendoaws.com
         Origins:
           - Id: private-site-bucket
             DomainName: !GetAtt SiteBucket.RegionalDomainName
@@ -136,6 +186,8 @@ Resources:
           FunctionAssociations:
             - EventType: viewer-request
               FunctionARN: !GetAtt BlogRoutingFunction.FunctionARN
+            - EventType: viewer-response
+              FunctionARN: !GetAtt ProductionIndexingFunction.FunctionARN
         CacheBehaviors:
           - PathPattern: assets/*
             TargetOriginId: private-site-bucket
@@ -145,6 +197,9 @@ Resources:
             Compress: true
             CachePolicyId: 658327ea-f89d-4fab-a63d-7e88639e58f6
             ResponseHeadersPolicyId: !Ref NoIndexResponseHeaders
+            FunctionAssociations:
+              - EventType: viewer-request
+                FunctionARN: !GetAtt BlogRoutingFunction.FunctionARN
         CustomErrorResponses:
           - ErrorCode: 403
             ResponsePagePath: /404.html
@@ -155,7 +210,9 @@ Resources:
             ResponseCode: 404
             ErrorCachingMinTTL: 0
         ViewerCertificate:
-          CloudFrontDefaultCertificate: true
+          AcmCertificateArn: !Ref SiteCertificate
+          SslSupportMethod: sni-only
+          MinimumProtocolVersion: TLSv1.2_2021
 
   SiteBucketPolicy:
     Type: AWS::S3::BucketPolicy
@@ -225,3 +282,6 @@ Outputs:
   PublisherRoleArn:
     Description: IAM role assumed by the main-branch GitHub Actions publisher.
     Value: !GetAtt GitHubPublisherRole.Arn
+  CertificateArn:
+    Description: ACM certificate for the production apex and www alias.
+    Value: !Ref SiteCertificate

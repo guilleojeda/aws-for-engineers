@@ -32,6 +32,7 @@ ASSET_PATH = re.compile(
     r"^/assets/(?:blog/[0-9a-f]{64}|.+\.[0-9a-f]{64})\.[a-z0-9]+$",
     re.IGNORECASE,
 )
+ANALYTICS_ASSET_PATH = re.compile(r"^/assets/js/analytics\.[0-9a-f]{64}\.mjs$", re.IGNORECASE)
 
 
 class SiteParser(HTMLParser):
@@ -40,6 +41,7 @@ class SiteParser(HTMLParser):
         self.cards: list[dict[str, str]] = []
         self.categories: list[str] = []
         self.asset_references: list[str] = []
+        self.script_sources: list[str] = []
         self.nav_hrefs: list[str] = []
         self.forms: list[dict[str, str]] = []
         self.anchor_hrefs: list[str] = []
@@ -58,6 +60,8 @@ class SiteParser(HTMLParser):
             self.forms.append(values)
         if tag == "script" and not values.get("src"):
             self.inline_scripts += 1
+        elif tag == "script":
+            self.script_sources.append(values["src"])
 
         if tag == "article" and "data-resource-card" in values:
             self.resource_card = {
@@ -204,6 +208,33 @@ def validate_assets(site_dir: Path, references: list[str]) -> None:
             fail(f"Generated asset is not fingerprinted: {path.relative_to(site_dir)}")
 
 
+def validate_analytics_markup(site_dir: Path) -> None:
+    pages = [path for path in site_dir.rglob("*.html") if path.name != "404.html"]
+    if not pages:
+        fail("Generated output has no pages to check for the GA4 loader")
+
+    shared_source: str | None = None
+    for page in pages:
+        parser = SiteParser()
+        parser.feed(page.read_text(encoding="utf-8"))
+        parser.close()
+        analytics_sources = [
+            source
+            for source in parser.script_sources
+            if ANALYTICS_ASSET_PATH.fullmatch(urlsplit(source).path)
+        ]
+        if len(analytics_sources) != 1:
+            fail(f"Generated page {page.relative_to(site_dir)} must load the fingerprinted GA4 module exactly once")
+        source = analytics_sources[0]
+        source_path = urlsplit(source).path
+        if not (site_dir / source_path.lstrip("/")).is_file():
+            fail(f"Generated page {page.relative_to(site_dir)} references a missing GA4 module: {source}")
+        if shared_source is None:
+            shared_source = source
+        elif source != shared_source:
+            fail("Generated pages do not share one fingerprinted GA4 module")
+
+
 def validate_site(site_dir: Path, repository: Path) -> None:
     index_path = site_dir / "index.html"
     not_found_path = site_dir / "404.html"
@@ -270,6 +301,7 @@ def validate_site(site_dir: Path, repository: Path) -> None:
         fail("Generated cards are not sorted by source Order, descending")
 
     validate_assets(site_dir, parser.asset_references)
+    validate_analytics_markup(site_dir)
 
     not_found = not_found_path.read_text(encoding="utf-8")
     not_found_parser = SiteParser()
