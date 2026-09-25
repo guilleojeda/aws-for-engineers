@@ -33,8 +33,34 @@ Read these stack outputs: `BucketName`, `DistributionId`, `PreviewUrl`, and `Git
 
 The [publish workflow](../.github/workflows/publish.yml) runs on each push to `main` and can also be started manually. It uses OIDC and stores no AWS access keys in GitHub. Its role can only list/write/delete this site's objects and invalidate this distribution.
 
-## Public domain cutover
+## Public domain
 
-The live site and its DNS must remain in place until preview checks pass. Request an ACM certificate in `us-east-1` for `awsforengineers.com` and `www.awsforengineers.com`, validate it through the current GoDaddy DNS, then update the stack with `CertificateArn`. Copy the full existing DNS zone into Route 53, including mail and verification records, and create apex and `www` alias records to the distribution. Only after checking those records should the registrar nameservers change. The domain registration stays at GoDaddy. After propagation, verify the public site, ads, analytics, email, and publishing workflow before canceling Unicorn Platform.
+The production stack is `aws-for-engineers-site` in account `719535286359`, region `us-east-1`. Its CloudFront distribution is `E2C3QM5K1YI7HT` (`dodm2697vnuos.cloudfront.net`). The ACM certificate covers `awsforengineers.com` and `www.awsforengineers.com`. CloudFront redirects `www` to the apex. The distribution uses pay-as-you-go pricing and has IPv6 enabled.
+
+The Route 53 public hosted zone is `Z1028403UTGTEDDP2XLG`. Its four authoritative nameservers are:
+
+```text
+ns-826.awsdns-39.net
+ns-381.awsdns-47.com
+ns-2033.awsdns-62.co.uk
+ns-1379.awsdns-44.org
+```
+
+The zone has apex and `www` A/AAAA aliases to CloudFront. It also preserves the five Google Workspace MX records, the apex SPF and Google verification TXT records, the SPF include TXT record, and GoDaddy's `_domainconnect` CNAME from the pre-cutover zone. ACM validation CNAMEs for both hostnames remain in Route 53 for certificate renewal. Do not replace the zone's Route 53 NS or SOA records with the old GoDaddy values.
+
+When updating the existing CloudFormation stack, pass both the existing OIDC provider and the production certificate. The template defaults are for a new preview stack and would remove the public aliases if used for an update:
+
+```sh
+aws cloudformation deploy \
+  --region us-east-1 \
+  --stack-name aws-for-engineers-site \
+  --template-file infra/site.yaml \
+  --capabilities CAPABILITY_NAMED_IAM \
+  --parameter-overrides \
+    ExistingGitHubOidcProviderArn=arn:aws:iam::719535286359:oidc-provider/token.actions.githubusercontent.com \
+    CertificateArn=arn:aws:acm:us-east-1:719535286359:certificate/8d3034a6-7775-4895-ad45-15919e4fbe22
+```
+
+The registration remains at GoDaddy. The original GoDaddy DNS zone has been left intact as a rollback option: restore `ns03.domaincontrol.com` and `ns04.domaincontrol.com` at the registrar while the old site is still active. Keep the old subscription until public-domain checks, ad and analytics requests, and publishing have been verified. DNS caches can continue using the previous nameservers after the registrar update.
 
 Temporary access keys must not be committed or put into GitHub secrets; the publishing workflow uses the OIDC role.
