@@ -1,2 +1,0 @@
-# Imported article Markdown uses trailing spaces for authored hard line breaks.
-content/blog/*.md whitespace=-blank-at-eol

@@ -1,3 +1,0 @@
-{{- $date := . -}}
-{{- $months := slice "January" "February" "March" "April" "May" "June" "July" "August" "September" "October" "November" "December" -}}
-{{- printf "%02d %s %d" $date.Day (index $months (sub (int $date.Month) 1)) $date.Year -}}
