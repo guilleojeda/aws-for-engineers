@@ -1,0 +1,440 @@
+---
+layout: post.njk
+templateEngineOverride: html
+tags: posts
+title: "HPC Workload Profiling on AWS: Best Practices"
+description: "Unlock HPC potential on AWS with profiling best practices, tools, and optimization techniques to enhance performance and reduce costs."
+date: "2024-09-30"
+datePublished: "2024-09-30T18:52:44.992000+00:00"
+heroImage: "/assets/media/4fc2e32b6baef4b56ba4.jpg"
+permalink: "/blog/hpc-workload-profiling-on-aws-best-practices/"
+sourceUrl: "https://awsforengineers.com/blog/hpc-workload-profiling-on-aws-best-practices/"
+---
+<p>Want to supercharge your HPC workloads on AWS? Here's what you need to know:</p>
+<ul>
+<li>HPC workload profiling analyzes resource usage to optimize performance</li>
+<li>AWS offers powerful tools for HPC: EC2, EFA, ParallelCluster, FSx for Lustre</li>
+<li>Key profiling methods: user-mode sampling, hardware event-based sampling, remote profiling</li>
+<li>Best practices include choosing the right instances, improving network performance, and optimizing storage</li>
+</ul>
+<p>Quick comparison of AWS HPC services:</p>
+<figure><table>
+<thead>
+<tr>
+<th>Service</th>
+<th>Purpose</th>
+<th>Key Feature</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>EC2</td>
+<td>Compute power</td>
+<td>400+ instance types</td>
+</tr>
+<tr>
+<td>EFA</td>
+<td>Network speed</td>
+<td>Fast node communication</td>
+</tr>
+<tr>
+<td>ParallelCluster</td>
+<td>Cluster management</td>
+<td>Automatic resource setup</td>
+</tr>
+<tr>
+<td>FSx for Lustre</td>
+<td>File storage</td>
+<td>High-speed data access</td>
+</tr>
+<tr>
+<td><a href="https://aws.amazon.com/batch/" target="_blank">AWS Batch</a></td>
+<td>Job scheduling</td>
+<td>Resource optimization</td>
+</tr>
+</tbody>
+</table></figure>
+<p>By profiling your HPC workloads on AWS, you can spot bottlenecks, fine-tune performance, and get more bang for your buck. Let's dive into how to set up, profile, and optimize your HPC tasks on the cloud.</p>
+<h2 id="related-video-from-youtube">Related video from YouTube</h2>
+<iframe allowfullscreen="" frameborder="0" loading="lazy" src="https://www.youtube-nocookie.com/embed/F5Ca5K_PdH8"></iframe><h2 id="hpc-workloads-on-aws">HPC workloads on AWS</h2>
+<p>HPC workloads aren't your average computing tasks. They're the heavy lifters of the digital world, demanding massive parallel computing, lightning-fast networking, and storage that can keep up.</p>
+<p>AWS has stepped up to the plate with a suite of services tailored for these power-hungry workloads:</p>
+<ol>
+<li>
+<p><strong><a href="https://aws.amazon.com/ec2/" target="_blank">Amazon EC2</a></strong>: The muscle behind HPC on AWS. With over 400 instance types, you'll find the right fit for your compute-intensive tasks.</p>
+</li>
+<li>
+<p><strong><a href="https://aws.amazon.com/hpc/efa/" target="_blank">Elastic Fabric Adapter</a> (EFA)</strong>: Think of it as a superhighway for data. It lets thousands of CPUs or GPUs chat at breakneck speeds.</p>
+</li>
+<li>
+<p><strong><a href="https://docs.aws.amazon.com/parallelcluster/latest/ug/what-is-aws-parallelcluster.html" target="_blank">AWS ParallelCluster</a></strong>: Your personal HPC butler. It sets up and scales clusters so you can focus on the work that matters.</p>
+</li>
+<li>
+<p><strong><a href="https://aws.amazon.com/fsx/lustre/" target="_blank">Amazon FSx for Lustre</a></strong>: The speed demon of storage. It handles massive datasets like a pro, perfect for tasks that need quick access to tons of data.</p>
+</li>
+<li>
+<p><strong>AWS Batch</strong>: The smart scheduler. It makes sure your jobs get the resources they need, when they need them.</p>
+</li>
+</ol>
+<p>Let's break it down:</p>
+<p><a href="/blog/aws-ec2-basics-core-concepts-explained/">EC2 instances</a> like C5n and P3dn are built for speed, delivering up to 100 Gbps of network throughput. That's music to the ears of anyone running fluid dynamics simulations or weather models.</p>
+<p>EFA takes networking to the next level. It's the secret sauce that lets deep learning models in <a href="https://www.tensorflow.org/" target="_blank">TensorFlow</a> or <a href="https://pytorch.org/" target="_blank">PyTorch</a> communicate at lightning speed.</p>
+<blockquote>
+<p>"EFA is used in fluid dynamics computations, large-scale weather modeling, and deep learning models built with frameworks like TensorFlow and PyTorch." - AWS Documentation</p>
+</blockquote>
+<p>ParallelCluster is your HPC wingman, handling the nitty-gritty of cluster management so you can focus on your work.</p>
+<p>FSx for Lustre is like a data firehose, processing massive datasets at hundreds of GB/s. It's a game-changer for tasks like genome analysis or oil and gas simulations.</p>
+<p>Finally, AWS Batch keeps everything running smoothly, making sure your jobs get the resources they need without breaking the bank.</p>
+<p>With this powerhouse lineup, AWS has positioned itself as a serious player in the HPC arena. Whether you're modeling weather patterns or training the next big AI model, AWS has the tools to get the job done.</p>
+<h2 id="setting-up-for-hpc-workload-profiling">Setting up for HPC workload profiling</h2>
+<p>Let's get your <a href="/">AWS environment</a> ready for HPC workload profiling. It's like prepping a race car - you need the right tools and setup.</p>
+<h3 id="aws-setup-for-profiling">AWS setup for profiling</h3>
+<p>First, configure your <a href="/blog/">AWS services</a>. Set up EC2 instances, storage, and networking for HPC workloads.</p>
+<p>For Amazon EC2, pick the right instance type. AWS offers these HPC-optimized families:</p>
+<figure><table>
+<thead>
+<tr>
+<th>Instance Family</th>
+<th>Best For</th>
+<th>Available Types</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Hpc6a</td>
+<td>AMD-based compute</td>
+<td>hpc6a.48xlarge</td>
+</tr>
+<tr>
+<td>Hpc6id</td>
+<td>Intel-based with high memory</td>
+<td>hpc6id.32xlarge</td>
+</tr>
+<tr>
+<td>Hpc7a</td>
+<td>Latest AMD processors</td>
+<td>hpc7a.12xlarge, hpc7a.24xlarge, hpc7a.48xlarge, hpc7a.96xlarge</td>
+</tr>
+<tr>
+<td>Hpc7g</td>
+<td>ARM-based with AWS Graviton</td>
+<td>hpc7g.4xlarge, hpc7g.8xlarge, hpc7g.16xlarge</td>
+</tr>
+</tbody>
+</table></figure>
+<h3 id="setting-up-instances-for-profiling">Setting up instances for profiling</h3>
+<p>Now, tweak some kernel parameters for profiling tools access:</p>
+<p>For User-Mode sampling:</p>
+<pre><code>echo 0 | sudo tee /proc/sys/kernel/yama/ptrace_scope
+</code></pre>
+<p>For Hardware Event-Based sampling:</p>
+<pre><code>echo 0 | sudo tee /proc/sys/kernel/perf_event_paranoid
+</code></pre>
+<p>These commands lower security restrictions that might block profiling tools.</p>
+<h3 id="key-profiling-tools">Key profiling tools</h3>
+<p>Time for the profiling tools. Let's use Intel® VTune™ Profiler:</p>
+<ol>
+<li>Install VTune Profiler on your instance.</li>
+<li>Launch it:</li>
+</ol>
+<pre><code>sudo &lt;vtune_install_dir&gt;/vtune_profiler/bin64/vtune-gui
+</code></pre>
+<ol start="3">
+<li>Create a new project and set your analysis settings.</li>
+</ol>
+<p>VTune Profiler will collect data and show where your HPC workload spends its time in the "Hotspots by CPU Utilization" view.</p>
+<h2 id="best-practices-for-hpc-profiling">Best practices for HPC profiling</h2>
+<h3 id="picking-the-right-instance-types">Picking the right instance types</h3>
+<p>Choosing the best EC2 instance for HPC is crucial. Here's what you need to know:</p>
+<ul>
+<li>C5 instances: Great for compute-heavy tasks like scientific simulations</li>
+<li>R5 instances: Ideal for memory-intensive jobs like big data analysis</li>
+<li>I3 instances: Perfect for tasks needing fast storage, thanks to NVMe SSDs</li>
+</ul>
+<p>Top HPC instance types:</p>
+<figure><table>
+<thead>
+<tr>
+<th>Instance Type</th>
+<th>vCPUs</th>
+<th>Memory (GiB)</th>
+<th>Network Performance</th>
+<th>Best For</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>c5n.18xlarge</td>
+<td>72</td>
+<td>192</td>
+<td>100 Gbps</td>
+<td>Compute-intensive tasks</td>
+</tr>
+<tr>
+<td>r5.24xlarge</td>
+<td>96</td>
+<td>768</td>
+<td>25 Gbps</td>
+<td>Memory-intensive jobs</td>
+</tr>
+<tr>
+<td>i3.16xlarge</td>
+<td>64</td>
+<td>488</td>
+<td>25 Gbps</td>
+<td>High I/O operations</td>
+</tr>
+</tbody>
+</table></figure>
+<p>Don't oversize. Pick instances that fit your job without wasting resources.</p>
+<h3 id="improving-network-performance">Improving network performance</h3>
+<p>Fast networking is key for HPC. Here's how to speed things up:</p>
+<ol>
+<li>Use cluster placement groups to reduce latency</li>
+<li>Turn off Hyper-Threading for floating-point heavy jobs</li>
+<li>Choose high network throughput instances (C5n and P3dn offer up to 100 Gbps)</li>
+<li>Try Elastic Fabric Adapter (EFA) for apps needing lots of inter-instance communication</li>
+</ol>
+<h3 id="storage-best-practices">Storage best practices</h3>
+<p>Good storage can make or break your HPC job:</p>
+<ol>
+<li>Use Amazon FSx for Lustre for big data sets (hundreds of GB/s throughput)</li>
+<li>Pick EBS-optimized instances for fast, dedicated EBS connections</li>
+<li>Use instance store volumes for temporary, high-speed storage</li>
+</ol>
+<p>Storage options compared:</p>
+<figure><table>
+<thead>
+<tr>
+<th>Storage Type</th>
+<th>Best For</th>
+<th>Performance</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Amazon FSx for Lustre</td>
+<td>Large datasets, high throughput</td>
+<td>Up to hundreds of GB/s</td>
+</tr>
+<tr>
+<td>EBS volumes</td>
+<td>Persistent storage</td>
+<td>Varies by volume type</td>
+</tr>
+<tr>
+<td>Instance store</td>
+<td>Temporary, high-performance storage</td>
+<td>Very high (directly attached)</td>
+</tr>
+</tbody>
+</table></figure>
+<h2 id="profiling-methods">Profiling methods</h2>
+<p>HPC workload profiling on AWS isn't one-size-fits-all. Here are three key methods:</p>
+<h3 id="user-mode-sampling">User-mode sampling</h3>
+<p>This method interrupts processes to collect data. It's like taking snapshots of your app's performance.</p>
+<ul>
+<li>Gives you a peek into how your app is performing</li>
+<li>Only slows things down by about 5%</li>
+<li>Great for finding hotspots and analyzing threading</li>
+</ul>
+<p>Intel® VTune™ Profiler uses this to see how apps use processor resources. It rates utilization as Idle, Poor, Ok, or Ideal.</p>
+<h3 id="hardware-event-based-sampling">Hardware event-based sampling</h3>
+<p>This one uses special hardware units to measure how software and hardware play together.</p>
+<ul>
+<li>Gives detailed info without slowing things down much</li>
+<li>Comes in two flavors:
+<ol>
+<li>End-to-end measurements</li>
+<li>Sampling-based measurements</li>
+</ol>
+</li>
+</ul>
+<p>The <a href="https://hpc.fau.de/research/tools/likwid/" target="_blank">Likwid</a> tool uses end-to-end measurements. You need to pin your app to specific cores, but it's lightweight and supports all events.</p>
+<h3 id="remote-profiling-techniques">Remote profiling techniques</h3>
+<p>For HPC on AWS, remote profiling is key. It lets you run the app and the profiler UI on different machines.</p>
+<p>You've got options:</p>
+<ol>
+<li>Direct connect</li>
+<li>SSH access</li>
+<li><a href="https://www.yourkit.com/" target="_blank">YourKit</a> Connection Broker</li>
+</ol>
+<p>For CUDA apps, try these:</p>
+<ul>
+<li><a href="https://developer.nvidia.com/nsight-systems" target="_blank">Nsight Systems</a> CLI: <code>nsys profile -o timeline ./myapplication</code></li>
+<li><a href="https://developer.nvidia.com/nsight-compute" target="_blank">Nsight CUDA</a> CLI: <code>nv-nsight-cu-cli -o profile ./bin/Release/atomicIncTest</code></li>
+</ul>
+<p>These create files you can analyze on your local machine.</p>
+<p>When picking a method, think about what you need and how much slowdown you can handle. Each method gives you different insights into your HPC workload on AWS.</p>
+<h2 id="understanding-profiling-results">Understanding profiling results</h2>
+<p>After collecting profiling data for your HPC workload on AWS, it's time to make sense of it. Let's dive into how to read the data and find bottlenecks.</p>
+<h3 id="reading-the-data">Reading the data</h3>
+<p>Profiling tools spit out a ton of info. Here's how to tackle it:</p>
+<ol>
+<li><strong>Key metrics</strong>: Focus on execution time, CPU usage, memory, and I/O.</li>
+<li><strong>Visualize</strong>: Use tools like <a href="https://www.intel.com/content/www/us/en/developer/tools/oneapi/vtune-profiler.html" target="_blank">Intel VTune Profiler</a> to see data graphically.</li>
+<li><strong>Compare runs</strong>: Look at different instance types or input sizes.</li>
+</ol>
+<p>Check out this finding from <a href="https://maqao.org/" target="_blank">MAQAO</a> ONE View on <a href="https://www.gromacs.org/" target="_blank">GROMACS</a>:</p>
+<blockquote>
+<p>"Comparing GROMACS on AWS Graviton3 vs Graviton3E showed a 13% speedup."</p>
+</blockquote>
+<p>This kind of insight helps you pick the right instance for your workload.</p>
+<h3 id="finding-bottlenecks">Finding bottlenecks</h3>
+<p>Now, let's hunt for performance issues:</p>
+<ol>
+<li><strong>Hotspots</strong>: Find resource-hungry code sections.</li>
+<li><strong>Resource use</strong>: Low CPU or memory? That's inefficient.</li>
+<li><strong>Communication</strong>: For distributed workloads, check network usage.</li>
+<li><strong>I/O operations</strong>: Slow storage access can kill HPC performance.</li>
+</ol>
+<p>MAQAO's GROMACS analysis found:</p>
+<blockquote>
+<p>"The largest assembly loop was 42% faster on Graviton3E than Graviton3."</p>
+</blockquote>
+<p>This points to where the newer instance shines.</p>
+<p>Here's a quick way to organize your findings:</p>
+<figure><table>
+<thead>
+<tr>
+<th>Metric</th>
+<th>Current</th>
+<th>Target</th>
+<th>Potential Boost</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Execution Time</td>
+<td>100s</td>
+<td>80s</td>
+<td>20%</td>
+</tr>
+<tr>
+<td>Memory Usage</td>
+<td>80%</td>
+<td>60%</td>
+<td>25%</td>
+</tr>
+<tr>
+<td>Network Throughput</td>
+<td>5 GB/s</td>
+<td>8 GB/s</td>
+<td>60%</td>
+</tr>
+</tbody>
+</table></figure>
+<h2 id="improving-hpc-workloads-with-profiling-insights">Improving HPC workloads with profiling insights</h2>
+<p>Now that you've analyzed your profiling results, it's time to put that knowledge to work. Here's how to fine-tune your HPC workloads on AWS for better performance.</p>
+<h3 id="adjusting-instance-settings">Adjusting instance settings</h3>
+<p>Tweaking your instance configurations can lead to big gains:</p>
+<ol>
+<li>
+<p><strong>Right-size your instances</strong>: Match instance types and sizes to your workload needs. This cuts costs by eliminating idle instances.</p>
+</li>
+<li>
+<p><strong>Set up auto-scaling</strong>: Use AWS ParallelCluster to scale resources based on demand. This keeps performance high and costs low.</p>
+</li>
+<li>
+<p><strong>Customize without AMIs</strong>: Use custom bootstrap actions to tweak instances. It's faster and easier than creating new AMIs.</p>
+</li>
+</ol>
+<blockquote>
+<p>"These optimizations can result in significant cost savings when you apply them to large fleets." - Isaac Jordan, Amazon CodeGuru Profiler team</p>
+</blockquote>
+<h3 id="making-code-more-efficient">Making code more efficient</h3>
+<p>Optimizing your code is crucial for getting the most out of AWS infrastructure:</p>
+<ol>
+<li>
+<p><strong>Use CodeGuru Profiler</strong>: This tool automatically suggests optimizations. It's saved Amazon millions through its recommendations.</p>
+</li>
+<li>
+<p><strong>Focus on hotspots</strong>: Target the most resource-hungry parts of your code first.</p>
+</li>
+<li>
+<p><strong>Consider GPU acceleration</strong>: For suitable workloads, <a href="https://www.nvidia.com/en-us/" target="_blank">NVIDIA</a> GPUs can speed up processing while using the same energy.</p>
+</li>
+</ol>
+<blockquote>
+<p>"After implementing recommendations from CodeGuru Profiler, one application reduced its CPU time spent creating new AWS SDK clients from 18.57% to less than 1%, resulting in improved latency and reduced costs."</p>
+</blockquote>
+<figure><table>
+<thead>
+<tr>
+<th>Optimization</th>
+<th>Benefit</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Right-sizing</td>
+<td>Lower costs, better resource use</td>
+</tr>
+<tr>
+<td>Auto-scaling</td>
+<td>Better performance, lower cost</td>
+</tr>
+<tr>
+<td>CodeGuru Profiler</td>
+<td>Less latency, lower costs</td>
+</tr>
+<tr>
+<td>GPU acceleration</td>
+<td>Faster processing, same energy</td>
+</tr>
+</tbody>
+</table></figure>
+<h2 id="wrap-up">Wrap-up</h2>
+<p>HPC workload profiling on AWS can supercharge your cloud resources. Here's what you need to know:</p>
+<p>1. <strong>Pick the right tools</strong></p>
+<p>AWS has a toolbox for HPC:</p>
+<figure><table>
+<thead>
+<tr>
+<th>Service</th>
+<th>What it's for</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>EC2</td>
+<td>Heavy-duty computing</td>
+</tr>
+<tr>
+<td>EFA</td>
+<td>Fast networking</td>
+</tr>
+<tr>
+<td>ParallelCluster</td>
+<td>Easy cluster setup</td>
+</tr>
+<tr>
+<td>FSx for Lustre</td>
+<td>Speedy storage</td>
+</tr>
+</tbody>
+</table></figure>
+<p>2. <strong>Optimize your setup</strong></p>
+<ul>
+<li>Use Placement Groups for network boost</li>
+<li>Skip Hyper-Threading for float-heavy jobs</li>
+<li>Go big with c5n.18xlarge for CPU work</li>
+</ul>
+<p>3. <strong>Keep an eye on things</strong></p>
+<p>Watch your workloads and tweak as needed:</p>
+<ul>
+<li><a href="https://aws.amazon.com/cloudwatch/" target="_blank">CloudWatch</a> for metrics</li>
+<li>Switch instance types based on data</li>
+<li>Fix code bottlenecks you find</li>
+</ul>
+<p>4. <strong>Learn from the pros</strong></p>
+<p>Others have cracked the HPC code on AWS:</p>
+<blockquote>
+<p>"Researchers want a cloud 'maker-shop' with top-notch tools. We need to get them in quickly and safely." - Luc Betbeder-Matibet, UNSW Research Tech Services Director</p>
+</blockquote>
+<p>
+<h2>Related posts</h2>
+<ul>
+<li><a href="/blog/top-10-ebs-performance-bottlenecks-and-solutions/">Top 10 EBS Performance Bottlenecks &amp; Solutions</a></li><li><a href="/blog/aws-rds-blog-insights-performance-tuning/">AWS RDS Blog Insights: Performance Tuning</a></li><li><a href="/blog/aws-ec2-basics-core-concepts-explained/">AWS EC2 Basics: Core Concepts Explained</a></li><li><a href="/blog/aws-ec2-right-sizing-cost-performance-optimization/">AWS EC2 Right Sizing: Cost-Performance Optimization</a></li>
+</ul>
+</p>

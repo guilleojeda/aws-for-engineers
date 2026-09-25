@@ -1,0 +1,9 @@
+# Site behavior and ownership
+
+AWS for Engineers is a public, ad-supported blog. Every page is built into HTML ahead of time. Visitors need no application server, database, or login. The homepage lists recent posts and filters that list in the browser; the blog archive paginates all posts. Each article has a stable `/blog/<slug>/` URL, title, description, canonical URL, social image, publication date, and BlogPosting structured data. The site generates a sitemap and robots file. Unknown URLs must return HTTP 404.
+
+The repository owns the content and media. Existing articles were migrated from their public rendered pages into HTML files after the supplied Unicorn export proved to contain no post content. HTML preserves their code, tables, headings, links, and image alt text; trying to parse those bodies as Markdown altered code in 11 articles. New posts are Markdown files with front matter and publish automatically when pushed to `main`. Imported images are local; the delivered pages must not request Unicorn Platform or SEO Bot assets or runtime scripts.
+
+Production pages load the existing Google Analytics, AdSense, and TinyAds configurations. Local and preview pages omit those requests to avoid polluting analytics and ad-network traffic. The visible advertising inquiry, newsletter, course, contributor, and social links remain external. Ad fill depends on the ad networks and is verified on the public domain after cutover.
+
+The AWS site uses private S3 behind CloudFront origin access control. CloudFront maps clean URLs to generated `index.html` files, redirects extensionless paths to trailing slashes, and serves a real 404 page for unknown content. GitHub Actions assumes a narrowly scoped AWS role through OIDC and deploys every push to `main`. The same distribution initially has an AWS preview domain; adding the public domain and Route 53 DNS is a later cutover step. The registrar can remain at GoDaddy while Route 53 serves authoritative DNS.

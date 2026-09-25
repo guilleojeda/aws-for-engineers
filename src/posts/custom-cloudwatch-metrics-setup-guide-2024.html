@@ -1,0 +1,571 @@
+---
+layout: post.njk
+templateEngineOverride: html
+tags: posts
+title: "Custom CloudWatch Metrics: Setup Guide 2024"
+description: "Learn how to set up and use custom CloudWatch metrics in AWS. Track app-specific data, create alarms, and optimize costs with this comprehensive guide."
+date: "2024-07-08"
+datePublished: "2024-07-08T00:31:31.388000+00:00"
+heroImage: "/assets/media/9fce78ac07f0f01550d8.jpg"
+permalink: "/blog/custom-cloudwatch-metrics-setup-guide-2024/"
+sourceUrl: "https://awsforengineers.com/blog/custom-cloudwatch-metrics-setup-guide-2024/"
+---
+<p>Custom CloudWatch metrics let you track specific aspects of your <a href="https://aws.amazon.com/" target="_blank">AWS</a> resources and apps that standard metrics don't cover. Here's what you need to know:</p>
+<ul>
+<li><strong>Purpose</strong>: Monitor app-specific data, create graphs, and set alerts</li>
+<li><strong>Benefits</strong>: Deeper insights, better decision-making, proactive monitoring</li>
+<li><strong>Setup methods</strong>: CloudWatch agent, AWS SDKs, AWS CLI, API calls</li>
+<li><strong>Key features</strong>: High-resolution metrics, dimensions, metric math</li>
+<li><strong>Cost management</strong>: Free tier available, pricing based on usage</li>
+</ul>
+<figure><table>
+<thead>
+<tr>
+<th>Feature</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Creation</td>
+<td>Use AWS tools to send custom data points</td>
+</tr>
+<tr>
+<td>Alerting</td>
+<td>Set up alarms for specific thresholds</td>
+</tr>
+<tr>
+<td>Integration</td>
+<td>Works with <a href="/blog/aws-engineering-blog-autoscaling-for-high-availability/">EC2 Auto Scaling</a>, Lambda, Systems Manager</td>
+</tr>
+<tr>
+<td>Debugging</td>
+<td>Check logs, use CLI/SDKs for troubleshooting</td>
+</tr>
+</tbody>
+</table></figure>
+<p>This guide covers setup, advanced techniques, cost management, and problem-solving for custom CloudWatch metrics.</p>
+<h2 id="related-video-from-youtube">Related video from YouTube</h2>
+<iframe allowfullscreen="" frameborder="0" loading="lazy" src="https://www.youtube.com/embed/PeHRGzlL2mo"></iframe><h2 id="before-you-start">Before You Start</h2>
+<p>Here's what you need to do before using custom CloudWatch metrics:</p>
+<h3 id="setting-up-your-aws-account">Setting Up Your <a href="https://aws.amazon.com/" target="_blank">AWS</a> Account</h3>
+<p><figure><img alt="AWS" loading="lazy" src="/assets/media/2d135ce4df17cc4bb773.jpg"/></figure></p>
+<ol>
+<li>Create an <a href="/blog/">AWS account</a> if you don't have one</li>
+<li>Go to the AWS website to sign up</li>
+</ol>
+<h3 id="cloudwatch-basics">CloudWatch Basics</h3>
+<p>Learn the main parts of CloudWatch:</p>
+<figure><table>
+<thead>
+<tr>
+<th>Feature</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Metrics</td>
+<td>Numbers that track your AWS resources</td>
+</tr>
+<tr>
+<td>Logs</td>
+<td>Records of what's happening in your system</td>
+</tr>
+<tr>
+<td>Alarms</td>
+<td>Alerts when something needs attention</td>
+</tr>
+</tbody>
+</table></figure>
+<h3 id="required-permissions-and-iam-roles">Required Permissions and IAM Roles</h3>
+<p>Set up the right permissions:</p>
+<ol>
+<li>Create IAM roles and users</li>
+<li>Give them permission to:
+<ul>
+<li>Write metrics to CloudWatch</li>
+<li>Talk to <a href="https://aws.amazon.com/ec2/" target="_blank">Amazon EC2</a></li>
+<li>Use <a href="https://aws.amazon.com/systems-manager/" target="_blank">AWS Systems Manager</a></li>
+</ul>
+</li>
+</ol>
+<p>This lets you make and manage custom metrics safely.</p>
+<h2 id="what-are-custom-metrics%3F">What Are Custom Metrics?</h2>
+<p>Custom metrics in <a href="https://aws.amazon.com/cloudwatch/" target="_blank">Amazon CloudWatch</a> are data points you create and send to CloudWatch. They let you track specific parts of your apps that regular metrics don't cover. With custom metrics, you can measure things like how many new users join your app each day.</p>
+<h3 id="standard-vs.-custom-metrics">Standard vs. Custom Metrics</h3>
+<figure><table>
+<thead>
+<tr>
+<th>Metric Type</th>
+<th>Description</th>
+<th>Use Case</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Standard</td>
+<td>Pre-made by AWS</td>
+<td>General monitoring</td>
+</tr>
+<tr>
+<td>Custom</td>
+<td>Made by you</td>
+<td>Specific app needs</td>
+</tr>
+</tbody>
+</table></figure>
+<p>Standard metrics work for basic checks, but custom metrics let you dig deeper into your app's performance.</p>
+<h3 id="when-to-use-custom-metrics">When to Use Custom Metrics</h3>
+<p>Use custom metrics when:</p>
+<ul>
+<li>You need to track something specific to your business</li>
+<li>You want to collect data more often</li>
+<li>You need more detailed information than standard metrics provide</li>
+</ul>
+<h3 id="limits-and-key-points">Limits and Key Points</h3>
+<p>Keep these things in mind when using custom metrics:</p>
+<figure><table>
+<thead>
+<tr>
+<th>Aspect</th>
+<th>Limit/Note</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Max definitions per destination</td>
+<td>2000</td>
+</tr>
+<tr>
+<td>Dimension name + value</td>
+<td>Counts as one extended metric</td>
+</tr>
+<tr>
+<td>Cost</td>
+<td>Charged as CloudWatch custom metrics</td>
+</tr>
+</tbody>
+</table></figure>
+<p>Be careful about how many custom metrics you use, as they can affect your bill.</p>
+<h2 id="creating-custom-metrics">Creating Custom Metrics</h2>
+<p>This guide shows you how to set up custom metrics in CloudWatch to track specific parts of your app.</p>
+<h3 id="ways-to-set-up-custom-metrics">Ways to Set Up Custom Metrics</h3>
+<p>You can set up custom metrics using:</p>
+<ul>
+<li>CloudWatch agent</li>
+<li>AWS SDKs</li>
+<li>AWS CLI</li>
+<li>API calls</li>
+</ul>
+<p>Choose the method that fits your needs best.</p>
+<h3 id="cloudwatch-agent-setup">CloudWatch Agent Setup</h3>
+<p>To use the CloudWatch agent:</p>
+<ol>
+<li>Install it on your EC2 instance or server</li>
+<li>Set it up to collect your chosen metrics</li>
+<li>Send the metrics to CloudWatch</li>
+</ol>
+<h3 id="using-aws-sdks">Using AWS SDKs</h3>
+<p>AWS SDKs let you send custom metrics from your app code. Here's an example using Python:</p>
+<pre><code>import boto3
+
+cloudwatch = boto3.client('cloudwatch')
+cloudwatch.put_metric_data(
+    Namespace='MyApp/Metrics',
+    MetricData=[
+        {
+            'MetricName': 'MyCustomMetric',
+            'Dimensions': [
+                {
+                    'Name': 'InstanceId',
+                    'Value': 'i-1234567890abcdef'
+                }
+            ],
+            'Value': 100,
+            'Unit': 'Count'
+        }
+    ]
+)
+</code></pre>
+<h3 id="aws-cli-method">AWS CLI Method</h3>
+<p>You can also use the AWS CLI. Here's an example:</p>
+<pre><code>aws cloudwatch put-metric-data --metric-name MyCustomMetric --namespace MyApp/Metrics --value 100 --dimensions InstanceId=i-1234567890abcdef
+</code></pre>
+<h3 id="api-setup">API Setup</h3>
+<p>To use the CloudWatch API, send a POST request like this:</p>
+<pre><code>POST / HTTP/1.1
+Host: monitoring.amazonaws.com
+Content-Type: application/x-amz-json-1.1
+
+{
+    "Namespace": "MyApp/Metrics",
+    "MetricData": [
+        {
+            "MetricName": "MyCustomMetric",
+            "Dimensions": [
+                {
+                    "Name": "InstanceId",
+                    "Value": "i-1234567890abcdef"
+                }
+            ],
+            "Value": 100,
+            "Unit": "Count"
+        }
+    ]
+}
+</code></pre>
+<h2 id="advanced-custom-metric-methods">Advanced Custom Metric Methods</h2>
+<p>Learn about more complex ways to use custom metrics.</p>
+<h3 id="high-resolution-metrics-explained">High-Resolution Metrics Explained</h3>
+<p>High-resolution metrics in CloudWatch let you:</p>
+<ul>
+<li>Publish metrics every second</li>
+<li>Monitor in real-time</li>
+<li>Trigger alarms faster</li>
+</ul>
+<p>This is useful for apps that need quick feedback, like those using Auto Scaling or Lambda functions.</p>
+<p>To set up high-resolution metrics:</p>
+<ol>
+<li>Use the <code>StorageResolution</code> parameter when creating a metric</li>
+<li>Be aware of higher costs compared to standard metrics</li>
+</ol>
+<h3 id="working-with-dimensions">Working with Dimensions</h3>
+<p>Dimensions are key-value pairs that add context to your custom metrics. They help you:</p>
+<ul>
+<li>Filter metrics</li>
+<li>Group metrics</li>
+<li>Aggregate metrics</li>
+</ul>
+<figure><table>
+<thead>
+<tr>
+<th>Dimension Limits</th>
+<th>Details</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Max per metric</td>
+<td>30</td>
+</tr>
+<tr>
+<td>Character limit</td>
+<td>256</td>
+</tr>
+</tbody>
+</table></figure>
+<p>Tips for using dimensions:</p>
+<ul>
+<li>Use clear names</li>
+<li>Avoid duplicates</li>
+<li>Keep them the same across your app</li>
+</ul>
+<h3 id="using-metric-math">Using Metric Math</h3>
+<p>Metric Math lets you make new metrics from existing ones using math functions. You can:</p>
+<ul>
+<li>Do calculations (sum, average, percentage)</li>
+<li>Create new metrics (like error rates or response times)</li>
+</ul>
+<p>Example of Metric Math:</p>
+<pre><code>AVG(m1, m2, m3)
+</code></pre>
+<p>This calculates the average of metrics m1, m2, and m3.</p>
+<figure><table>
+<thead>
+<tr>
+<th>Metric Math Uses</th>
+<th>Examples</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Error rates</td>
+<td>(Errors / Total Requests) * 100</td>
+</tr>
+<tr>
+<td>Response times</td>
+<td>AVG(Instance1Time, Instance2Time)</td>
+</tr>
+<tr>
+<td>Resource usage</td>
+<td>SUM(CPU1, CPU2, CPU3)</td>
+</tr>
+</tbody>
+</table></figure>
+<p>Using Metric Math helps you understand your app's performance better without creating extra custom metrics.</p>
+<h2 id="setting-up-alerts">Setting Up Alerts</h2>
+<p>Alerts help you quickly respond to changes in your app's performance. Here's how to set them up for your custom CloudWatch metrics.</p>
+<h3 id="making-alarms-for-custom-metrics">Making Alarms for Custom Metrics</h3>
+<p>To create an alarm:</p>
+<ol>
+<li>Go to the CloudWatch console and click <strong>Alarms</strong>.</li>
+<li>Choose <strong>Create Alarm</strong> then <strong>Select metric</strong>.</li>
+<li>Find your custom metric in the search box.</li>
+<li>Set up the alarm:
+<ul>
+<li>Choose when it should go off (e.g., when a value is too high)</li>
+<li>Pick how often to check (e.g., every 5 minutes)</li>
+<li>Decide what should happen when the alarm goes off</li>
+</ul>
+</li>
+</ol>
+<h3 id="setting-up-notifications">Setting Up Notifications</h3>
+<p>To get alerts:</p>
+<ol>
+<li>Make a new <a href="https://aws.amazon.com/sns/" target="_blank">Amazon SNS</a> topic.</li>
+<li>In CloudWatch, go to your alarm.</li>
+<li>Add an action to send a message to your SNS topic.</li>
+</ol>
+<h3 id="connecting-with-other-aws-services">Connecting with Other AWS Services</h3>
+<p>You can use your custom metrics with other AWS tools. For example, you can make your app grow or shrink based on these metrics:</p>
+<ol>
+<li>Go to Amazon EC2 Auto Scaling.</li>
+<li>Make or change an Auto Scaling group.</li>
+<li>Add a new scaling rule.</li>
+<li>Pick your custom metric to control the scaling.</li>
+<li>Set up when to add or remove servers based on the metric.</li>
+</ol>
+<figure><table>
+<thead>
+<tr>
+<th>Service</th>
+<th>Use with Custom Metrics</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>EC2 Auto Scaling</td>
+<td>Grow or shrink your app</td>
+</tr>
+<tr>
+<td>Lambda</td>
+<td>Trigger functions</td>
+</tr>
+<tr>
+<td>Systems Manager</td>
+<td>Run tasks on your servers</td>
+</tr>
+</tbody>
+</table></figure>
+<h2 id="managing-costs">Managing Costs</h2>
+<p>Custom CloudWatch metrics can help you track your app's performance, but they can cost money. Here's how to use them wisely.</p>
+<h3 id="custom-metric-pricing">Custom Metric Pricing</h3>
+<p>CloudWatch charges for custom metrics based on:</p>
+<ul>
+<li>How many you create</li>
+<li>How often you update them</li>
+<li>How many times you ask for data</li>
+</ul>
+<figure><table>
+<thead>
+<tr>
+<th>Metric Count</th>
+<th>Price per Month</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>First 10,000</td>
+<td>Free</td>
+</tr>
+<tr>
+<td>Up to 100,000</td>
+<td>$0.30 per metric</td>
+</tr>
+<tr>
+<td>Over 100,000</td>
+<td>Price goes down</td>
+</tr>
+</tbody>
+</table></figure>
+<h3 id="ways-to-save-money">Ways to Save Money</h3>
+<p>To keep costs down:</p>
+<ul>
+<li>Use the free 10,000 metrics each month</li>
+<li>Keep track of how many metrics you're using</li>
+<li>Update metrics less often if you can</li>
+<li>Combine similar metrics</li>
+</ul>
+<h3 id="checking-and-fixing-metric-usage">Checking and Fixing Metric Usage</h3>
+<p>To make sure you're not spending too much:</p>
+<ul>
+<li>Use CloudWatch to watch your metric use</li>
+<li>Set up alerts for when you use too many metrics</li>
+<li>Look at your logs to see where you can cut back</li>
+</ul>
+<figure><table>
+<thead>
+<tr>
+<th>Method</th>
+<th>How It Helps</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Use CloudWatch</td>
+<td>See how many metrics you're using</td>
+</tr>
+<tr>
+<td>Set up alerts</td>
+<td>Get warned if you use too many</td>
+</tr>
+<tr>
+<td>Check your logs</td>
+<td>Find ways to use fewer metrics</td>
+</tr>
+</tbody>
+</table></figure>
+<h2 id="fixing-common-problems">Fixing Common Problems</h2>
+<p>When using custom metrics in Amazon CloudWatch, you might run into some issues. Here's how to spot and fix them, along with where to get help.</p>
+<h3 id="typical-custom-metric-issues">Typical Custom Metric Issues</h3>
+<figure><table>
+<thead>
+<tr>
+<th>Issue</th>
+<th>Cause</th>
+<th>Solution</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Metric not showing up</td>
+<td>Takes up to 15 minutes to appear</td>
+<td>Wait and check again</td>
+</tr>
+<tr>
+<td>Metric missing from search</td>
+<td>No new data in 2 weeks</td>
+<td>Add new data points</td>
+</tr>
+<tr>
+<td>Delayed metrics</td>
+<td>Recent creation or update</td>
+<td>Give it time, test with sample data</td>
+</tr>
+</tbody>
+</table></figure>
+<h3 id="how-to-debug">How to Debug</h3>
+<p>To find and fix problems:</p>
+<ol>
+<li>Check CloudWatch logs for errors</li>
+<li>Use AWS CLI or SDKs to get metric data</li>
+<li>Test your Lambda function with a sample event</li>
+</ol>
+<h3 id="where-to-get-aws-help">Where to Get AWS Help</h3>
+<p>If you're stuck, try these AWS resources:</p>
+<figure><table>
+<thead>
+<tr>
+<th>Resource</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>CloudWatch docs</td>
+<td>Full guide to features and fixes</td>
+</tr>
+<tr>
+<td>AWS Support</td>
+<td>Create a ticket for expert help</td>
+</tr>
+<tr>
+<td>AWS Forums</td>
+<td>Ask questions, get community answers</td>
+</tr>
+<tr>
+<td>SDK and CLI docs</td>
+<td>Guides for using AWS tools</td>
+</tr>
+</tbody>
+</table></figure>
+<h2 id="wrap-up">Wrap-Up</h2>
+<p>This guide has covered the key aspects of custom CloudWatch metrics, including:</p>
+<ul>
+<li>Setting up your AWS account</li>
+<li>Creating and managing custom metrics</li>
+<li>Setting up alarms and notifications</li>
+<li>Using advanced methods like high-resolution metrics and metric math</li>
+<li>Reducing costs</li>
+<li>Fixing common problems</li>
+</ul>
+<p>Now you have the knowledge to use custom CloudWatch metrics in your AWS setup. Here are some tips to help you use them well:</p>
+<figure><table>
+<thead>
+<tr>
+<th>Tip</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Use metrics wisely</td>
+<td>Only create metrics you really need</td>
+</tr>
+<tr>
+<td>Watch your costs</td>
+<td>Keep track of how many metrics you use</td>
+</tr>
+<tr>
+<td>Set up alerts</td>
+<td>Get notified when issues come up</td>
+</tr>
+<tr>
+<td>Review regularly</td>
+<td>Make sure your metrics still fit your needs</td>
+</tr>
+</tbody>
+</table></figure>
+<p>Remember to:</p>
+<ul>
+<li>Only use custom metrics when standard ones don't work</li>
+<li>Look for ways to save money on metrics</li>
+<li>Set up alarms to catch problems quickly</li>
+<li>Check and update your metrics as your needs change</li>
+</ul>
+<h2 id="faqs">FAQs</h2>
+<h3 id="can-i-add-my-own-metrics-to-cloudwatch%3F">Can I add my own metrics to CloudWatch?</h3>
+<p>Yes, you can add your own metrics to CloudWatch. While AWS services automatically send data to CloudWatch, you might need to track metrics that AWS doesn't cover. You can send custom metrics to CloudWatch using:</p>
+<ul>
+<li>The CloudWatch agent</li>
+<li>AWS API</li>
+</ul>
+<h3 id="how-do-i-create-a-custom-metric-in-cloudwatch%3F">How do I create a custom metric in CloudWatch?</h3>
+<p>To create a custom metric using the AWS Command Line Interface:</p>
+<ol>
+<li>Open your command line tool</li>
+<li>Use the <code>cloudwatch</code> command</li>
+<li>Add the <code>put-metric-data</code> option</li>
+</ol>
+<h3 id="what-are-custom-metrics-in-cloudwatch%3F">What are custom metrics in CloudWatch?</h3>
+<p>Custom metrics in CloudWatch let you track specific parts of your app that regular metrics don't cover. They help you:</p>
+<figure><table>
+<thead>
+<tr>
+<th>Regular CloudWatch Metrics</th>
+<th>Custom Metrics</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Monitor EC2 basics (CPU, disk, network)</td>
+<td>Track app-specific data</td>
+</tr>
+<tr>
+<td>Automatically sent by AWS</td>
+<td>You choose what to send</td>
+</tr>
+<tr>
+<td>Limited to AWS resource data</td>
+<td>Can include any data you want</td>
+</tr>
+</tbody>
+</table></figure>
+<p>Custom metrics fill the gaps left by standard AWS monitoring, giving you a complete view of your app's performance.</p>
+<p>
+<h2>Related posts</h2>
+<ul>
+<li><a href="/blog/aws-performance-insights-monitoring-rds-databases/">AWS Performance Insights: Monitoring RDS Databases</a></li><li><a href="/blog/10-aws-cost-optimization-strategies-2024/">10 AWS Cost Optimization Strategies 2024</a></li><li><a href="/blog/aws-devops-monitoring-metrics-tools-best-practices/">AWS DevOps Monitoring: Metrics, Tools, Best Practices</a></li><li><a href="/blog/aws-config-resource-inventory-change-tracking-guide/">AWS Config: Resource Inventory, Change Tracking Guide</a></li>
+</ul>
+</p>

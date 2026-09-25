@@ -1,0 +1,233 @@
+---
+layout: post.njk
+templateEngineOverride: html
+tags: posts
+title: "AWS Lambda Getting Started: First Steps"
+description: "Learn how to get started with AWS Lambda, from creating a basic function to customizing and testing it. Get insights on AWS IAM, CloudWatch logs, and cleaning up resources."
+date: "2024-03-01"
+datePublished: "2024-03-01T16:16:48.062000+00:00"
+heroImage: "/assets/media/8e2fa9c2f72a55e86007.jpg"
+permalink: "/blog/aws-lambda-getting-started-first-steps/"
+sourceUrl: "https://awsforengineers.com/blog/aws-lambda-getting-started-first-steps/"
+---
+<p>Getting started with AWS Lambda is a straightforward process ideal for beginners looking to run code without managing servers. This guide covers the essentials:</p>
+<ul>
+<li><strong>Creating an AWS account</strong> and understanding <strong>AWS IAM basics</strong> for proper permissions.</li>
+<li>Making a simple <strong>'Hello World' <a href="https://aws.amazon.com/lambda/" target="_blank">Lambda</a> function</strong> using the AWS Management Console.</li>
+<li>Customizing your function to calculate the area of a rectangle.</li>
+<li><strong>Testing your Lambda function</strong> with sample data to ensure it works as expected.</li>
+<li>Viewing <strong>test results and logs</strong> in CloudWatch for performance insights.</li>
+<li><strong>Cleaning up resources</strong> post-experimentation to avoid unnecessary charges.</li>
+</ul>
+<p>By the end of this guide, you'll have gained the knowledge to create, customize, test, and manage basic AWS Lambda functions, setting a solid foundation for more complex projects.</p>
+<h3 id="sign-up-for-an-aws-account">Sign up for an AWS account</h3>
+<p>If you don't have an AWS account yet, you'll need to create one. Just go to <a href="https://portal.aws.amazon.com/billing/signup" target="_blank">sign up</a>. New accounts can use some AWS services for free, up to certain limits.</p>
+<h3 id="learn-the-basics-of-aws-iam">Learn the basics of AWS IAM</h3>
+<p>AWS IAM is a tool that lets you control who can do what with your AWS resources. For making Lambda functions, your user account needs the right permissions. You can read up on IAM basics in the <a href="https://docs.aws.amazon.com/IAM/latest/UserGuide/introduction.html" target="_blank">IAM documentation</a>.</p>
+<h3 id="get-administrative-console-access">Get administrative console access</h3>
+<p>To follow this guide, you'll need the ability to create Lambda functions and roles in the <a href="https://console.aws.amazon.com/" target="_blank">AWS Management Console</a>. An admin can give you these permissions through IAM policies.</p>
+<h2 id="create-a-basic-lambda-function">Create a basic Lambda function</h2>
+<p>Let's walk through making a simple "Hello World" Lambda function step by step. This is a basic example to help you get started with AWS Lambda.</p>
+<h3 id="1.-go-to-the-lambda-service">1. Go to the Lambda service</h3>
+<ul>
+<li>First, in the AWS Management Console, find and click on <strong>Lambda</strong>. This takes you to the Lambda section.</li>
+</ul>
+<h3 id="2.-click-%22create-function%22">2. Click "Create function"</h3>
+<ul>
+<li>Once you're on the Lambda <strong>Functions</strong> page, look for a button that says <strong>Create function</strong> and click it. This is how you begin making a new function.</li>
+</ul>
+<h3 id="3.-configure-function-settings">3. Configure function settings</h3>
+<ul>
+<li>You'll see a spot to type in a <strong>Function name</strong>. Put something simple like <code>my-hello-function</code> there.</li>
+<li>For <strong>Runtime</strong>, pick <strong>Node.js 16.x</strong>.</li>
+<li>Choose <strong>x86_64</strong> for the <strong>Architecture</strong>.</li>
+<li>Then, hit <strong>Create function</strong>.</li>
+</ul>
+<h3 id="4.-review-default-code">4. Review default code</h3>
+<ul>
+<li>Lambda starts you off with some basic code that says "Hello from Lambda!".</li>
+<li>There's a <strong>Handler</strong> field that tells you which file and function Lambda will call, like <code>index.handler</code>.</li>
+</ul>
+<h3 id="5.-replace-code">5. Replace code</h3>
+<ul>
+<li>Erase the code that's there and put in this instead:</li>
+</ul>
+<pre><code>exports.handler = async () =&gt; {
+  return "Hello World!"  
+};
+</code></pre>
+<ul>
+<li>This new code will say "Hello World!" when it runs.</li>
+</ul>
+<h3 id="6.-deploy-the-code">6. Deploy the code</h3>
+<ul>
+<li>Click <strong>Deploy</strong> to send your code to Lambda. Now it's ready to run.</li>
+</ul>
+<p>And that's it! You've just made a simple Lambda function. You can now test it out and add more to it if you want.</p>
+<h2 id="customize-the-function-code">Customize the function code</h2>
+<p>Now that you've got your basic "Hello World" Lambda function up and running, let's make it do something a bit more useful. We're going to change the function so it can figure out the area of a rectangle using the length and width you give it.</p>
+<h3 id="define-the-handler-method">Define the handler method</h3>
+<p>First, let's swap out the current handler code for this new one:</p>
+<pre><code>exports.handler = async (event) =&gt; {
+
+  // Get length and width from what you input
+  const length = event.length;
+  const width = event.width;
+  
+  // Use length and width to find the area
+  const area = length * width;
+
+  // Give back the area value
+  return {
+    area: area
+  };
+
+};
+</code></pre>
+<p>Here's what this new code does:</p>
+<ul>
+<li>It looks for <code>length</code> and <code>width</code> in the input (<code>event</code>) you give it</li>
+<li>It multiplies <code>length</code> and <code>width</code> to find the <code>area</code></li>
+<li>It sends back the area as a result</li>
+</ul>
+<h3 id="handle-input-parameters">Handle input parameters</h3>
+<p>When you run this function, Lambda sends it an event, which is just a fancy way of saying a bunch of information. This code grabs the <code>length</code> and <code>width</code> info from that event.</p>
+<p>For instance, if the event looks like this:</p>
+<pre><code>{
+  "length": 5,
+  "width": 2 
+}
+</code></pre>
+<p>Then, inside the handler, <code>length</code> will be 5 and <code>width</code> will be 2.</p>
+<p>The code uses a cool shortcut from ES6 (a version of JavaScript) to grab these values easily.</p>
+<h3 id="return-area-result">Return area result</h3>
+<p>To send something back from a Lambda handler, you just use <code>return</code> with what you want to send. Here, we're sending back a simple object that says how much area we've calculated.</p>
+<p>Testing the function will show you how Lambda uses what you return to display your function's result.</p>
+<p>And that's pretty much it for making a Lambda function do something more specific! This is a basic way to start making functions that do all sorts of useful things with the info they get.</p>
+<h2 id="test-the-lambda-function">Test the Lambda function</h2>
+<p>To see if your Lambda function works, you'll need to set up a simple test. This involves giving it some example data to work with. It's like a practice run to make sure everything goes smoothly.</p>
+<h3 id="create-test-event">Create test event</h3>
+<p>Here's a sample set of data you can use to test your function. It has measurements for <code>length</code> and <code>width</code>:</p>
+<pre><code>{
+  "length": 6,
+  "width": 7
+}
+</code></pre>
+<p>Feel free to change these numbers to try out different sizes.</p>
+<h3 id="test-function">Test function</h3>
+<p>To run the test:</p>
+<ul>
+<li>Head over to the AWS Lambda section in the AWS Management Console.</li>
+<li>Find your function and click <strong>Test</strong>. Pick the test event you just set up.</li>
+<li>Click <strong>Test</strong> one more time.</li>
+</ul>
+<p>This tells your function to run using the test data. Shortly after, you'll see the result.</p>
+<p>If you used the sample data above, your function should tell you the area is:</p>
+<pre><code>{
+  "area": 42 
+}
+</code></pre>
+<h3 id="check-logs">Check logs</h3>
+<p>To look at the details of your test:</p>
+<ul>
+<li>Visit the <a href="https://console.aws.amazon.com/cloudwatch/home#logs:" target="_blank">CloudWatch Logs console</a>.</li>
+<li>Click on the log group that matches your Lambda function's name (like <code>/aws/lambda/myLambdaFunction</code>).</li>
+<li>Open the most recent log to see detailed info about your test run.</li>
+</ul>
+<p>These logs are handy for understanding more about how your function behaves and troubleshooting if needed.</p>
+<h2 id="clean-up-resources">Clean up resources</h2>
+<p>After you're done playing around with your example Lambda function, it's a good idea to delete everything you set up. This way, you won't keep getting charged for stuff you're not using. Here's how to get rid of the function, its logs, and the role that let it do its thing:</p>
+<h3 id="delete-the-lambda-function">Delete the Lambda function</h3>
+<ul>
+<li>Head to the <a href="https://console.aws.amazon.com/lambda/home#/functions" target="_blank">Functions page</a> on the Lambda console.</li>
+<li>Click on the function you made.</li>
+<li>Hit <strong>Actions</strong>, and then <strong>Delete</strong>.</li>
+<li>A box will pop up asking if you're sure. Type <code>delete</code> and click <strong>Delete</strong>.</li>
+</ul>
+<h3 id="delete-the-log-group">Delete the log group</h3>
+<ul>
+<li>Jump over to the <a href="https://console.aws.amazon.com/cloudwatch/home#logs:" target="_blank">Log groups page</a> in the CloudWatch console.</li>
+<li>Find the log group for your function (it'll look something like <code>/aws/lambda/my-function</code>).</li>
+<li>Click <strong>Actions</strong>, then <strong>Delete log group(s)</strong>.</li>
+<li>Say yes to the delete confirmation.</li>
+</ul>
+<h3 id="delete-the-execution-role">Delete the execution role</h3>
+<ul>
+<li>Go to the <a href="https://console.aws.amazon.com/iam/home?#/roles" target="_blank">Roles page</a> in the IAM console.</li>
+<li>Find the role you made for your function.</li>
+<li>Press <strong>Delete</strong>.</li>
+<li>You'll need to type in the role name to confirm you really want to get rid of it.</li>
+</ul>
+<p>If you're just trying things out, deleting these by hand is totally fine. But remember, if you start using Lambda a lot, you might want to learn how to clean up automatically with tools like AWS CloudFormation or the AWS CLI. Either way, make sure to delete what you don't need to keep your AWS bill in check.</p>
+<h2 id="conclusion">Conclusion</h2>
+<p>Great job on setting up your first AWS Lambda function! This guide aimed to make it easy for beginners to get started with AWS Lambda, and by now, you should know how to:</p>
+<ul>
+<li>Make a simple Lambda function using the AWS console</li>
+<li>Change the function's code to do what you need</li>
+<li>Use test data to check if your function works</li>
+<li>Look at the results and logs to see how your function performed</li>
+</ul>
+<p>Now that you've got the basics down, you're ready to tackle more complicated projects with Lambda. Here are a few ideas for what to do next:</p>
+<ul>
+<li>Figure out how to include extra code or libraries with your Lambda function</li>
+<li>Set up your functions to run automatically at certain times with CloudWatch Events</li>
+<li>Try building a website without servers using Lambda and other AWS tools</li>
+<li>Dive into more detailed Lambda guides and tutorials to learn even more</li>
+</ul>
+<p>Remember to clean up any Lambda functions and resources you're not using to keep your AWS costs down. If you ever get stuck or need ideas, the AWS documentation and community are great resources. And most importantly, enjoy creating and experimenting with your new serverless skills!</p>
+<h2 id="related-questions">Related Questions</h2>
+<h3 id="how-do-you-start-a-lambda%3F">How do you start a <a href="https://aws.amazon.com/lambda/" target="_blank">Lambda</a>?</h3>
+<p><figure><img alt="Lambda" loading="lazy" src="/assets/media/5c80186f74defaa9acf3.jpg"/></figure></p>
+<p>To get going with AWS Lambda, here's a simple guide:</p>
+<ul>
+<li>Sign into your AWS account and head over to the Lambda section.</li>
+<li>Look for and click on "Create function".</li>
+<li>Name your function and pick the type of code it will run (like Node.js or <a href="https://www.python.org/" target="_blank">Python</a>).</li>
+<li>You can either write your code right there or upload a file with your code.</li>
+<li>Set up a test to see if it works and decide what will make your function run.</li>
+<li>Hit "Save" to make your function live.</li>
+</ul>
+<p>Basically, you create a Lambda function by setting it up in the AWS console, adding your code, and letting AWS take care of running it when needed.</p>
+<h3 id="how-do-i-launch-aws-lambda%3F">How do I launch AWS Lambda?</h3>
+<p>You can start an AWS Lambda function in several ways:</p>
+<ul>
+<li>Directly through the AWS Lambda console</li>
+<li>By sending a request to the function's web address</li>
+<li>Using the AWS command-line tool</li>
+<li>From within an app using AWS's software for developers</li>
+<li>By setting up other AWS services to make the function run automatically</li>
+</ul>
+<p>For instance, an app on your phone could use AWS's tools for developers to run a function, or you could have a function start whenever you add files to a storage service on AWS.</p>
+<h3 id="how-do-i-write-my-first-aws-lambda-function%3F">How do I write my first AWS Lambda function?</h3>
+<p>Here's how to make a simple Lambda function that says "Hello World":</p>
+<ul>
+<li>Go to the Lambda part of the AWS console and click <strong>Create function</strong>.</li>
+<li>Choose <strong>Author from scratch</strong>.</li>
+<li>Name your function something like <code>myFirstFunction</code>.</li>
+<li>Pick a programming language version, like <strong>Node.js 14.x</strong>.</li>
+<li>Use this code:</li>
+</ul>
+<pre><code>exports.handler = async () =&gt; {
+  return "Hello World!";
+};
+</code></pre>
+<ul>
+<li>Click <strong>Save</strong>.</li>
+</ul>
+<p>Now you have a Lambda function that will say "Hello World!" when you run it. You can test it and then add more to it as you learn.</p>
+<h3 id="how-do-you-start-a-step-function-from-lambda%3F">How do you start a step function from Lambda?</h3>
+<p>To make a Lambda function start a workflow with AWS Step Functions:</p>
+<ol>
+<li>Make sure the Lambda function has the right setup to call the workflow.</li>
+<li>The function needs permission to start workflows, so set that up.</li>
+<li>In your function's code, use the command to start a workflow.</li>
+<li>You can send data to the workflow if it needs it.</li>
+<li>Your function will get a response back when it starts the workflow, but it doesn't have to wait around for the workflow to finish.</li>
+</ol>
+<p>This way, you can kick off a complex set of tasks with just a Lambda function.</p>
+<p>
+<h2>Related posts</h2>
+<ul>
+<li><a href="/blog/aws-tutorial-for-beginners-step-by-step-core-concepts/">AWS Tutorial for Beginners Step by Step: Core Concepts</a></li><li><a href="/blog/understanding-aws-a-beginners-guide/">Understanding AWS: A Beginner's Guide</a></li><li><a href="/blog/aws-ec2-and-s3-for-beginners/">AWS EC2 and S3 for Beginners</a></li><li><a href="/blog/aws-lambda-getting-started-deploy-your-first-function/">AWS Lambda Getting Started: Deploy Your First Function</a></li>
+</ul>
+</p>

@@ -1,0 +1,927 @@
+---
+layout: post.njk
+templateEngineOverride: html
+tags: posts
+title: "Node.js Unit Testing for AWS Lambda Functions"
+description: "Learn how to effectively unit test Node.js AWS Lambda functions. Covering key testing steps, frameworks, mocking libraries, best practices, and more."
+date: "2024-07-30"
+datePublished: "2024-07-30T18:49:14.724000+00:00"
+heroImage: "/assets/media/0229bda590c15612ae15.jpg"
+permalink: "/blog/nodejs-unit-testing-for-aws-lambda-functions/"
+sourceUrl: "https://awsforengineers.com/blog/nodejs-unit-testing-for-aws-lambda-functions/"
+---
+<p>This article covers how to effectively unit test <a href="https://nodejs.org/en" target="_blank">Node.js</a> <a href="https://aws.amazon.com/lambda/" target="_blank">AWS Lambda</a> functions:</p>
+<ul>
+<li>
+<p><strong>Why test Lambda functions:</strong> • Ensure code works correctly • Catch errors early • Improve reliability</p>
+</li>
+<li>
+<p><strong>Key testing steps:</strong></p>
+<ol>
+<li>Set up testing environment</li>
+<li>Make functions testable</li>
+<li>Write unit tests</li>
+<li>Mock AWS services</li>
+<li>Test different function types</li>
+<li>Follow best practices</li>
+<li>Integrate with CI/CD</li>
+<li>Debug and fix issues</li>
+<li>Optimize performance</li>
+</ol>
+</li>
+<li>
+<p><strong>Testing frameworks:</strong> • <a href="https://jestjs.io/" target="_blank">Jest</a> • <a href="https://mochajs.org/" target="_blank">Mocha</a></p>
+</li>
+<li>
+<p><strong>Mocking libraries:</strong> • <a href="https://www.npmjs.com/package/aws-sdk-mock" target="_blank">aws-sdk-mock</a></p>
+</li>
+<li>
+<p><strong>Best practices:</strong> • Separate business logic • Use dependency injection • Create AWS service mocks • Measure test coverage • Organize test files</p>
+</li>
+</ul>
+<figure><table>
+<thead>
+<tr>
+<th>Testing Area</th>
+<th>Key Points</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>HTTP handlers</td>
+<td>Test methods, payloads, responses</td>
+</tr>
+<tr>
+<td>Event-driven</td>
+<td>Test event processing, error handling</td>
+</tr>
+<tr>
+<td>Scheduled</td>
+<td>Test timing, multiple runs</td>
+</tr>
+<tr>
+<td>Performance</td>
+<td>Check metrics, load testing</td>
+</tr>
+</tbody>
+</table></figure>
+<p>By following these testing approaches, you can build more reliable and maintainable Lambda functions.</p>
+<h2 id="related-video-from-youtube">Related video from YouTube</h2>
+<iframe allowfullscreen="" frameborder="0" loading="lazy" src="https://www.youtube.com/embed/mTRWh6kRdYc"></iframe><h2 id="setting-up-your-testing-environment">Setting up your testing environment</h2>
+<p>To test your <a href="/blog/aws-lambda-getting-started-first-steps/">AWS Lambda functions</a>, you need to set up your testing environment. This section will show you how to do this step-by-step.</p>
+<h3 id="picking-a-testing-framework">Picking a testing framework</h3>
+<p>For Node.js AWS Lambda functions, you can use Jest or Mocha as your testing framework. Here's a quick look at both:</p>
+<figure><table>
+<thead>
+<tr>
+<th>Framework</th>
+<th>What it is</th>
+<th>Why use it</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Jest</td>
+<td>A testing tool made by Facebook</td>
+<td>Easy to set up, works fast, has many built-in features</td>
+</tr>
+<tr>
+<td>Mocha</td>
+<td>A popular testing tool for Node.js</td>
+<td>Can be customized, works with both sync and async tests</td>
+</tr>
+</tbody>
+</table></figure>
+<p>When choosing between Jest and Mocha, think about:</p>
+<ul>
+<li>What your project needs</li>
+<li>How big and complex your code is</li>
+<li>How much you want to customize your tests</li>
+<li>How easy it is to set up and use with your current tools</li>
+</ul>
+<p>Pick the one that works best for you and your project.</p>
+<h3 id="installing-required-tools">Installing required tools</h3>
+<p>To set up your testing environment, you'll need to install:</p>
+<ul>
+<li>A testing framework (Jest or Mocha)</li>
+<li>A test runner (like <code>jest</code> or <code>mocha</code>)</li>
+<li>A mocking library (like <code>aws-sdk-mock</code>)</li>
+</ul>
+<p>You can install these using npm or yarn:</p>
+<pre><code>npm install --save-dev jest aws-sdk-mock
+</code></pre>
+<p>or</p>
+<pre><code>yarn add jest aws-sdk-mock --dev
+</code></pre>
+<p>Check the docs for each tool to make sure you're using the right versions.</p>
+<h3 id="setting-up-the-test-runner">Setting up the test runner</h3>
+<p>After installing the tools, you need to set up the test runner. This helps you run your tests easily.</p>
+<p>For Jest, create a <code>jest.config.js</code> file with this setup:</p>
+<pre><code>module.exports = {
+  preset: 'ts-jest',
+  testEnvironment: 'node',
+  roots: ['&lt;rootDir&gt;/src'],
+  testMatch: ['**/*.test.ts'],
+};
+</code></pre>
+<p>For Mocha, create a <code>mocha.opts</code> file with this setup:</p>
+<pre><code>--require @babel/register
+--require ts-node/register
+--ui bdd
+--colors
+--reporter spec
+--timeout 10000
+</code></pre>
+<p>Change these settings to fit your project's needs and structure.</p>
+<h2 id="making-lambda-functions-testable">Making Lambda functions testable</h2>
+<p>To test AWS Lambda functions well, you need to write them with testing in mind. This section shows you how to do this by:</p>
+<ol>
+<li>Splitting up your code</li>
+<li>Using dependency injection</li>
+<li>Creating fake AWS SDK calls</li>
+</ol>
+<h3 id="splitting-up-your-code">Splitting up your code</h3>
+<p>It's best to keep your business logic separate from the Lambda handler. This makes your code easier to test and maintain.</p>
+<p>Here's an example:</p>
+<pre><code>// lambdaHandler.js
+import { calculateTotal } from './businessLogic';
+
+export const handler = async (event) =&gt; {
+  const total = await calculateTotal(event.items);
+  return { statusCode: 200, body: JSON.stringify({ total }) };
+};
+</code></pre>
+<pre><code>// businessLogic.js
+export const calculateTotal = async (items) =&gt; {
+  return items.reduce((acc, item) =&gt; acc + item.price, 0);
+};
+</code></pre>
+<p>In this example, <code>lambdaHandler.js</code> handles the Lambda event, while <code>businessLogic.js</code> does the actual work.</p>
+<h3 id="using-dependency-injection">Using dependency injection</h3>
+<p>Dependency injection means passing in the things your function needs, instead of hard-coding them. This makes your code more flexible and easier to test.</p>
+<p>Here's how it works:</p>
+<pre><code>// lambdaHandler.js
+import { calculateTotal } from './businessLogic';
+
+export const handler = async (event, dependencies) =&gt; {
+  const total = await calculateTotal(event.items, dependencies);
+  return { statusCode: 200, body: JSON.stringify({ total }) };
+};
+</code></pre>
+<pre><code>// businessLogic.js
+export const calculateTotal = async (items, dependencies) =&gt; {
+  const taxRate = dependencies.taxRate;
+  const total = items.reduce((acc, item) =&gt; acc + item.price * (1 + taxRate), 0);
+  return total;
+};
+</code></pre>
+<p>In this example, we pass <code>dependencies</code> to the <code>calculateTotal</code> function.</p>
+<h3 id="creating-aws-sdk-mocks">Creating AWS SDK mocks</h3>
+<p>When testing Lambda functions, you don't want to use real AWS services. Instead, you can create fake (mock) versions of AWS SDK calls. This makes your tests faster and safer.</p>
+<p>Here's an example using the <code>aws-sdk-mock</code> library:</p>
+<pre><code>// test/businessLogic.test.js
+import { calculateTotal } from '../businessLogic';
+import AWS from 'aws-sdk';
+import { mock } from 'aws-sdk-mock';
+
+beforeEach(() =&gt; {
+  mock('DynamoDB', 'getItem', (params, callback) =&gt; {
+    callback(null, { Item: { taxRate: 0.08 } });
+  });
+});
+
+afterEach(() =&gt; {
+  mock.restore('DynamoDB');
+});
+
+test('calculateTotal', async () =&gt; {
+  const items = [{ price: 10 }, { price: 20 }];
+  const total = await calculateTotal(items, { taxRate: 0.08 });
+  expect(total).toBe(30.8);
+});
+</code></pre>
+<p>This example creates a fake <code>DynamoDB.getItem</code> method that always returns a tax rate of 0.08. The test then uses this fake method to check if <code>calculateTotal</code> works correctly.</p>
+<h2 id="writing-unit-tests-for-lambda-functions">Writing unit tests for Lambda functions</h2>
+<h3 id="basic-test-structure">Basic test structure</h3>
+<p>A unit test for a Lambda function usually has three parts:</p>
+<ol>
+<li>Setup: Prepare the test environment</li>
+<li>Execution: Run the Lambda function</li>
+<li>Assertion: Check if the output is correct</li>
+</ol>
+<p>Here's a simple example using Jest:</p>
+<pre><code>// tests/lambdaHandler.test.js
+import { handler } from '../lambdaHandler';
+
+describe('lambdaHandler', () =&gt; {
+  it('should return a successful response', async () =&gt; {
+    // Setup
+    const event = { /* test event data */ };
+    const context = { /* test context data */ };
+
+    // Execution
+    const response = await handler(event, context);
+
+    // Assertion
+    expect(response.statusCode).toBe(200);
+    expect(response.body).toEqual({ /* expected response body */ });
+  });
+});
+</code></pre>
+<h3 id="testing-synchronous-functions">Testing synchronous functions</h3>
+<p>For synchronous functions, you can simply call the function and check the output. Here's an example:</p>
+<pre><code>// tests/businessLogic.test.js
+import { calculateTotal } from '../businessLogic';
+
+describe('calculateTotal', () =&gt; {
+  it('should return the correct total', () =&gt; {
+    const items = [{ price: 10 }, { price: 20 }];
+    const total = calculateTotal(items);
+    expect(total).toBe(30);
+  });
+});
+</code></pre>
+<h3 id="testing-asynchronous-functions">Testing asynchronous functions</h3>
+<p>For asynchronous functions, use a testing library that supports async testing, like Jest or Mocha. Here's an example with Jest:</p>
+<pre><code>// tests/asyncBusinessLogic.test.js
+import { asyncCalculateTotal } from '../asyncBusinessLogic';
+
+describe('asyncCalculateTotal', () =&gt; {
+  it('should return the correct total', async () =&gt; {
+    const items = [{ price: 10 }, { price: 20 }];
+    const total = await asyncCalculateTotal(items);
+    expect(total).toBe(30);
+  });
+});
+</code></pre>
+<h3 id="working-with-callbacks-and-promises">Working with callbacks and promises</h3>
+<p>When testing functions that use callbacks or promises, you need to handle the asynchronous nature of these operations.</p>
+<p>Here's how to test a callback-based function:</p>
+<pre><code>// tests/callbackBusinessLogic.test.js
+import { callbackCalculateTotal } from '../callbackBusinessLogic';
+
+describe('callbackCalculateTotal', () =&gt; {
+  it('should return the correct total', (done) =&gt; {
+    const items = [{ price: 10 }, { price: 20 }];
+    callbackCalculateTotal(items, (err, total) =&gt; {
+      expect(err).toBeNull();
+      expect(total).toBe(30);
+      done();
+    });
+  });
+});
+</code></pre>
+<p>And here's how to test a promise-based function:</p>
+<pre><code>// tests/promiseBusinessLogic.test.js
+import { promiseCalculateTotal } from '../promiseBusinessLogic';
+
+describe('promiseCalculateTotal', () =&gt; {
+  it('should return the correct total', async () =&gt; {
+    const items = [{ price: 10 }, { price: 20 }];
+    const total = await promiseCalculateTotal(items);
+    expect(total).toBe(30);
+  });
+});
+</code></pre>
+<p>In the promise example, we use <code>await</code> to wait for the promise to finish before checking the result.</p>
+<h2 id="mocking-aws-services">Mocking AWS services</h2>
+<p>When testing Lambda functions, it's important to create fake versions of AWS services. This helps make your tests faster and more reliable.</p>
+<h3 id="why-use-fake-aws-services%3F">Why use fake AWS services?</h3>
+<p>Using <a href="/blog/">fake AWS services</a> in your tests has several benefits:</p>
+<figure><table>
+<thead>
+<tr>
+<th>Benefit</th>
+<th>Explanation</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Faster tests</td>
+<td>No need to wait for real AWS services to respond</td>
+</tr>
+<tr>
+<td>More reliable</td>
+<td>Tests aren't affected by network issues or AWS service problems</td>
+</tr>
+<tr>
+<td>Lower costs</td>
+<td>Avoid paying for AWS service usage during testing</td>
+</tr>
+</tbody>
+</table></figure>
+<p>You can use tools like Jest or <a href="https://sinonjs.org/" target="_blank">Sinon.js</a> to create fake AWS services for your tests.</p>
+<h3 id="creating-fake-s3-operations">Creating fake S3 operations</h3>
+<p>To test S3 operations, you can make fake versions of the <code>S3</code> client and its methods. Here's an example using Jest:</p>
+<pre><code>// tests/s3Mock.js
+import { S3 } from 'aws-sdk';
+
+const s3Mock = {
+  putObject: jest.fn(),
+  getObject: jest.fn(),
+  deleteObject: jest.fn(),
+};
+
+jest.mock('aws-sdk', () =&gt; ({
+  S3: jest.fn(() =&gt; s3Mock),
+}));
+
+export default s3Mock;
+</code></pre>
+<p>You can then use this fake S3 client in your tests:</p>
+<pre><code>// tests/lambdaHandler.test.js
+import { handler } from '../lambdaHandler';
+import s3Mock from './s3Mock';
+
+describe('lambdaHandler', () =&gt; {
+  it('should upload a file to S3', async () =&gt; {
+    s3Mock.putObject.mockResolvedValue({});
+
+    const event = { /* test event data */ };
+    const context = { /* test context data */ };
+    const response = await handler(event, context);
+
+    expect(s3Mock.putObject).toHaveBeenCalledTimes(1);
+    expect(s3Mock.putObject).toHaveBeenCalledWith({
+      Bucket: 'my-bucket',
+      Key: 'my-key',
+      Body: 'my-file',
+    });
+  });
+});
+</code></pre>
+<h3 id="creating-fake-dynamodb-queries">Creating fake DynamoDB queries</h3>
+<p>For DynamoDB, you can create fake versions of the <code>DynamoDB</code> client and its methods:</p>
+<pre><code>// tests/dynamoDBMock.js
+import { DynamoDB } from 'aws-sdk';
+
+const dynamoDBMock = {
+  get: jest.fn(),
+  put: jest.fn(),
+  delete: jest.fn(),
+};
+
+jest.mock('aws-sdk', () =&gt; ({
+  DynamoDB: jest.fn(() =&gt; dynamoDBMock),
+}));
+
+export default dynamoDBMock;
+</code></pre>
+<p>Use the fake DynamoDB client in your tests like this:</p>
+<pre><code>// tests/lambdaHandler.test.js
+import { handler } from '../lambdaHandler';
+import dynamoDBMock from './dynamoDBMock';
+
+describe('lambdaHandler', () =&gt; {
+  it('should retrieve an item from DynamoDB', async () =&gt; {
+    dynamoDBMock.get.mockResolvedValue({
+      Item: { /* test item data */ },
+    });
+
+    const event = { /* test event data */ };
+    const context = { /* test context data */ };
+    const response = await handler(event, context);
+
+    expect(dynamoDBMock.get).toHaveBeenCalledTimes(1);
+    expect(dynamoDBMock.get).toHaveBeenCalledWith({
+      TableName: 'my-table',
+      Key: { /* test key data */ },
+    });
+  });
+});
+</code></pre>
+<h3 id="creating-fake-versions-of-other-aws-services">Creating fake versions of other AWS services</h3>
+<p>You can use the same method to create fake versions of other AWS services, like API Gateway, SQS, and SNS. The main idea is to make fake versions of the service clients and their methods, then use these in your tests to control how the services behave.</p>
+<h2 id="testing-different-lambda-function-types">Testing different Lambda function types</h2>
+<p>This section covers how to test various Lambda function types. We'll look at testing HTTP API handlers, event-driven functions, and scheduled Lambda functions.</p>
+<h3 id="testing-http-api-handlers">Testing HTTP API handlers</h3>
+<p>When testing HTTP API handlers, focus on these key areas:</p>
+<figure><table>
+<thead>
+<tr>
+<th>Area</th>
+<th>What to Test</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Request methods</td>
+<td>GET, POST, PUT, DELETE, etc.</td>
+</tr>
+<tr>
+<td>Request payloads</td>
+<td>Correct validation and error handling</td>
+</tr>
+<tr>
+<td>Responses</td>
+<td>Status codes, headers, and body content</td>
+</tr>
+</tbody>
+</table></figure>
+<p>Here's an example of testing an HTTP API handler with Jest:</p>
+<pre><code>// tests/httpHandler.test.js
+import { handler } from '../httpHandler';
+
+describe('httpHandler', () =&gt; {
+  it('should handle GET requests', async () =&gt; {
+    const event = { httpMethod: 'GET', path: '/users' };
+    const response = await handler(event);
+    expect(response.statusCode).toBe(200);
+    expect(response.body).toContain('users');
+  });
+
+  it('should handle POST requests', async () =&gt; {
+    const event = { httpMethod: 'POST', path: '/users', body: JSON.stringify({ name: 'John Doe' }) };
+    const response = await handler(event);
+    expect(response.statusCode).toBe(201);
+    expect(response.body).toContain('user created');
+  });
+});
+</code></pre>
+<h3 id="testing-event-driven-functions">Testing event-driven functions</h3>
+<p>For event-driven functions, test these main areas:</p>
+<figure><table>
+<thead>
+<tr>
+<th>Area</th>
+<th>What to Test</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Event payloads</td>
+<td>Correct validation and error handling</td>
+</tr>
+<tr>
+<td>Event processing</td>
+<td>Handling single and multiple events</td>
+</tr>
+<tr>
+<td>Error handling</td>
+<td>Retry logic and error reporting</td>
+</tr>
+</tbody>
+</table></figure>
+<p>Here's an example of testing an event-driven function with Jest:</p>
+<pre><code>// tests/eventHandler.test.js
+import { handler } from '../eventHandler';
+
+describe('eventHandler', () =&gt; {
+  it('should handle SNS events', async () =&gt; {
+    const event = { Records: [{ Sns: { Message: JSON.stringify({ foo: 'bar' }) } }] };
+    const response = await handler(event);
+    expect(response).toBeUndefined();
+  });
+
+  it('should handle SQS events', async () =&gt; {
+    const event = { Records: [{ body: JSON.stringify({ foo: 'bar' }) }] };
+    const response = await handler(event);
+    expect(response).toBeUndefined();
+  });
+});
+</code></pre>
+<h3 id="testing-scheduled-lambda-functions">Testing scheduled Lambda functions</h3>
+<p>For scheduled Lambda functions, focus on these areas:</p>
+<figure><table>
+<thead>
+<tr>
+<th>Area</th>
+<th>What to Test</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Schedule</td>
+<td>Correct timing (cron and rate expressions)</td>
+</tr>
+<tr>
+<td>Function execution</td>
+<td>Proper handling of multiple runs</td>
+</tr>
+<tr>
+<td>Error handling</td>
+<td>Retry logic and error reporting</td>
+</tr>
+</tbody>
+</table></figure>
+<p>Here's an example of testing a scheduled Lambda function with Jest:</p>
+<pre><code>// tests/scheduledHandler.test.js
+import { handler } from '../scheduledHandler';
+
+describe('scheduledHandler', () =&gt; {
+  it('should run on schedule', async () =&gt; {
+    const event = { source: 'aws.events', detail: { instance: 'i-0123456789abcdef0' } };
+    const response = await handler(event);
+    expect(response).toBeUndefined();
+  });
+});
+</code></pre>
+<h2 id="best-practices-for-lambda-function-unit-testing">Best practices for Lambda function unit testing</h2>
+<h3 id="keeping-tests-separate">Keeping tests separate</h3>
+<p>When writing unit tests for Lambda functions, it's important to keep each test separate. This helps make sure each test runs on its own, without affecting others. Here's how to do it:</p>
+<figure><table>
+<thead>
+<tr>
+<th>Practice</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Use separate files</td>
+<td>Put each test suite in its own file</td>
+</tr>
+<tr>
+<td>Give unique names</td>
+<td>Name each test case differently</td>
+</tr>
+<tr>
+<td>Don't share test data</td>
+<td>Use new data for each test</td>
+</tr>
+<tr>
+<td>Use mocking</td>
+<td>Create fake versions of dependencies</td>
+</tr>
+</tbody>
+</table></figure>
+<p>By keeping tests separate, you can find and fix problems more easily.</p>
+<h3 id="using-test-doubles">Using test doubles</h3>
+<p>Test doubles help you test your Lambda function without using real dependencies. Here are the main types:</p>
+<figure><table>
+<thead>
+<tr>
+<th>Type</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Stubs</td>
+<td>Replace dependencies with test versions</td>
+</tr>
+<tr>
+<td>Mocks</td>
+<td>Check how your function works with dependencies</td>
+</tr>
+<tr>
+<td>Spies</td>
+<td>Watch how your function uses dependencies</td>
+</tr>
+</tbody>
+</table></figure>
+<p>Using test doubles helps you test your Lambda function in different situations.</p>
+<h3 id="measuring-test-coverage">Measuring test coverage</h3>
+<p>Checking how much of your code is tested is important. Here's how to do it:</p>
+<ul>
+<li>Use a tool like <a href="https://istanbul.js.org/" target="_blank">Istanbul</a> or Jest to measure coverage</li>
+<li>Set a goal for how much of your code should be tested (like 80% or 90%)</li>
+<li>Look at coverage reports to see which parts need more testing</li>
+</ul>
+<p>Measuring coverage helps make sure your Lambda function is well-tested.</p>
+<h3 id="organizing-test-files">Organizing test files</h3>
+<p>Keeping your test files organized makes them easier to find and use. Here's how:</p>
+<ul>
+<li>Put all test files in a separate folder</li>
+<li>Name test files the same way each time</li>
+<li>Use subfolders to group tests by what they're testing</li>
+</ul>
+<p>Good organization makes it easier to keep your Lambda function up to date.</p>
+<h3 id="example-of-a-well-organized-test-file-structure">Example of a well-organized test file structure</h3>
+<p>Here's an example of how to organize your test files:</p>
+<pre><code>tests/
+├── handlers/
+│   ├── userHandler.test.js
+│   ├── productHandler.test.js
+│   └──...
+├── services/
+│   ├── userService.test.js
+│   ├── productService.test.js
+│   └──...
+├── utils/
+│   ├── logger.test.js
+│   ├── auth.test.js
+│   └──...
+└──...
+</code></pre>
+<p>This structure groups tests by what they're testing, making them easy to find.</p>
+<h2 id="continuous-integration-for-lambda-tests">Continuous integration for Lambda tests</h2>
+<h3 id="adding-tests-to-ci%2Fcd-pipelines">Adding tests to CI/CD pipelines</h3>
+<p>To add unit tests to your CI/CD pipeline, set up your CI tool to run tests automatically. Here's how to do it with common CI tools:</p>
+<figure><table>
+<thead>
+<tr>
+<th>CI Tool</th>
+<th>Steps</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="https://www.jenkins.io/" target="_blank">Jenkins</a></td>
+<td>1. Add Node.js plugin  <br/>2. Set up job for tests  <br/>3. Use <code>npm test</code> command</td>
+</tr>
+<tr>
+<td><a href="https://github.com/actions" target="_blank">GitHub Actions</a></td>
+<td>1. Make workflow file in <code>.github/workflows</code> <br/>2. Set up Node.js  <br/>3. Run <code>npm test</code></td>
+</tr>
+<tr>
+<td><a href="https://aws.amazon.com/codepipeline/" target="_blank">AWS CodePipeline</a></td>
+<td>1. Create pipeline with source stage  <br/>2. Add build stage for tests  <br/>3. Add deploy stage for Lambda</td>
+</tr>
+</tbody>
+</table></figure>
+<h3 id="running-tests-automatically">Running tests automatically</h3>
+<p>To run tests on every code commit, set up your CI tool to start when you push code:</p>
+<figure><table>
+<thead>
+<tr>
+<th>CI Tool</th>
+<th>How to Set Up</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Jenkins</td>
+<td>1. Set job to start on push  <br/>2. Use webhook for new commits</td>
+</tr>
+<tr>
+<td>GitHub Actions</td>
+<td>1. Set workflow to start on push  <br/>2. Use <code>on.push</code> event</td>
+</tr>
+<tr>
+<td>AWS CodePipeline</td>
+<td>1. Set pipeline to start on push  <br/>2. Use CodeCommit or GitHub with webhook</td>
+</tr>
+</tbody>
+</table></figure>
+<h3 id="dealing-with-test-failures">Dealing with test failures</h3>
+<p>When tests fail, act quickly to fix them. Here's what to do:</p>
+<ul>
+<li><strong>Watch for failures</strong>: Check your CI tool's dashboard often</li>
+<li><strong>Look into problems</strong>: Find out why each test failed</li>
+<li><strong>Fix issues</strong>: Solve the problems and run tests again</li>
+<li><strong>Stop future failures</strong>: Add more tests or improve your code</li>
+</ul>
+<h2 id="debugging-and-fixing-issues">Debugging and fixing issues</h2>
+<h3 id="common-lambda-testing-problems">Common Lambda testing problems</h3>
+<p>When testing AWS Lambda functions, you might face these issues:</p>
+<figure><table>
+<thead>
+<tr>
+<th>Problem</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Timeouts</td>
+<td>Function takes too long to run</td>
+</tr>
+<tr>
+<td>Dependency issues</td>
+<td>External tools or libraries not working right</td>
+</tr>
+<tr>
+<td>Network problems</td>
+<td>Trouble connecting to other services</td>
+</tr>
+<tr>
+<td>Mocking errors</td>
+<td>Issues with fake versions of services</td>
+</tr>
+</tbody>
+</table></figure>
+<h3 id="how-to-debug-test-failures">How to debug test failures</h3>
+<p>When a test fails, follow these steps:</p>
+<ol>
+<li>Look at test logs for error messages</li>
+<li>Use a debugger to check the code step by step</li>
+<li>Check Lambda function logs for errors</li>
+<li>Make sure the test setup is correct</li>
+</ol>
+<h3 id="tools-for-better-test-diagnostics">Tools for better test diagnostics</h3>
+<p>Here are some tools to help find and fix test problems:</p>
+<figure><table>
+<thead>
+<tr>
+<th>Tool</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="https://aws.amazon.com/cloudwatch/" target="_blank">AWS CloudWatch</a></td>
+<td>Shows logs and numbers about your function</td>
+</tr>
+<tr>
+<td><a href="https://aws.amazon.com/xray/" target="_blank">AWS X-Ray</a></td>
+<td>Gives details about how your function works</td>
+</tr>
+<tr>
+<td>Node.js debuggers</td>
+<td>Help you look at your code closely</td>
+</tr>
+<tr>
+<td>Mocking libraries</td>
+<td>Let you make fake versions of other services</td>
+</tr>
+</tbody>
+</table></figure>
+<p>These tools can help you find and fix issues in your Lambda function tests more easily.</p>
+<h2 id="performance-considerations">Performance considerations</h2>
+<h3 id="speeding-up-test-execution">Speeding up test execution</h3>
+<p>Fast test execution helps you update and deploy your code more quickly. Here are some ways to speed up your tests:</p>
+<figure><table>
+<thead>
+<tr>
+<th>Method</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Use a fast test runner</td>
+<td>Try different test runners like Jest to find the fastest one</td>
+</tr>
+<tr>
+<td>Run tests at the same time</td>
+<td>Use parallel testing to run multiple tests at once</td>
+</tr>
+<tr>
+<td>Choose a small test framework</td>
+<td>Smaller frameworks like <a href="https://github.com/avajs/ava" target="_blank">Ava</a> can run tests faster</td>
+</tr>
+<tr>
+<td>Use fake dependencies</td>
+<td>Replace real dependencies with fake ones to save time</td>
+</tr>
+</tbody>
+</table></figure>
+<h3 id="balancing-depth-and-speed">Balancing depth and speed</h3>
+<p>It's important to have both fast and thorough tests. Here's how to balance them:</p>
+<ul>
+<li>Test the most important parts of your code first</li>
+<li>Focus on areas that are likely to break</li>
+<li>Use the testing pyramid:
+<ul>
+<li>Many unit tests</li>
+<li>Fewer integration tests</li>
+<li>Even fewer end-to-end tests</li>
+</ul>
+</li>
+</ul>
+<h3 id="testing-lambda-performance">Testing Lambda performance</h3>
+<p>Besides checking if your Lambda function works correctly, you should also test how well it performs:</p>
+<figure><table>
+<thead>
+<tr>
+<th>Method</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Use <a href="/blog/aws-lambda-insights-serverless-monitoring-guide/">AWS Lambda metrics</a></td>
+<td>Check built-in metrics like invocation count and error rate</td>
+</tr>
+<tr>
+<td>Try third-party tools</td>
+<td>Use tools that give more detailed performance information</td>
+</tr>
+<tr>
+<td>Do load testing</td>
+<td>Use tools like <a href="https://jmeter.apache.org/" target="_blank">Apache JMeter</a> to test how your function handles many requests</td>
+</tr>
+</tbody>
+</table></figure>
+<h2 id="conclusion">Conclusion</h2>
+<h3 id="key-takeaways">Key takeaways</h3>
+<p><a href="/blog/aws-lambda-unit-testing-best-practices-2024/">Unit testing AWS Lambda functions</a> helps make sure your serverless apps work well. Here are the main points from this article:</p>
+<figure><table>
+<thead>
+<tr>
+<th>Point</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Separate logic</td>
+<td>Keep business logic apart from the Lambda handler</td>
+</tr>
+<tr>
+<td>Use dependency injection</td>
+<td>Makes code easier to test</td>
+</tr>
+<tr>
+<td>Create AWS SDK mocks</td>
+<td>Test without real AWS services</td>
+</tr>
+<tr>
+<td>Write different test types</td>
+<td>Test both sync and async functions</td>
+</tr>
+<tr>
+<td>Use testing tools</td>
+<td>Try Jest or Ava for writing and running tests</td>
+</tr>
+<tr>
+<td>Check test coverage</td>
+<td>Use tools like Istanbul to see what needs more testing</td>
+</tr>
+</tbody>
+</table></figure>
+<h3 id="why-good-testing-matters">Why good testing matters</h3>
+<p>Good testing helps keep your code working well. Here's why it's important:</p>
+<figure><table>
+<thead>
+<tr>
+<th>Benefit</th>
+<th>Explanation</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Find problems early</td>
+<td>Spend less time fixing bugs later</td>
+</tr>
+<tr>
+<td>Better code</td>
+<td>Fewer issues and easier to update</td>
+</tr>
+<tr>
+<td>Works as expected</td>
+<td>Make sure your app does what it should</td>
+</tr>
+<tr>
+<td>Fewer new bugs</td>
+<td>Lower chance of breaking things when you change code</td>
+</tr>
+<tr>
+<td>Team work</td>
+<td>Everyone understands how the code should work</td>
+</tr>
+</tbody>
+</table></figure>
+<h2 id="faqs">FAQs</h2>
+<h3 id="can-you-unit-test-lambda%3F">Can you unit test Lambda?</h3>
+<p>Yes, you can unit test AWS Lambda functions in Node.js. Here's how:</p>
+<ol>
+<li>Import the handler function into your test file</li>
+<li>Use a testing framework like Jest to write and run tests</li>
+</ol>
+<p>Here's a simple example:</p>
+<pre><code>import { handler } from '../src/arcbot-stack.stream';
+
+test('userInput: How is the weather?', async () =&gt; {
+  const event = {
+    userInput: 'How is the weather?'
+  };
+
+  const response = await handler(event, '');
+
+  expect(response.statusCode).toBe(200);
+  expect(JSON.parse(response.body)).toEqual({
+    respond: 'I do not understand. Please rephrase!'
+  });
+});
+</code></pre>
+<p>This test:</p>
+<ul>
+<li>Imports the handler function</li>
+<li>Creates a mock event</li>
+<li>Calls the handler with the event</li>
+<li>Checks the response</li>
+</ul>
+<figure><table>
+<thead>
+<tr>
+<th>Step</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Import</td>
+<td>Bring in the Lambda function</td>
+</tr>
+<tr>
+<td>Mock</td>
+<td>Create fake input data</td>
+</tr>
+<tr>
+<td>Run</td>
+<td>Call the function with test data</td>
+</tr>
+<tr>
+<td>Check</td>
+<td>Make sure the output is correct</td>
+</tr>
+</tbody>
+</table></figure>
+<p>
+<h2>Related posts</h2>
+<ul>
+<li><a href="/blog/aws-lambda-unit-testing-best-practices-2024/">AWS Lambda Unit Testing Best Practices 2024</a></li><li><a href="/blog/10-best-practices-for-end-to-end-testing-aws-apps/">10 Best Practices for End-to-End Testing AWS Apps</a></li><li><a href="/blog/test-serverless-apps-locally-with-aws-sam-cli/">Test Serverless Apps Locally with AWS SAM CLI</a></li><li><a href="/blog/aws-lambda-getting-started-first-steps/">AWS Lambda Getting Started: First Steps</a></li>
+</ul>
+</p>

@@ -1,0 +1,824 @@
+---
+layout: post.njk
+templateEngineOverride: html
+tags: posts
+title: "Migrate Legacy Apps to AWS Containers: 7 Strategies"
+description: "Discover 7 strategies for migrating legacy apps to AWS containers, including moving as-is, making small changes, breaking down big apps, moving databases, setting up automatic updates, ensuring container safety, and optimizing app performance."
+date: "2024-08-01"
+datePublished: "2024-08-01T00:26:57.131000+00:00"
+heroImage: "/assets/media/c4d35b7ebe6710f9336c.jpg"
+permalink: "/blog/migrate-legacy-apps-to-aws-containers-7-strategies/"
+sourceUrl: "https://awsforengineers.com/blog/migrate-legacy-apps-to-aws-containers-7-strategies/"
+---
+<p>Moving old software to <a href="https://aws.amazon.com/" target="_blank">AWS</a> containers can be challenging, but it's worth the effort. Here are 7 strategies to make the transition smoother:</p>
+<ol>
+<li>Move As-Is (Lift and Shift)</li>
+<li>Small Changes for Better Fit</li>
+<li>Breaking Down Big Apps</li>
+<li>Moving Databases to Containers</li>
+<li>Setting Up Automatic Updates</li>
+<li>Keeping Containers Safe</li>
+<li>Making Apps Run Better</li>
+</ol>
+<figure><table>
+<thead>
+<tr>
+<th>Strategy</th>
+<th>Key Benefit</th>
+<th>When to Use</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Move As-Is</td>
+<td>Quick migration</td>
+<td>For complex apps or rapid moves</td>
+</tr>
+<tr>
+<td>Small Changes</td>
+<td>Better container fit</td>
+<td>When minor tweaks suffice</td>
+</tr>
+<tr>
+<td>Breaking Down Apps</td>
+<td>Improved manageability</td>
+<td>For large, monolithic apps</td>
+</tr>
+<tr>
+<td>Moving Databases</td>
+<td>Data optimization</td>
+<td>When upgrading database systems</td>
+</tr>
+<tr>
+<td>Automatic Updates</td>
+<td>Continuous improvement</td>
+<td>For frequent app updates</td>
+</tr>
+<tr>
+<td>Container Safety</td>
+<td>Enhanced security</td>
+<td>Always, especially for sensitive data</td>
+</tr>
+<tr>
+<td>Performance Tuning</td>
+<td>Optimal resource use</td>
+<td>After initial migration</td>
+</tr>
+</tbody>
+</table></figure>
+<p>These strategies help overcome common challenges like outdated code, complex systems, and missing documentation. By using containers, you'll benefit from easier portability, resource efficiency, and improved isolation between applications.</p>
+<h2 id="related-video-from-youtube">Related video from YouTube</h2>
+<iframe allowfullscreen="" frameborder="0" loading="lazy" src="https://www.youtube-nocookie.com/embed/8iVQ9Kugzl0"></iframe><h2 id="getting-ready-to-migrate">Getting Ready to Migrate</h2>
+<p>Before moving your old apps to AWS containers, you need to prepare. Here's how to get ready for a good move.</p>
+<h3 id="checking-your-current-apps">Checking Your Current Apps</h3>
+<p>First, look at what you have now:</p>
+<figure><table>
+<thead>
+<tr>
+<th>What to Check</th>
+<th>Why It's Important</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>App parts</td>
+<td>Know what makes up each app</td>
+</tr>
+<tr>
+<td>How parts work together</td>
+<td>Understand what each part needs</td>
+</tr>
+<tr>
+<td>Where apps run now</td>
+<td>Know your current setup</td>
+</tr>
+<tr>
+<td>Safety rules</td>
+<td>Make sure you follow the rules</td>
+</tr>
+</tbody>
+</table></figure>
+<p>Here's an example of what to list:</p>
+<figure><table>
+<thead>
+<tr>
+<th>App</th>
+<th>Parts</th>
+<th>Needs</th>
+<th>Current Setup</th>
+<th>Safety Rules</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>App 1</td>
+<td>Website, database</td>
+<td>Outside tool</td>
+<td>Computer 1, Storage 1</td>
+<td>HIPAA rules</td>
+</tr>
+<tr>
+<td>App 2</td>
+<td>API, message system</td>
+<td>In-house tool</td>
+<td>Computer 2, Storage 2</td>
+<td>PCI-DSS rules</td>
+</tr>
+</tbody>
+</table></figure>
+<h3 id="choosing-apps-for-containers">Choosing Apps for Containers</h3>
+<p>Not all apps work well in containers. Pick apps that:</p>
+<ul>
+<li>Are simple</li>
+<li>Don't need too much power</li>
+<li>Are important for your work</li>
+</ul>
+<figure><table>
+<thead>
+<tr>
+<th>App</th>
+<th>How Complex</th>
+<th>Power Needs</th>
+<th>How Important</th>
+<th>Move Priority</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>App 1</td>
+<td>Medium</td>
+<td>Medium</td>
+<td>Very</td>
+<td>High</td>
+</tr>
+<tr>
+<td>App 2</td>
+<td>Simple</td>
+<td>Low</td>
+<td>Somewhat</td>
+<td>Medium</td>
+</tr>
+</tbody>
+</table></figure>
+<h3 id="key-points-to-remember">Key Points to Remember</h3>
+<p>Keep these things in mind:</p>
+<ul>
+<li>Containers don't fix bad apps</li>
+<li>Pick the right AWS tool (ECS, EKS, or Fargate)</li>
+<li>Plan how to watch your apps in containers</li>
+</ul>
+<figure><table>
+<thead>
+<tr>
+<th>Point</th>
+<th>What It Means</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Fix apps first</td>
+<td>Make sure apps work well before moving</td>
+</tr>
+<tr>
+<td>Choose wisely</td>
+<td>Pick the AWS tool that fits your needs</td>
+</tr>
+<tr>
+<td>Watch your apps</td>
+<td>Have a plan to check on your apps</td>
+</tr>
+</tbody>
+</table></figure>
+<h2 id="1.-move-as-is-(lift-and-shift)">1. Move As-Is (Lift and Shift)</h2>
+<h3 id="what-it-is-and-when-to-use-it">What It Is and When to Use It</h3>
+<p>"Move As-Is" or "Lift and Shift" means moving your old app to AWS containers without changing its code. Use this when:</p>
+<ul>
+<li>You need to move quickly</li>
+<li>Your app is complex</li>
+<li>You want to test how your app works in containers</li>
+</ul>
+<h3 id="steps-to-move-as-is">Steps to Move As-Is</h3>
+<ol>
+<li><strong>Check Your App</strong></li>
+</ol>
+<p>Look at your app's:</p>
+<ul>
+<li>How complex it is</li>
+<li>How good the code is</li>
+<li>What it needs to work</li>
+<li>Safety rules it must follow</li>
+</ul>
+<ol start="2">
+<li><strong>Pick a Container Tool</strong></li>
+</ol>
+<p>Choose a tool that fits your app. Some options are:</p>
+<ul>
+<li><a href="https://www.docker.com/" target="_blank">Docker</a></li>
+<li><a href="https://kubernetes.io/" target="_blank">Kubernetes</a></li>
+<li><a href="/blog/">AWS ECS</a></li>
+</ul>
+<ol start="3">
+<li><strong>Make a Container Image</strong></li>
+</ol>
+<p>Put your app, what it needs, and its settings into a container image.</p>
+<ol start="4">
+<li><strong>Send the Image to a Storage Place</strong></li>
+</ol>
+<p>Send your image to a place like Docker Hub or AWS ECR.</p>
+<ol start="5">
+<li><strong>Set Up the Container</strong></li>
+</ol>
+<p>Use AWS ECS, EKS, or Fargate to set up and run your container.</p>
+<h3 id="good-and-bad-points">Good and Bad Points</h3>
+<figure><table>
+<thead>
+<tr>
+<th>Good</th>
+<th>Bad</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Fast move to the cloud</td>
+<td>App may not work its best</td>
+</tr>
+<tr>
+<td>Less work stoppage</td>
+<td>May have safety problems</td>
+</tr>
+</tbody>
+</table></figure>
+<h2 id="2.-small-changes-for-better-fit">2. Small Changes for Better Fit</h2>
+<h3 id="what-this-means">What This Means</h3>
+<p>This method involves making small tweaks to your old app's code so it works well in AWS containers. It's good when you want to use containers without completely rewriting your app.</p>
+<h3 id="changes-you-need-to-make">Changes You Need to Make</h3>
+<p>When moving an old app to a container, you'll need to change a few things:</p>
+<figure><table>
+<thead>
+<tr>
+<th>Change</th>
+<th>What to Do</th>
+<th>Example</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Settings</td>
+<td>Use environment variables instead of fixed settings</td>
+<td>Change <code>DB_HOST=localhost</code> to <code>DB_HOST=${DB_HOST}</code></td>
+</tr>
+<tr>
+<td>File locations</td>
+<td>Update where your app looks for files</td>
+<td>Change <code>/var/log/app.log</code> to <code>/app/log/app.log</code></td>
+</tr>
+<tr>
+<td>Logging</td>
+<td>Use container-friendly ways to record what your app does</td>
+<td>Change <code>logger.info('Hello World')</code> to <code>print('Hello World')</code></td>
+</tr>
+</tbody>
+</table></figure>
+<h3 id="how-to-make-small-changes">How to Make Small Changes</h3>
+<p>Here are some tips to help you make these changes:</p>
+<ul>
+<li>Use tools like Docker or Kubernetes to help set up your container</li>
+<li>Make small changes one at a time</li>
+<li>Test your app in the container after each change</li>
+</ul>
+<h3 id="good-and-bad-points-1">Good and Bad Points</h3>
+<figure><table>
+<thead>
+<tr>
+<th>Good</th>
+<th>Bad</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Keeps most of your old code</td>
+<td>Takes more time than just moving the app as-is</td>
+</tr>
+<tr>
+<td>Works better in containers than unchanged apps</td>
+<td>Might introduce new bugs if not done carefully</td>
+</tr>
+<tr>
+<td>Lets you use some container benefits</td>
+<td>Doesn't fix all problems with old apps</td>
+</tr>
+</tbody>
+</table></figure>
+<h2 id="3.-breaking-down-big-apps">3. Breaking Down Big Apps</h2>
+<h3 id="splitting-apps-into-smaller-parts">Splitting Apps into Smaller Parts</h3>
+<p>Breaking big apps into smaller parts can make them easier to manage. This is called microservices. It helps:</p>
+<ul>
+<li>Make apps work better</li>
+<li>Make apps easier to fix</li>
+<li>Make changes faster</li>
+<li>Keep apps running if one part breaks</li>
+</ul>
+<p>Here's how to split a big app:</p>
+<ol>
+<li>Find the main parts of the app</li>
+<li>See how these parts work together</li>
+<li>Make each part its own service</li>
+<li>Set up ways for parts to talk to each other</li>
+<li>Put each part in a container using Docker</li>
+</ol>
+<h3 id="putting-each-part-in-a-container">Putting Each Part in a Container</h3>
+<p>After splitting the app, put each part in a container:</p>
+<ol>
+<li>Write a Dockerfile for each part</li>
+<li>Make a Docker image</li>
+<li>Send the image to a storage place</li>
+<li>Set up the container to run on AWS</li>
+</ol>
+<h3 id="how-parts-talk-to-each-other-in-aws">How Parts Talk to Each Other in <a href="https://aws.amazon.com/" target="_blank">AWS</a></h3>
+<p><figure><img alt="AWS" loading="lazy" src="/assets/media/2d135ce4df17cc4bb773.jpg"/></figure></p>
+<p>In AWS, parts of your app can talk to each other using these tools:</p>
+<figure><table>
+<thead>
+<tr>
+<th>AWS Tool</th>
+<th>What It Does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>ECS</td>
+<td>Runs containers on AWS computers</td>
+</tr>
+<tr>
+<td>Lambda</td>
+<td>Runs code when something happens</td>
+</tr>
+<tr>
+<td>API Gateway</td>
+<td>Helps parts talk to each other</td>
+</tr>
+<tr>
+<td>ELB</td>
+<td>Spreads work across containers</td>
+</tr>
+</tbody>
+</table></figure>
+<h4 id="example%3A-online-store">Example: Online Store</h4>
+<p>An online store might have these parts:</p>
+<figure><table>
+<thead>
+<tr>
+<th>Part</th>
+<th>What It Does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Product list</td>
+<td>Shows what's for sale</td>
+</tr>
+<tr>
+<td>Shopping cart</td>
+<td>Keeps track of what you want to buy</td>
+</tr>
+<tr>
+<td>Payment</td>
+<td>Handles money</td>
+</tr>
+</tbody>
+</table></figure>
+<p>Each part is in its own container. They use API Gateway to share information.</p>
+<h4 id="good-things-about-this-approach">Good Things About This Approach</h4>
+<figure><table>
+<thead>
+<tr>
+<th>Good Thing</th>
+<th>Why It's Good</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Grows easily</td>
+<td>Can make one part bigger without changing others</td>
+</tr>
+<tr>
+<td>Flexible</td>
+<td>Can use different coding languages for different parts</td>
+</tr>
+<tr>
+<td>Keeps working</td>
+<td>If one part breaks, others still work</td>
+</tr>
+<tr>
+<td>Easy to fix</td>
+<td>Can fix one part without touching others</td>
+</tr>
+</tbody>
+</table></figure>
+<h4 id="tips-for-making-it-work-well">Tips for Making It Work Well</h4>
+<ul>
+<li>Give each part one job</li>
+<li>Use APIs for parts to talk to each other</li>
+<li>Use containers</li>
+<li>Watch how parts are working</li>
+<li>Use computers to set up and run parts</li>
+</ul>
+<h2 id="4.-moving-databases-to-containers">4. Moving Databases to Containers</h2>
+<h3 id="ways-to-put-databases-in-containers">Ways to Put Databases in Containers</h3>
+<p>There are three main ways to use databases with containers:</p>
+<ol>
+<li>Put the database in a container</li>
+<li>Use a managed database service</li>
+<li>Use a serverless database</li>
+</ol>
+<h3 id="aws-database-options-for-containers">AWS Database Options for Containers</h3>
+<p>AWS has several database choices for containers:</p>
+<figure><table>
+<thead>
+<tr>
+<th>Database</th>
+<th>Type</th>
+<th>Good for</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="https://docs.aws.amazon.com/rds/" target="_blank">Amazon RDS</a></td>
+<td>Managed relational</td>
+<td>MySQL, PostgreSQL, Oracle</td>
+</tr>
+<tr>
+<td><a href="https://docs.aws.amazon.com/AmazonRDS/latest/AuroraUserGuide/CHAP_AuroraOverview.html" target="_blank">Amazon Aurora</a></td>
+<td>High-speed relational</td>
+<td>MySQL and PostgreSQL</td>
+</tr>
+<tr>
+<td><a href="https://docs.aws.amazon.com/dynamodb/" target="_blank">Amazon DynamoDB</a></td>
+<td>NoSQL</td>
+<td>Busy apps</td>
+</tr>
+<tr>
+<td><a href="https://docs.aws.amazon.com/documentdb/" target="_blank">Amazon DocumentDB</a></td>
+<td>Document-based</td>
+<td>MongoDB-like</td>
+</tr>
+</tbody>
+</table></figure>
+<h3 id="how-to-move-your-data">How to Move Your Data</h3>
+<p>To move your data to a container database on AWS:</p>
+<ol>
+<li><strong>Look at your data</strong>: Check how big and complex it is.</li>
+<li><strong>Pick a database</strong>: Choose an AWS database that fits your needs.</li>
+<li><strong>Set up the database</strong>: Start a new database on AWS.</li>
+<li><strong>Move the data</strong>: Use AWS tools to copy your data to the new database.</li>
+<li><strong>Check everything</strong>: Make sure all the data moved correctly and works well.</li>
+</ol>
+<h4 id="aws-tools-for-moving-data">AWS Tools for Moving Data</h4>
+<figure><table>
+<thead>
+<tr>
+<th>Tool</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="https://docs.aws.amazon.com/dms/" target="_blank">AWS Database Migration Service</a> (DMS)</td>
+<td>Moves data between databases</td>
+</tr>
+<tr>
+<td><a href="https://docs.aws.amazon.com/SchemaConversionTool/" target="_blank">AWS Schema Conversion Tool</a> (SCT)</td>
+<td>Changes database structure if needed</td>
+</tr>
+</tbody>
+</table></figure>
+<h2 id="5.-setting-up-automatic-updates">5. Setting Up Automatic Updates</h2>
+<h3 id="creating-update-pipelines">Creating Update Pipelines</h3>
+<p>To set up automatic updates for your old apps in AWS containers, you need an update pipeline. This pipeline will update your containers with new code, settings, or tools without you doing it by hand. Here's how to make one:</p>
+<ol>
+<li>Plan your pipeline</li>
+<li>Connect to your code</li>
+<li>Build your container</li>
+<li>Test your container</li>
+<li>Put your container to work</li>
+</ol>
+<h3 id="using-aws-tools-for-updates">Using AWS Tools for Updates</h3>
+<p>AWS has tools to help you update your old apps in containers:</p>
+<figure><table>
+<thead>
+<tr>
+<th>AWS Tool</th>
+<th>What It Does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>CodePipeline</td>
+<td>Moves your code through build, test, and use steps</td>
+</tr>
+<tr>
+<td>CodeBuild</td>
+<td>Makes your code ready to use</td>
+</tr>
+<tr>
+<td>CodeDeploy</td>
+<td>Puts your code where it needs to go</td>
+</tr>
+<tr>
+<td>CloudFormation</td>
+<td>Sets up your AWS tools the same way each time</td>
+</tr>
+</tbody>
+</table></figure>
+<h3 id="automatic-testing-and-deployment">Automatic Testing and Deployment</h3>
+<p>Testing and using your code without doing it by hand is important. Here's how:</p>
+<ul>
+<li><strong>Write tests</strong>: Make tests that check if your code works right</li>
+<li><strong>Use tests</strong>: Run your tests using <a href="https://docs.aws.amazon.com/codebuild/" target="_blank">AWS CodeBuild</a></li>
+<li><strong>Put code to work</strong>: Use <a href="https://docs.aws.amazon.com/codedeploy/" target="_blank">AWS CodeDeploy</a> to put your container where it needs to go</li>
+<li><strong>Update bit by bit</strong>: Change a little at a time to keep your app working while you update</li>
+</ul>
+<figure><table>
+<thead>
+<tr>
+<th>Step</th>
+<th>How to Do It</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Write tests</td>
+<td>Use tools like JUnit or PyUnit</td>
+</tr>
+<tr>
+<td>Use tests</td>
+<td>Set up CodeBuild to run your tests</td>
+</tr>
+<tr>
+<td>Put code to work</td>
+<td>Use CodeDeploy to move your container</td>
+</tr>
+<tr>
+<td>Update bit by bit</td>
+<td>Change only some parts at a time</td>
+</tr>
+</tbody>
+</table></figure>
+<h2 id="6.-keeping-containers-safe">6. Keeping Containers Safe</h2>
+<h3 id="aws-container-safety-tips">AWS Container Safety Tips</h3>
+<p>AWS offers tools to help keep your containers safe. Here's what you can do:</p>
+<figure><table>
+<thead>
+<tr>
+<th>Safety Measure</th>
+<th>What It Does</th>
+<th>How to Use It</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="https://docs.aws.amazon.com/iam/" target="_blank">AWS IAM</a> roles</td>
+<td>Controls access to AWS resources</td>
+<td>Assign roles to containers</td>
+</tr>
+<tr>
+<td>Logging and monitoring</td>
+<td>Tracks container activity</td>
+<td>Use CloudWatch and CloudTrail</td>
+</tr>
+<tr>
+<td>Encryption</td>
+<td>Protects your data</td>
+<td>Use S3 encryption and KMS</td>
+</tr>
+<tr>
+<td>Network security</td>
+<td>Controls traffic to containers</td>
+<td>Set up VPC and Security Groups</td>
+</tr>
+</tbody>
+</table></figure>
+<h3 id="following-rules-and-regulations">Following Rules and Regulations</h3>
+<p>Make sure your containers follow the rules:</p>
+<ol>
+<li>Know what rules apply to you</li>
+<li>Use AWS tools to help follow rules</li>
+<li>Check for rule-breaking</li>
+</ol>
+<figure><table>
+<thead>
+<tr>
+<th>AWS Tool</th>
+<th>What It Does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="https://docs.aws.amazon.com/config/latest/developerguide/WhatIsConfig.html" target="_blank">AWS Config</a></td>
+<td>Checks if you're following rules</td>
+</tr>
+<tr>
+<td><a href="https://docs.aws.amazon.com/awscloudtrail/latest/userguide/cloudtrail-user-guide.html" target="_blank">AWS CloudTrail</a></td>
+<td>Keeps track of what happens in AWS</td>
+</tr>
+</tbody>
+</table></figure>
+<h3 id="watching-for-security-issues">Watching for Security Issues</h3>
+<p>Keep an eye out for problems:</p>
+<ul>
+<li>Look for weak spots in your containers</li>
+<li>Have a plan ready if something goes wrong</li>
+<li>Learn about new ways to stay safe</li>
+</ul>
+<figure><table>
+<thead>
+<tr>
+<th>Task</th>
+<th>Why It's Important</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Check for weak spots</td>
+<td>Stops bad people from getting in</td>
+</tr>
+<tr>
+<td>Be ready for problems</td>
+<td>Helps you fix issues quickly</td>
+</tr>
+<tr>
+<td>Learn new safety tricks</td>
+<td>Keeps your containers safer</td>
+</tr>
+</tbody>
+</table></figure>
+<p>Remember: Keeping containers safe is ongoing work. Always be on the lookout for new ways to protect your stuff.</p>
+<h2 id="7.-making-apps-run-better">7. Making Apps Run Better</h2>
+<h3 id="setting-container-resources">Setting Container Resources</h3>
+<p>To make your apps work well in containers, you need to set up their resources correctly. Here's how to do it with <a href="https://docs.aws.amazon.com/ecs/" target="_blank">Amazon ECS</a>:</p>
+<ol>
+<li>Choose CPU and memory for each container</li>
+<li>Set limits to stop containers from using too much</li>
+<li>Watch how containers use resources with <a href="https://docs.aws.amazon.com/cloudwatch/" target="_blank">Amazon CloudWatch</a></li>
+</ol>
+<figure><table>
+<thead>
+<tr>
+<th>Resource</th>
+<th>What It Is</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>CPU</td>
+<td>How much processing power the container can use</td>
+</tr>
+<tr>
+<td>Memory</td>
+<td>How much computer memory the container can use</td>
+</tr>
+<tr>
+<td>Ports</td>
+<td>Which doors the container can use to talk to other parts</td>
+</tr>
+</tbody>
+</table></figure>
+<h3 id="growing-and-shrinking-automatically">Growing and Shrinking Automatically</h3>
+<p>Your apps need to handle different amounts of work. <a href="https://docs.aws.amazon.com/autoscaling/" target="_blank">AWS Auto Scaling</a> can help:</p>
+<ol>
+<li>Make a group of containers that can grow or shrink</li>
+<li>Set rules for when to add or remove containers</li>
+<li>Watch things like CPU use to know when to change</li>
+</ol>
+<figure><table>
+<thead>
+<tr>
+<th>What to Watch</th>
+<th>Why It Matters</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>CPU Use</td>
+<td>Shows if containers are working too hard</td>
+</tr>
+<tr>
+<td>Number of Requests</td>
+<td>Shows how many people are using your app</td>
+</tr>
+</tbody>
+</table></figure>
+<h3 id="checking-how-apps-are-doing">Checking How Apps Are Doing</h3>
+<p>To make sure your apps are working well, use these AWS tools:</p>
+<ol>
+<li>Amazon CloudWatch: Looks at how your app is working</li>
+<li>Amazon CloudTrail: Watches for safety problems</li>
+<li><a href="https://docs.aws.amazon.com/xray/" target="_blank">Amazon X-Ray</a>: Finds and fixes slow parts of your app</li>
+</ol>
+<figure><table>
+<thead>
+<tr>
+<th>Tool</th>
+<th>What It Does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>CloudWatch</td>
+<td>Watches your app and warns you about problems</td>
+</tr>
+<tr>
+<td>CloudTrail</td>
+<td>Keeps track of who does what in AWS</td>
+</tr>
+<tr>
+<td>X-Ray</td>
+<td>Helps find why your app might be slow</td>
+</tr>
+</tbody>
+</table></figure>
+<h2 id="wrap-up">Wrap-Up</h2>
+<h3 id="quick-look-at-the-7-strategies">Quick Look at the 7 Strategies</h3>
+<p>Here's a summary of the seven ways to move old apps to AWS containers:</p>
+<figure><table>
+<thead>
+<tr>
+<th>Strategy</th>
+<th>What It Does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1. Move As-Is</td>
+<td>Put the app in a container without changes</td>
+</tr>
+<tr>
+<td>2. Small Changes</td>
+<td>Make minor tweaks to fit the app in a container</td>
+</tr>
+<tr>
+<td>3. Break Down Big Apps</td>
+<td>Split large apps into smaller parts</td>
+</tr>
+<tr>
+<td>4. Move Databases</td>
+<td>Put databases in containers or use AWS database services</td>
+</tr>
+<tr>
+<td>5. Set Up Auto Updates</td>
+<td>Create ways to update containers automatically</td>
+</tr>
+<tr>
+<td>6. Keep Containers Safe</td>
+<td>Use AWS tools to protect your containers</td>
+</tr>
+<tr>
+<td>7. Make Apps Run Better</td>
+<td>Adjust resources and set up auto-scaling</td>
+</tr>
+</tbody>
+</table></figure>
+<p>Pick the strategy that works best for each of your apps.</p>
+<h3 id="why-containers-are-good-long-term">Why Containers Are Good Long-Term</h3>
+<p>Containers help your apps in many ways:</p>
+<figure><table>
+<thead>
+<tr>
+<th>Benefit</th>
+<th>How It Helps</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Grow or shrink easily</td>
+<td>Match the app's size to how many people use it</td>
+</tr>
+<tr>
+<td>Better safety</td>
+<td>Keep apps separate to stop problems from spreading</td>
+</tr>
+<tr>
+<td>Work faster</td>
+<td>Make building, testing, and using apps quicker</td>
+</tr>
+<tr>
+<td>Use resources well</td>
+<td>Get the most out of your computers</td>
+</tr>
+</tbody>
+</table></figure>
+<p>Using containers can make your old apps work better and cost less to run.</p>
+<h3 id="what-to-do-next">What to Do Next</h3>
+<p>Now that you know about moving old apps to AWS containers, here's what to do:</p>
+<ol>
+<li><strong>Look at your apps</strong>: Figure out which strategy fits each app best.</li>
+<li><strong>Pick the right tools</strong>: Choose AWS tools that work with your strategy.</li>
+<li><strong>Make a plan</strong>: Write down the steps to move your apps to containers.</li>
+<li><strong>Try it out</strong>: Test your apps in containers and fix any problems.</li>
+</ol>
+<p>
+<h2>Related posts</h2>
+<ul>
+<li><a href="/blog/analyze-legacy-code-for-aws-migration-5-strategies/">Analyze Legacy Code for AWS Migration: 5 Strategies</a></li><li><a href="/blog/aws-serverless-migration-legacy-app-modernization-guide/">AWS Serverless Migration: Legacy App Modernization Guide</a></li><li><a href="/blog/aws-migration-readiness-application-portfolio-analysis/">AWS Migration Readiness: Application Portfolio Analysis</a></li><li><a href="/blog/aws-content-migration-best-practices/">AWS Content Migration Best Practices</a></li>
+</ul>
+</p>

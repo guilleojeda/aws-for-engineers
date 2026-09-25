@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{{ title }}</title>
+    <meta name="description" content="{{ description }}">
+    <meta name="google-adsense-account" content="ca-pub-9639896081226655">
+    <link rel="canonical" href="https://awsforengineers.com{{ page.url }}">
+    <meta property="og:type" content="{% if isPost %}article{% else %}website{% endif %}">
+    <meta property="og:title" content="{{ title }}">
+    <meta property="og:description" content="{{ description }}">
+    <meta property="og:url" content="https://awsforengineers.com{{ page.url }}">
+    {% set socialImage = heroImage or imported.homeOgImage %}
+    {% if socialImage %}<meta property="og:image" content="https://awsforengineers.com{{ socialImage }}">{% endif %}
+    <meta name="twitter:card" content="summary_large_image">
+    {% if socialImage %}<meta name="twitter:image" content="https://awsforengineers.com{{ socialImage }}">{% endif %}
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/assets/site.css">
+    <link rel="icon" href="{{ imported.favicon or '/assets/favicon.svg' }}">
+    <script>
+      // Only the public domain sends production analytics and ad requests.
+      if (location.hostname === 'awsforengineers.com') {
+        window.dataLayer = window.dataLayer || [];
+        window.gtag = function(){window.dataLayer.push(arguments);};
+        gtag('js', new Date());
+        gtag('config', 'G-NQSBTTBL2Q');
+        for (const [src, module] of [
+          ['https://www.googletagmanager.com/gtag/js?id=G-NQSBTTBL2Q', false],
+          ['https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9639896081226655', false],
+          ['https://app.tinyadz.com/scripts/ads.js?siteId=67e41a4ea3e895aab1bf9a58', true]
+        ]) {
+          const script = document.createElement('script');
+          script.async = true;
+          if (module) script.type = 'module';
+          if (src.includes('googlesyndication')) script.crossOrigin = 'anonymous';
+          script.src = src;
+          document.head.appendChild(script);
+        }
+      }
+    </script>
+    {% if isPost %}<script type="application/ld+json">{{ {"@context":"https://schema.org","@type":"BlogPosting","headline":title,"description":description,"image":["https://awsforengineers.com" + (heroImage or imported.homeOgImage)],"datePublished":datePublished or date,"mainEntityOfPage":"https://awsforengineers.com" + page.url} | jsonScript | safe }}</script>{% endif %}
+  </head>
+  <body>
+    <a class="skip-link" href="#main">Skip to content</a>
+    <header class="site-header {% if page.url == '/' %}site-header--home{% endif %}">
+      <nav class="nav wrap" aria-label="Main navigation">
+        <a class="brand" href="/">AWS for Engineers</a>
+        <div class="nav-links">
+          <a href="/">Home</a>
+          <a href="/blog/">Blog</a>
+          <a href="mailto:contact@awsforengineers.com">Contact</a>
+        </div>
+      </nav>
+    </header>
+    <main id="main">{{ content | safe }}</main>
+    <footer class="site-footer">
+      <div class="wrap footer-grid">
+        <p>© {{ buildYear }} AWS for Engineers. All rights reserved.</p>
+        <div>
+          <h2>Resources</h2>
+          <a href="/blog/">Blog</a>
+          <a href="https://dondeaprendoaws.com/?utm_source=awsforengineers&utm_medium=home">Donde Aprendo AWS</a>
+          <a href="https://blog.guilleojeda.com/?utm_source=awsforengineers&utm_medium=home">Cloudy Things blog</a>
+        </div>
+        <div>
+          <h2>Follow us</h2>
+          <a href="https://www.linkedin.com/in/guilleojeda/">LinkedIn</a>
+          <a href="mailto:info@awsforengineers.com">Email</a>
+        </div>
+      </div>
+    </footer>
+    <script defer src="/assets/site.js"></script>
+  </body>
+</html>

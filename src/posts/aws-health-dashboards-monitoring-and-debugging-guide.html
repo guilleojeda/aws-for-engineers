@@ -1,0 +1,738 @@
+---
+layout: post.njk
+templateEngineOverride: html
+tags: posts
+title: "AWS Health Dashboards: Monitoring & Debugging Guide"
+description: "Learn how to monitor and debug your AWS resources using AWS Health Dashboards. Explore the key features, setup guide, tips for monitoring, and debugging methods."
+date: "2024-08-01"
+datePublished: "2024-08-01T00:13:57.113000+00:00"
+heroImage: "/assets/media/624fe63f33c17eaba9db.jpg"
+permalink: "/blog/aws-health-dashboards-monitoring-and-debugging-guide/"
+sourceUrl: "https://awsforengineers.com/blog/aws-health-dashboards-monitoring-and-debugging-guide/"
+---
+<p><a href="https://docs.aws.amazon.com/health/latest/ug/getting-started-health-dashboard.html" target="_blank">AWS Health Dashboards</a> are essential tools for monitoring and debugging your AWS resources. Here's what you need to know:</p>
+<ul>
+<li><strong>Purpose</strong>: Track AWS service health and your account's resource status</li>
+<li><strong>Types</strong>: Service Health Dashboard and Personal Health Dashboard</li>
+<li><strong>Key features</strong>: Real-time updates, customizable views, <a href="/">integration with other AWS tools</a></li>
+<li><strong>Benefits</strong>: Quick problem-solving, easier troubleshooting, better resource use, improved reliability</li>
+</ul>
+<figure><table>
+<thead>
+<tr>
+<th>Feature</th>
+<th>Service Health Dashboard</th>
+<th>Personal Health Dashboard</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Scope</td>
+<td>All AWS services</td>
+<td>Your AWS resources</td>
+</tr>
+<tr>
+<td>Access</td>
+<td>Public</td>
+<td><a href="https://aws.amazon.com/console/" target="_blank">AWS Management Console</a></td>
+</tr>
+<tr>
+<td>Alerts</td>
+<td>General service issues</td>
+<td>Account-specific events</td>
+</tr>
+</tbody>
+</table></figure>
+<p>To get started:</p>
+<ol>
+<li>Log in to AWS Management Console</li>
+<li>Find "AWS Health" in services</li>
+<li>Set up your dashboard</li>
+<li>Configure alerts and custom views</li>
+</ol>
+<p>Use AWS Health Dashboards to:</p>
+<ul>
+<li>Spot problems quickly</li>
+<li>Connect issues across services</li>
+<li>Set up automatic responses with Lambda</li>
+<li>Improve your AWS resource management</li>
+</ul>
+<p>Remember to check your dashboard regularly, set up relevant alerts, and have a plan for addressing issues when they arise.</p>
+<h2 id="related-video-from-youtube">Related video from YouTube</h2>
+<iframe allowfullscreen="" frameborder="0" loading="lazy" src="https://www.youtube-nocookie.com/embed/Qf1hegZXyo8"></iframe><h2 id="aws-health-dashboards-explained"><a href="https://docs.aws.amazon.com/health/latest/ug/getting-started-health-dashboard.html" target="_blank">AWS Health Dashboards</a> explained</h2>
+<p><figure><img alt="AWS Health Dashboards" loading="lazy" src="/assets/media/a409eef560023021be03.jpg"/></figure></p>
+<h3 id="definition-and-purpose">Definition and purpose</h3>
+<p>AWS Health Dashboards are tools that show you how your AWS resources are doing in real-time. They help you:</p>
+<ul>
+<li>See if your AWS services are working well</li>
+<li>Find and fix problems quickly</li>
+<li>Set up the dashboard to show what's important to you</li>
+<li>Work with other AWS tools to fix issues automatically</li>
+</ul>
+<h3 id="service-health-vs-personal-health-dashboards">Service Health vs Personal Health Dashboards</h3>
+<p>AWS has two types of Health Dashboards:</p>
+<figure><table>
+<thead>
+<tr>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Service Health Dashboards</td>
+<td>Show how all AWS services are doing</td>
+</tr>
+<tr>
+<td>Personal Health Dashboards</td>
+<td>Show how your own AWS resources are doing</td>
+</tr>
+</tbody>
+</table></figure>
+<p>Both can be found in the AWS Management Console.</p>
+<h3 id="main-features-and-uses">Main features and uses</h3>
+<p>AWS Health Dashboards offer:</p>
+<ul>
+<li><strong>Up-to-date info</strong>: See how your AWS resources are doing right now</li>
+<li><strong>Your own setup</strong>: Choose what you want to see on your dashboard</li>
+<li><strong>Works with other AWS tools</strong>: Can team up with services like CloudWatch and Lambda</li>
+<li><strong>Warnings</strong>: Get alerts when something's wrong</li>
+<li><strong>Past data</strong>: Look at how things have been working over time</li>
+</ul>
+<p>These dashboards help you keep an eye on your AWS resources and fix problems fast, so your apps and work keep running smoothly.</p>
+<h2 id="getting-started-with-aws-health-dashboards">Getting started with AWS Health Dashboards</h2>
+<h3 id="what-you-need-before-setup">What you need before setup</h3>
+<p>Before setting up your AWS Health Dashboard, make sure you have:</p>
+<figure><table>
+<thead>
+<tr>
+<th>Requirement</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>AWS account</td>
+<td>With permissions to use the AWS Management Console</td>
+</tr>
+<tr>
+<td>Basic AWS knowledge</td>
+<td>Understanding of AWS services and resources</td>
+</tr>
+<tr>
+<td>Console familiarity</td>
+<td>Know how to use the AWS Management Console</td>
+</tr>
+</tbody>
+</table></figure>
+<p>It's also good to know what you want to keep an eye on with your Health Dashboard. This helps you set it up better.</p>
+<h3 id="how-to-set-up-your-dashboard">How to set up your dashboard</h3>
+<p>Follow these steps to set up your AWS Health Dashboard:</p>
+<ol>
+<li>Log in to the AWS Management Console</li>
+<li>Find "AWS Health" using the search bar or service list</li>
+<li>Click "Create dashboard"</li>
+<li>Pick Service Health or Personal Health</li>
+<li>Choose which AWS services and resources to watch</li>
+<li>Add widgets, set up alerts, and change settings as needed</li>
+</ol>
+<h3 id="tips-for-a-good-setup">Tips for a good setup</h3>
+<p>Here's how to make your AWS Health Dashboard work well for you:</p>
+<figure><table>
+<thead>
+<tr>
+<th>Tip</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Start small</td>
+<td>Begin with a basic setup, add more later</td>
+</tr>
+<tr>
+<td>Make it yours</td>
+<td>Set up the dashboard to show what matters to you</td>
+</tr>
+<tr>
+<td>Use alerts</td>
+<td>Get notified when something needs your attention</td>
+</tr>
+<tr>
+<td>Keep it up to date</td>
+<td>Check and update your dashboard regularly</td>
+</tr>
+</tbody>
+</table></figure>
+<h2 id="how-to-use-aws-health-dashboards-for-monitoring">How to use AWS Health Dashboards for monitoring</h2>
+<h3 id="understanding-the-dashboard-layout">Understanding the dashboard layout</h3>
+<p>The AWS Health Dashboard shows how your AWS resources are doing. It has four main parts:</p>
+<figure><table>
+<thead>
+<tr>
+<th>Section</th>
+<th>What it shows</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Service Health</td>
+<td>How AWS services are working now</td>
+</tr>
+<tr>
+<td>Personal Health</td>
+<td>How your own AWS resources are doing</td>
+</tr>
+<tr>
+<td>Metrics</td>
+<td>Numbers that show how well things are working</td>
+</tr>
+<tr>
+<td>Events</td>
+<td>Things that have happened or will happen soon</td>
+</tr>
+</tbody>
+</table></figure>
+<h3 id="reading-dashboard-data">Reading dashboard data</h3>
+<p>When you look at the dashboard:</p>
+<ul>
+<li>Check the colors: Green means good, yellow means be careful, red means there's a problem</li>
+<li>Look at the numbers: See if they're normal or not</li>
+<li>Read about events: Find out what's happening and why</li>
+</ul>
+<h3 id="important-metrics-to-watch">Important metrics to watch</h3>
+<p>Keep an eye on these numbers:</p>
+<figure><table>
+<thead>
+<tr>
+<th>Metric</th>
+<th>Why it's important</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>CPU use</td>
+<td>Shows if your computer is working too hard</td>
+</tr>
+<tr>
+<td>Memory use</td>
+<td>Helps avoid running out of memory</td>
+</tr>
+<tr>
+<td>Disk space</td>
+<td>Makes sure you don't run out of room</td>
+</tr>
+<tr>
+<td>Request time</td>
+<td>Shows how fast your app is working</td>
+</tr>
+</tbody>
+</table></figure>
+<h3 id="creating-custom-views">Creating custom views</h3>
+<p>To make your own view:</p>
+<ol>
+<li>Click "Create custom view"</li>
+<li>Pick what you want to see</li>
+<li>Choose how it looks</li>
+<li>Save it for later</li>
+</ol>
+<h2 id="debugging-with-aws-health-dashboards">Debugging with AWS Health Dashboards</h2>
+<h3 id="spotting-problems">Spotting problems</h3>
+<p>To find issues using AWS Health Dashboards:</p>
+<figure><table>
+<thead>
+<tr>
+<th>Color</th>
+<th>What it means</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Green</td>
+<td>All good</td>
+</tr>
+<tr>
+<td>Yellow</td>
+<td>Possible problem</td>
+</tr>
+<tr>
+<td>Red</td>
+<td>Definite problem</td>
+</tr>
+</tbody>
+</table></figure>
+<p>Also:</p>
+<ul>
+<li>Look for odd numbers in the metrics</li>
+<li>Read what the events say</li>
+</ul>
+<h3 id="linking-events-across-services">Linking events across services</h3>
+<p>To connect events in different services:</p>
+<ul>
+<li>Use the "Related events" tab</li>
+<li>Click on an event to see more details</li>
+<li>Use the "Service" filter to see events for one service</li>
+</ul>
+<h3 id="using-logs-to-solve-issues">Using logs to solve issues</h3>
+<p>Logs help fix problems:</p>
+<ul>
+<li>Check the "Logs" tab</li>
+<li>Filter logs by service</li>
+<li>Look for error messages</li>
+</ul>
+<h3 id="more-debugging-methods">More debugging methods</h3>
+<p>Other ways to debug:</p>
+<figure><table>
+<thead>
+<tr>
+<th>Method</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>"Metrics" tab</td>
+<td>Shows numbers about the event</td>
+</tr>
+<tr>
+<td>Custom views</td>
+<td>Let you see only what you want</td>
+</tr>
+<tr>
+<td>Alerts</td>
+<td>Tell you when there's a problem</td>
+</tr>
+</tbody>
+</table></figure>
+<h2 id="connecting-aws-health-dashboards-to-other-aws-tools">Connecting AWS Health Dashboards to other AWS tools</h2>
+<h3 id="working-with-cloudwatch">Working with CloudWatch</h3>
+<p>AWS Health Dashboards can work together with <a href="https://docs.aws.amazon.com/cloudwatch/" target="_blank">Amazon CloudWatch</a>. CloudWatch helps you keep an eye on your AWS resources by collecting data and logs.</p>
+<p>To connect your AWS Health Dashboard to CloudWatch:</p>
+<ol>
+<li>Open AWS Health Dashboard</li>
+<li>Click the gear icon in the top right</li>
+<li>Choose "Integrations"</li>
+<li>Pick "CloudWatch"</li>
+<li>Follow the steps to connect them</li>
+</ol>
+<p>Once connected, you can:</p>
+<ul>
+<li>See CloudWatch data in your AWS Health Dashboard</li>
+<li>Look at logs to fix problems</li>
+<li>Make custom views with both AWS Health Dashboard and CloudWatch info</li>
+</ul>
+<h3 id="using-the-health-api">Using the Health API</h3>
+<p>The AWS Health API lets you use AWS Health Dashboard data in your own programs. With it, you can:</p>
+<figure><table>
+<thead>
+<tr>
+<th>What you can do</th>
+<th>How it helps</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Get health data</td>
+<td>See how your AWS resources are doing</td>
+</tr>
+<tr>
+<td>Make custom apps</td>
+<td>Use AWS Health Dashboard data in your own tools</td>
+</tr>
+<tr>
+<td>Do things automatically</td>
+<td>Set up actions based on AWS Health Dashboard info</td>
+</tr>
+</tbody>
+</table></figure>
+<p>To start using the Health API:</p>
+<ol>
+<li>Turn on the Health API in AWS</li>
+<li>Set up permissions to use it</li>
+<li>Use AWS tools to talk to the API</li>
+</ol>
+<h3 id="setting-up-lambda-for-auto-responses">Setting up Lambda for auto-responses</h3>
+<p><a href="https://docs.aws.amazon.com/lambda/" target="_blank">AWS Lambda</a> lets you run code when things happen. You can use it with AWS Health Dashboard to do things automatically when events occur.</p>
+<p>To set up Lambda with AWS Health Dashboard:</p>
+<ol>
+<li>Make a Lambda function</li>
+<li>Set it to run when something happens in AWS Health Dashboard</li>
+<li>Use the AWS Health Dashboard API to get info and decide what to do</li>
+</ol>
+<p>For example, you could make a Lambda function that tells your team when there's a problem. The function would:</p>
+<ul>
+<li>Get event info from AWS Health Dashboard</li>
+<li>Figure out how bad the problem is</li>
+<li>Send the right message to your team</li>
+</ul>
+<p>This helps you respond to issues faster without having to watch your dashboard all the time.</p>
+<h2 id="tips-for-better-monitoring-and-debugging">Tips for better monitoring and debugging</h2>
+<h3 id="regular-dashboard-checks">Regular dashboard checks</h3>
+<p>Checking your AWS Health Dashboard often helps you keep track of your AWS resources. Here's how to make it a habit:</p>
+<figure><table>
+<thead>
+<tr>
+<th>Tip</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Set a time</td>
+<td>Pick a time each day to look at your dashboard</td>
+</tr>
+<tr>
+<td>Quick review</td>
+<td>Spend a few minutes looking for any problems</td>
+</tr>
+<tr>
+<td>Use filters</td>
+<td>Sort and filter to find important info fast</td>
+</tr>
+<tr>
+<td>Make a list</td>
+<td>Write down tasks to fix any issues you find</td>
+</tr>
+</tbody>
+</table></figure>
+<p>By checking your dashboard regularly, you can catch problems early.</p>
+<h3 id="setting-up-alerts">Setting up alerts</h3>
+<p>Alerts let you know when something happens with your AWS resources. Here's how to set them up:</p>
+<figure><table>
+<thead>
+<tr>
+<th>Step</th>
+<th>Action</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>Choose what events you want to know about</td>
+</tr>
+<tr>
+<td>2</td>
+<td>Set up alerts for each type of event</td>
+</tr>
+<tr>
+<td>3</td>
+<td>Use filters to avoid getting too many alerts</td>
+</tr>
+<tr>
+<td>4</td>
+<td>Test your alerts to make sure they work</td>
+</tr>
+</tbody>
+</table></figure>
+<p>With alerts, you can fix problems quickly and keep your system running smoothly.</p>
+<h3 id="planning-responses-to-events">Planning responses to events</h3>
+<p>Having a plan for when things go wrong helps you fix issues fast. Here's how to make a plan:</p>
+<figure><table>
+<thead>
+<tr>
+<th>Step</th>
+<th>Action</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>List the types of problems that might happen</td>
+</tr>
+<tr>
+<td>2</td>
+<td>Write down steps to fix each type of problem</td>
+</tr>
+<tr>
+<td>3</td>
+<td>Check and update your plans often</td>
+</tr>
+<tr>
+<td>4</td>
+<td>Look at past events to make your plans better</td>
+</tr>
+</tbody>
+</table></figure>
+<h2 id="extra-features-and-advice">Extra features and advice</h2>
+<h3 id="preventing-issues-with-dashboards">Preventing issues with dashboards</h3>
+<p>To keep your AWS Health Dashboards working well, check and update them often. Here's what to do:</p>
+<figure><table>
+<thead>
+<tr>
+<th>Action</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Check dashboard speed</td>
+<td>Make sure your dashboard runs fast</td>
+</tr>
+<tr>
+<td>Update settings</td>
+<td>Change settings to fit what you need now</td>
+</tr>
+<tr>
+<td>Test everything</td>
+<td>Make sure all parts of your dashboard work right</td>
+</tr>
+</tbody>
+</table></figure>
+<p>By doing these things, you can stop problems before they start and keep your dashboard showing the right info about your AWS resources.</p>
+<h3 id="using-past-data-to-spot-future-issues">Using past data to spot future issues</h3>
+<p>AWS Health Dashboards let you look at old data to guess what might go wrong later. Here's how:</p>
+<figure><table>
+<thead>
+<tr>
+<th>Step</th>
+<th>What to do</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Look at old data</td>
+<td>Find patterns in what happened before</td>
+</tr>
+<tr>
+<td>Guess what might happen</td>
+<td>Use what you learned to guess future problems</td>
+</tr>
+<tr>
+<td>Make special views</td>
+<td>Set up your dashboard to show possible issues quickly</td>
+</tr>
+</tbody>
+</table></figure>
+<p>By looking at what happened before, you can stop problems before they start and keep your AWS stuff running smoothly.</p>
+<h3 id="dashboards-for-different-team-members">Dashboards for different team members</h3>
+<p>You can set up AWS Health Dashboards for each person on your team. Here's how:</p>
+<figure><table>
+<thead>
+<tr>
+<th>Action</th>
+<th>How it helps</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Make special views</td>
+<td>Show each person just what they need to see</td>
+</tr>
+<tr>
+<td>Set who can see what</td>
+<td>Control who can look at and change different dashboards</td>
+</tr>
+<tr>
+<td>Use ready-made setups</td>
+<td>Quickly make new dashboards for different people</td>
+</tr>
+</tbody>
+</table></figure>
+<p>This way, everyone on your team can see the info they need to do their job well.</p>
+<h2 id="fixing-common-problems">Fixing common problems</h2>
+<h3 id="solving-access-issues">Solving access issues</h3>
+<p>If you can't get into your AWS Health Dashboard, try these steps:</p>
+<figure><table>
+<thead>
+<tr>
+<th>Step</th>
+<th>What to do</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Check permissions</td>
+<td>Make sure you're allowed to use the dashboard</td>
+</tr>
+<tr>
+<td>Look at setup</td>
+<td>Check if your dashboard is set up right</td>
+</tr>
+<tr>
+<td>Try another way</td>
+<td>Use a different web browser or device</td>
+</tr>
+</tbody>
+</table></figure>
+<p>These steps should help you get back to watching your AWS resources.</p>
+<h3 id="fixing-data-mismatches">Fixing data mismatches</h3>
+<p>If the numbers in your dashboard don't look right:</p>
+<figure><table>
+<thead>
+<tr>
+<th>Problem</th>
+<th>What to check</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Wrong data sources</td>
+<td>Make sure your AWS services are set up right</td>
+</tr>
+<tr>
+<td>Incorrect settings</td>
+<td>Check if your dashboard is showing the right info</td>
+</tr>
+<tr>
+<td>Data problems</td>
+<td>Look for missing or weird data</td>
+</tr>
+</tbody>
+</table></figure>
+<p>Doing these checks will help make sure your dashboard shows the right info.</p>
+<h3 id="improving-dashboard-speed">Improving dashboard speed</h3>
+<p>If your dashboard is slow:</p>
+<figure><table>
+<thead>
+<tr>
+<th>Fix</th>
+<th>How it helps</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Use fewer widgets</td>
+<td>Makes the dashboard simpler and faster</td>
+</tr>
+<tr>
+<td>Make better data queries</td>
+<td>Gets info from AWS more quickly</td>
+</tr>
+<tr>
+<td>Check AWS resource use</td>
+<td>Makes sure you have enough computer power</td>
+</tr>
+</tbody>
+</table></figure>
+<p>These steps can help your dashboard run faster and show info more quickly.</p>
+<h2 id="wrap-up">Wrap-up</h2>
+<h3 id="main-points-to-remember">Main points to remember</h3>
+<p>Here's a quick look at the key things to know about AWS Health Dashboards:</p>
+<figure><table>
+<thead>
+<tr>
+<th>Point</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Purpose</td>
+<td>Watch and fix AWS resources</td>
+</tr>
+<tr>
+<td>Types</td>
+<td>Service Health and Personal Health</td>
+</tr>
+<tr>
+<td>Setup</td>
+<td>Important for good monitoring</td>
+</tr>
+<tr>
+<td>Skills needed</td>
+<td>Understanding layout, reading data, making custom views</td>
+</tr>
+<tr>
+<td>Works with</td>
+<td>CloudWatch, Health API, Lambda</td>
+</tr>
+<tr>
+<td>Best practices</td>
+<td>Regular checks, alerts, plan for problems</td>
+</tr>
+</tbody>
+</table></figure>
+<h3 id="keep-improving-your-monitoring">Keep improving your monitoring</h3>
+<p>To get better at using your AWS Health Dashboard:</p>
+<figure><table>
+<thead>
+<tr>
+<th>Tip</th>
+<th>How to do it</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Read AWS docs</td>
+<td>Check for new info often</td>
+</tr>
+<tr>
+<td>Try new things</td>
+<td>Use new features to see if they help</td>
+</tr>
+<tr>
+<td>Talk to others</td>
+<td>Join online groups to learn from others</td>
+</tr>
+<tr>
+<td>Keep checking</td>
+<td>Look at how you use the dashboard and make it better</td>
+</tr>
+</tbody>
+</table></figure>
+<h2 id="faqs">FAQs</h2>
+<h3 id="what's-the-difference-between-aws-health-dashboard-and-personal-health-dashboard%3F">What's the difference between AWS Health Dashboard and Personal Health Dashboard?</h3>
+<figure><table>
+<thead>
+<tr>
+<th>Dashboard Type</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Service Health Dashboard</td>
+<td>Shows overall status of AWS services</td>
+</tr>
+<tr>
+<td>Personal Health Dashboard</td>
+<td>Displays status of AWS services you use</td>
+</tr>
+</tbody>
+</table></figure>
+<h3 id="what-does-the-aws-health-dashboard-do%3F">What does the AWS Health Dashboard do?</h3>
+<p>The AWS Health Dashboard shows you:</p>
+<ul>
+<li>Events that might affect your AWS services or account</li>
+<li>Issues specific to your account</li>
+<li>Upcoming changes that could impact your resources</li>
+</ul>
+<h3 id="how-can-i-get-alerts-about-aws-health-issues%3F">How can I get alerts about AWS health issues?</h3>
+<p>Use <a href="https://docs.aws.amazon.com/eventbridge/" target="_blank">Amazon EventBridge</a> to set up notifications for AWS Health events.</p>
+<h3 id="how-do-i-access-the-aws-health-dashboard%3F">How do I access the AWS Health Dashboard?</h3>
+<ol>
+<li>Go to https://health.aws.amazon.com/health/home</li>
+<li>Sign in to your AWS account</li>
+<li>Look for "Your account health" in the menu</li>
+</ol>
+<h3 id="how-can-i-check-aws-service-health%3F">How can I check AWS service health?</h3>
+<p>Use the AWS Health Dashboard to:</p>
+<ul>
+<li>See events affecting your services</li>
+<li>View issues specific to your account</li>
+<li>Check upcoming changes to your resources</li>
+</ul>
+<figure><table>
+<thead>
+<tr>
+<th>Dashboard Section</th>
+<th>Information Shown</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Open and recent issues</td>
+<td>Recently opened and closed events</td>
+</tr>
+<tr>
+<td>Scheduled changes</td>
+<td>Upcoming events that might affect your services</td>
+</tr>
+</tbody>
+</table></figure>
+<p>
+<h2>Related posts</h2>
+<ul>
+<li><a href="/blog/aws-performance-insights-monitoring-rds-databases/">AWS Performance Insights: Monitoring RDS Databases</a></li><li><a href="/blog/aws-config-resource-inventory-change-tracking-guide/">AWS Config: Resource Inventory, Change Tracking Guide</a></li><li><a href="/blog/aws-devops-monitoring-metrics-tools-best-practices/">AWS DevOps Monitoring: Metrics, Tools, Best Practices</a></li><li><a href="/blog/aws-lambda-insights-serverless-monitoring-guide/">AWS Lambda Insights: Serverless Monitoring Guide</a></li>
+</ul>
+</p>

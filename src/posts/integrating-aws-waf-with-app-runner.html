@@ -1,0 +1,261 @@
+---
+layout: post.njk
+templateEngineOverride: html
+tags: posts
+title: "Integrating AWS WAF with App Runner"
+description: "Learn how to effectively integrate a web application firewall with App Runner to enhance security and manage traffic for your web applications."
+date: "2025-09-04"
+datePublished: "2025-09-04T02:51:30.035000+00:00"
+heroImage: "/assets/media/102758215ac75909b456.jpg"
+permalink: "/blog/integrating-aws-waf-with-app-runner/"
+sourceUrl: "https://awsforengineers.com/blog/integrating-aws-waf-with-app-runner/"
+---
+<p><a href="https://aws.amazon.com/waf/" rel="nofollow noopener noreferrer" target="_blank">AWS WAF</a> (Web Application Firewall) protects your App Runner services by filtering malicious traffic, reducing resource usage, and improving security. App Runner simplifies deploying web applications, while <a href="https://aws.amazon.com/waf/" rel="nofollow noopener noreferrer" target="_blank">AWS WAF</a> adds an extra layer of protection against threats like SQL injection and XSS.</p>
+<h3 id="key-takeaways">Key Takeaways:</h3>
+<ul>
+<li><strong>AWS WAF</strong>: Blocks harmful HTTP/HTTPS requests using custom or managed rules.</li>
+<li><strong><a href="https://aws.amazon.com/apprunner/" rel="nofollow noopener noreferrer" target="_blank">AWS App Runner</a></strong>: Deploys web apps with minimal effort, handling scaling and HTTPS endpoints.</li>
+<li><strong>Integration Benefits</strong>: Secure public endpoints, prevent attacks, and manage traffic efficiently.</li>
+</ul>
+<h3 id="steps-to-integrate">Steps to Integrate:</h3>
+<ol>
+<li><strong>Set Up App Runner</strong>: Deploy your service from source code or a container image.</li>
+<li><strong>Create a WAF Web ACL</strong>: Define rules like IP restrictions, rate limits, or AWS-managed rule groups.</li>
+<li><strong>Associate Web ACL with App Runner</strong>: Use the AWS Console, CLI, or API to link the WAF to your service.</li>
+</ol>
+<p><strong>Note</strong>: WAF rules work differently for public and private App Runner services. Private services require security group rules for IP filtering.</p>
+<h2 id="prerequisites-for-integration">Prerequisites for Integration</h2>
+<p>Before diving into the integration process, make sure you've set up the necessary <a href="/blog/">AWS services</a> and verified regional compatibility. You'll also need specific permissions and a properly configured App Runner service to serve as the foundation for this setup.</p>
+<h3 id="aws-services-and-permissions-required">AWS Services and Permissions Required</h3>
+<p>To get started, you'll need access to <strong>AWS WAF</strong>, <strong>App Runner</strong>, and <strong>IAM</strong>. Specific IAM permissions are crucial for associating a WAF web ACL with your App Runner service.</p>
+<p>Here are the required permissions:</p>
+<ul>
+<li>
+<strong>For WAF operations</strong>:
+<ul>
+<li><code>wafv2:AssociateWebACL</code></li>
+<li><code>wafv2:DisassociateWebACL</code></li>
+<li><code>wafv2:GetWebACLForResource</code></li>
+<li><code>wafv2:CreateWebACL</code></li>
+<li><code>wafv2:UpdateWebACL</code></li>
+<li><code>wafv2:GetWebACL</code></li>
+<li><code>wafv2:ListWebACLs</code></li>
+</ul>
+</li>
+<li>
+<strong>For App Runner operations</strong>:
+<ul>
+<li><code>apprunner:AssociateWebAcl</code></li>
+<li><code>apprunner:DisassociateWebAcl</code></li>
+<li><code>apprunner:DescribeWebAclForService</code></li>
+</ul>
+</li>
+</ul>
+<p>These permissions are essential for creating, managing, and associating WAF web ACLs with an App Runner service, as well as monitoring their configurations.</p>
+<h3 id="aws-account-and-region-support">AWS Account and Region Support</h3>
+<p>AWS WAF can protect App Runner services in regions where both services are available. However, keep in mind that the WAF web ACL and the App Runner service must exist in the <strong>same region</strong>. For instance, you cannot protect an App Runner service in <code>us-east-1</code> using a WAF web ACL created in <code>us-west-2</code>.</p>
+<p>When associating a new web ACL with your App Runner service, remember that each service can only have <strong>one web ACL</strong> at a time. After initiating the association, it may take anywhere from a few seconds to several minutes for the web ACL to propagate fully. During this time, attempting to use it might result in a <code>WAFUnavailableEntityException</code> error.</p>
+<p>One key limitation to note: <strong>Private App Runner services</strong> cannot use WAF source IP rules. This is because request source IP data isn’t forwarded to private services when WAF is in use. If your private service requires source IP or CIDR-based traffic controls, you'll need to rely on <strong>security group rules</strong> for private endpoints instead of WAF web ACLs.</p>
+<p>Additionally, AWS WAF inspects up to <strong>64 KB</strong> of request bodies for App Runner services, with a default limit of <strong>16 KB</strong> (configurable). Standard AWS WAF pricing applies, but there are no extra charges for using WAF with App Runner.</p>
+<p>Once you've confirmed the required permissions and regional setup, you're ready to move on to deploying a basic App Runner service.</p>
+<h3 id="setting-up-a-basic-app-runner-service">Setting Up a Basic App Runner Service</h3>
+<p>To proceed, ensure you have an App Runner service up and running. This can be deployed from either source code or container images. During setup, configure the following:</p>
+<ul>
+<li><strong>Repository connection</strong></li>
+<li><strong>Build commands</strong></li>
+<li><strong>Start command</strong></li>
+<li><strong>Environment variables</strong></li>
+</ul>
+<p>Wait until the service status changes to <strong>Running</strong> before starting the WAF integration process.</p>
+<h2 id="creating-and-configuring-a-waf-web-acl">Creating and Configuring a WAF Web ACL</h2>
+<p>Now that you've got your App Runner service up and running, it's time to strengthen its defenses by creating and configuring a WAF web ACL. A WAF web ACL is essentially a set of rules that determines which requests should be allowed, blocked, or logged based on specific conditions you define. This is a key step in protecting your application from web-based threats.</p>
+<h3 id="defining-waf-web-acl-rules">Defining WAF Web ACL Rules</h3>
+<p>WAF web ACLs offer multiple rule types to address various security needs:</p>
+<ul>
+<li>
+<strong>Rate-based rules</strong>: These are great for mitigating DDoS attacks by limiting the number of requests from a single IP. For example, you can block IPs that exceed 2,000 requests within five minutes.
+</li>
+<li>
+<strong>IP set rules</strong>: These allow you to create lists of IP addresses or CIDR blocks to either allow or block. Use them to deny access from known malicious sources or to permit traffic from trusted networks, like your office.
+</li>
+<li>
+<strong>Managed rule groups</strong>: AWS provides pre-configured rule groups that protect against common threats. Examples include the AWS Core Rule Set (guarding against vulnerabilities like those in the <a href="https://owasp.org/www-project-top-ten/" rel="nofollow noopener noreferrer" target="_blank">OWASP Top 10</a>), Known Bad Inputs (blocking malicious patterns), and SQL injection prevention.
+</li>
+<li>
+<strong>Custom rules</strong>: These let you define specific conditions based on request details such as headers, query strings, or request bodies. For instance, you might block requests with a specific user agent or allow only those containing certain authentication headers.
+</li>
+</ul>
+<p>Each rule has a priority number, dictating the order in which WAF evaluates them. Lower numbers take precedence. If a rule matches a request, the action (allow, block, or count) is applied, and further rule processing stops unless the action is set to <strong>Count</strong>.</p>
+<p>Once you've defined your rules, you can create the web ACL using your preferred method.</p>
+<h3 id="using-aws-console-or-aws-cli">Using AWS Console or AWS CLI</h3>
+<p>If you prefer a visual workflow, the <strong>AWS Management Console</strong> makes creating a web ACL straightforward. Start by navigating to the WAF service, selecting <strong>Web ACLs</strong>, and clicking <strong>Create web ACL</strong>. Since App Runner is a regional service, choose <strong>Regional</strong> as the resource type.</p>
+<p>During setup, you'll need to specify a <strong>default action</strong> for requests that don’t match any rules. Most configurations use <strong>Allow</strong> as the default action, adding rules later to block unwanted traffic.</p>
+<p>For those who prefer command-line tools, the AWS CLI provides a powerful alternative. Here's an example command to create a web ACL:</p>
+<pre><code>aws wafv2 create-web-acl \
+  --scope REGIONAL \
+  --default-action '{"Allow": {}}' \
+  --name "AppRunnerWebACL" \
+  --region us-east-1
+</code></pre>
+<p>After creating the web ACL, you can add rules using additional AWS CLI commands. This method is especially useful for automation and offers fine-grained control.</p>
+<p>When incorporating managed rule groups, you can override specific rules. For instance, if the AWS Core Rule Set blocks legitimate traffic, you can modify the problematic rule to <strong>Count</strong> instead of <strong>Block</strong>, ensuring you still benefit from the broader protection.</p>
+<p>Alternatively, you can define your entire WAF setup in a <a href="https://aws.amazon.com/cloudformation/" rel="nofollow noopener noreferrer" target="_blank">CloudFormation</a> template. This approach ensures version control and makes deployments consistent across environments.</p>
+<p>With your web ACL in place, you’ll want to follow best practices to maximize its effectiveness.</p>
+<h3 id="best-practices-for-waf-configuration">Best Practices for WAF Configuration</h3>
+<ul>
+<li>
+<strong>Start with monitoring</strong>: Initially, set new rules to the <strong>Count</strong> action. This logs matches without affecting traffic. Review logs for false positives before switching rules to <strong>Block</strong>.
+</li>
+<li>
+<strong>Leverage managed rule groups</strong>: The AWS Core Rule Set offers solid protection against common attacks and is regularly updated by AWS. Pair it with SQL injection prevention for a strong baseline defense.
+</li>
+<li>
+<strong>Set appropriate thresholds for rate-based rules</strong>: Configure thresholds that align with your typical traffic patterns. While 2,000 requests per five minutes is a good starting point, adjust as needed for high-traffic applications.
+</li>
+<li>
+<strong>Prioritize rule order</strong>: Place specific rules, like an IP allowlist for your office network, before broader managed rule groups. This reduces processing time and ensures critical rules are applied first.
+</li>
+<li>
+<strong>Monitor metrics in <a href="https://aws.amazon.com/cloudwatch/" rel="nofollow noopener noreferrer" target="_blank">CloudWatch</a></strong>: Keep an eye on key metrics like blocked, allowed, and sampled requests. A spike in blocked requests could signal an attack or overly restrictive rules.
+</li>
+<li>
+<strong>Enable WAF logging</strong>: Detailed logs in CloudWatch Logs, <a href="https://aws.amazon.com/s3/" rel="nofollow noopener noreferrer" target="_blank">Amazon S3</a>, or <a href="https://aws.amazon.com/firehose/" rel="nofollow noopener noreferrer" target="_blank">Kinesis Data Firehose</a> can help you troubleshoot and fine-tune your configuration.
+</li>
+</ul>
+<p>Before deploying your WAF setup to production, thoroughly test it in a staging environment. Simulate attack scenarios to confirm that malicious traffic is blocked while legitimate requests flow through, especially for critical API endpoints and forms.</p>
+<h2 id="connecting-waf-web-acl-with-an-app-runner-service">Connecting WAF Web ACL with an App Runner Service</h2>
+<p>Once your web ACL is configured, the next step is linking it to your App Runner service. This connection ensures incoming requests are filtered according to your defined rules. AWS offers several ways to set up this association, but the App Runner Console is the easiest starting point.</p>
+<h3 id="using-the-app-runner-console">Using the App Runner Console</h3>
+<p>The App Runner console simplifies the process of associating a web ACL with your service. You can do this either while creating a new service or by updating an existing one.</p>
+<p>For <strong>new services</strong>, go to the App Runner console and select <strong>Create an App Runner service</strong>. After setting up your source code or container image, move to the <strong>Configure Service</strong> step. Scroll down to the <strong>Web application firewall</strong> section under <strong>Security</strong>. Toggle the <strong>Activate</strong> button to see your options. If you already have a web ACL, select it from the <strong>Choose a web ACL</strong> table, which lists all available regional web ACLs in your current AWS region. Need a new web ACL? Click <strong>Create web ACL</strong> to open the AWS WAF console and set one up.</p>
+<p>For <strong>existing services</strong>, head to the service's <strong>Configuration</strong> tab and click <strong>Edit</strong> under <strong>Configure service</strong>. In the <strong>Web application firewall</strong> section, activate the toggle and choose your desired web ACL from the list.</p>
+<p>Make sure your IAM permissions allow this association.</p>
+<p><strong>Timing is key</strong>: When a web ACL is created, it may take a few minutes to propagate fully. Trying to associate it too early can result in a <code>WAFUnavailableEntityException</code>. Also, avoid refreshing the browser or leaving the App Runner console during this propagation period, as it might disrupt the process.</p>
+<p>After selecting your web ACL, click <strong>Next</strong> for new services or <strong>Save changes</strong> for existing ones. To confirm the association, check the <strong>Web application firewall</strong> section in the service's <strong>Configuration</strong> tab.</p>
+<h3 id="using-aws-cli-or-api">Using AWS CLI or API</h3>
+<p>For a more programmatic approach, the AWS CLI lets you associate a web ACL with your App Runner service. You'll need the ARNs of both your web ACL and App Runner service.</p>
+<p>Run the following command to associate the web ACL:</p>
+<pre><code>aws wafv2 associate-web-acl \
+  --web-acl-arn "arn:aws:wafv2:us-east-1:123456789012:regional/webacl/AppRunnerWebACL/a1b2c3d4-5678-90ab-cdef-EXAMPLE11111" \
+  --resource-arn "arn:aws:apprunner:us-east-1:123456789012:service/my-app-service/1234567890123456789012345678901234567890" \
+  --region us-east-1
+</code></pre>
+<p>Keep in mind that both the web ACL and App Runner service must be in the same AWS region, as App Runner operates regionally.</p>
+<p>To find your App Runner service ARN, use:</p>
+<pre><code>aws apprunner list-services --region us-east-1
+</code></pre>
+<p>And to get your web ACL ARN, use:</p>
+<pre><code>aws wafv2 list-web-acls --scope REGIONAL --region us-east-1
+</code></pre>
+<p>This method is ideal for CI/CD pipelines. You can include these commands in CloudFormation templates, <a href="https://aws.amazon.com/cdk/" rel="nofollow noopener noreferrer" target="_blank">AWS CDK</a> stacks, or deployment scripts to maintain consistent security settings across environments.</p>
+<p>To remove a web ACL later, use the <code>disassociate-web-acl</code> command:</p>
+<pre><code>aws wafv2 disassociate-web-acl \
+  --resource-arn "arn:aws:apprunner:us-east-1:123456789012:service/my-app-service/1234567890123456789012345678901234567890" \
+  --region us-east-1
+</code></pre>
+<h3 id="public-vs-private-app-runner-services">Public vs. Private App Runner Services</h3>
+<p>The process for associating a web ACL is the same for both public and private App Runner services. However, there are some key differences to be aware of.</p>
+<p><strong>Public App Runner services</strong> are accessible over the internet by default. These services work seamlessly with all WAF rule types, including IP-based rules. Source IP information is passed along, enabling rules like rate limiting, IP set restrictions, and geolocation filtering to function correctly.</p>
+<p><strong>Private App Runner services</strong>, on the other hand, are only accessible within an <a href="https://aws.amazon.com/vpc/" rel="nofollow noopener noreferrer" target="_blank">Amazon VPC</a>. This setup has a notable limitation: source IP rules in WAF web ACLs don't work as expected. AWS doesn't currently support forwarding source IP data to private App Runner services when WAF is involved.</p>
+<p>If you need IP-based traffic control for private services, use <strong>security group rules for private endpoints</strong> instead. Configure your VPC endpoint's security groups to manage traffic by IP ranges, while relying on WAF for other protections like SQL injection and XSS filtering.</p>
+<p>Other WAF rule types, such as managed rule groups, custom rules based on headers or query parameters, and geographic restrictions, still function effectively with private services.</p>
+
+<h2 id="managing-and-updating-waf-rules">Managing and Updating WAF Rules</h2>
+<p>Once you've integrated AWS WAF with your App Runner service, it's crucial to regularly update and adjust your WAF rules. This helps address new threats, minimize false positives, and maintain optimal performance in line with your application's traffic patterns.</p>
+<h3 id="updating-and-fine-tuning-waf-rules">Updating and Fine-Tuning WAF Rules</h3>
+<p>WAF rules are not a one-and-done setup. As your application evolves and new threats emerge, your rules will need adjustments.</p>
+<p>To make changes, use the AWS WAF console. Updates take effect within 60 seconds. Simply navigate to your web ACL, select the rule, and modify settings like rate limits, IP sets, or custom rule conditions.</p>
+<p>When adding new rules, pay attention to their priority order - rules with lower numbers are executed first. This ensures critical blocks are processed before less urgent ones. For instance, you might add seasonal IP restrictions, adopt new managed rule groups from the AWS Marketplace, or create custom rules to counter specific attack patterns.</p>
+<p>Before fully activating new rules, use the <strong>Count mode</strong> to monitor their impact. This lets you observe the rule's behavior without blocking legitimate users. Once you're confident the rule is working as intended, you can switch it to <strong>Block</strong> mode.</p>
+<p>Streamline your web ACL by removing rules that show no matches over time or consolidating similar ones. A leaner ACL can improve response times. Also, keep geographic restrictions updated. If your business expands into new regions or you identify threats from specific areas, adjust your geo-blocking rules accordingly. Similarly, IP set rules should reflect changes in your organization's network or newly identified threat sources.</p>
+<p>Finally, ensure you have effective monitoring in place to evaluate how your updates perform.</p>
+<h3 id="monitoring-waf-activity">Monitoring WAF Activity</h3>
+<p>Monitoring is key to understanding both your application's security and the effectiveness of your WAF rules. AWS offers several tools to help you track activity and performance.</p>
+<p><strong>CloudWatch metrics</strong> provide insights into AllowedRequests, BlockedRequests, and CountedRequests. These metrics can reveal traffic trends and help you assess rule performance. Set up <a href="/blog/cloudwatch-alarms-best-practices-for-thresholds-and-conditions/">CloudWatch alarms</a> to detect unusual spikes in blocked requests, which could indicate an attack or misconfigured rules.</p>
+<p>Enable logging in your web ACL settings to send detailed logs to CloudWatch Logs, S3, or Kinesis Data Firehose. These logs are invaluable for diagnosing false positives or analyzing attack patterns.</p>
+<p>You can also use <strong>AWS WAF Security Automations</strong> to enhance monitoring. This solution automatically creates CloudWatch dashboards and sets up automated responses to common attack patterns. It's especially helpful during sudden traffic spikes or coordinated attacks that might overwhelm manual responses.</p>
+<p>Keep an eye on costs, too. AWS WAF charges are based on web ACLs, rules, and request volume. Use <a href="https://aws.amazon.com/aws-cost-management/aws-cost-explorer/" rel="nofollow noopener noreferrer" target="_blank">AWS Cost Explorer</a> to monitor your monthly expenses, especially if you're processing large traffic volumes or using multiple managed rule groups. Regularly review your enabled rule groups to ensure they provide value.</p>
+<p>Performance monitoring is equally important. Track your App Runner service's response times before and after implementing WAF rules. While WAF typically adds minimal latency, complex custom rules or multiple managed rule groups can sometimes slow things down.</p>
+<p>During traffic spikes or suspected attacks, real-time monitoring becomes critical. Use the <strong>Sampled requests</strong> section in the WAF console to quickly review recent requests that matched your rules. This helps you identify whether blocks are justified or if adjustments are needed.</p>
+<p>To manage updates effectively, it's also worth comparing different configuration methods.</p>
+<h3 id="configuration-methods-comparison">Configuration Methods Comparison</h3>
+<p>Choosing the right configuration method can make managing WAF rules more efficient. Each method has its strengths and trade-offs, depending on your team's needs.</p>
+<figure><table>
+<thead>
+<tr>
+<th>Method</th>
+<th>Best For</th>
+<th>Advantages</th>
+<th>Disadvantages</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>AWS Console</strong></td>
+<td>Quick changes, troubleshooting</td>
+<td>User-friendly interface, immediate feedback, easy to test rules</td>
+<td>Manual process, lacks version control, harder to replicate across environments</td>
+</tr>
+<tr>
+<td><strong>AWS CLI</strong></td>
+<td>Automation, bulk updates</td>
+<td>Scriptable, integrates with CI/CD workflows, repeatable</td>
+<td>Requires CLI knowledge, less intuitive, harder to visualize complex rules</td>
+</tr>
+<tr>
+<td><strong>CloudFormation/CDK</strong></td>
+<td>Long-term consistency, compliance</td>
+<td>Version-controlled, consistent deployments, rollback options</td>
+<td>Steeper learning curve, slower for testing, requires template expertise</td>
+</tr>
+<tr>
+<td><strong><a href="https://www.terraform.io/" rel="nofollow noopener noreferrer" target="_blank">Terraform</a></strong></td>
+<td>Multi-cloud setups, existing workflows</td>
+<td>Familiar for Terraform users, state management, plan/apply workflow</td>
+<td>Third-party tool dependency, may lag in supporting new WAF features</td>
+</tr>
+</tbody>
+</table></figure>
+<p>The <strong>AWS Console</strong> is ideal for quick adjustments or troubleshooting live issues. Its visual interface makes it easy to understand rule relationships and test configurations.</p>
+<p>The <strong>AWS CLI</strong> is great for production environments where consistency is key. You can automate tasks like updating IP sets or deploying emergency blocks across multiple web ACLs.</p>
+<p>Using <strong><a href="/blog/aws-engineering-blog-mastering-infrastructure-as-code/">infrastructure as code</a></strong> tools like CloudFormation or CDK ensures your WAF configuration is documented, version-controlled, and easily reproducible. This approach is particularly useful for compliance and team collaboration.</p>
+<p>Many organizations adopt a <strong>hybrid approach</strong>, combining infrastructure as code for foundational configurations with console access for real-time adjustments. This blend provides flexibility while ensuring long-term stability.</p>
+<p>Establish clear guidelines on when to use each method. For example, use the console for immediate security responses but rely on CLI or infrastructure as code for planned updates. This ensures your WAF setup remains both effective and manageable over time.</p>
+<h2 id="troubleshooting-and-best-practices">Troubleshooting and Best Practices</h2>
+<p>Integrating AWS WAF with App Runner can come with its own set of challenges. Below are some common issues you might face and practical ways to tackle them.</p>
+<h3 id="common-issues-and-solutions">Common Issues and Solutions</h3>
+<p><strong>Permission errors:</strong><br/>
+Double-check that your IAM role includes the necessary permissions, such as <code>wafv2:AssociateWebACL</code>, <code>wafv2:DisassociateWebACL</code>, and <code>apprunner:AssociateWebAcl</code>. Without these, you'll run into "access denied" errors when trying to link your web ACL to your App Runner service.</p>
+<p><strong>WAFUnavailableEntityException:</strong><br/>
+This error often pops up when you try to associate a web ACL immediately after creating it. Give it a few minutes before attempting again.</p>
+<p><strong>WAFNonexistentItemException:</strong><br/>
+This error usually signals that your App Runner service isn't in the right state. Make sure your service is running and not stuck in states like <code>CREATE_FAILED</code>, <code>DELETE_FAILED</code>, <code>DELETED</code>, or <code>OPERATION_IN_PROGRESS</code>.</p>
+<p><strong>Handling large requests:</strong><br/>
+If your requests exceed the standard inspection limits, configure your WAF rules with the <strong>Continue</strong> action for large content types. This allows AWS WAF to inspect the first 8,192 bytes of a request and continue processing if no threats are found.</p>
+<p><strong>Source IP filtering for private services:</strong><br/>
+For private App Runner services, use VPC security groups to manage source IP restrictions instead of relying on WAF.</p>
+<p><strong>False positive blocks:</strong><br/>
+Use the Sampled Requests feature to review traffic that was blocked. This helps identify rules causing false positives. If needed, switch those rules to <strong>Count</strong> mode temporarily while fine-tuning their conditions.</p>
+<p>Addressing these challenges is just the start. Following best practices will help you maintain a secure and compliant setup.</p>
+<h3 id="security-and-compliance-best-practices">Security and Compliance Best Practices</h3>
+<p>To keep your integration secure and functional, it's essential to adopt proactive measures:</p>
+<ul>
+<li>Regularly update and test your WAF rules to stay ahead of new threats. Always test changes in a staging environment first to avoid blocking legitimate traffic.</li>
+<li>Use infrastructure-as-code tools for managing your WAF configurations. This approach makes it easier to track changes and roll back updates if something goes wrong.</li>
+</ul>
+<h2 id="conclusion">Conclusion</h2>
+<p>By integrating AWS WAF with App Runner, you can effectively secure your containerized applications against threats like web exploits, DDoS attacks, and malicious bots. This protection is achieved through a straightforward setup process that strengthens your application's defenses.</p>
+<p>The process involves creating a WAF web ACL with specific rules and linking it to your App Runner service using the AWS Console or CLI. This approach not only reduces the load on your containers but also ensures optimal performance by blocking unwanted requests at the edge, preventing unnecessary scaling and keeping costs predictable.</p>
+<p>With monitoring tools like CloudWatch and WAF logs, you gain valuable insights into blocked requests and attack patterns, enabling you to fine-tune rules in real time. To stay ahead of evolving threats, regularly update your WAF rules using infrastructure-as-code practices, avoiding configuration drift and maintaining a strong security posture.</p>
+<p>This integration is especially suited for applications handling sensitive data, serving public traffic, or requiring strict compliance. By combining App Runner's ease of use with AWS WAF's advanced security features, you can achieve scalable, reliable protection for modern applications.</p>
+<h2 id="faqs">FAQs</h2>
+<h3 id="how-can-i-set-up-aws-waf-to-protect-my-app-runner-service-without-disrupting-legitimate-traffic">How can I set up AWS WAF to protect my App Runner service without disrupting legitimate traffic?</h3>
+<p>To safeguard your App Runner service using <strong>AWS WAF</strong> without disrupting genuine traffic, start by studying your application's typical traffic patterns. Leveraging <strong>managed rule groups</strong> is a great starting point since they provide a solid base and reduce the chances of false positives. Begin with less restrictive rules and adjust them gradually as you observe how your traffic behaves.</p>
+<p>Keep a close eye on <strong>WAF logs</strong> and key metrics to spot and resolve any false positives. Testing your rules in a staging environment before rolling them out to production is a smart way to confirm they function as expected. By continuously refining and adjusting your rules, you can strike the right balance between robust security and a seamless user experience.</p>
+<h3 id="what-should-i-consider-when-integrating-aws-waf-with-private-app-runner-services-and-how-is-it-different-from-public-services">What should I consider when integrating AWS WAF with private App Runner services, and how is it different from public services?</h3>
+<p>When working with <strong>AWS WAF</strong> and private App Runner services, managing traffic becomes a bit different. Unlike public App Runner services, where <strong>web ACLs</strong> in WAF can directly block malicious traffic, private endpoints require a different approach. Since WAF source IP rules don’t support private endpoints, you’ll need to rely on <strong>security group rules</strong> to control access.</p>
+<p>For private services, it’s crucial to configure security groups to allow traffic only from trusted IP ranges or CIDR blocks. This ensures that your endpoints remain secure. On the other hand, public App Runner services have a more straightforward setup, as WAF can directly filter out web exploits without additional configurations. The key difference here is the extra step needed to safeguard private services effectively.</p>
+<h3 id="how-can-i-automate-associating-and-managing-aws-waf-web-acls-with-app-runner-services-and-why-is-it-beneficial">How can I automate associating and managing AWS WAF web ACLs with App Runner services, and why is it beneficial?</h3>
+<p>You can set up automated management of <strong>AWS WAF web ACLs</strong> for <strong>AWS App Runner services</strong> by leveraging infrastructure-as-code tools like AWS CloudFormation or Terraform. These tools let you define and manage WAF configurations programmatically, using resources such as <code>AWS::WAFv2::WebACLAssociation</code>.</p>
+<p>By automating this process, you ensure security policies are applied consistently while cutting down on manual work. This approach streamlines updates, reduces the chances of configuration mistakes, and boosts the overall reliability of your deployments - all while saving valuable time.</p>
+<h2>Related Blog Posts</h2><ul><li><a href="/blog/how-automation-rules-work-in-aws-security-hub/">How Automation Rules Work in AWS Security Hub</a></li><li><a href="/blog/aws-app-mesh-for-service-mesh-integration/">AWS App Mesh for Service Mesh Integration</a></li><li><a href="/blog/aws-waf-and-shield-pricing-explained/">AWS WAF and Shield Pricing Explained</a></li><li><a href="/blog/cloudfront-ddos-protection-aws-shield-best-practices/">CloudFront DDoS Protection: AWS Shield Best Practices</a></li></ul><script type="application/ld+json">{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"How can I set up AWS WAF to protect my App Runner service without disrupting legitimate traffic?","acceptedAnswer":{"@type":"Answer","text":"<p>To safeguard your App Runner service using <strong>AWS WAF</strong> without disrupting genuine traffic, start by studying your application's typical traffic patterns. Leveraging <strong>managed rule groups</strong> is a great starting point since they provide a solid base and reduce the chances of false positives. Begin with less restrictive rules and adjust them gradually as you observe how your traffic behaves.</p> <p>Keep a close eye on <strong>WAF logs</strong> and key metrics to spot and resolve any false positives. Testing your rules in a staging environment before rolling them out to production is a smart way to confirm they function as expected. By continuously refining and adjusting your rules, you can strike the right balance between robust security and a seamless user experience.</p>"}},{"@type":"Question","name":"What should I consider when integrating AWS WAF with private App Runner services, and how is it different from public services?","acceptedAnswer":{"@type":"Answer","text":"<p>When working with <strong>AWS WAF</strong> and private App Runner services, managing traffic becomes a bit different. Unlike public App Runner services, where <strong>web ACLs</strong> in WAF can directly block malicious traffic, private endpoints require a different approach. Since WAF source IP rules don’t support private endpoints, you’ll need to rely on <strong>security group rules</strong> to control access.</p> <p>For private services, it’s crucial to configure security groups to allow traffic only from trusted IP ranges or CIDR blocks. This ensures that your endpoints remain secure. On the other hand, public App Runner services have a more straightforward setup, as WAF can directly filter out web exploits without additional configurations. The key difference here is the extra step needed to safeguard private services effectively.</p>"}},{"@type":"Question","name":"How can I automate associating and managing AWS WAF web ACLs with App Runner services, and why is it beneficial?","acceptedAnswer":{"@type":"Answer","text":"<p>You can set up automated management of <strong>AWS WAF web ACLs</strong> for <strong>AWS App Runner services</strong> by leveraging infrastructure-as-code tools like AWS CloudFormation or Terraform. These tools let you define and manage WAF configurations programmatically, using resources such as <code>AWS::WAFv2::WebACLAssociation</code>.</p> <p>By automating this process, you ensure security policies are applied consistently while cutting down on manual work. This approach streamlines updates, reduces the chances of configuration mistakes, and boosts the overall reliability of your deployments - all while saving valuable time.</p>"}}]}</script>

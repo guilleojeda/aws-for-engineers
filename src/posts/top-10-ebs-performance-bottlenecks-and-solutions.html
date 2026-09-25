@@ -1,0 +1,469 @@
+---
+layout: post.njk
+templateEngineOverride: html
+tags: posts
+title: "Top 10 EBS Performance Bottlenecks & Solutions"
+description: "Explore the top 10 EBS bottlenecks and solutions to optimize AWS storage performance for smoother application operation and enhanced efficiency."
+date: "2024-05-13"
+datePublished: "2024-05-13T02:12:32.603000+00:00"
+heroImage: "/assets/media/de3ec024cf6807269924.jpg"
+permalink: "/blog/top-10-ebs-performance-bottlenecks-and-solutions/"
+sourceUrl: "https://awsforengineers.com/blog/top-10-ebs-performance-bottlenecks-and-solutions/"
+---
+<p>Optimizing <a href="https://en.wikipedia.org/wiki/Amazon_Elastic_Block_Store" target="_blank">EBS</a> (Elastic Block Store) performance is crucial for ensuring your <a href="https://aws.amazon.com/" target="_blank">AWS</a> applications run smoothly. This article addresses the top 10 <a href="https://en.wikipedia.org/wiki/Amazon_Elastic_Block_Store" target="_blank">EBS</a> performance bottlenecks and their solutions:</p>
+<ol>
+<li>
+<p><strong>Insufficient IOPS and <a href="https://docs.aws.amazon.com/ebs/latest/userguide/provisioned-iops.html" target="_blank">Provisioned IOPS SSD</a></strong></p>
+<ul>
+<li>Upgrade to Provisioned IOPS SSD volumes</li>
+<li>Optimize I/O size</li>
+<li>Use EBS-optimized instances</li>
+<li>Monitor and analyze performance metrics</li>
+</ul>
+</li>
+<li>
+<p><strong>Large I/O Size</strong></p>
+<ul>
+<li>Reduce I/O size to increase IOPS</li>
+<li>Use EBS-optimized instances</li>
+<li>Monitor and analyze performance regularly</li>
+</ul>
+</li>
+<li>
+<p><strong>Network Bandwidth</strong></p>
+<ul>
+<li>Use EBS-optimized instances with dedicated bandwidth</li>
+</ul>
+</li>
+<li>
+<p><strong>OS/Host-Level IO Consolidation</strong></p>
+<ul>
+<li>Understand IO consolidation for accurate IOPS measurement</li>
+</ul>
+</li>
+<li>
+<p><strong>EBS Backend IO Consolidation</strong></p>
+<ul>
+<li>Be aware of EBS backend IO consolidation affecting reported IOPS</li>
+</ul>
+</li>
+<li>
+<p><strong>Throughput Limits and EBS Design</strong></p>
+<ul>
+<li>Choose the right instance for required throughput</li>
+<li>Ensure sufficient network bandwidth</li>
+<li>Monitor performance metrics</li>
+<li>Distribute workload across volumes or instances</li>
+</ul>
+</li>
+<li>
+<p><strong>Snapshot Initialization Latency</strong></p>
+<ul>
+<li>Initialize volumes by reading all blocks to reduce latency</li>
+</ul>
+</li>
+<li>
+<p><strong>Small Random I/O on HDD Volumes</strong></p>
+<ul>
+<li>Implement caching</li>
+<li>Optimize data</li>
+<li>Use volume striping</li>
+</ul>
+</li>
+<li>
+<p><strong>Read-Ahead Settings for High-Throughput Workloads</strong></p>
+<ul>
+<li>Adjust read-ahead buffer size for improved performance</li>
+</ul>
+</li>
+<li>
+<p><strong><a href="https://www.linuxfoundation.org/" target="_blank">Linux</a> Kernel Version for HDD Performance</strong></p>
+</li>
+</ol>
+<pre><code>-   Upgrade to a recent kernel version
+-   Use the `noop` I/O scheduler for HDD volumes
+</code></pre>
+<p>By addressing these bottlenecks and implementing the recommended solutions, you can optimize your EBS volumes for high performance and ensure your applications run smoothly on AWS.</p>
+<h2 id="related-video-from-youtube">Related video from YouTube</h2>
+<iframe allowfullscreen="" frameborder="0" loading="lazy" src="https://www.youtube.com/embed/gUYa7RzrNhM"></iframe><h2 id="1.-insufficient-iops-and-provisioned-iops-ssd">1. Insufficient IOPS and <a href="https://docs.aws.amazon.com/ebs/latest/userguide/provisioned-iops.html" target="_blank">Provisioned IOPS SSD</a></h2>
+<p><figure><img alt="Provisioned IOPS SSD" loading="lazy" src="/assets/media/d0cc64db16cc79cebdd8.jpg"/></figure></p>
+<p>Insufficient IOPS (Input/Output Operations Per Second) and Provisioned IOPS SSD (Solid-State Drive) are common performance bottlenecks in Amazon Web Services (AWS) Elastic Block Store (EBS).</p>
+<h3 id="understanding-iops-and-provisioned-iops-ssd">Understanding IOPS and Provisioned IOPS SSD</h3>
+<p>IOPS measures the number of read and write operations that can be performed on a storage device in one second. Provisioned IOPS SSD volumes provide a dedicated number of IOPS, making them suitable for applications that require high performance.</p>
+<h3 id="symptoms-of-insufficient-iops">Symptoms of Insufficient IOPS</h3>
+<p>Applications experiencing insufficient IOPS may exhibit the following symptoms:</p>
+<ul>
+<li><strong>Slow data access and retrieval</strong></li>
+<li><strong>Increased latency</strong></li>
+<li><strong>Poor application performance</strong></li>
+<li><strong>Frequent timeouts and errors</strong></li>
+</ul>
+<h3 id="solutions">Solutions</h3>
+<p>To overcome insufficient IOPS and Provisioned IOPS SSD bottlenecks, consider the following solutions:</p>
+<figure><table>
+<thead>
+<tr>
+<th>Solution</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Upgrade to Provisioned IOPS SSD</strong></td>
+<td>Upgrade to Provisioned IOPS SSD volumes to ensure consistent and predictable performance.</td>
+</tr>
+<tr>
+<td><strong>Optimize I/O Size</strong></td>
+<td>Optimize the I/O size to reduce the number of IOPS required.</td>
+</tr>
+<tr>
+<td><strong>Use EBS-Optimized Instances</strong></td>
+<td>Use EBS-optimized instances, which provide dedicated bandwidth for EBS volumes.</td>
+</tr>
+<tr>
+<td><strong>Monitor and Analyze Performance</strong></td>
+<td>Monitor and analyze performance metrics to identify bottlenecks and optimize accordingly.</td>
+</tr>
+</tbody>
+</table></figure>
+<p>By understanding IOPS and Provisioned IOPS SSD, and implementing these solutions, you can overcome performance bottlenecks and ensure your applications run smoothly.</p>
+<h2 id="2.-large-i%2Fo-size-optimization">2. Large I/O Size Optimization</h2>
+<p>Large I/O sizes can significantly impact the performance of your EBS volumes. Understanding how I/O size affects performance is crucial to optimizing your storage configuration.</p>
+<h3 id="how-i%2Fo-size-affects-performance">How I/O Size Affects Performance</h3>
+<p>The size of I/O operations can reduce the number of IOPS (Input/Output Operations Per Second) available. For example, if your application sends 512KB blocks, your IOPS will be reduced to 50% of the provisioned value. This can result in:</p>
+<ul>
+<li><strong>Slow data access and retrieval</strong></li>
+<li><strong>Increased latency</strong></li>
+<li><strong>Poor application performance</strong></li>
+<li><strong>Frequent timeouts and errors</strong></li>
+</ul>
+<h3 id="solutions-to-optimize-i%2Fo-size">Solutions to Optimize I/O Size</h3>
+<p>To overcome large I/O size bottlenecks, consider the following solutions:</p>
+<figure><table>
+<thead>
+<tr>
+<th>Solution</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Optimize I/O Size</strong></td>
+<td>Reduce I/O size to increase the number of IOPS and improve overall performance.</td>
+</tr>
+<tr>
+<td><strong>Use EBS-Optimized Instances</strong></td>
+<td>Use EBS-optimized instances, which provide dedicated bandwidth for EBS volumes.</td>
+</tr>
+<tr>
+<td><strong>Monitor and Analyze Performance</strong></td>
+<td>Regularly monitor and analyze performance metrics to identify bottlenecks and optimize accordingly.</td>
+</tr>
+</tbody>
+</table></figure>
+<p>By understanding the impact of I/O size on performance and implementing these solutions, you can optimize your EBS configuration and improve application performance.</p>
+<h2 id="3.-network-bandwidth-and-ebs-optimized-instances">3. Network Bandwidth and <a href="https://en.wikipedia.org/wiki/Amazon_Elastic_Block_Store" target="_blank">EBS</a>-Optimized Instances</h2>
+<p><figure><img alt="EBS" loading="lazy" src="/assets/media/8a85c9becdeba96da264.jpg"/></figure></p>
+<p>Insufficient network bandwidth can significantly impact the performance of your EBS volumes. This can lead to:</p>
+<ul>
+<li><strong>Slow data transfer rates</strong></li>
+<li><strong>Increased latency</strong></li>
+<li><strong>Poor application performance</strong></li>
+<li><strong>Frequent timeouts and errors</strong></li>
+</ul>
+<h3 id="overcoming-network-bandwidth-bottlenecks">Overcoming Network Bandwidth Bottlenecks</h3>
+<p>To overcome these bottlenecks, use EBS-optimized instances. These instances provide dedicated bandwidth for EBS volumes, ensuring that your application can access data quickly and efficiently.</p>
+<h3 id="key-benefits-of-ebs-optimized-instances">Key Benefits of EBS-Optimized Instances</h3>
+<figure><table>
+<thead>
+<tr>
+<th>Benefit</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Dedicated bandwidth</strong></td>
+<td>EBS-optimized instances provide dedicated bandwidth for EBS volumes, minimizing contention between EBS I/O and other traffic from your instance.</td>
+</tr>
+<tr>
+<td><strong>Improved performance</strong></td>
+<td>With dedicated bandwidth, EBS-optimized instances can deliver higher IOPS and throughput, resulting in improved application performance.</td>
+</tr>
+<tr>
+<td><strong>Consistent performance</strong></td>
+<td>EBS-optimized instances ensure consistent performance, even during periods of high traffic or resource utilization.</td>
+</tr>
+</tbody>
+</table></figure>
+<p>To take advantage of EBS-optimized instances, ensure that your instance type supports EBS optimization. You can check the instance type documentation to determine if it supports EBS optimization.</p>
+<p>By using EBS-optimized instances, you can overcome network bandwidth bottlenecks and ensure that your application can access data quickly and efficiently.</p>
+<h2 id="4.-os%2Fhost-level-io-consolidation-understanding">4. OS/Host-Level IO Consolidation Understanding</h2>
+<p>When it comes to EBS performance, understanding IO consolidation at the OS/host level is crucial. This phenomenon occurs when the file system and block device layers consolidate IO requests to improve performance.</p>
+<h3 id="how-io-consolidation-affects-iops-measurement">How IO Consolidation Affects IOPS Measurement</h3>
+<p>Measuring IOPS can be tricky. You need to understand where the measurements are taken. If you measure IOPS at the OS/host level, you might get different results than if you measured at the EBS backend. This is because the EBS backend also consolidates IO requests, which can affect the reported IOPS metrics.</p>
+<h3 id="key-points-to-remember">Key Points to Remember</h3>
+<p>To avoid confusion, keep the following points in mind:</p>
+<figure><table>
+<thead>
+<tr>
+<th>Point</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>IO Consolidation</strong></td>
+<td>IO consolidation occurs at both the OS/host level and the EBS backend.</td>
+</tr>
+<tr>
+<td><strong>IOPS Measurement</strong></td>
+<td>IOPS measurement location affects the reported metrics.</td>
+</tr>
+<tr>
+<td><strong>Accurate Measurement</strong></td>
+<td>Understand IO consolidation to accurately measure IOPS and optimize EBS performance.</td>
+</tr>
+</tbody>
+</table></figure>
+<p>By grasping the concept of OS/host-level IO consolidation, you can better navigate EBS performance bottlenecks and optimize your storage setup for improved performance and efficiency.</p>
+<h2 id="5.-ebs-backend-io-consolidation-awareness">5. EBS Backend IO Consolidation Awareness</h2>
+<p>Understanding EBS backend IO consolidation is crucial for accurate performance measurement.</p>
+<h3 id="how-ebs-backend-io-consolidation-affects-performance-metrics">How EBS Backend IO Consolidation Affects Performance Metrics</h3>
+<p>When you provision an EBS volume with a certain IOPS capacity, the reported IOPS metrics might not match the provisioned capacity. This is because the EBS backend consolidates IO requests to improve performance.</p>
+<p>For example, if you provision an io1 volume with 200 IOPS, you can send IO requests at a rate of 800 IOPS if you send down 64K sequential blocks. This means that <a href="https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/WhatIsCloudWatch.html" target="_blank">CloudWatch</a> metrics will report an IOPS rate of 800, even though the provisioned capacity is only 200 IOPS.</p>
+<h3 id="key-takeaways">Key Takeaways</h3>
+<p>To ensure accurate performance measurement, remember:</p>
+<figure><table>
+<thead>
+<tr>
+<th>Point</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>EBS Backend IO Consolidation</strong></td>
+<td>The EBS backend consolidates IO requests, affecting reported IOPS metrics.</td>
+</tr>
+<tr>
+<td><strong>Reported IOPS Metrics</strong></td>
+<td>Reported IOPS metrics may exceed the provisioned capacity due to consolidation.</td>
+</tr>
+</tbody>
+</table></figure>
+<p>By understanding EBS backend IO consolidation, you can better navigate EBS performance bottlenecks and make informed decisions about your storage setup.</p>
+<h2 id="6.-throughput-limits-and-ebs-design">6. Throughput Limits and EBS Design</h2>
+<p>When designing an EBS storage setup, it's crucial to consider the throughput limits of your instances and volumes. Throughput refers to the amount of data that can be read or written to a volume in a given time period.</p>
+<h3 id="dedicated-throughput-with-ebs-optimized-instances">Dedicated Throughput with EBS-Optimized Instances</h3>
+<p>EBS-optimized instances provide dedicated throughput to your EBS volumes, ranging from 425 Mbps to 14,000 Mbps, depending on the instance type. This dedicated throughput ensures that your instances can handle the required I/O operations without network contention.</p>
+<h3 id="throughput-limits-and-volume-performance">Throughput Limits and Volume Performance</h3>
+<p>The throughput limit of an instance affects the performance of your EBS volumes. If your instance's throughput limit is lower than the required throughput of your volume, it can lead to performance bottlenecks.</p>
+<h3 id="designing-for-optimal-throughput">Designing for Optimal Throughput</h3>
+<p>To design an optimal EBS storage setup, consider the following:</p>
+<figure><table>
+<thead>
+<tr>
+<th><strong>Design Consideration</strong></th>
+<th><strong>Description</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Choose the right instance</strong></td>
+<td>Select an EBS-optimized instance that matches the throughput requirements of your volume.</td>
+</tr>
+<tr>
+<td><strong>Ensure sufficient network bandwidth</strong></td>
+<td>Verify that your instance's network bandwidth can handle the required throughput.</td>
+</tr>
+<tr>
+<td><strong>Monitor performance metrics</strong></td>
+<td>Track your volume's performance metrics, such as throughput and IOPS, to identify potential bottlenecks.</td>
+</tr>
+<tr>
+<td><strong>Distribute the workload</strong></td>
+<td>Consider using multiple volumes or instances to distribute the workload and optimize performance.</td>
+</tr>
+</tbody>
+</table></figure>
+<p>By understanding the throughput limits of your instances and volumes, you can design an EBS storage setup that meets your performance requirements and avoids bottlenecks.</p>
+<h2 id="7.-snapshot-initialization-latency">7. Snapshot Initialization Latency</h2>
+<p>When creating an EBS volume from a snapshot, AWS uses lazy loading. This means that the data transfer from the snapshot to the volume happens on-demand as you access the data. While this approach allows for faster creation and availability of the volume, it can lead to higher latency issues when accessing areas of the volume where the data has yet to be loaded.</p>
+<h3 id="why-does-this-happen%3F">Why does this happen?</h3>
+<p>The data needs to be fetched from the snapshot and loaded into the volume before it can be accessed. This preliminary action takes time and causes a significant increase in the latency of I/O operations the first time each block is accessed.</p>
+<h3 id="how-to-overcome-this-issue%3F">How to overcome this issue?</h3>
+<p>To overcome snapshot initialization latency, you can initialize the volume by reading all blocks from the volume once. This ensures low latency throughput and prevents high latency issues during the first query execution.</p>
+<p><strong>Initialization Methods</strong></p>
+<p>You can use Linux utilities like <code>dd</code> or <code>fio</code> to read from all of the blocks on a volume. All existing data on the volume will be preserved.</p>
+<figure><table>
+<thead>
+<tr>
+<th><strong>Method</strong></th>
+<th><strong>Command</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>dd</code></td>
+<td><code>sudo dd if=/dev/xvdf of=/dev/null bs=1M</code></td>
+</tr>
+<tr>
+<td><code>fio</code></td>
+<td><code>sudo fio — filename=/dev/xvdf — rw=read — bs=128k — iodepth=32 — ioengine=libaio — direct=1 — name=volume-initialize</code></td>
+</tr>
+</tbody>
+</table></figure>
+<p>By initializing the volume, you can reduce latency and improve performance when accessing data from a newly created volume.</p>
+<h2 id="8.-small-random-i%2Fo-on-hdd-volumes">8. Small Random I/O on HDD Volumes</h2>
+<p>HDD volumes can experience performance issues when handling small, random I/O operations. This is because HDDs are designed for sequential I/O operations, making them less efficient when dealing with small, random read and write requests.</p>
+<h3 id="why-does-this-happen%3F-1">Why does this happen?</h3>
+<p>HDDs have mechanical parts that need to move to access different locations on the disk. This mechanical movement takes time, resulting in higher latency and slower performance when dealing with small, random I/O operations.</p>
+<h3 id="how-to-overcome-this-issue%3F-1">How to overcome this issue?</h3>
+<p>To minimize the impact of small random I/O on HDD volumes, consider the following strategies:</p>
+<figure><table>
+<thead>
+<tr>
+<th><strong>Strategy</strong></th>
+<th><strong>Description</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Caching</strong></td>
+<td>Implement caching mechanisms to reduce the number of I/O operations on the HDD volume.</td>
+</tr>
+<tr>
+<td><strong>Data optimization</strong></td>
+<td>Optimize your data to reduce the number of small, random I/O operations.</td>
+</tr>
+<tr>
+<td><strong>Volume striping</strong></td>
+<td>Use volume striping to distribute I/O operations across multiple HDD volumes, reducing the impact of small, random I/O on individual volumes.</td>
+</tr>
+</tbody>
+</table></figure>
+<p>By understanding the limitations of HDD volumes and implementing these strategies, you can improve the performance of your EBS volumes and optimize your AWS infrastructure for better efficiency.</p>
+<h2 id="9.-read-ahead-settings-for-high-throughput-workloads">9. Read-Ahead Settings for High-Throughput Workloads</h2>
+<p>High-throughput workloads on EBS volumes can significantly benefit from optimized read-ahead settings. Read-ahead is a technique that allows the operating system to anticipate and prepare for future read requests by preloading data into memory.</p>
+<h3 id="understanding-read-ahead-settings">Understanding Read-Ahead Settings</h3>
+<p>To check the current read-ahead value for your block devices, use the following command:</p>
+<pre><code>sudo blockdev --report /dev/&lt;device&gt;
+</code></pre>
+<p>This command returns block device information, including the read-ahead value. The default read-ahead value is 256, which translates to a read-ahead buffer size of 128 KiB (256 * 512 bytes).</p>
+<h3 id="optimizing-read-ahead-settings">Optimizing Read-Ahead Settings</h3>
+<p>To set the read-ahead buffer size to 1 MiB, use the following command:</p>
+<pre><code>sudo blockdev --setra 2048 /dev/&lt;device&gt;
+</code></pre>
+<p>Verify that the read-ahead setting has been updated by running the <code>blockdev --report</code> command again.</p>
+<p><strong>Read-Ahead Settings Table</strong></p>
+<figure><table>
+<thead>
+<tr>
+<th><strong>Read-Ahead Value</strong></th>
+<th><strong>Buffer Size</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>256</td>
+<td>128 KiB</td>
+</tr>
+<tr>
+<td>2048</td>
+<td>1 MiB</td>
+</tr>
+</tbody>
+</table></figure>
+<p>By increasing the read-ahead buffer size, you can improve the performance of your high-throughput workloads on EBS volumes. Remember to monitor your system's performance and adjust the read-ahead settings as needed to achieve optimal results.</p>
+<h2 id="10.-linux-kernel-version-for-hdd-performance">10. <a href="https://www.linuxfoundation.org/" target="_blank">Linux</a> Kernel Version for HDD Performance</h2>
+<p><figure><img alt="Linux" loading="lazy" src="/assets/media/3e18f152ea0b9d335fd1.jpg"/></figure></p>
+<p>When using HDD volumes on EBS, the Linux kernel version can significantly impact performance. Outdated kernel versions can lead to poor performance, while newer versions can improve I/O operations.</p>
+<h3 id="understanding-the-impact-of-linux-kernel-version">Understanding the Impact of Linux Kernel Version</h3>
+<p>Newer kernel versions often include bug fixes, performance enhancements, and improved support for storage devices. For example, kernel versions 4.14 and later include enhancements for block device I/O scheduling, which can improve performance on HDD volumes.</p>
+<h3 id="optimizing-linux-kernel-version-for-hdd-performance">Optimizing Linux Kernel Version for HDD Performance</h3>
+<p>To take advantage of the performance benefits offered by newer kernel versions, ensure that your system is running a recent kernel version. You can check the current kernel version using the following command:</p>
+<pre><code>uname -r
+</code></pre>
+<p>If your kernel version is outdated, consider upgrading to a newer version. Additionally, ensure that your system is configured to use the correct I/O scheduler for your HDD volumes. The <code>noop</code> scheduler is often a good choice for HDD volumes, as it provides better performance than the default <code>cfq</code> scheduler.</p>
+<p><strong>Recommended I/O Schedulers for HDD Volumes</strong></p>
+<figure><table>
+<thead>
+<tr>
+<th><strong>I/O Scheduler</strong></th>
+<th><strong>Description</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>noop</code></td>
+<td>Provides better performance than the default <code>cfq</code> scheduler for HDD volumes.</td>
+</tr>
+<tr>
+<td><code>cfq</code></td>
+<td>The default I/O scheduler, which may not provide optimal performance for HDD volumes.</td>
+</tr>
+</tbody>
+</table></figure>
+<p>By upgrading to a newer Linux kernel version and optimizing your I/O scheduler, you can improve the performance of your HDD volumes on EBS.</p>
+<h2 id="conclusion">Conclusion</h2>
+<p>In this article, we explored the top 10 EBS performance bottlenecks and their solutions. By understanding these common issues and implementing the recommended strategies, you can optimize your EBS volumes for high performance and availability.</p>
+<h3 id="key-takeaways-1">Key Takeaways</h3>
+<p>To optimize your EBS volumes, remember:</p>
+<figure><table>
+<thead>
+<tr>
+<th><strong>Bottleneck</strong></th>
+<th><strong>Solution</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Insufficient IOPS</td>
+<td>Upgrade to Provisioned IOPS SSD volumes, optimize I/O size, use EBS-optimized instances, and monitor performance metrics.</td>
+</tr>
+<tr>
+<td>Large I/O Size</td>
+<td>Optimize I/O size to reduce the number of IOPS required.</td>
+</tr>
+<tr>
+<td>Network Bandwidth</td>
+<td>Use EBS-optimized instances, which provide dedicated bandwidth for EBS volumes.</td>
+</tr>
+<tr>
+<td>OS/Host-Level IO Consolidation</td>
+<td>Understand IO consolidation to accurately measure IOPS and optimize EBS performance.</td>
+</tr>
+<tr>
+<td>EBS Backend IO Consolidation</td>
+<td>Be aware of the EBS backend I/O consolidation mechanism, which can impact performance for small I/O operations.</td>
+</tr>
+<tr>
+<td>Throughput Limits</td>
+<td>Design your architecture according to the throughput limits of your instances and volumes.</td>
+</tr>
+<tr>
+<td>Snapshot Initialization Latency</td>
+<td>Initialize volumes by reading all blocks to reduce latency and improve performance.</td>
+</tr>
+<tr>
+<td>Small Random I/O on HDD Volumes</td>
+<td>Implement caching mechanisms, optimize data, and use volume striping to minimize the impact of small random I/O on HDD volumes.</td>
+</tr>
+<tr>
+<td>Read-Ahead Settings</td>
+<td>Adjust read-ahead settings for high-throughput, read-heavy workloads to improve performance.</td>
+</tr>
+<tr>
+<td>Linux Kernel Version</td>
+<td>Ensure you are running a recent Linux kernel version, as newer versions often include performance enhancements for HDD volumes.</td>
+</tr>
+</tbody>
+</table></figure>
+<p>By addressing these bottlenecks and implementing the appropriate solutions, you can unlock the full potential of your EBS volumes, ensuring optimal performance and cost-effectiveness for your applications and workloads.</p>
+<p>
+<h2>Related posts</h2>
+<ul>
+<li><a href="/blog/aws-engineering-blog-autoscaling-for-high-availability/">AWS Engineering Blog: Autoscaling for High Availability</a></li><li><a href="/blog/aws-ec2-basics-core-concepts-explained/">AWS EC2 Basics: Core Concepts Explained</a></li><li><a href="/blog/aws-rds-blog-insights-performance-tuning/">AWS RDS Blog Insights: Performance Tuning</a></li><li><a href="/blog/aws-content-migration-best-practices/">AWS Content Migration Best Practices</a></li>
+</ul>
+</p>

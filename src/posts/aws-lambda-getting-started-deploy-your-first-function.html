@@ -1,0 +1,352 @@
+---
+layout: post.njk
+templateEngineOverride: html
+tags: posts
+title: "AWS Lambda Getting Started: Deploy Your First Function"
+description: "Learn how to deploy your first AWS Lambda function with ease. No server management, cost-effective, automatic scaling, and high availability. Follow the steps to set up, create, test, monitor, and clean up your Lambda function."
+date: "2024-03-02"
+datePublished: "2024-03-02T01:57:33.970000+00:00"
+heroImage: "/assets/media/c1bc2e7ddd2f75a8f5da.jpg"
+permalink: "/blog/aws-lambda-getting-started-deploy-your-first-function/"
+sourceUrl: "https://awsforengineers.com/blog/aws-lambda-getting-started-deploy-your-first-function/"
+---
+<p>Getting started with AWS Lambda allows you to run code without managing servers, focusing on your code while AWS handles the rest. Here's a quick guide to deploy your first function:</p>
+<ul>
+<li><strong>No Server Management</strong>: AWS manages server capacity, maintenance, and scalability.</li>
+<li><strong>Cost-Effective</strong>: Pay only for the compute time you consume.</li>
+<li><strong>Automatic Scaling</strong>: Handles few requests to millions without any manual intervention.</li>
+<li><strong>High Availability</strong>: Functions are run across multiple locations for resilience.</li>
+</ul>
+<h3 id="prerequisites%3A">Prerequisites:</h3>
+<ul>
+<li>An AWS account and a basic understanding of JavaScript or Python.</li>
+</ul>
+<h3 id="steps-to-deploy-your-first-aws-lambda-function%3A">Steps to Deploy Your First AWS Lambda Function:</h3>
+<ul>
+<li><strong>Set Up AWS Environment</strong>: Sign into AWS Console, create an IAM role.</li>
+<li><strong>Create Your First Lambda Function</strong>: Choose a runtime, author function code, configure execution role, and deploy.</li>
+<li><strong>Test The Function</strong>: Create a test event, invoke the function, and review the results.</li>
+<li><strong>Monitor Metrics</strong>: Use CloudWatch to monitor function invocations, errors, and performance.</li>
+<li><strong>Clean Up</strong>: Delete the function, log group, and IAM role to avoid unnecessary charges.</li>
+</ul>
+<p>This guide offers a straightforward path to deploying and managing a serverless 'Hello World' function with AWS Lambda, suitable for beginners.</p>
+<h3 id="sign-up-for-an-aws-account">Sign up for an AWS account</h3>
+<p>If you don't have an AWS account yet, you'll need to make one. Here's how:</p>
+<ul>
+<li>Visit <a href="https://aws.amazon.com" target="_blank">aws.amazon.com</a> and click <strong>Create an AWS Account</strong>.</li>
+<li>Just follow the steps on the screen. You'll have to confirm your phone number as part of the process.</li>
+</ul>
+<p>Your new AWS account might take up to 24 hours to get ready. You'll get an email once everything is set up and you're good to go.</p>
+<h3 id="aws-free-tier">AWS Free Tier</h3>
+<p>This tutorial mostly uses services that are free under the AWS Free Tier. This means you can try things out without paying, up to a certain point each month.</p>
+<p>If you go over those limits, you'll start getting charged, but we'll stay within the free limits for this guide. Just something to keep in mind if you find yourself using AWS a lot.</p>
+<p>Now that we've got the basics out of the way, let's move on to making your first Lambda function!</p>
+<h2 id="step-1---set-up-aws-environment">Step 1 - Set Up AWS Environment</h2>
+<h3 id="navigate-aws-console">Navigate AWS Console</h3>
+<p>Getting started with AWS Lambda is straightforward. Here's how to dive in:</p>
+<ul>
+<li>Head over to <a href="https://console.aws.amazon.com/" target="_blank">https://console.aws.amazon.com/</a> and sign in with your AWS details.</li>
+<li>At the top of the page, there's a search bar. Type in "Lambda" and press enter.</li>
+<li>You'll see "Lambda" pop up in the search results. Click on it to go to the Lambda section.</li>
+</ul>
+<p>This area lets you create and manage your Lambda functions. It's pretty user-friendly and even has a built-in editor for writing your code.</p>
+<h3 id="create-iam-role">Create IAM Role</h3>
+<p>Your Lambda function needs a special kind of permission to run, which is where IAM roles come in. Think of an IAM role as a set of rules that tells AWS what your function can and can't do.</p>
+<p>Here's how to set one up:</p>
+<ol>
+<li>
+<p>On the Lambda page, look for "Roles" in the menu on the left and click it.</p>
+</li>
+<li>
+<p>Hit the "Create role" button.</p>
+</li>
+<li>
+<p>Choose "Lambda" from the list of services that can use this role.</p>
+</li>
+<li>
+<p>Click "Next".</p>
+</li>
+<li>
+<p>Now, find and select "AWSLambdaBasicExecutionRole". This gives your function the basic permissions it needs.</p>
+</li>
+<li>
+<p>Name your role something like "my-lambda-role" and click "Create role".</p>
+</li>
+</ol>
+<p>Now you've got an IAM role ready for your Lambda functions. This is all about making sure your function has the right access without giving it too much power, which keeps things secure.</p>
+<h2 id="step-2---create-your-first-lambda-function">Step 2 - Create Your First Lambda Function</h2>
+<h3 id="choose-runtime">Choose Runtime</h3>
+<p>AWS Lambda lets you write your functions in many programming languages. Here are a few:</p>
+<ul>
+<li><strong>Node.js</strong> - This is JavaScript for server-side stuff. You can use versions from 6.10 up to 18.x.</li>
+</ul>
+<pre><code>exports.handler = async function(event) {
+  console.log("Hello world!"); 
+};
+</code></pre>
+<ul>
+<li><strong>Python</strong> - A beginner-friendly language. AWS Lambda supports Python 2.7 and 3.9.</li>
+</ul>
+<pre><code>def handler(event, context):
+  print("Hello world!")
+</code></pre>
+<ul>
+<li>
+<p><strong>Java</strong> - Good for more complex stuff. You can use Java 8 &amp; 11.</p>
+</li>
+<li>
+<p><strong>.NET</strong> - For those who like C# and .NET. It works with .NET Core 3.1 and .NET 6.</p>
+</li>
+</ul>
+<p>We'll go with <strong>Node.js 14.x</strong> for our example. It's up-to-date with the latest JavaScript features.</p>
+<h3 id="author-function-code">Author Function Code</h3>
+<p>Here's a simple piece of code that says "Hello world!":</p>
+<pre><code>exports.handler = async function(event, context) {
+
+  console.log("Hello world!");
+
+  return {
+    statusCode: 200,
+    body: JSON.stringify({
+      message: "Hello world!" 
+    })
+  };
+
+};
+</code></pre>
+<p>What's happening here:</p>
+<ul>
+<li>
+<p><code>exports.handler</code> - This is where our function starts.</p>
+</li>
+<li>
+<p><code>async function</code> - This means our function can do things one step at a time.</p>
+</li>
+<li>
+<p><code>event</code> - The information sent to the function.</p>
+</li>
+<li>
+<p><code>context</code> - Details about the function and where it's running.</p>
+</li>
+<li>
+<p><code>console.log</code> - This writes out "Hello world!" so we can see it in the logs.</p>
+</li>
+<li>
+<p>The function sends back a message saying "Hello world!" with a status of 200, meaning everything's okay.</p>
+</li>
+</ul>
+<h3 id="configure-execution-role">Configure Execution Role</h3>
+<p>Let's use the IAM role we created before for our function:</p>
+<ol>
+<li>
+<p>In the Lambda console, find "Existing role" under Permissions.</p>
+</li>
+<li>
+<p>Choose the role we made, like <code>my-lambda-role</code>.</p>
+</li>
+</ol>
+<p>This lets our function use other AWS services it might need.</p>
+<h3 id="deploy-the-code">Deploy The Code</h3>
+<p>Now, let's put our code on AWS Lambda:</p>
+<ol>
+<li>
+<p>Click "Deploy" at the top right of the console.</p>
+</li>
+<li>
+<p>You'll see a message that your code is ready to go!</p>
+</li>
+</ol>
+<p>Our function is now up and running. Let's see how to test it next!</p>
+<h2 id="step-3---test-the-function">Step 3 - Test The Function</h2>
+<p>Testing your Lambda function is like giving it a practice run to see if it does what you expect. Let's set up a simple test.</p>
+<h3 id="create-a-test-event">Create a Test Event</h3>
+<ol>
+<li>Go to your function's page in the Lambda console and find the <strong>Test</strong> tab.</li>
+<li>Click on <strong>Create new test event</strong>.</li>
+<li>Name your test event something like <code>myFirstTest</code>.</li>
+<li>Choose the <strong>Hello World</strong> template for a straightforward JSON example.</li>
+<li>Hit <strong>Create</strong>.</li>
+</ol>
+<p>Now, you've got a test ready to go.</p>
+<h3 id="invoke-the-function">Invoke the Function</h3>
+<p>To see your function in action:</p>
+<ul>
+<li>Hit the <strong>Test</strong> button in the <strong>Test</strong> tab.</li>
+<li>Look below for the results.</li>
+</ul>
+<p>Here's what to expect:</p>
+<ul>
+<li><strong>Execution result:</strong> This tells you if the test worked or not.</li>
+<li><strong>Function logs:</strong> Here, you'll find the output from your function, like the "Hello world!" message.</li>
+<li><strong>Execution details:</strong> This shows how long it took and the resources used.</li>
+</ul>
+<p>Seeing your "Hello world!" message means everything's working great!</p>
+<h3 id="check-cloudwatch-logs">Check CloudWatch Logs</h3>
+<p>For a deeper dive into your function's activity, check out CloudWatch Logs.</p>
+<p>Here's how:</p>
+<ul>
+<li>Visit the CloudWatch console.</li>
+<li>Click on <strong><a href="https://console.aws.amazon.com/cloudwatch/home" target="_blank">Log groups</a></strong>.</li>
+<li>Find and select the log group named after your function, like <code>/aws/lambda/your-function-name</code>.</li>
+<li>Open the most recent log by clicking its name.</li>
+</ul>
+<p>These logs provide a detailed record of your function's runs, useful for troubleshooting or understanding its performance.</p>
+<p>Now you're all set with running and checking your Lambda function!</p>
+<h2 id="step-4---monitor-metrics">Step 4 - Monitor Metrics</h2>
+<p>CloudWatch is a tool from AWS that helps you keep an eye on how your Lambda functions are doing. It's like having a dashboard that shows you everything from how often your function is used to whether it's running into any problems. Here's a simple breakdown of what CloudWatch can show you:</p>
+<h3 id="invocations">Invocations</h3>
+<p>This is about how many times your function is called. If you see big changes here, it might mean something's up.</p>
+<ul>
+<li><strong>Errors</strong> - Counts when your function doesn't work as expected. It's important to check this.</li>
+<li><strong>Throttles</strong> - Shows if AWS had to slow down your function to keep things stable.</li>
+<li><strong>Duration</strong> - Tells you how long it takes for your function to do its job. Longer times could mean a slowdown.</li>
+</ul>
+<h3 id="concurrency">Concurrency</h3>
+<p>This tells you how many instances of your function are running at the same time. This info can help you plan better.</p>
+<ul>
+<li><strong>Provisioned concurrency</strong> - These are instances set up in advance, ready to go immediately.</li>
+</ul>
+<h3 id="resources">Resources</h3>
+<p>Gives you the lowdown on the tech stuff your function uses, like CPU and memory.</p>
+<p>Keeping an eye on these details with CloudWatch helps you:</p>
+<ul>
+<li>Catch and fix problems early.</li>
+<li>Understand how much power and space your functions need.</li>
+<li>Keep your functions running smoothly and efficiently.</li>
+<li>Make sure your system can handle the work without any hiccups.</li>
+</ul>
+<p>For instance, if you start seeing more errors, you might need to look closer at your function's logs or maybe there's something in your code that needs tweaking.</p>
+<p>CloudWatch also lets you set up your own dashboards, alarms, and get notifications, so you're always in the know.</p>
+<p>Spending a bit of time each day checking on your Lambda functions with CloudWatch can save you a lot of hassle. It's a good way to spot issues before they affect your users and keep everything running smoothly.</p>
+<h2 id="step-5---clean-up">Step 5 - Clean Up</h2>
+<p>After you're done experimenting with your example function, it's a smart move to delete it and any related resources. Doing this helps you avoid any unnecessary costs.</p>
+<p>Here's how to tidy up:</p>
+<h3 id="delete-the-lambda-function">Delete the Lambda Function</h3>
+<ul>
+<li>Head over to the <a href="https://console.aws.amazon.com/lambda/home#/functions" target="_blank">Functions page</a> in the Lambda console.</li>
+<li>Click on the function you made before.</li>
+<li>Click <strong>Actions</strong>, then <strong>Delete</strong>.</li>
+<li>A box will pop up asking if you're sure. Type in <code>delete</code> and hit <strong>Delete</strong>.</li>
+</ul>
+<h3 id="delete-the-log-group">Delete the Log Group</h3>
+<ul>
+<li>Visit the <a href="https://console.aws.amazon.com/cloudwatch/home#logs:" target="_blank">Log Groups page</a> in the CloudWatch console.</li>
+<li>Look for the log group for your function (like <code>/aws/lambda/my-function</code>).</li>
+<li>Click <strong>Actions</strong>, then <strong>Delete log group(s)</strong>.</li>
+<li>Say yes to confirm you want to delete it.</li>
+</ul>
+<h3 id="delete-the-iam-role">Delete the IAM Role</h3>
+<ul>
+<li>Go to the <a href="https://console.aws.amazon.com/iam/home?#/roles" target="_blank">IAM Roles page</a> in the IAM console.</li>
+<li>Find the execution role you made (something like <code>my-lambda-role</code>).</li>
+<li>Hit <strong>Delete</strong>, type the role name to make sure, and choose <strong>Delete</strong>.</li>
+</ul>
+<p>You can also make things easier by using AWS CloudFormation templates and the AWS CLI to set up and remove functions and resources automatically.</p>
+<p>Cleaning up after you're done is important to avoid extra charges and keep your workspace neat for new projects.</p>
+<h2 id="conclusion">Conclusion</h2>
+<p>Great job on setting up your first AWS Lambda function! You've just started using a powerful tool that lets you run applications without worrying about the servers they run on.</p>
+<p>Here's what you've done:</p>
+<ul>
+<li>Got the <strong>basics</strong> of AWS Lambda and why going serverless is helpful.</li>
+<li><strong>Set up</strong> a role for your function and made your first Lambda function.</li>
+<li><strong>Ran</strong> a simple Node.js function and <strong>checked</strong> it worked by testing it.</li>
+<li><strong>Looked at</strong> the results in the console and <strong>kept an eye on</strong> how it's doing with logs and metrics.</li>
+<li><strong>Removed</strong> everything after to avoid extra costs.</li>
+</ul>
+<p>Now, you know enough to start using Lambda for different projects like:</p>
+<ul>
+<li>Handling file uploads</li>
+<li>Making chatbots and skills for Alexa</li>
+<li>Setting up serverless schedules</li>
+<li>Supporting REST APIs</li>
+<li>Dealing with events</li>
+<li>Managing tasks that need a lot of computing power</li>
+<li>Trying out new ideas quickly</li>
+</ul>
+<p>What to do next:</p>
+<ul>
+<li>Learn how to add <strong>more code</strong> and <strong>packages</strong> for bigger projects</li>
+<li>Use <strong>S3</strong> and <strong>DynamoDB</strong> to trigger functions</li>
+<li>Try building apps with the <strong>Serverless Framework</strong></li>
+<li>Get better at monitoring and fixing issues with <strong><a href="https://dashbird.io/" target="_blank">Dashbird</a></strong></li>
+</ul>
+<p>Check out the <a href="https://docs.aws.amazon.com/lambda/index.html" target="_blank">Lambda documentation</a> for more detailed information.</p>
+<p>Feel free to <strong>play around</strong> with these tools through tutorials, examples, and your projects. <strong>Practicing</strong> is the best way to really get how Lambda works.</p>
+<p>If you have questions, just ask in the comments! We're here to help you keep getting better at building things without servers using AWS Lambda.</p>
+<h2 id="additional-resources">Additional Resources</h2>
+<p>If you're looking to dive deeper into AWS Lambda, here are some handy links:</p>
+<ul>
+<li><a href="https://docs.aws.amazon.com/lambda/index.html" target="_blank">AWS Lambda Documentation</a> - This is where you can find all the nitty-gritty details about Lambda. It's packed with info and is the go-to place for anything technical.</li>
+<li><a href="https://aws.amazon.com/lambda/faqs/" target="_blank">AWS Lambda FAQs</a> - Got questions? This page probably has the answers, covering everything from what Lambda does, how it's priced, and more.</li>
+<li><a href="https://docs.aws.amazon.com/lambda/latest/dg/best-practices.html" target="_blank">AWS Lambda Best Practices</a> - Here, you'll find useful tips on how to make your Lambda functions run better and smoother.</li>
+<li><a href="https://docs.aws.amazon.com/lambda/latest/dg/lambda-tutorials.html" target="_blank">AWS Lambda Tutorials</a> - These step-by-step guides are great for learning how to use Lambda with other AWS services like DynamoDB, S3, and API Gateway.</li>
+<li><a href="https://www.amazon.com/Serverless-Architectures-AWS-Lambda-Landscape/dp/1617293822" target="_blank">Serverless Architectures with AWS Lambda</a> - This book dives into how to build apps that don't need a server using Lambda. It's full of examples and patterns to learn from.</li>
+</ul>
+<h3 id="next-steps">Next Steps</h3>
+<p>Ready to get even better with Lambda? Try these ideas:</p>
+<ul>
+<li>Work on making your Lambda functions run faster, use less money, and be easier to keep an eye on.</li>
+<li>Build a website without a server using Lambda, API Gateway, DynamoDB, and other AWS tools.</li>
+<li>Set up a system where Lambda functions sort through data, triggered by updates in S3 or messages in SQS.</li>
+<li>Use Lambda with AWS Step Functions to manage multiple functions in one go.</li>
+<li>Get your Lambda functions to update themselves through a CI/CD pipeline.</li>
+<li>Move an existing app or API over to a serverless setup with AWS.</li>
+<li>Learn the best ways to check your Lambda functions with different testing methods.</li>
+<li>Explore advanced Lambda features like setting up ahead of time, connecting to a private network, using Lambda layers, and more.</li>
+<li>See how Lambda works with other tech like Docker, Kubernetes, and Terraform.</li>
+</ul>
+<p>There's so much you can do with Lambda. Start with small projects, learn by doing, and enjoy the process.</p>
+<h2 id="related-questions">Related Questions</h2>
+<h3 id="what-is-the-first-step-in-getting-started-with-aws-lambda%3F">What is the first step in getting started with AWS Lambda?</h3>
+<p>Starting with AWS Lambda is pretty straightforward. <a href="https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/serverless-sam-cli-install.html" target="_blank">Here</a>'s what you need to do first:</p>
+<ul>
+<li>Go to the Lambda console and create a new function.</li>
+<li>Give your function a name and pick a programming language (like Node.js or Python).</li>
+<li>Write a simple piece of code that your function will run.</li>
+<li>Set up any triggers (events that will make your function run) and permissions.</li>
+<li>Deploy your function to Lambda.</li>
+<li>Test it right there in the console.</li>
+</ul>
+<p>This process lets you quickly get a Lambda function up and running without dealing with server or infrastructure management. The console guides you through the setup.</p>
+<h3 id="how-do-i-deploy-a-function-to-aws-lambda%3F">How do I deploy a function to AWS Lambda?</h3>
+<p>To get your code onto Lambda, you have a few choices:</p>
+<ul>
+<li><strong>Use a .zip file</strong>: You can zip your code and any libraries it needs, then upload this directly in the console.</li>
+<li><strong>Use Amazon S3</strong>: If you prefer, upload your zip file to an S3 bucket, and Lambda can use it from there.</li>
+<li><strong>Use the AWS CLI</strong>: The Command Line Interface is a tool for managing AWS services from your computer, and you can use it to deploy Lambda functions.</li>
+<li><strong>Use AWS SDKs</strong>: These are tools for programming languages that let you work with AWS services, including deploying Lambda functions.</li>
+</ul>
+<p>Basically, you pack your function and its dependencies into a zip file and upload it using one of these methods.</p>
+<h3 id="how-do-i-trigger-aws-lambda-functions%3F">How do I trigger AWS Lambda functions?</h3>
+<p>Lambda functions can be triggered in several ways:</p>
+<ul>
+<li>
+<p><strong>Directly</strong>: You can manually trigger a function using the console, AWS CLI, SDKs, or the Invoke API.</p>
+</li>
+<li>
+<p><strong>Event source</strong>: Connect your function to another AWS service like S3 or DynamoDB, and it will run automatically when certain events happen.</p>
+</li>
+<li>
+<p><strong>HTTP request</strong>: You can make your function respond to web requests by using it with API Gateway.</p>
+</li>
+<li>
+<p><strong>Scheduled events</strong>: Use CloudWatch to have your function run on a schedule, like once a day or every hour.</p>
+</li>
+</ul>
+<p>In short, you can trigger Lambda functions manually, through other services, via web requests, or on a schedule.</p>
+<h3 id="how-long-does-it-take-for-aws-lambda-function-to-cold-start%3F">How long does it take for AWS Lambda function to cold start?</h3>
+<p>Cold starts in Lambda functions are pretty rare, happening in less than 1% of the time. When they do happen, it might take anywhere from a fraction of a second to a couple of seconds for your function to be ready. The exact time can depend on the programming language, the size of your code, and other factors.</p>
+<p>But, you can make cold starts faster by:</p>
+<ul>
+<li>Making your code smaller and simpler.</li>
+<li>Using container images for quicker starts.</li>
+<li>Setting up provisioned concurrency to have instances ready to go.</li>
+<li>Keeping functions warm by invoking them regularly.</li>
+</ul>
+<p>While cold starts can add a bit of delay, there are ways to make them less of an issue.</p>
+<p>
+<h2>Related posts</h2>
+<ul>
+<li><a href="/blog/aws-ec2-and-s3-for-beginners/">AWS EC2 and S3 for Beginners</a></li><li><a href="/blog/aws-tutorial-for-beginners-step-by-step-core-concepts/">AWS Tutorial for Beginners Step by Step: Core Concepts</a></li><li><a href="/blog/understanding-aws-a-beginners-guide/">Understanding AWS: A Beginner's Guide</a></li><li><a href="/blog/aws-services-overview-core-components/">AWS Services Overview: Core Components</a></li>
+</ul>
+</p>

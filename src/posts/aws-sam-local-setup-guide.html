@@ -1,0 +1,532 @@
+---
+layout: post.njk
+templateEngineOverride: html
+tags: posts
+title: "AWS SAM Local: Setup Guide"
+description: "Learn how to set up AWS SAM Local for testing serverless applications on your machine before deploying them to the cloud."
+date: "2024-11-11"
+datePublished: "2024-11-11T17:15:35.196000+00:00"
+heroImage: "/assets/media/bce60d2e2ebfdfdda1a2.jpg"
+permalink: "/blog/aws-sam-local-setup-guide/"
+sourceUrl: "https://awsforengineers.com/blog/aws-sam-local-setup-guide/"
+---
+<p>AWS SAM Local lets you test serverless apps on your computer before deploying to the cloud. Here's how to set it up:</p>
+<ol>
+<li>
+Install prerequisites:
+<ul>
+<li>AWS account</li>
+<li><a href="https://www.docker.com/" rel="nofollow noopener noreferrer" target="_blank">Docker</a></li>
+<li><a href="https://aws.amazon.com/cli/" rel="nofollow noopener noreferrer" target="_blank">AWS CLI</a></li>
+<li>Python 3.7+</li>
+<li><a href="https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/using-sam-cli.html" rel="nofollow noopener noreferrer" target="_blank">AWS SAM CLI</a></li>
+</ul>
+</li>
+<li>
+Configure AWS credentials:
+<pre><code>aws configure
+</code></pre>
+</li>
+<li>
+Create a new SAM project:
+<pre><code>sam init
+</code></pre>
+</li>
+<li>
+Build your app:
+<pre><code>sam build
+</code></pre>
+</li>
+<li>
+Test locally:
+<pre><code>sam local invoke
+sam local start-api
+</code></pre>
+</li>
+</ol>
+<p>Key benefits:</p>
+<ul>
+<li>Test Lambda functions locally</li>
+<li>Debug in your IDE</li>
+<li>Simulate API Gateway events</li>
+<li>View function logs on your machine</li>
+</ul>
+<p>Common issues:</p>
+<ul>
+<li>Docker not running</li>
+<li>Outdated SAM CLI version</li>
+<li>Missing AWS credentials</li>
+<li>Incorrect template.yaml file</li>
+</ul>
+<p>Remember: Local testing is just the start. Always test in the cloud too for a complete picture of your app's performance.</p>
+<h2 id="related-video-from-youtube">Related video from YouTube</h2>
+<iframe allowfullscreen="" frameborder="0" loading="lazy" src="https://www.youtube-nocookie.com/embed/AUQRyl1SNcU"></iframe><h2 id="prerequisites">Prerequisites</h2>
+<p>Before you start with AWS SAM Local, you need a few things in place. Let's go through the essentials:</p>
+<h3 id="aws-account-setup">AWS Account Setup</h3>
+<p>First, you need an AWS account. Don't have one? Here's what to do:</p>
+<ol>
+<li>Go to https://portal.aws.amazon.com/billing/signup</li>
+<li>Follow the prompts to create your account</li>
+<li>This process will create an AWS account root user</li>
+</ol>
+<p>Once that's done, create an IAM user for CLI access:</p>
+<ol>
+<li>Sign in to the AWS Management Console</li>
+<li>Go to the IAM service</li>
+<li>Create a new IAM user with programmatic access</li>
+<li>Give it the right permissions (like AWSLambdaFullAccess and AmazonAPIGatewayAdministrator)</li>
+<li>Save the access key ID and secret access key somewhere safe</li>
+</ol>
+<blockquote>
+<p>"For CLI access, create an access key ID and secret access key. Use temporary credentials instead of long-term access keys when possible." - AWS Documentation</p>
+</blockquote>
+<h3 id="docker-setup"><a href="https://www.docker.com/" rel="nofollow noopener noreferrer" target="_blank">Docker</a> Setup</h3>
+<p><figure><img alt="Docker" loading="lazy" src="/assets/media/1b1c971f6ea65ebe7969.jpg"/></figure></p>
+<p>Docker is key for AWS SAM Local. It mimics the <a href="https://aws.amazon.com/lambda/" rel="nofollow noopener noreferrer" target="_blank">AWS Lambda</a> environment on your machine. Here's how to set it up:</p>
+<p>For <a href="https://aws.amazon.com/amazon-linux-2/" rel="nofollow noopener noreferrer" target="_blank">Amazon Linux</a> 2:</p>
+<pre><code>sudo amazon-linux-extras install docker
+sudo service docker start
+sudo usermod -a -G docker ec2-user
+</code></pre>
+<p>For Amazon Linux 2023:</p>
+<pre><code>sudo yum install -y docker
+sudo service docker start
+sudo usermod -a -G docker ec2-user
+</code></pre>
+<p>After installing, log out and back in. Then check if it's working:</p>
+<pre><code>docker ps
+</code></pre>
+<p>Having trouble? Check out the Docker Docs for troubleshooting tips.</p>
+<h3 id="development-tools">Development Tools</h3>
+<p>You'll also need:</p>
+<ol>
+<li>Python: Get it from https://www.python.org/downloads/</li>
+<li>AWS CLI: Follow the AWS Command Line Interface User Guide to install</li>
+<li><a href="https://code.visualstudio.com/" rel="nofollow noopener noreferrer" target="_blank">Visual Studio Code</a>: Download from http://code.visualstudio.com/ (or use your favorite IDE)</li>
+</ol>
+<h3 id="software-versions">Software Versions</h3>
+<p>Make sure you've got the right versions:</p>
+<figure><table>
+<thead>
+<tr>
+<th>Software</th>
+<th>Minimum Version</th>
+<th>Check Version With</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Python</td>
+<td>3.7 or later</td>
+<td><code>python --version</code></td>
+</tr>
+<tr>
+<td>AWS CLI</td>
+<td>2.0 or later</td>
+<td><code>aws --version</code></td>
+</tr>
+<tr>
+<td>AWS SAM CLI</td>
+<td>Latest</td>
+<td><code>sam --version</code></td>
+</tr>
+<tr>
+<td>Docker</td>
+<td>Latest stable</td>
+<td><code>docker --version</code></td>
+</tr>
+</tbody>
+</table></figure>
+<blockquote>
+<p>"Starting September 2023, AWS will no longer maintain the AWS managed Homebrew installer for the AWS SAM CLI. Users are encouraged to switch to the community managed installer." - AWS SAM CLI Documentation</p>
+</blockquote>
+<p>Keep these tools up to date for the best experience with <a href="/blog/">AWS services</a>.</p>
+<h2 id="installing-required-software">Installing Required Software</h2>
+<p>To use AWS SAM Local, you need Docker, AWS CLI, and AWS SAM CLI. Here's how to set them up:</p>
+<h3 id="docker">Docker</h3>
+<p>Docker lets you test serverless apps locally. Install it like this:</p>
+<p>Amazon Linux 2:</p>
+<pre><code>sudo amazon-linux-extras install docker
+sudo service docker start
+sudo usermod -a -G docker ec2-user
+</code></pre>
+<p>Amazon Linux 2023:</p>
+<pre><code>sudo yum install -y docker
+sudo service docker start
+sudo usermod -a -G docker ec2-user
+</code></pre>
+<p>Log out, log back in, then check if Docker works:</p>
+<pre><code>docker ps
+</code></pre>
+<p>For Windows and macOS, grab <a href="https://www.docker.com/products/docker-desktop/" rel="nofollow noopener noreferrer" target="_blank">Docker Desktop</a> from Docker's website and install it.</p>
+<h3 id="aws-cli"><a href="https://aws.amazon.com/cli/" rel="nofollow noopener noreferrer" target="_blank">AWS CLI</a></h3>
+<p><figure><img alt="AWS CLI" loading="lazy" src="/assets/media/e65dace0ee6c568d4b98.jpg"/></figure></p>
+<p>AWS CLI helps set up your AWS credentials. Here's what to do:</p>
+<ol>
+<li>Get the AWS CLI installer for your system from AWS's website.</li>
+<li>Install it.</li>
+<li>Open a new terminal and run:</li>
+</ol>
+<pre><code>aws --version
+</code></pre>
+<ol start="4">
+<li>Set up your AWS credentials:</li>
+</ol>
+<pre><code>aws configure
+</code></pre>
+<p>You'll need to enter your AWS Access Key ID, Secret Access Key, default region, and output format.</p>
+<h3 id="aws-sam-cli"><a href="https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/using-sam-cli.html" rel="nofollow noopener noreferrer" target="_blank">AWS SAM CLI</a></h3>
+<p><figure><img alt="AWS SAM CLI" loading="lazy" src="/assets/media/15a3764026ff79b17d21.jpg"/></figure></p>
+<p>Now, let's get AWS SAM CLI:</p>
+<p>macOS:</p>
+<ol>
+<li>Download the right <code>.pkg</code> file:
+<ul>
+<li>Intel: <code>aws-sam-cli-macos-x86_64.pkg</code></li>
+<li>Apple silicon: <code>aws-sam-cli-macos-arm64.pkg</code></li>
+</ul>
+</li>
+<li>Run it and follow the steps.</li>
+<li>Install to <code>/usr/local/aws-sam-cli</code>.</li>
+<li>Check it's working:</li>
+</ol>
+<pre><code>which sam
+sam --version
+</code></pre>
+<p>Windows:</p>
+<ol>
+<li>Get the AWS SAM CLI 64-bit MSI installer.</li>
+<li>Run it.</li>
+<li>Open PowerShell and check:</li>
+</ol>
+<pre><code>sam --version
+</code></pre>
+<p>Linux:</p>
+<ol>
+<li>Download the installer for your system.</li>
+<li>Run these commands:</li>
+</ol>
+<pre><code>sudo ./sam-installation-package.sh install
+sam --version
+</code></pre>
+<blockquote>
+<p>The installer creates a symlink between <code>/usr/local/bin/sam</code> and <code>/usr/local/aws-sam-cli/sam</code> (or your chosen folder) so you can use the <code>sam</code> command.</p>
+</blockquote>
+<p>Heads up: Since September 2023, AWS doesn't maintain the Homebrew installer for AWS SAM CLI. Stick to these methods instead.</p>
+<h2 id="setting-up-configurations">Setting Up Configurations</h2>
+<p>You've got the software installed. Now let's set up your environment for AWS SAM Local. We'll cover AWS credentials, SAM CLI config, Docker settings, and environment variables.</p>
+<h3 id="aws-credentials">AWS Credentials</h3>
+<p>First, set up your AWS credentials:</p>
+<ol>
+<li>Open your terminal</li>
+<li>Run:</li>
+</ol>
+<pre><code>aws configure
+</code></pre>
+<ol start="3">
+<li>Enter your AWS Access Key ID, Secret Access Key, default region, and output format when prompted.</li>
+</ol>
+<p>This info gets stored in a <code>default</code> profile in your home directory's credentials and config files.</p>
+<h3 id="sam-cli-config">SAM CLI Config</h3>
+<p>The SAM CLI uses a <code>samconfig.toml</code> file for project settings. Here's a sample:</p>
+<pre><code>version = 0.1
+[default]
+[default.global.parameters]
+stack_name = "sam-app"
+[default.build.parameters]
+cached = true
+parallel = true
+[default.deploy.parameters]
+capabilities = "CAPABILITY_IAM"
+confirm_changeset = true
+resolve_s3 = true
+[default.sync.parameters]
+watch = true
+[default.local_start_api.parameters]
+warm_containers = "EAGER"
+</code></pre>
+<p>You can customize these settings. For example, to set different parameters for production:</p>
+<pre><code>[prod]
+[prod.sync.parameters]
+watch = false
+</code></pre>
+<p>To use a specific config when deploying:</p>
+<pre><code>sam deploy --config-env "prod"
+</code></pre>
+<h3 id="docker-setup-1">Docker Setup</h3>
+<p>Docker mimics the AWS Lambda environment locally. Here's what you need to do:</p>
+<ol>
+<li>Start Docker:</li>
+</ol>
+<pre><code>sudo service docker start
+</code></pre>
+<ol start="2">
+<li>Add your user to the docker group:</li>
+</ol>
+<pre><code>sudo usermod -a -G docker ec2-user
+</code></pre>
+<p>Log out and back in for this to take effect.</p>
+<ol start="3">
+<li>If you need to run Lambda functions with a different architecture than your machine:</li>
+</ol>
+<pre><code>docker run --rm --privileged multiarch/qemu-user-static --reset -p yes
+</code></pre>
+<p>This is handy for running <code>arm64</code> functions on an <code>x86_64</code> machine.</p>
+<h3 id="environment-variables">Environment Variables</h3>
+<p>Managing different configs across environments is crucial. Here's how:</p>
+<ol>
+<li>Define parameters in your SAM template:</li>
+</ol>
+<pre><code>Parameters:
+  EnvType:
+    Type: String
+    Default: dev
+    AllowedValues:
+      - dev
+      - prod
+</code></pre>
+<ol start="2">
+<li>Use these parameters in your function resources:</li>
+</ol>
+<pre><code>Resources:
+  MyFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Environment:
+        Variables:
+          ENV_TYPE: !Ref EnvType
+</code></pre>
+<ol start="3">
+<li>Access these variables in your Lambda function:</li>
+</ol>
+<pre><code>import os
+env_type = os.environ['ENV_TYPE']
+</code></pre>
+<ol start="4">
+<li>Provide values during deployment:</li>
+</ol>
+<pre><code>sam deploy --parameter-overrides EnvType=prod
+</code></pre>
+<p>This lets you maintain different configs for dev and prod without changing your code.</p>
+<h2 id="setting-up-local-development">Setting Up Local Development</h2>
+<p>Let's dive into setting up your local environment for AWS SAM. It's not rocket science, but it's crucial for smooth serverless development.</p>
+<p>First, fire up your terminal and run:</p>
+<pre><code>sam init
+</code></pre>
+<p>This creates a new SAM project with a structure like this:</p>
+<pre><code>sam-app/
+├── README.md
+├── events/
+│   └── event.json
+├── hello_world/
+│   ├── app.py
+│   └── requirements.txt
+├── template.yaml
+└── tests/
+    └── unit/
+        └── test_handler.py
+</code></pre>
+<p>Your Lambda function code lives in <code>hello_world</code>, and <code>template.yaml</code> is where the magic happens for your app's infrastructure.</p>
+<p>Now, let's talk about the <code>template.yaml</code> file. It's the backbone of your SAM app, defining your serverless resources. Here's a simple example:</p>
+<pre><code>AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: SAM Template for hello-world app
+
+Resources:
+  HelloWorldFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: hello_world/
+      Handler: app.lambda_handler
+      Runtime: python3.9
+</code></pre>
+<p>This template sets up a basic Lambda function. As you build out your app, you'll add more resources here.</p>
+<p>Time to write some code. Open up <code>hello_world/app.py</code> and add this:</p>
+<pre><code>import json
+
+def lambda_handler(event, context):
+    return {
+        "statusCode": 200,
+        "body": json.dumps({
+            "message": "Hello from Lambda!"
+        }),
+    }
+</code></pre>
+<p>This function just returns a simple JSON response when called.</p>
+<p>Want to test your function locally? No problem. Run these commands:</p>
+<pre><code>sam build
+sam local invoke HelloWorldFunction
+</code></pre>
+<p><code>sam build</code> preps your app by creating a <code>.aws-sam</code> directory. Then, <code>sam local invoke</code> runs your function in a Docker container that mimics Lambda.</p>
+<p>Need to test with a custom event? Create a JSON file (like <code>events/custom-event.json</code>) and run:</p>
+<pre><code>sam local invoke HelloWorldFunction --event events/custom-event.json
+</code></pre>
+<p>For API testing, use:</p>
+<pre><code>sam local start-api
+</code></pre>
+<p>This fires up a local HTTP server so you can test your API endpoints.</p>
+<blockquote>
+<p>"The SAM CLI provides a Lambda-like execution environment that lets you locally build, test, and debug applications defined by SAM templates." - Jon Bonso, Co-founder of Tutorials Dojo</p>
+</blockquote>
+<h2 id="fix-common-problems">Fix Common Problems</h2>
+<p>Setting up AWS SAM Local can be tricky. Let's tackle some common issues and how to solve them.</p>
+<h3 id="docker-issues">Docker Issues</h3>
+<p>Docker is key for AWS SAM Local, but it can cause headaches. Here's how to fix common Docker problems:</p>
+<p>1. <strong>Docker not running</strong></p>
+<p>If you see this:</p>
+<pre><code>Running AWS SAM projects locally requires Docker. Have you got it installed?
+</code></pre>
+<p>Docker isn't running. To fix:</p>
+<ul>
+<li>Linux: Run <code>sudo service docker start</code></li>
+<li>macOS/Windows: Open Docker Desktop</li>
+</ul>
+<p>2. <strong>Wrong Docker version</strong></p>
+<p>SAM Local needs a recent Docker version. If you're getting weird errors, update Docker:</p>
+<pre><code>docker --version
+</code></pre>
+<p>If it's old, get the latest from Docker's website.</p>
+<p>3. <strong>Docker permission issues</strong></p>
+<p>On Linux, you might lack Docker permissions. Fix with:</p>
+<pre><code>sudo usermod -aG docker $USER
+</code></pre>
+<p>Log out and back in for it to work.</p>
+<h3 id="permission-errors">Permission Errors</h3>
+<p>Permission errors pop up when SAM can't access what it needs. Here's how to fix them:</p>
+<p>1. <strong>AWS credentials not set</strong></p>
+<p>Seeing this?</p>
+<pre><code>Failed to create managed resources: Unable to locate credentials
+</code></pre>
+<p>Your AWS credentials aren't set up. Fix it:</p>
+<pre><code>aws configure
+</code></pre>
+<p>Enter your AWS Access Key ID and Secret Access Key when asked.</p>
+<p>2. <strong>File permission issues</strong></p>
+<p>If SAM can't read your files, check their permissions:</p>
+<pre><code>ls -l
+</code></pre>
+<p>Files should be at least 644 (rw-r--r--). If not, fix with:</p>
+<pre><code>chmod 644 filename
+</code></pre>
+<h3 id="configuration-problems">Configuration Problems</h3>
+<p>Configuration issues can be sneaky. Here's how to spot and fix them:</p>
+<p>1. <strong>Missing stack name</strong></p>
+<p>Getting this?</p>
+<pre><code>Error: Can't find exact resource information with given stack name
+</code></pre>
+<p>You forgot the stack name. Use:</p>
+<pre><code>sam remote invoke --stack-name your-stack-name
+</code></pre>
+<p>2. <strong>Incorrect SAM template</strong></p>
+<p>Check your <code>template.yaml</code>. Common mistakes:</p>
+<ul>
+<li>Indentation errors</li>
+<li>Missing required fields</li>
+<li>Wrong resource types</li>
+</ul>
+<p>Validate your template:</p>
+<pre><code>sam validate
+</code></pre>
+<h3 id="version-issues">Version Issues</h3>
+<p>Version conflicts can be a pain. Here's how to fix them:</p>
+<p>1. <strong>Outdated SAM CLI</strong></p>
+<p>Weird errors? Your SAM CLI might be old. Update it:</p>
+<pre><code>pip install --upgrade aws-sam-cli
+</code></pre>
+<p>2. <strong>IDE plugin version mismatch</strong></p>
+<p>Make sure your IDE plugin works with your SAM CLI version. For example, AWS Toolkit version 1.10 needs SAM CLI version 0.41.0 or later.</p>
+<blockquote>
+<p>"Even after updating to version 1.10, you might STILL GET THIS ERROR." - Steve Maurer</p>
+</blockquote>
+<p>If updating doesn't help, try uninstalling and reinstalling both the SAM CLI and your IDE plugin.</p>
+<p>When all else fails, check the AWS SAM CLI troubleshooting guide. It's updated often with solutions to the latest developer issues.</p>
+<h2 id="conclusion">Conclusion</h2>
+<p>AWS SAM Local is a game-changer for serverless development. It lets you build, test, and debug your apps locally before cloud deployment. Here's a quick recap:</p>
+<p>1. <strong>Set up your environment</strong></p>
+<p>Install Docker, AWS CLI, and AWS SAM CLI. Configure your AWS credentials and SAM CLI settings.</p>
+<p>2. <strong>Create your project</strong></p>
+<p>Use <code>sam init</code> to set up your project structure. Write your Lambda functions and define resources in <code>template.yaml</code>.</p>
+<p>3. <strong>Test locally</strong></p>
+<p>Use <code>sam local invoke</code> and <code>sam local start-api</code> to test your functions on your machine.</p>
+<p>But remember: local testing is just the start. Kari Marttila, an AWS dev pro, says:</p>
+<blockquote>
+<p>"When developing AWS Lambda code, you have several options to speed up the development cycle - if you are using Python, you should do most of the application logic just using the Python interpreter."</p>
+</blockquote>
+<p>This can cut down your dev time big time. Running app logic in the Python interpreter is instant, while SAM can take about 20 seconds to build and invoke.</p>
+<p>Don't skip cloud testing, though. AWS Prescriptive Guidance makes it clear:</p>
+<blockquote>
+<p>"Testing in the cloud is valuable for all phases of testing, including unit tests, integration tests, and end-to-end tests."</p>
+</blockquote>
+<p>To speed up cloud testing, check out AWS SAM Accelerate or AWS CDK watch mode. They'll help you push code changes to the cloud faster, so you can experiment more quickly.</p>
+<p>As you dive deeper into AWS SAM, keep these tips in mind:</p>
+<ul>
+<li>Update your SAM CLI regularly</li>
+<li>Use <code>sam validate</code> to catch template issues early</li>
+<li>Try <code>sam sync</code> for faster cloud testing</li>
+<li>Keep your Lambda handler file lean and move logic to separate modules for quicker local testing</li>
+</ul>
+<h2 id="faqs">FAQs</h2>
+<h3 id="how-to-configure-sam-cli%3F">How to configure sam cli?</h3>
+<p>Setting up the AWS SAM CLI is pretty straightforward:</p>
+<p>1. <strong>Create your app</strong></p>
+<p>Run <code>sam init</code> to set up your project. This gives you a basic template to work with.</p>
+<p>2. <strong>Set up your infrastructure</strong></p>
+<p>Open the <code>template.yaml</code> file. This is where you'll define your app's resources and permissions. Here's a simple example:</p>
+<pre><code>AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Resources:
+  MyFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: ./
+      Handler: app.lambda_handler
+      Runtime: python3.9
+</code></pre>
+<p>3. <strong>Build your app</strong></p>
+<p>Use <code>sam build</code> to get your app ready for deployment. This creates a <code>.aws-sam</code> folder with your built stuff.</p>
+<blockquote>
+<p>Pro tip: If you're using Node.js functions, try esbuild for faster builds.</p>
+</blockquote>
+<h3 id="how-to-install-sam-in-aws%3F">How to install SAM in AWS?</h3>
+<p>Here's how to get SAM up and running:</p>
+<ol>
+<li>Sign up for AWS if you haven't already.</li>
+<li>Create an admin IAM user for safe access.</li>
+<li>Get your access key ID and secret key.</li>
+<li>Install the AWS CLI (method depends on your OS).</li>
+<li>Run <code>aws configure</code> to set up your AWS credentials.</li>
+</ol>
+<p>Now, let's install SAM CLI:</p>
+<ul>
+<li>macOS: Download and run the <code>.pkg</code> file for your system.</li>
+<li>Windows: Use the 64-bit MSI installer.</li>
+<li>Linux: Download the installer and run the script.</li>
+</ul>
+<p>To make sure it worked, just type:</p>
+<pre><code>sam --version
+</code></pre>
+<h3 id="does-sam-local-use-docker%3F">Does Sam local use Docker?</h3>
+<p>Yep, SAM Local uses Docker to mimic the AWS Lambda environment on your machine. It's like having a mini-AWS on your computer.</p>
+<p>SAM officially supports Docker Desktop, but since version 1.47.0, you can use other Docker runtimes if they play nice with the Docker API.</p>
+<p>To get SAM Local working:</p>
+<ol>
+<li>
+Install Docker. On Amazon Linux 2, it's:
+<pre><code>sudo amazon-linux-extras install docker
+sudo service docker start
+sudo usermod -a -G docker ec2-user
+</code></pre>
+</li>
+<li>
+Check if Docker's running:
+<pre><code>docker ps
+</code></pre>
+</li>
+<li>
+When you use SAM Local, it'll automatically grab the Docker images it needs to fake the Lambda environment.
+</li>
+</ol>
+<h2>Related posts</h2>
+<ul>
+<li><a href="/blog/10-best-practices-for-end-to-end-testing-aws-apps/">10 Best Practices for End-to-End Testing AWS Apps</a></li><li><a href="/blog/aws-lambda-unit-testing-best-practices-2024/">AWS Lambda Unit Testing Best Practices 2024</a></li><li><a href="/blog/test-serverless-apps-locally-with-aws-sam-cli/">Test Serverless Apps Locally with AWS SAM CLI</a></li><li><a href="/blog/aws-sam-cli-local-development-tips/">AWS SAM CLI: Local Development Tips</a></li>
+</ul>

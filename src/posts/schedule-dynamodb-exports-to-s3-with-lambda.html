@@ -1,0 +1,458 @@
+---
+layout: post.njk
+templateEngineOverride: html
+tags: posts
+title: "Schedule DynamoDB Exports to S3 with Lambda"
+description: "Learn how to automate DynamoDB exports to S3 with AWS Lambda for reliable backups and efficient data management."
+date: "2025-05-05"
+datePublished: "2025-05-05T04:56:05.495000+00:00"
+heroImage: "/assets/media/81e2e531581aae3e21fb.jpg"
+permalink: "/blog/schedule-dynamodb-exports-to-s3-with-lambda/"
+sourceUrl: "https://awsforengineers.com/blog/schedule-dynamodb-exports-to-s3-with-lambda/"
+---
+<p><strong>Want to automate DynamoDB backups to S3?</strong> Here’s how you can set up an <a href="https://docs.aws.amazon.com/lambda/" rel="nofollow noopener noreferrer" target="_blank">AWS Lambda</a> function to schedule DynamoDB exports, ensuring consistent backups and easier data recovery.</p>
+<h3 id="key-steps">Key Steps:</h3>
+<ol>
+<li><strong>Enable Point-in-Time Recovery (PITR)</strong> on your DynamoDB table to allow exporting data from any point within the last 35 days.</li>
+<li><strong>Set up an <a href="/blog/learn-aws-s3-fundamentals/">S3 bucket</a></strong> with proper permissions to store the exported data.</li>
+<li><strong>Create a Lambda function</strong> (Python or Node.js) to automate the export process, using environment variables for flexibility.</li>
+<li><strong>Schedule the Lambda function</strong> using <a href="https://docs.aws.amazon.com/eventbridge/" rel="nofollow noopener noreferrer" target="_blank">Amazon EventBridge</a> to run at regular intervals (e.g., daily, weekly).</li>
+</ol>
+<h3 id="tools-and-permissions">Tools and Permissions:</h3>
+<ul>
+<li><strong><a href="https://docs.aws.amazon.com/cli/" rel="nofollow noopener noreferrer" target="_blank">AWS CLI</a></strong>: For testing and deploying configurations.</li>
+<li><strong>IAM Role</strong>: Grant permissions for <code>dynamodb:ExportTableToPointInTime</code> and <code>s3:PutObject</code>.</li>
+<li><strong>CloudWatch</strong>: Monitor logs and export performance.</li>
+</ul>
+<h3 id="costs-to-consider">Costs to Consider:</h3>
+<ul>
+<li><strong>DynamoDB Exports</strong>: $0.10 per GB.</li>
+<li><strong><a href="/blog/getting-started-with-aws-s3-essential-concepts/">S3 Storage</a></strong>: $0.023 per GB/month (Standard).</li>
+<li><strong>Lambda</strong>: $0.20 per million requests.</li>
+</ul>
+<h3 id="benefits">Benefits:</h3>
+<ul>
+<li><strong>Consistency</strong>: Automate regular backups.</li>
+<li><strong>Scalability</strong>: Handle large tables without affecting performance.</li>
+<li><strong>Cost Control</strong>: Use <a href="/blog/s3-lifecycle-rules-automate-storage-and-cut-costs/">S3 lifecycle rules</a> to manage storage costs.</li>
+</ul>
+<p>By following these steps, you can simplify your DynamoDB backup routines and ensure reliable data exports to S3.</p>
+<h2 id="required-setup">Required Setup</h2>
+<h3 id="aws-services-setup">AWS Services Setup</h3>
+<p>Here’s how to set up the necessary AWS services:</p>
+<p><strong>DynamoDB Configuration</strong></p>
+<ul>
+<li>Choose the DynamoDB table you want to work with.</li>
+<li>Turn on Point-In-Time Recovery (PITR) for the selected table.</li>
+</ul>
+<p><strong>S3 Configuration</strong></p>
+<ul>
+<li>Set up a dedicated S3 bucket for storing DynamoDB exports.</li>
+<li>Assign the proper permissions using an IAM role to ensure smooth operations.</li>
+</ul>
+<p><strong>IAM Role Permissions</strong><br/>
+The Lambda function will need an IAM role with these permissions:</p>
+<ul>
+<li><code>dynamodb:ExportTableToPointInTime</code></li>
+<li><code>s3:PutObject</code></li>
+<li><code>s3:GetObject</code></li>
+<li><code>s3:ListBucket</code></li>
+</ul>
+<h3 id="lambda-function-setup">Lambda Function Setup</h3>
+<p>Follow these steps to configure the Lambda function:</p>
+<ol>
+<li><strong>Runtime</strong>: Use Python 3.9 or a newer version.</li>
+<li><strong>Memory</strong>: Allocate a minimum of 512 MB to handle export processes efficiently.</li>
+<li><strong>Timeout</strong>: Set the timeout to 5 minutes for standard export tasks.</li>
+<li><strong>Environment Variables</strong>:
+<ul>
+<li><code>DYNAMODB_TABLE_NAME</code></li>
+<li><code>S3_BUCKET_NAME</code></li>
+<li><code>S3_PREFIX</code> (optional, for organizing exports in S3)</li>
+</ul>
+</li>
+</ol>
+<h3 id="aws-tools-overview">AWS Tools Overview</h3>
+<p>Once your services are configured, these tools will help you deploy and monitor your setup:</p>
+<p><strong>AWS Management Console</strong></p>
+<ul>
+<li>Use it to configure services.</li>
+<li>Monitor export processes visually.</li>
+<li>Access CloudWatch logs for debugging.</li>
+</ul>
+<p><strong>AWS CLI</strong></p>
+<ul>
+<li>Ideal for testing export commands.</li>
+<li>Helps troubleshoot permission issues.</li>
+<li>Supports script-based deployments for automation.</li>
+</ul>
+<p>Ensure the AWS CLI is set up with the correct credentials and region. Run <code>aws configure</code> to input your access key, secret key, and default region.</p>
+<figure><table>
+<thead>
+<tr>
+<th>Tool</th>
+<th>Primary Use</th>
+<th>Required Permission Level</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>AWS Console</td>
+<td>Service configuration</td>
+<td>Admin Access</td>
+</tr>
+<tr>
+<td>AWS CLI</td>
+<td>Export testing</td>
+<td>Programmatic Access</td>
+</tr>
+<tr>
+<td>CloudWatch</td>
+<td>Monitoring export tasks</td>
+<td>Read Access</td>
+</tr>
+</tbody>
+</table></figure>
+<h2 id="dynamodb-and-s3-export-settings">DynamoDB and S3 Export Settings</h2>
+<h3 id="enable-point-in-time-recovery">Enable Point-in-Time Recovery</h3>
+<p>If Point-in-Time Recovery (PITR) isn’t enabled yet, here’s how to activate it:</p>
+<ol>
+<li>Open the <strong>DynamoDB console</strong>.</li>
+<li>Select the table you want to back up.</li>
+<li>Go to the <strong>Backups</strong> tab.</li>
+<li>Turn on <strong>Point-in-time recovery</strong>.</li>
+</ol>
+<p>PITR keeps a rolling backup of your table for the past 35 days. You can export data from any point within this time frame. Keep in mind, this feature incurs additional costs based on your table size and the volume of write operations.</p>
+<h3 id="export-configuration">Export Configuration</h3>
+<p>Once PITR is enabled, set up your export options:</p>
+<p><strong>Source Configuration</strong></p>
+<ul>
+<li>Choose the DynamoDB table you want to export.</li>
+<li>Select the export time (within the 35-day PITR window).</li>
+<li>Pick the data format: either <strong>DynamoDB JSON</strong> or <strong>ION format</strong>.</li>
+</ul>
+<p><strong>Destination Settings</strong></p>
+<ul>
+<li>Define the S3 bucket path for storing the export.</li>
+<li>Set an export prefix, like <code>exports/[table-name]/[date]</code>, to organize files.</li>
+<li>Configure encryption using either <strong>SSE-S3</strong> or <strong>SSE-KMS</strong>.</li>
+</ul>
+<figure><table>
+<thead>
+<tr>
+<th>Export Setting</th>
+<th>Description</th>
+<th>Recommended Value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Data Format</td>
+<td>File format for exported data</td>
+<td>DynamoDB JSON</td>
+</tr>
+<tr>
+<td>S3 Prefix</td>
+<td>Folder structure for exports</td>
+<td><code>exports/[table-name]/YYYY-MM-DD</code></td>
+</tr>
+<tr>
+<td>Compression</td>
+<td>Type of data compression</td>
+<td>GZIP</td>
+</tr>
+<tr>
+<td>Manifest Format</td>
+<td>Metadata format for export</td>
+<td>JSON</td>
+</tr>
+</tbody>
+</table></figure>
+<p>After configuring these settings, run a manual test to ensure everything works as expected.</p>
+<h3 id="test-export-process">Test Export Process</h3>
+<p>Follow these steps to test your export:</p>
+<ol>
+<li>
+<strong>Export and Monitor</strong>
+<ul>
+<li>Manually start an export using your configured settings.</li>
+<li>Keep an eye on the export task in the DynamoDB console.</li>
+</ul>
+</li>
+<li>
+<strong>Verify Export Results</strong>
+<ul>
+<li>Check that the S3 bucket contains the following:
+<ul>
+<li>A <strong>manifest file</strong> with export metadata.</li>
+<li>Compressed <strong>data files</strong> containing the table contents.</li>
+<li>A logical file structure based on your export prefix.</li>
+</ul>
+</li>
+</ul>
+</li>
+</ol>
+<p>Testing ensures your setup is correct and that the exported data is stored and organized properly in S3.</p>
+<h2 id="lambda-export-automation">Lambda Export Automation</h2>
+<p>This process builds on the previously set up DynamoDB and S3 export configurations. After testing manual exports, you can now automate the export process using Lambda.</p>
+<h3 id="write-lambda-function">Write Lambda Function</h3>
+<p>Here's a Node.js Lambda function that automates DynamoDB exports, complete with error handling and logging:</p>
+<pre><code>const AWS = require('aws-sdk');
+const dynamodb = new AWS.DynamoDB();
+
+exports.handler = async (event) =&gt; {
+    try {
+        const params = {
+            TableArn: process.env.TABLE_ARN,
+            S3Bucket: process.env.S3_BUCKET,
+            S3Prefix: `exports/${process.env.TABLE_NAME}/${new Date().toISOString().split('T')[0]}`, // Date formatted as YYYY-MM-DD
+            ExportFormat: 'DYNAMODB_JSON'
+        };
+
+        const result = await dynamodb.exportTableToPointInTime(params).promise();
+        console.log(`Export started: ${result.ExportDescription.ExportArn}`);
+
+        return {
+            statusCode: 200,
+            body: JSON.stringify(result)
+        };
+    } catch (error) {
+        console.error('Export failed:', error);
+        throw error;
+    }
+};
+</code></pre>
+<p>This function uses environment variables for flexibility. Check the Lambda Function Setup for details on configuring these variables. Once the function is ready, schedule it with EventBridge for regular execution.</p>
+<h3 id="set-export-schedule">Set Export Schedule</h3>
+<p>Use Amazon EventBridge to schedule your Lambda function. Below are some common scheduling options:</p>
+<figure><table>
+<thead>
+<tr>
+<th>Schedule Type</th>
+<th>Cron Expression</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Daily Backup</td>
+<td><code>0 0 * * ? *</code></td>
+<td>Runs daily at midnight UTC</td>
+</tr>
+<tr>
+<td>Weekly Backup</td>
+<td><code>0 0 ? * SUN *</code></td>
+<td>Runs every Sunday at midnight</td>
+</tr>
+<tr>
+<td>Monthly Backup</td>
+<td><code>0 0 1 * ? *</code></td>
+<td>Runs on the first day of the month</td>
+</tr>
+</tbody>
+</table></figure>
+<p>To configure the schedule:</p>
+<ul>
+<li>Open EventBridge and create a new rule.</li>
+<li>Choose "Schedule" as the rule type.</li>
+<li>Enter the appropriate cron expression.</li>
+<li>Select your Lambda function as the target.</li>
+<li>Ensure the function has the required IAM permissions.</li>
+</ul>
+<h3 id="lambda-configuration-tips">Lambda Configuration Tips</h3>
+<p>Set up your Lambda function with these settings for optimal performance:</p>
+<figure><table>
+<thead>
+<tr>
+<th>Setting</th>
+<th>Value</th>
+<th>Reason</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Memory</td>
+<td>512 MB</td>
+<td>Handles export tasks efficiently</td>
+</tr>
+<tr>
+<td>Timeout</td>
+<td>5 minutes</td>
+<td>Accounts for larger export operations</td>
+</tr>
+<tr>
+<td>Retry Attempts</td>
+<td>2</td>
+<td>Handles temporary failures</td>
+</tr>
+<tr>
+<td>Concurrent Executions</td>
+<td>5</td>
+<td>Prevents overuse of resources</td>
+</tr>
+</tbody>
+</table></figure>
+<p>You'll also need these IAM permissions for the Lambda function to work properly:</p>
+<pre><code>{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Effect": "Allow",
+            "Action": [
+                "dynamodb:ExportTableToPointInTime",
+                "s3:PutObject"
+            ],
+            "Resource": [
+                "arn:aws:dynamodb:*:*:table/*",
+                "arn:aws:s3:::your-bucket/*"
+            ]
+        }
+    ]
+}
+</code></pre>
+<h3 id="error-handling">Error Handling</h3>
+<p>To ensure smooth operations, consider these practices:</p>
+<ul>
+<li>Use exponential backoff for retries.</li>
+<li>Set up <a href="/blog/cloudwatch-alarms-best-practices-for-thresholds-and-conditions/">CloudWatch alarms</a> to track failed exports.</li>
+<li>Configure SNS notifications to receive updates on export status.</li>
+</ul>
+<p>Monitor the function's performance using CloudWatch metrics and logs. This will help you quickly identify and resolve any issues, ensuring your backups remain consistent and reliable.</p>
+
+<h2 id="operations-and-limits">Operations and Limits</h2>
+<h3 id="export-monitoring">Export Monitoring</h3>
+<p>You can keep track of DynamoDB exports using <strong>CloudWatch Logs</strong>. To identify completed exports, use <strong><a href="/blog/aws-lambda-insights-serverless-monitoring-guide/">CloudWatch Logs Insights</a></strong> with the following query:</p>
+<pre><code>fields @timestamp, @message
+filter @message like /EXPORT_COMPLETED/
+| sort @timestamp desc
+| limit 20
+</code></pre>
+<p>Consider setting up a <strong><a href="/blog/aws-health-dashboards-monitoring-and-debugging-guide/">CloudWatch dashboard</a></strong> to visualize export performance and quickly spot any issues. Once you have a clear view of performance, assess the associated costs to ensure you're staying within budget.</p>
+<h3 id="export-costs">Export Costs</h3>
+<p>Automated DynamoDB exports come with specific costs. Here's a quick breakdown:</p>
+<figure><table>
+<thead>
+<tr>
+<th>Component</th>
+<th>Cost (US Region)</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>DynamoDB Export</td>
+<td>$0.10/GB</td>
+<td>Does not use RCUs</td>
+</tr>
+<tr>
+<td><a href="/blog/aws-s3-getting-started-understanding-storage-classes/">S3 Standard Storage</a></td>
+<td>$0.023/GB/month</td>
+<td>Use lifecycle policies for cost control</td>
+</tr>
+<tr>
+<td>Lambda Invocation</td>
+<td>$0.20/million requests</td>
+<td>Minimal impact for typical use</td>
+</tr>
+</tbody>
+</table></figure>
+<p>You can reduce expenses by applying <strong>S3 lifecycle rules</strong>, such as:</p>
+<ul>
+<li>Moving exports older than 30 days to <strong>Glacier Instant Retrieval</strong> (at $0.004/GB/month).</li>
+<li>Deleting exports that are older than 365 days.</li>
+<li>Enabling <strong>Intelligent-Tiering</strong> to adjust for varying access patterns automatically.</li>
+</ul>
+<p>Now, let’s look at the system limits that could affect your export operations.</p>
+<h3 id="system-limits">System Limits</h3>
+<p>DynamoDB exports are subject to the following limits:</p>
+<figure><table>
+<thead>
+<tr>
+<th>Limit Type</th>
+<th>Default Value</th>
+<th>Adjustable</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Concurrent Exports</td>
+<td>300 per account</td>
+<td>Yes</td>
+</tr>
+<tr>
+<td>Total Export Size</td>
+<td>100TB in-flight</td>
+<td>No</td>
+</tr>
+<tr>
+<td>Export Duration</td>
+<td>24 hours max</td>
+<td>No</td>
+</tr>
+<tr>
+<td>API Rate</td>
+<td>50 requests/second</td>
+<td>Yes</td>
+</tr>
+</tbody>
+</table></figure>
+<p>For tables larger than 100TB, you can split the export process using the <code>ExportTime</code> parameter.</p>
+<p>To manage your export operations effectively, consider these strategies:</p>
+<ul>
+<li>Use <strong>checkpointing</strong> via DynamoDB Streams for exports nearing the 24-hour limit.</li>
+<li>Implement <strong>exponential backoff</strong> to handle API rate limits. For example:</li>
+</ul>
+<pre><code>const backoff = (attempt) =&gt; Math.min(100 * Math.pow(2, attempt), 2000);
+</code></pre>
+<p>Set up <strong>CloudWatch alarms</strong> to monitor:</p>
+<ul>
+<li>The <code>DynamoDBExportFailed</code> metric.</li>
+<li>Any Lambda errors exceeding zero.</li>
+<li>S3 object counts to verify successful exports.</li>
+</ul>
+<p>One key advantage: exports do not use read capacity units, making them an efficient option for large-scale data migrations without affecting table performance.</p>
+<h2 id="summary">Summary</h2>
+<p>Streamline DynamoDB exports by setting up Point-in-Time Recovery, configuring an S3 bucket, and scheduling a Lambda function. Here are some key practices to ensure exports are reliable and cost-efficient:</p>
+<ul>
+<li><strong>Track performance and costs</strong>: Use CloudWatch to monitor exports and AWS Cost Explorer to review expenses for DynamoDB, S3, and Lambda.</li>
+<li><strong>Set up safeguards</strong>: Implement CloudWatch alarms and robust monitoring to catch potential issues early.</li>
+<li><strong>Check account limits</strong>: Ensure your export settings align with account limitations.</li>
+</ul>
+<p>Adjust your export settings periodically based on:</p>
+<ul>
+<li>Performance data</li>
+<li>Cost-saving opportunities</li>
+<li>Changes in data volume</li>
+<li>Shifts in access patterns</li>
+</ul>
+<p>Combining regular monitoring through CloudWatch with smart cost management via AWS Cost Explorer helps you maintain a system that’s both reliable and efficient. Make sure your export settings match your backup needs while keeping performance and costs in check.</p>
+<h2 id="faqs">FAQs</h2>
+<h3 id="what-permissions-does-my-lambda-function-need-to-export-dynamodb-data-to-s3">What permissions does my Lambda function need to export DynamoDB data to S3?</h3>
+<p>To ensure your Lambda function can export DynamoDB data to S3, you need to attach an <strong>IAM role</strong> with the appropriate permissions. This role should include:</p>
+<ul>
+<li><strong>DynamoDB permissions</strong>: Grant <code>dynamodb:ExportTableToPointInTime</code> to allow the function to initiate exports.</li>
+<li><strong><a href="/blog/aws-s3-guide-understanding-access-management/">S3 permissions</a></strong>: Grant actions like <code>s3:PutObject</code> and <code>s3:GetBucketLocation</code> for the destination bucket.</li>
+</ul>
+<p>Make sure the IAM role is correctly assigned to your Lambda function. You can define these permissions in the AWS Management Console or using an infrastructure-as-code tool like <a href="https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/Welcome.html" rel="nofollow noopener noreferrer" target="_blank">AWS CloudFormation</a> or <a href="https://www.terraform.io/" rel="nofollow noopener noreferrer" target="_blank">Terraform</a>.</p>
+<h3 id="how-can-i-reduce-costs-when-storing-dynamodb-export-data-in-s3">How can I reduce costs when storing DynamoDB export data in S3?</h3>
+<p>To optimize costs when storing DynamoDB export data in S3, consider the following strategies:</p>
+<ul>
+<li>
+<strong>Use S3 storage classes wisely</strong>: Choose cost-effective storage classes such as S3 Glacier or S3 Glacier Deep Archive for infrequently accessed data. For data that requires quick retrieval, S3 Standard-Infrequent Access (S3 Standard-IA) can be a good option.
+</li>
+<li>
+<strong>Enable S3 Lifecycle policies</strong>: Set up lifecycle rules to automatically transition older data to cheaper storage classes or delete data that is no longer needed.
+</li>
+<li>
+<strong>Compress your data</strong>: Export data in compressed formats like GZIP or Parquet to reduce storage size and save costs.
+</li>
+<li>
+<strong>Monitor and analyze usage</strong>: Use tools like AWS Cost Explorer or S3 Storage Lens to review your storage usage and identify cost-saving opportunities.
+</li>
+</ul>
+<p>By implementing these strategies, you can effectively manage your S3 storage costs while maintaining access to your DynamoDB export data as needed.</p>
+<h3 id="what-should-i-do-if-my-scheduled-dynamodb-exports-to-s3-are-failing">What should I do if my scheduled DynamoDB exports to S3 are failing?</h3>
+<p>If your scheduled DynamoDB exports to S3 are failing, start by checking the <strong><a href="https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/WhatIsCloudWatch.html" rel="nofollow noopener noreferrer" target="_blank">AWS CloudWatch</a> logs</strong> for your Lambda function. These logs often provide detailed error messages or clues about the issue, such as permission problems or resource limits.</p>
+<p>Additionally, verify that your Lambda function's <strong>IAM role</strong> has the necessary permissions to access both DynamoDB and S3. Common permissions include <code>dynamodb:ExportTableToPointInTime</code> and <code>s3:PutObject</code>.</p>
+<p>If the issue persists, ensure that your Lambda function is configured with the correct <strong>timeout settings</strong> and has sufficient memory allocated to handle the export process. Misconfigurations in these areas can cause the function to fail during execution.</p>
+<h2>Related posts</h2><ul><li><a href="/blog/lambda-error-monitoring-best-practices/">Lambda Error Monitoring: Best Practices</a></li><li><a href="/blog/dynamodb-export-to-s3-step-by-step-guide/">DynamoDB Export to S3: Step-by-Step Guide</a></li><li><a href="/blog/how-to-reduce-dynamodb-throttling-issues/">How to Reduce DynamoDB Throttling Issues</a></li><li><a href="/blog/data-compression-in-aws-s3-techniques-and-benefits/">Data Compression in AWS S3: Techniques and Benefits</a></li></ul><script type="application/ld+json">{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"What permissions does my Lambda function need to export DynamoDB data to S3?","acceptedAnswer":{"@type":"Answer","text":"<p>To ensure your Lambda function can export DynamoDB data to S3, you need to attach an <strong>IAM role</strong> with the appropriate permissions. This role should include:</p>\n<ul>\n<li><strong>DynamoDB permissions</strong>: Grant <code>dynamodb:ExportTableToPointInTime</code> to allow the function to initiate exports.</li>\n<li><strong><a href=\"https://awsforengineers.com/blog/aws-s3-guide-understanding-access-management/\">S3 permissions</a></strong>: Grant actions like <code>s3:PutObject</code> and <code>s3:GetBucketLocation</code> for the destination bucket.</li>\n</ul>\n<p>Make sure the IAM role is correctly assigned to your Lambda function. You can define these permissions in the AWS Management Console or using an infrastructure-as-code tool like <a href=\"https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/Welcome.html\" target=\"_blank\" rel=\"nofollow noopener noreferrer\">AWS CloudFormation</a> or <a href=\"https://www.terraform.io/\" target=\"_blank\" rel=\"nofollow noopener noreferrer\">Terraform</a>.</p>"}},{"@type":"Question","name":"How can I reduce costs when storing DynamoDB export data in S3?","acceptedAnswer":{"@type":"Answer","text":"<p>To optimize costs when storing DynamoDB export data in S3, consider the following strategies:</p>\n<ul>\n<li>\n<strong>Use S3 storage classes wisely</strong>: Choose cost-effective storage classes such as S3 Glacier or S3 Glacier Deep Archive for infrequently accessed data. For data that requires quick retrieval, S3 Standard-Infrequent Access (S3 Standard-IA) can be a good option.\n</li>\n<li>\n<strong>Enable S3 Lifecycle policies</strong>: Set up lifecycle rules to automatically transition older data to cheaper storage classes or delete data that is no longer needed.\n</li>\n<li>\n<strong>Compress your data</strong>: Export data in compressed formats like GZIP or Parquet to reduce storage size and save costs.\n</li>\n<li>\n<strong>Monitor and analyze usage</strong>: Use tools like AWS Cost Explorer or S3 Storage Lens to review your storage usage and identify cost-saving opportunities.\n</li>\n</ul>\n<p>By implementing these strategies, you can effectively manage your S3 storage costs while maintaining access to your DynamoDB export data as needed.</p>"}},{"@type":"Question","name":"What should I do if my scheduled DynamoDB exports to S3 are failing?","acceptedAnswer":{"@type":"Answer","text":"<p>If your scheduled DynamoDB exports to S3 are failing, start by checking the <strong><a href=\"https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/WhatIsCloudWatch.html\" target=\"_blank\" rel=\"nofollow noopener noreferrer\">AWS CloudWatch</a> logs</strong> for your Lambda function. These logs often provide detailed error messages or clues about the issue, such as permission problems or resource limits.</p>\n<p>Additionally, verify that your Lambda function's <strong>IAM role</strong> has the necessary permissions to access both DynamoDB and S3. Common permissions include <code>dynamodb:ExportTableToPointInTime</code> and <code>s3:PutObject</code>.</p>\n<p>If the issue persists, ensure that your Lambda function is configured with the correct <strong>timeout settings</strong> and has sufficient memory allocated to handle the export process. Misconfigurations in these areas can cause the function to fail during execution.</p>"}}]}</script>

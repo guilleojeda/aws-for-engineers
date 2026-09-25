@@ -1,0 +1,161 @@
+---
+layout: post.njk
+templateEngineOverride: html
+tags: posts
+title: "Troubleshooting AWS Direct Connect Step-by-Step"
+description: "Learn how to troubleshoot AWS Direct Connect step-by-step, addressing common issues across physical, data link, network, and routing layers."
+date: "2025-09-25"
+datePublished: "2025-09-25T02:42:19.430000+00:00"
+heroImage: "/assets/media/8eb3dffb7965e95e65a8.jpg"
+permalink: "/blog/troubleshooting-aws-direct-connect-step-by-step/"
+sourceUrl: "https://awsforengineers.com/blog/troubleshooting-aws-direct-connect-step-by-step/"
+---
+<p><a href="https://aws.amazon.com/directconnect/" rel="nofollow noopener noreferrer" target="_blank">AWS Direct Connect</a> provides a private, high-speed connection between your data center and AWS. However, when issues arise, troubleshooting can be complex, as problems may occur across multiple layers: physical, data link, network/transport, and routing. Here's a quick breakdown of how to identify and resolve common issues:</p>
+<ul>
+<li><strong>Physical Layer</strong>: Check fiber cables, transceivers, and cross-connect setups for faults. Verify signal strength (-14.4 to 2.50 dBm for 1-10 Gbps, -4.3 to 4.5 dBm for 100 Gbps).</li>
+<li><strong>Data Link Layer</strong>: Confirm VLAN tagging (802.1Q) and ARP resolution. Ensure VLAN IDs match and clear ARP cache if needed.</li>
+<li><strong>Network/Transport Layer</strong>: Verify BGP configurations (ASN, IPs, MD5 keys) and ensure TCP port 179 is open. Check firewall and ACL rules.</li>
+<li><strong>Routing Layer</strong>: Confirm route advertisements and propagation. Stay within AWS limits (e.g., 100 routes for private interfaces).</li>
+</ul>
+<p>Use tools like CloudWatch for monitoring and <a href="https://docs.aws.amazon.com/vpc/latest/userguide/flow-logs.html" rel="nofollow noopener noreferrer" target="_blank">VPC Flow Logs</a> to identify blocked traffic. If problems persist, document your findings and escalate to <a href="https://aws.amazon.com/premiumsupport/" rel="nofollow noopener noreferrer" target="_blank">AWS Support</a> with detailed logs and configurations.</p>
+<h2 id="fixing-physical-connection-problems">Fixing Physical Connection Problems</h2>
+<p>When Direct Connect connections fail entirely, the root cause often lies within the physical layer. This includes hardware components like fiber cables, optical transceivers, cross-connects, and router ports. These types of issues tend to show clear symptoms and typically have straightforward fixes.</p>
+<h3 id="checking-cross-connect-setup-and-hardware">Checking Cross-Connect Setup and Hardware</h3>
+<p>Start by confirming that the cross-connect installation is complete. Many connection problems stem from incomplete or incorrect setups at the colocation facility. Reach out to your colocation provider to verify that the cross-connect between your equipment and AWS is finalized. Ask for a cross-connect completion notice and compare the listed ports with those on your LOA-CFA (Letter of Authorization and Connecting Facility Assignment). Keep in mind, the LOA-CFA expires after 90 days if the cross-connect isn't completed. If needed, download a fresh copy from the <a href="/blog/aws-direct-connect-vs-vpn-key-differences/">AWS Direct Connect</a> console.</p>
+<p>Next, ensure your equipment and router ports are functioning as expected. Direct Connect requires single-mode fiber optic cables and specific optical transceivers depending on the connection speed:</p>
+<ul>
+<li><strong>1 Gbps</strong>: Use 1000BASE-LX transceivers at 1310 nm</li>
+<li><strong>10 Gbps</strong>: Use 10GBASE-LR transceivers</li>
+<li><strong>100 Gbps</strong>: Use 100GBASE-LR4 transceivers</li>
+<li><strong>400 Gbps</strong>: Use 400GBASE-LR4 transceivers </li>
+</ul>
+<p>Auto-negotiation settings can also cause trouble. For speeds over 1 Gbps, disable auto-negotiation and manually configure the port speed and full-duplex mode. For 1 Gbps connections, the requirement depends on the AWS Direct Connect endpoint.</p>
+<p>Lastly, ensure your connection path supports 802.1Q VLAN encapsulation, and verify that all intermediate devices are compatible. Your equipment must also support BGP and BGP MD5 authentication to establish connectivity at higher network layers. If issues persist, proceed to test the fiber-optic signals.</p>
+<h3 id="testing-optical-signals-and-fiber-connections">Testing Optical Signals and Fiber Connections</h3>
+<p>Proper optical signal strength is essential for reliable operation. AWS specifies the following signal ranges:</p>
+<ul>
+<li><strong>1–10 Gbps connections</strong>: Transmit and receive signals should be between –14.4 dBm and 2.50 dBm.</li>
+<li><strong>100 Gbps connections</strong>: Transmit signals should range from –4.3 to 4.5 dBm, while receive signals should fall between –10.6 and 4.5 dBm. These ranges apply to each optical lane in 100 Gbps setups.</li>
+</ul>
+<p>If signals fall outside these ranges, try flipping the transmit and receive fiber strands. This simple adjustment can correct issues caused by incorrect fiber polarity.</p>
+<p>Request an optical signal report from your colocation provider to check the transmit and receive levels across the cross-connect. This report can help pinpoint whether problems originate from your equipment, the cross-connect, or the AWS side.</p>
+<p>Perform loopback tests to narrow down the issue. Start by testing the link from the Meet-Me-Room (MMR) to your router. If your device's port becomes active, the link to the MMR is functional. Use commands like <code>show interfaces eth1 transceiver</code> on <a href="https://www.cisco.com/site/us/en/products/networking/index.html" rel="nofollow noopener noreferrer" target="_blank">Cisco</a> equipment to check transmit and receive light levels. Then, conduct a loopback test from the MMR toward the AWS router, running it for at least 10 minutes. If the physical components are working correctly, the AWS port should activate, which you can confirm with CloudWatch metrics.</p>
+<p>If problems persist, request a comprehensive media test from your colocation provider. This should include patch-cord verification, cleaning, and a full examination of the cabling and signaling. You can also use a <a href="https://www.flukenetworks.com/datacom-cabling/fiber-testing/VisiFault-Visual-Fault-Locator" rel="nofollow noopener noreferrer" target="_blank">Visual Fault Locator</a> (VFL) to check fiber continuity - if the red light doesn't travel end-to-end, there may be a fiber break.</p>
+<h3 id="monitoring-physical-errors-with-cloudwatch">Monitoring Physical Errors with CloudWatch</h3>
+<p>After confirming hardware and signal integrity, use <a href="https://aws.amazon.com/cloudwatch/" rel="nofollow noopener noreferrer" target="_blank">Amazon CloudWatch</a> to monitor for ongoing issues. CloudWatch provides metrics that track the health of the Direct Connect physical layer, updated every 5 minutes by default (1-minute intervals are available upon request).</p>
+<p>Key metrics to monitor include:</p>
+<figure><table>
+<thead>
+<tr>
+<th>Metric</th>
+<th>Purpose</th>
+<th>Normal Range</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>ConnectionState</strong></td>
+<td>Physical connection status</td>
+<td>1 (up) or 0 (down)</td>
+</tr>
+<tr>
+<td><strong>ConnectionLightLevelTx</strong></td>
+<td>Outbound optical signal strength</td>
+<td>–14.4 to 2.50 dBm (1–10 Gbps); –4.3 to 4.5 dBm (100 Gbps)</td>
+</tr>
+<tr>
+<td><strong>ConnectionLightLevelRx</strong></td>
+<td>Inbound optical signal strength</td>
+<td>–14.4 to 2.50 dBm (1–10 Gbps); –10.6 to 4.5 dBm (100 Gbps)</td>
+</tr>
+</tbody>
+</table></figure>
+<p>For 100 Gbps connections, use the OpticalLaneNumber dimension to inspect the four optical lanes individually. Metrics like <code>ConnectionState</code> indicate basic connectivity (1 for up, 0 for down), while <code>ConnectionErrorCount</code> tracks MAC-level errors, such as CRC errors. Rising error counts may point to damaged cables or failing transceivers.</p>
+<p>Set up CloudWatch alarms for these metrics to catch issues early. Also, check the <a href="https://health.aws.amazon.com/" rel="nofollow noopener noreferrer" target="_blank">AWS Health Dashboard</a> for planned maintenance or outages, and confirm with your colocation provider that no scheduled activities could disrupt your service.</p>
+<h2 id="fixing-data-link-layer-problems">Fixing Data Link Layer Problems</h2>
+<p>Once you've ensured the physical layer is stable, the next step is tackling Layer 2 issues, such as VLAN misconfigurations and ARP failures. These problems often disrupt communication between your equipment and AWS, making it crucial to address them promptly.</p>
+<h3 id="checking-vlan-and-ip-configuration">Checking VLAN and IP Configuration</h3>
+<p>VLAN misconfigurations are a frequent cause of Direct Connect issues at Layer 2. AWS requires all traffic to follow proper 802.1Q VLAN tagging. Any deviation from this standard will block ARP establishment on the AWS side.</p>
+<p>Start by verifying the VLAN settings on both ends of the connection. In the Direct Connect console, review your virtual interface details or use the <code>describe-virtual-interfaces</code> command. Ensure the AWS peer IP is assigned to the correct VLAN subinterface (e.g., GigabitEthernet0/0.123) rather than the physical interface. This is critical because AWS requires tagged traffic to establish communication.</p>
+<p>Check your router configuration to confirm the VLAN tag is unique and falls within the valid range of 1–4094. Download the router config file for precise commands if needed. Additionally, <strong>enable VLAN trunking</strong> on all intermediate devices between your router and the AWS Direct Connect endpoint. Any device that mishandles the 802.1Q VLAN tag can break connectivity. Once VLAN settings are verified, test Layer 2 connectivity by examining ARP entries.</p>
+<h3 id="clearing-arp-cache-and-checking-mac-addresses">Clearing ARP Cache and Checking MAC Addresses</h3>
+<p>After confirming VLAN tagging, focus on MAC address resolution by inspecting the ARP table. If the ARP table lacks an entry for the AWS endpoint’s MAC address, it indicates a Layer 2 issue. This could mean your device isn’t learning the Direct Connect endpoint’s MAC address, pointing to ARP resolution failures.</p>
+<p>To address this:</p>
+<ul>
+<li>Clear the ARP cache on your customer gateway to force a rebuild of MAC mappings.</li>
+<li>Enable ARP debugging on your customer gateway to monitor ARP request and reply activity.</li>
+<li>Use packet capture tools on the Layer 2 device connected to the Direct Connect endpoint. Verify that ARP broadcasts are being sent to AWS with the correct 802.1Q encapsulation and VLAN tag. These broadcasts should use the MAC address <code>FF:FF:FF:FF:FF:FF</code> and include proper VLAN tagging.</li>
+</ul>
+<h3 id="escalating-persistent-layer-2-problems">Escalating Persistent Layer 2 Problems</h3>
+<p>If your virtual interface is still down after checking VLAN configurations and troubleshooting ARP issues, you may need to involve AWS Support. Before escalating, ensure you've thoroughly documented your troubleshooting process.</p>
+<p>Provide AWS Support with the following:</p>
+<ul>
+<li>ARP table contents</li>
+<li>Packet capture results</li>
+<li>Confirmation that VLAN trunking is enabled on all intermediate devices </li>
+</ul>
+<p>Also, include details such as the specific VLAN ID in use, confirmation that it falls within the valid range (1–4094), and verification that the VLAN tag is unique. For hosted connections, keep in mind that your AWS Direct Connect Partner assigns the VLAN value, and it cannot be changed after the virtual interface is created.</p>
+<h2 id="fixing-network-and-transport-layer-problems">Fixing Network and Transport Layer Problems</h2>
+<p>Once Layer 2 issues are resolved, it's time to focus on the network and transport layers. If Layer 2 connectivity is confirmed but the virtual interface remains down, the problem likely lies in Layer 3 or 4. These issues often stem from BGP routing misconfigurations or firewall rules blocking BGP traffic.</p>
+<h3 id="checking-bgp-settings-and-authentication">Checking BGP Settings and Authentication</h3>
+<p>BGP configuration mistakes are a frequent culprit behind Direct Connect network layer failures. Start by confirming that the <strong>BGP ASN numbers</strong> match exactly between your router configuration and the <a href="/blog/aws-network-dashboard-issues-troubleshooting-tips/">AWS Direct Connect console</a>. Even a small mismatch will prevent the session from establishing.</p>
+<p>Next, verify the <strong>peer IP addresses</strong> on both sides. Your customer gateway must be configured with the correct AWS peer IP address, and AWS needs the correct IP for your router.</p>
+<p>If you're using <strong>MD5 authentication</strong>, ensure the key matches perfectly between your router and the AWS console. Any discrepancy here will result in authentication failures. Double-check your router's MD5 key against the one entered in the AWS console when setting up the virtual interface. Also, keep in mind that AWS does <strong>not allow 0 as a Hold Time value</strong>, so make sure your BGP timer settings use valid non-zero values.</p>
+<p>To test connectivity, run a telnet check on <strong>TCP port 179</strong> between your router and the AWS peer IP. If this fails, there's a connectivity issue that needs attention. Once you've confirmed BGP settings, review your firewall and ACL rules to ensure they aren't blocking traffic.</p>
+<h3 id="checking-firewall-and-acl-rules">Checking Firewall and ACL Rules</h3>
+<p>Firewall settings are another common reason for BGP traffic issues. BGP uses <strong>TCP port 179</strong> for initial connections and <strong>high-numbered ephemeral TCP ports</strong> for ongoing communication. Any rules blocking these ports will interrupt BGP connectivity.</p>
+<p>On the AWS side, check your <strong>VPC security groups and Network ACLs</strong>. These must allow two-way traffic between your on-premises network CIDR blocks and your AWS resources. Be sure to review both inbound and outbound rules to confirm that the required ports are open for traffic in both directions.</p>
+<p>To locate where traffic is being blocked, use traceroute from your on-premises router and an Amazon VPC instance. If the trace halts at your on-premises router's peer IP, your local firewall might be dropping the traffic. If it stops at the AWS peer IP, examine your AWS-side security group and Network ACL rules.</p>
+<p>Enabling <strong>Amazon VPC Flow Logs</strong> can give you a clearer picture of traffic patterns. These logs show whether packets from your on-premises router are reaching specific elastic network interfaces in your VPC. This can help identify if the block is occurring at the network interface level instead of at the router.</p>
+<h3 id="checking-bgp-logs-for-errors">Checking BGP Logs for Errors</h3>
+<p>To pinpoint negotiation failures, collect packet captures and analyze <strong>BGP debug logs</strong>. These tools reveal what happens during each step of the session establishment process.</p>
+<p>BGP sessions move through distinct states, and log analysis can help identify where the failure occurs. In the <strong>Connect state</strong>, confirm that the TCP three-way handshake completes successfully. Look for dropped packets or connection errors in the logs. If the handshake doesn’t complete, check that both routers are configured with the correct neighbor IP addresses and that MD5 authentication keys are an exact match.</p>
+<p>During the <strong>OpenSent state</strong>, BGP sends an OPEN message and waits for a response. Review your logs to ensure the message includes the correct parameters, such as the version number, AS number, Hold Timer, and BGP Identifier IP address. Errors like mismatched AS numbers or invalid Hold Timer values can cause failures here.</p>
+<p>In the <strong>Established state</strong>, routers exchange route updates and keepalive messages. If your session reaches Established but then drops back to Idle, check whether you're <strong>advertising more than 100 routes</strong>. AWS imposes a limit of 100 advertised routes for private virtual interfaces, and exceeding this will terminate the session. You can fix this by summarizing your routes or advertising a default route instead.</p>
+<p>Finally, review your BGP logs for any <strong>prefix filters or route maps</strong> that could be blocking route advertisement. Ensure that the prefixes you're advertising appear in the AWS route tables and that no local filtering is preventing expected routes from being advertised.</p>
+
+<h2 id="fixing-routing-and-traffic-flow-problems">Fixing Routing and Traffic Flow Problems</h2>
+<p>When routing and traffic permissions are not configured correctly, data transmission can fail even if a BGP session is established.</p>
+<h3 id="checking-route-advertisement-and-propagation">Checking Route Advertisement and Propagation</h3>
+<p>Start by ensuring your router advertises the correct IP prefixes to AWS. Use the <code>show ip bgp neighbors</code> command to confirm this. The output should list all the prefixes from your network that you want AWS to access.</p>
+<p>Next, check the virtual interface BGP route table in the AWS Direct Connect console to verify the routes received from your router. Missing routes could mean your router isn’t advertising them properly, or they might be filtered by route maps or prefix lists on your end.</p>
+<p>In the VPC console, ensure route propagation is enabled for your Virtual Private Gateway. Without this, even properly advertised routes won’t show up in your VPC routing tables.</p>
+<p>If you're working with <strong><a href="/blog/aws-transit-gateway-route-tables-explained/">transit gateways</a></strong>, examine the route tables linked to your Direct Connect gateway attachment. Routes must either be explicitly associated or propagated to the correct route table. Connectivity issues often arise due to missing route table associations in transit gateway setups.</p>
+<p>Also, make sure that summarized routes cover all necessary subnets to avoid traffic black holes. Lastly, check that security settings are not inadvertently blocking the advertised routes.</p>
+<h3 id="checking-vpc-security-groups-and-network-acls">Checking VPC Security Groups and Network ACLs</h3>
+<p>Security groups and Network ACLs play a crucial role in allowing traffic from your on-premises network.</p>
+<p><strong>Security groups</strong> are stateful and operate at the instance level. This means return traffic is automatically allowed for established connections. Review the security groups attached to your EC2 instances or other resources. Ensure the inbound rules permit traffic from your on-premises IP ranges over the required ports and protocols.</p>
+<p>For instance, if your goal is to access a web server in your VPC, the security group must include an inbound rule allowing HTTP (port 80) or HTTPS (port 443) traffic from your corporate network’s IP range. Without this, packets will be dropped regardless of correct routing.</p>
+<p><strong>Network ACLs</strong> are stateless and work at the subnet level, requiring explicit rules for both inbound and outbound traffic. Check the ACLs associated with the subnet hosting your target resources. Ensure traffic is allowed in both directions, including ephemeral port ranges for return traffic.</p>
+<p>While the default Network ACL allows all traffic, custom ACLs are often more restrictive. If you’ve implemented custom rules, verify they accommodate your on-premises traffic. Remember, Network ACL rules are processed in numerical order, and the first matching rule determines the action.</p>
+<p>If packets are being rejected, use VPC Flow Logs to identify the issue. Look for REJECT entries in the logs, then review the corresponding security groups and Network ACLs for the affected resources.</p>
+<h3 id="checking-aws-routing-limits">Checking AWS Routing Limits</h3>
+<p>AWS enforces specific routing limits that, if exceeded, can disrupt connectivity. Being aware of these limits is key to avoiding traffic issues.</p>
+<p>For private virtual interfaces, AWS supports up to 100 advertised routes. If your router advertises more than this, AWS will shut down the BGP session. Regularly monitor your route advertisements and use route summarization to stay within this limit.</p>
+<p><strong>VPC route tables</strong> have limits too: 50 non-propagated routes and 100 propagated routes per table. If you’re using multiple Direct Connect or VPN connections, you could hit these limits, leading to ignored routes and connectivity gaps.</p>
+<p>To manage these limits, consider implementing <strong>route summarization</strong>. For example, instead of advertising individual /24 subnets, summarize them into larger blocks like /16 or /8 networks. This reduces the number of advertised routes while maintaining network connectivity.</p>
+<p>For large networks, advertising a default route from your router to AWS can be a more efficient strategy. This uses just one route slot but requires careful planning to ensure proper traffic flow.</p>
+<p>Monitor your route usage through the AWS console, and set up <strong>CloudWatch alarms</strong> to alert you when you’re nearing routing limits. Proactive monitoring can help you avoid unexpected connectivity issues caused by exceeding these thresholds.</p>
+<h2 id="conclusion">Conclusion</h2>
+<p>When troubleshooting <strong>AWS Direct Connect</strong>, a structured, step-by-step approach is key. By examining each network layer from the ground up, you can avoid missing fundamental issues that might ripple across multiple layers.</p>
+<p>Starting with the physical layer is critical. Problems like damaged fiber connections or incorrect cross-connects can block all higher-layer protocols from functioning. Once the physical layer is confirmed, move to the data link layer, where misconfigured VLANs or ARP issues could cause sporadic connectivity problems. Proper testing is essential to pinpoint these issues.</p>
+<p><strong>BGP configuration errors</strong> are another frequent culprit. Double-check details like AS numbers, authentication keys, and IP addresses before assuming hardware is at fault. Even minor configuration mismatches can disrupt BGP sessions entirely.</p>
+<p>Don’t overlook AWS limits - these can lead to unexpected outages. For example, exceeding the 100-route limit on private virtual interfaces or hitting VPC route table limits can cause disruptions. Regularly monitor your route advertisements and consider using route summarization to avoid hitting these thresholds.</p>
+<p>Leverage monitoring tools throughout the process. These tools provide insights into connection status, packet flows, and the decisions made by security groups. Flow logs, in particular, can help pinpoint whether traffic is being blocked by security groups or Network ACLs, or if routing is the issue.</p>
+<p>When reaching out to AWS Support, ensure you document everything thoroughly. Include details like BGP session states, route advertisements, and security configurations. This not only speeds up resolution but also shows that you’ve done your homework.</p>
+<p>Finally, collaboration is crucial. Bring together your network, cloud, and security teams to share findings and streamline troubleshooting. This teamwork reduces redundancy and ensures every angle of the issue is thoroughly addressed.</p>
+<h2 id="faqs">FAQs</h2>
+<h3 id="what-are-common-physical-connection-issues-with-aws-direct-connect-and-how-can-they-be-fixed">What are common physical connection issues with AWS Direct Connect, and how can they be fixed?</h3>
+<p>Physical connection problems with AWS Direct Connect often stem from <strong>damaged or loose fiber optic cables</strong> or an <strong>incomplete cross-connect setup</strong>. Here's how you can address these issues:</p>
+<ul>
+<li><strong>Check the cables</strong>: Ensure all fiber optic cables are securely connected and free from damage.</li>
+<li><strong>Verify the cross-connect setup</strong>: Contact your colocation provider to confirm that the cross-connect is properly configured and active.</li>
+</ul>
+<p>If you notice there's no light coming from the cross-connect panel, it's usually a sign of a hardware or connectivity issue. In this case, inspect the cables, ports, and any related hardware to identify potential faults or misconfigurations. Keeping these components in good condition is essential for restoring your connection.</p>
+<h3 id="what-are-the-effects-of-vlan-misconfigurations-on-aws-direct-connect-and-how-can-you-resolve-them">What are the effects of VLAN misconfigurations on AWS Direct Connect and how can you resolve them?</h3>
+<p>VLAN misconfigurations can throw a wrench into AWS Direct Connect, leading to virtual interfaces (VIFs) becoming unresponsive or failing to connect. These hiccups often arise from issues like using incorrect VLAN IDs, mismatched settings between your network and AWS, or errors in traffic tagging.</p>
+<p>To get things back on track, start by double-checking that the VLAN IDs on your devices align with those provided by AWS. Make sure VLAN tagging is set up correctly and that your network hardware supports the required encapsulation standard, such as <strong>802.1ad</strong>. Next, review your physical connections and confirm that the cross-connect is properly established. Take a close look at the status of the VIF and BGP session for any irregularities. If problems persist, running traceroutes can help pinpoint potential network path issues. Tackling these troubleshooting steps methodically can go a long way in restoring your connection.</p>
+<h3 id="how-can-i-configure-bgp-settings-for-a-stable-aws-direct-connect-connection">How can I configure BGP settings for a stable AWS Direct Connect connection?</h3>
+<p>To keep your AWS Direct Connect connection steady, it's important to configure <strong>BGP (Border Gateway Protocol)</strong> with well-chosen settings. For example, set the hold timer to a practical value, like 3 seconds, to strike the right balance between quick responsiveness and connection stability. Also, make sure to establish <strong>two BGP sessions</strong> for redundancy - this way, if one session fails, the other can take over without disrupting your connection.</p>
+<p>You can also use <strong>BGP communities</strong> to fine-tune route preferences, making it easier to manage traffic flow. Regularly checking the status of your BGP sessions is key to spotting and fixing potential issues before they cause problems. This proactive monitoring ensures your connection remains reliable and helps reduce the risk of downtime.</p>
+<h2>Related Blog Posts</h2><ul><li><a href="/blog/visualize-aws-transit-gateways-with-network-manager/">Visualize AWS Transit Gateways with Network Manager</a></li><li><a href="/blog/ultimate-guide-to-aws-network-performance-benchmarking/">Ultimate Guide to AWS Network Performance Benchmarking</a></li><li><a href="/blog/aws-direct-connect-vs-vpn-key-differences/">AWS Direct Connect vs VPN: Key Differences</a></li><li><a href="/blog/troubleshoot-vpc-endpoint-connectivity/">Troubleshoot VPC Endpoint Connectivity</a></li></ul><script type="application/ld+json">{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"What are common physical connection issues with AWS Direct Connect, and how can they be fixed?","acceptedAnswer":{"@type":"Answer","text":"<p>Physical connection problems with AWS Direct Connect often stem from <strong>damaged or loose fiber optic cables</strong> or an <strong>incomplete cross-connect setup</strong>. Here's how you can address these issues:</p> <ul> <li><strong>Check the cables</strong>: Ensure all fiber optic cables are securely connected and free from damage.</li> <li><strong>Verify the cross-connect setup</strong>: Contact your colocation provider to confirm that the cross-connect is properly configured and active.</li> </ul> <p>If you notice there's no light coming from the cross-connect panel, it's usually a sign of a hardware or connectivity issue. In this case, inspect the cables, ports, and any related hardware to identify potential faults or misconfigurations. Keeping these components in good condition is essential for restoring your connection.</p>"}},{"@type":"Question","name":"What are the effects of VLAN misconfigurations on AWS Direct Connect and how can you resolve them?","acceptedAnswer":{"@type":"Answer","text":"<p>VLAN misconfigurations can throw a wrench into AWS Direct Connect, leading to virtual interfaces (VIFs) becoming unresponsive or failing to connect. These hiccups often arise from issues like using incorrect VLAN IDs, mismatched settings between your network and AWS, or errors in traffic tagging.</p> <p>To get things back on track, start by double-checking that the VLAN IDs on your devices align with those provided by AWS. Make sure VLAN tagging is set up correctly and that your network hardware supports the required encapsulation standard, such as <strong>802.1ad</strong>. Next, review your physical connections and confirm that the cross-connect is properly established. Take a close look at the status of the VIF and BGP session for any irregularities. If problems persist, running traceroutes can help pinpoint potential network path issues. Tackling these troubleshooting steps methodically can go a long way in restoring your connection.</p>"}},{"@type":"Question","name":"How can I configure BGP settings for a stable AWS Direct Connect connection?","acceptedAnswer":{"@type":"Answer","text":"<p>To keep your AWS Direct Connect connection steady, it's important to configure <strong>BGP (Border Gateway Protocol)</strong> with well-chosen settings. For example, set the hold timer to a practical value, like 3 seconds, to strike the right balance between quick responsiveness and connection stability. Also, make sure to establish <strong>two BGP sessions</strong> for redundancy - this way, if one session fails, the other can take over without disrupting your connection.</p> <p>You can also use <strong>BGP communities</strong> to fine-tune route preferences, making it easier to manage traffic flow. Regularly checking the status of your BGP sessions is key to spotting and fixing potential issues before they cause problems. This proactive monitoring ensures your connection remains reliable and helps reduce the risk of downtime.</p>"}}]}</script>

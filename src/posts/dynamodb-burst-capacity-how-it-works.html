@@ -1,0 +1,112 @@
+---
+layout: post.njk
+templateEngineOverride: html
+tags: posts
+title: "DynamoDB Burst Capacity: How It Works"
+description: "Learn how DynamoDB's burst capacity manages sudden traffic spikes by utilizing unused throughput for optimal performance and cost efficiency."
+date: "2025-03-17"
+datePublished: "2025-03-17T04:10:58.573000+00:00"
+heroImage: "/assets/media/26f28ee3e87037ee40f1.jpg"
+permalink: "/blog/dynamodb-burst-capacity-how-it-works/"
+sourceUrl: "https://awsforengineers.com/blog/dynamodb-burst-capacity-how-it-works/"
+---
+<p><a href="https://aws.amazon.com/dynamodb/" rel="nofollow noopener noreferrer" target="_blank">DynamoDB</a>'s burst capacity helps your database handle sudden traffic spikes by using unused throughput saved from the last 5 minutes. This ensures your application stays responsive during short-term demand surges without manual adjustments.</p>
+<p><strong>Key Takeaways:</strong></p>
+<ul>
+<li><strong>What it is:</strong> A temporary reserve of unused read/write capacity to manage unexpected traffic.</li>
+<li><strong>How it works:</strong> Unused capacity accumulates for up to 5 minutes and is used during spikes.</li>
+<li><strong>Why it matters:</strong> Prevents throttling, saves costs by avoiding over-provisioning, and ensures smooth performance.</li>
+<li><strong>Monitoring:</strong> Use <a href="https://www.amazonaws.cn/en/cloudwatch/" rel="nofollow noopener noreferrer" target="_blank">Amazon CloudWatch</a> to track metrics like consumed and provisioned capacity.</li>
+<li><strong>Limitations:</strong> Burst capacity is temporary; sustained high traffic may require on-demand capacity mode.</li>
+</ul>
+<p>Plan your baseline capacity wisely, monitor usage patterns, and leverage tools like auto-scaling to ensure your application remains reliable. If burst capacity isn't enough, consider switching to on-demand capacity for better scalability.</p>
+<h2 id="burst-capacity-mechanics">Burst Capacity Mechanics</h2>
+<p>DynamoDB gathers unused capacity over time, creating a temporary reserve to handle unexpected spikes in demand. Here's a breakdown of how this works:</p>
+<h3 id="how-unused-capacity-builds-up">How Unused Capacity Builds Up</h3>
+<p>Whenever your application uses less than the provisioned capacity, the extra capacity is stored as burst capacity. This process happens in real time, ensuring you're ready for sudden traffic increases.</p>
+<h3 id="5-minute-storage-window">5-Minute Storage Window</h3>
+<p>Burst capacity is stored for up to 5 minutes. After this period, it expires, aligning with the current workload and preventing long-term accumulation.</p>
+<h3 id="traffic-spike-management">Traffic Spike Management</h3>
+<p>During a traffic surge, DynamoDB taps into burst capacity to manage the load. However, if both the provisioned and burst capacities are depleted, requests are throttled. Keep in mind, burst capacity is a temporary safeguard - not a substitute for careful capacity planning.</p>
+<h2 id="tracking-burst-capacity">Tracking Burst Capacity</h2>
+<p>Keep an eye on burst capacity to avoid throttling and maintain system performance.</p>
+<h3 id="measuring-burst-capacity">Measuring Burst Capacity</h3>
+<p>DynamoDB automatically sends capacity metrics to <strong>Amazon CloudWatch</strong>, giving you a clear view of burst capacity usage. Key metrics to focus on include:</p>
+<ul>
+<li><strong>ConsumedReadCapacityUnits</strong>: Tracks the actual read capacity being used.</li>
+<li><strong>ConsumedWriteCapacityUnits</strong>: Tracks the actual write capacity being used.</li>
+<li><strong>ProvisionedReadCapacityUnits</strong>: Shows the allocated read capacity.</li>
+<li><strong>ProvisionedWriteCapacityUnits</strong>: Shows the allocated write capacity.</li>
+</ul>
+<p>By comparing provisioned capacity with consumed capacity, you can estimate how much burst credit is available to handle sudden spikes in demand. Use <strong>CloudWatch</strong> to access these metrics for real-time updates.</p>
+<h3 id="using-cloudwatch-for-monitoring">Using CloudWatch for Monitoring</h3>
+<p>CloudWatch is essential for tracking usage patterns and identifying capacity limits. Here are the key metrics to monitor:</p>
+<figure><table>
+<thead>
+<tr>
+<th><strong>Metric Type</strong></th>
+<th><strong>Measurement Interval</strong></th>
+<th><strong>Purpose</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Consumed Capacity</td>
+<td>1-minute intervals</td>
+<td>Monitor actual usage trends</td>
+</tr>
+<tr>
+<td>Throttled Requests</td>
+<td>Near real-time</td>
+<td>Detect potential capacity shortages</td>
+</tr>
+<tr>
+<td>Provisioned Capacity</td>
+<td>5-minute intervals</td>
+<td>Keep track of baseline capacity allocation</td>
+</tr>
+</tbody>
+</table></figure>
+<p>These metrics help you spot issues early and adjust capacity as needed.</p>
+<h3 id="setting-up-monitoring">Setting Up Monitoring</h3>
+<ol>
+<li>Open the <strong><a href="https://console.aws.amazon.com/cloudwatch/home" rel="nofollow noopener noreferrer" target="_blank">CloudWatch console</a></strong>, navigate to DynamoDB metrics, and verify that metrics for your table are being recorded.</li>
+<li>Build dashboards to compare provisioned and consumed capacity, and highlight throttling events.</li>
+<li>Set up <strong><a href="https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/AlarmThatSendsEmail.html" rel="nofollow noopener noreferrer" target="_blank">CloudWatch alarms</a></strong> to notify you when consumption approaches capacity or when there are sudden spikes.</li>
+</ol>
+<p>Regularly tracking and analyzing these metrics ensures better capacity planning and minimizes the risk of performance problems for your users.</p>
+
+<h2 id="using-burst-capacity-effectively">Using Burst Capacity Effectively</h2>
+<h3 id="capacity-planning">Capacity Planning</h3>
+<p>To handle traffic spikes effectively, balance your regular capacity with burst capacity. Plan your baseline capacity to manage everyday operations while reserving burst credits for peak times.</p>
+<p>Here’s how to approach it:</p>
+<ul>
+<li><strong>Analyze traffic patterns</strong>: Look for trends, fluctuations, and periodic spikes in usage.</li>
+<li><strong>Track burst credit accumulation</strong>: Monitor how credits build during low-usage periods to prepare for short-term surges.</li>
+<li><strong><a href="/blog/aws-engineering-blog-autoscaling-for-high-availability/">Leverage auto-scaling</a></strong>: Use auto-scaling tools to adjust capacity based on real-time demand, minimizing the need for burst capacity.</li>
+</ul>
+<h3 id="common-mistakes-to-avoid">Common Mistakes to Avoid</h3>
+<p>Steer clear of these common errors to keep your capacity planning on track:</p>
+<ul>
+<li>Don’t rely too heavily on burst credits - ensure your baseline capacity is sufficient.</li>
+<li>Set up <strong>CloudWatch alarms</strong> to flag throttled requests and capacity limits before they become issues.</li>
+<li>Use <strong><a href="https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/AnalyzingLogData.html" rel="nofollow noopener noreferrer" target="_blank">CloudWatch insights</a></strong> to make proactive adjustments to your capacity instead of reacting to problems.</li>
+<li>Neglecting to monitor burst credits can signal that your baseline capacity is too low.</li>
+</ul>
+<h2 id="burst-capacity-constraints">Burst Capacity Constraints</h2>
+<h3 id="maximum-capacity-limits">Maximum Capacity Limits</h3>
+<p>DynamoDB's burst capacity allows up to 300 seconds (5 minutes) of unused capacity to handle temporary traffic spikes. However, if traffic consistently exceeds both the provisioned and burst capacities, DynamoDB will throttle requests. This results in <strong>ProvisionedThroughputExceededException</strong> errors for reads, delayed or rejected writes, and increased operation latency. For workloads that regularly push beyond these limits, exploring other capacity modes might be a better option.</p>
+<h3 id="other-traffic-management-options">Other Traffic Management Options</h3>
+<p>If burst capacity isn't enough to handle your workload, it's time to consider other ways to manage traffic. One option is <strong>on-demand capacity mode</strong>, which automatically adjusts to traffic spikes and unpredictable patterns without requiring manual intervention.</p>
+<p>Choosing the right traffic management strategy depends on your application's needs. Burst capacity works well for occasional spikes, but for sustained high traffic, on-demand capacity mode provides a more reliable solution.</p>
+<h2 id="summary">Summary</h2>
+<p>DynamoDB's burst capacity helps handle unexpected traffic spikes by using unused throughput from a rolling 5-minute window. This reserve ensures performance remains steady during sudden increases in workload.</p>
+<p>Here are the key points:</p>
+<ul>
+<li><strong>Unused Capacity Builds Up</strong>: When throughput is below the provisioned level, the extra capacity accumulates automatically.</li>
+<li><strong>5-Minute Window</strong>: Unused capacity is stored for up to 5 minutes, providing a short-term buffer.</li>
+<li><strong>Tracking Usage</strong>: You can monitor burst capacity usage through <a href="/blog/custom-cloudwatch-metrics-setup-guide-2024/">CloudWatch metrics</a>.</li>
+<li><strong>Throttling Risks</strong>: Once the burst capacity is consumed, requests may be throttled.</li>
+</ul>
+<p>To keep your application running smoothly, include these factors in your capacity planning. Regularly monitor usage and adjust as needed. If burst capacity isn't enough for your needs, consider switching to on-demand capacity mode, which automatically scales to handle demand.</p>
+<h2>Related Blog Posts</h2><ul><li><a href="/blog/aws-rds-blog-insights-performance-tuning/">AWS RDS Blog Insights: Performance Tuning</a></li><li><a href="/blog/aws-engineering-blog-autoscaling-for-high-availability/">AWS Engineering Blog: Autoscaling for High Availability</a></li><li><a href="/blog/aws-lambda-metrics-explained/">AWS Lambda Metrics Explained</a></li><li><a href="/blog/predictive-scaling-vs-dynamic-scaling-in-aws/">Predictive Scaling vs Dynamic Scaling in AWS</a></li></ul>

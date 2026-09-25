@@ -1,0 +1,131 @@
+---
+layout: post.njk
+templateEngineOverride: html
+tags: posts
+title: "AWS Fargate Metrics with CloudWatch"
+description: "Learn how to effectively monitor AWS Fargate metrics with CloudWatch for optimizing performance and resource management."
+date: "2025-09-08"
+datePublished: "2025-09-08T11:57:19.355000+00:00"
+heroImage: "/assets/media/2dab8afcc830e1bcfd5a.jpg"
+permalink: "/blog/aws-fargate-metrics-with-cloudwatch/"
+sourceUrl: "https://awsforengineers.com/blog/aws-fargate-metrics-with-cloudwatch/"
+---
+<p><a href="https://aws.amazon.com/fargate/" rel="nofollow noopener noreferrer" target="_blank">AWS Fargate</a> simplifies containerized application deployment by removing server management, while <a href="https://aws.amazon.com/cloudwatch/" rel="nofollow noopener noreferrer" target="_blank">CloudWatch</a> enables you to monitor performance through detailed metrics. Key metrics like CPU usage, memory consumption, and network activity help ensure smooth operations. <a href="https://aws.amazon.com/cloudwatch/" rel="nofollow noopener noreferrer" target="_blank">CloudWatch</a>'s <strong><a href="https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/ContainerInsights.html" rel="nofollow noopener noreferrer" target="_blank">Container Insights</a></strong> offers deeper visibility into your tasks, clusters, and services, with features like custom dashboards, alarms, and autoscaling.</p>
+<p><strong>Quick Takeaways:</strong></p>
+<ul>
+<li><strong>Core Metrics</strong>: CPU usage, memory consumption, EBS filesystem usage, and running task count.</li>
+<li><strong>Setup Steps</strong>: Enable Container Insights via the ECS console or CLI and configure IAM permissions.</li>
+<li><strong>Custom Monitoring</strong>: Fine-tune metrics using custom dimensions or log-based tracking.</li>
+<li><strong>Dashboards &amp; Alarms</strong>: Visualize trends and set alerts for critical thresholds.</li>
+</ul>
+<p>Use these tools to monitor Fargate workloads effectively, optimize resource usage, and maintain high application performance.</p>
+<h2 id="setting-up-cloudwatch-for-fargate-metrics">Setting Up <a href="https://aws.amazon.com/cloudwatch/" rel="nofollow noopener noreferrer" target="_blank">CloudWatch</a> for Fargate Metrics</h2>
+<p><figure><img alt="CloudWatch" loading="lazy" src="/assets/media/409d4f8623d5bfc7dc15.jpg"/></figure></p>
+<p>Getting CloudWatch ready for monitoring Fargate tasks starts with a few essential steps. Once these are squared away, setting up detailed monitoring becomes a lot simpler. Begin by ensuring all prerequisites are met before diving into the configuration.</p>
+<h3 id="prerequisites-for-cloudwatch-and-fargate">Prerequisites for CloudWatch and Fargate</h3>
+<p>Before you start configuring CloudWatch, make sure everything you need is in place. First, your AWS account should have the right IAM permissions. Key permissions include <code>ecs:CreateCluster</code>, <code>ecs:DescribeClusters</code>, and <code>cloudwatch:PutMetricData</code>. These are crucial for basic operations.</p>
+<p>You’ll also need an active ECS cluster and task definitions with appropriate CPU and memory allocations. These resource settings are critical for calculating utilization percentages accurately. If your tasks are under-allocated, metrics might be inaccurate, or the tasks could fail to run.</p>
+<p>Lastly, ensure you have access to the <a href="https://aws.amazon.com/console/" rel="nofollow noopener noreferrer" target="_blank">AWS Management Console</a> or <a href="https://aws.amazon.com/cli/" rel="nofollow noopener noreferrer" target="_blank">AWS CLI</a> with valid credentials to manage configurations.</p>
+<h3 id="enabling-cloudwatch-container-insights">Enabling CloudWatch <a href="https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/ContainerInsights.html" rel="nofollow noopener noreferrer" target="_blank">Container Insights</a></h3>
+<p><figure><img alt="Container Insights" loading="lazy" src="/assets/media/3af63d5e28b45e1259d1.jpg"/></figure></p>
+<p>Container Insights provides an in-depth look at your Fargate workloads. To enable it, go to the <a href="https://aws.amazon.com/ecs/" rel="nofollow noopener noreferrer" target="_blank">Amazon ECS</a> console, pick your cluster, and head over to the <strong>Configuration</strong> tab. Under the <strong>Monitoring</strong> section, toggle the Container Insights setting to "Enabled", then save your changes. This setting applies to all services and tasks within that cluster. The activation process usually takes 2–3 minutes, and you’ll see a confirmation once it’s complete.</p>
+<p>When enabled, new deployments will automatically adopt the monitoring setup of the cluster. The service also creates a CloudWatch Log Group named <code>/aws/ecs/containerinsights/[cluster-name]/performance</code>, where enhanced metrics are stored.</p>
+<p>You can also enable Container Insights using the AWS CLI with this command:<br/>
+<code>aws ecs put-account-setting --name "containerInsights" --value "enabled"</code></p>
+<p>Once enabled, you can fine-tune metric collection to better fit your application’s monitoring needs.</p>
+<h3 id="customizing-metric-collection">Customizing Metric Collection</h3>
+<p>Fine-tuning metrics can improve your monitoring precision. For instance, you can publish custom or high-resolution metrics using the CloudWatch SDK. To do this, use the <code>PutMetricData</code> API with a <code>StorageResolution</code> of 1 for high-frequency (1-second) data. Adding custom dimensions like <code>Environment=production</code> or <code>Application=web-api</code> can help organize your metrics more effectively. Keep in mind, though, that high-resolution metrics might increase costs.</p>
+<p>Custom dimensions can be added through task definition environment variables or by configuring your application’s CloudWatch client.</p>
+<p>Another way to customize metrics is through log-based tracking. By creating metric filters from your application logs, you can monitor specific events - like user signups, payment transactions, or error occurrences. These custom metrics will show up alongside standard Fargate metrics in your <a href="/blog/aws-health-dashboards-monitoring-and-debugging-guide/">CloudWatch dashboards</a>, giving you a more complete view of your application’s performance.</p>
+<h2 id="key-metrics-for-monitoring-fargate-with-cloudwatch">Key Metrics for Monitoring Fargate with CloudWatch</h2>
+<p>CloudWatch automatically tracks several metrics from your Fargate tasks, giving you insights into the performance and resource usage of your containerized applications. These metrics are grouped into different namespaces, each offering unique levels of detail. Let’s break down the key metrics and their role in effective resource monitoring.</p>
+<h3 id="core-fargate-metrics">Core Fargate Metrics</h3>
+<p>When monitoring Fargate tasks, some of the most important metrics to watch include <strong>CPU utilization</strong>, <strong>memory usage</strong>, <strong>EBS filesystem usage</strong>, and the <strong>number of running tasks</strong>. CloudWatch gathers CPU and memory metrics automatically for any Amazon ECS service running on Fargate. These metrics are crucial for evaluating whether your tasks are using resources efficiently.</p>
+<ul>
+<li>
+<strong>CPU utilization</strong>: This metric shows what percentage of the allocated CPU is being used by your tasks. If CPU usage is consistently low (e.g., below 20%), it may indicate over-provisioning. On the flip side, high CPU usage (above 90%) could lead to performance issues. Setting alerts for usage spikes above 90% can help you address potential slowdowns before they affect users.
+</li>
+<li>
+<strong>Memory usage</strong>: This measures how much of the allocated memory your tasks are consuming. Keeping memory usage below 80% is ideal to avoid out-of-memory errors that could terminate your tasks. By keeping an eye on this metric, you can adjust task definitions and avoid over-allocating resources.
+</li>
+<li>
+<strong>EBS filesystem usage</strong>: For applications that store temporary data, logs, or other files on the container’s filesystem, monitoring EBS usage is critical. CloudWatch provides these metrics automatically for Fargate tasks.
+</li>
+<li>
+<strong>Running tasks count</strong>: AWS imposes a regional limit of 100 Fargate tasks. Monitoring the number of running tasks ensures you stay within this limit and helps you identify problems that might prevent tasks from starting properly. Comparing the desired task count against the actual running tasks can quickly highlight any discrepancies.
+</li>
+</ul>
+<h3 id="metric-namespaces-and-data-interpretation">Metric Namespaces and Data Interpretation</h3>
+<p>CloudWatch organizes Fargate metrics into specific namespaces, making it easier to focus on the data you need.</p>
+<ul>
+<li>
+<strong>AWS/ECS namespace</strong>: This namespace offers free metrics for clusters and services, such as CPU and memory reservation, utilization, and EBS filesystem usage across clusters and services. It’s ideal for high-level monitoring and keeping costs in check.
+</li>
+<li>
+<strong>ECS/ContainerInsights namespace</strong>: For more detailed monitoring, this namespace provides per-task metrics, including CPU, memory, and EBS filesystem usage. While it gives a deeper look into individual tasks, it does come with additional costs.
+</li>
+<li>
+<strong>AWS/Usage namespace</strong>: This namespace tracks usage metrics like ResourceCount for vCPU, which is helpful for capacity planning and ensuring you don’t exceed service limits.
+</li>
+</ul>
+<p>For <a href="https://aws.amazon.com/eks/" rel="nofollow noopener noreferrer" target="_blank">EKS</a> on Fargate, <a href="https://kubernetes.io/" rel="nofollow noopener noreferrer" target="_blank">Kubernetes</a> tools like the Metrics Server and kube-state-metrics provide pod-level metrics and state information.</p>
+<p>Each metric is defined by its name, namespace, and dimensions, allowing you to filter and aggregate data by cluster, service, or task. This makes it easier to create dashboards and set up targeted alerts.</p>
+<p>When analyzing these metrics, keep in mind that Fargate metrics are reported as percentages of the resources allocated to your tasks, not the underlying hardware. For instance, if a task shows 50% CPU utilization, it means it’s using half of its allocated CPU, making resource planning more predictable.</p>
+<h2 id="visualizing-and-analyzing-fargate-metrics-in-cloudwatch">Visualizing and Analyzing Fargate Metrics in CloudWatch</h2>
+<p>Once you've set up Fargate metric collection, the next step is to make the data actionable. This is where CloudWatch dashboards and alarms come into play. Dashboards help you visualize trends and monitor your resources, while alarms ensure you're alerted to potential issues before they impact your users.</p>
+<h3 id="creating-custom-dashboards">Creating Custom Dashboards</h3>
+<p>CloudWatch dashboards provide a central hub for monitoring Fargate metrics, even across multiple AWS accounts and regions. You can create them directly in the CloudWatch console or programmatically using the AWS CLI or the <code>PutDashboard</code> API.</p>
+<p>Here’s how to create a dashboard through the CloudWatch console:</p>
+<ul>
+<li>Open the CloudWatch console at <a href="https://console.aws.amazon.com/cloudwatch/" rel="nofollow noopener noreferrer" target="_blank">https://console.aws.amazon.com/cloudwatch/</a> and select <strong>Dashboards</strong> from the navigation pane.</li>
+<li>Click <strong>Create dashboard</strong>, give it a name, and start adding widgets.</li>
+<li>Choose from various widget types, such as line graphs, stacked area graphs, numeric displays, or text blocks.</li>
+</ul>
+<p>When adding metrics, you'll find Fargate data organized in specific namespaces. For instance:</p>
+<ul>
+<li>The <code>AWS/Usage</code> namespace includes metrics like <code>ResourceCount</code> for tracking vCPU usage.</li>
+<li>The <code>ECS/ContainerInsights/Prometheus</code> namespace is ideal for custom application metrics.</li>
+</ul>
+<p>If you manage multiple AWS accounts, CloudWatch's cross-account observability feature lets you view and graph metrics from all your accounts on one dashboard. For automation, the <code>PutDashboard</code> API allows you to define dashboards using JSON, making it easier to standardize and replicate setups.</p>
+<p>While dashboards are excellent for visualizing data, alarms are critical for proactive monitoring.</p>
+<h3 id="setting-up-cloudwatch-alarms">Setting Up CloudWatch Alarms</h3>
+<p>Dashboards give you a clear picture of your metrics, but alarms ensure you're notified when something goes wrong - whether you're actively monitoring or not.</p>
+<p>Start by identifying key metrics for your Fargate workloads, such as CPU utilization, memory usage, or service quota thresholds. For example, metrics like <code>ResourceCount</code> for vCPU usage are published in the <code>AWS/Usage</code> namespace, with dimensions such as <code>Service: Fargate</code>, <code>Type: Resource</code>, and <code>Class: Standard/OnDemand</code> or <code>Standard/Spot</code>.</p>
+<p>Follow these steps to set up an alarm:</p>
+<ul>
+<li>Open the CloudWatch console, go to <strong>Alarms</strong> &gt; <strong>All alarms</strong>, and click <strong>Create alarm</strong>.</li>
+<li>Choose the metric you want to monitor from the relevant namespace.</li>
+<li>Define a threshold, selecting a condition (e.g., greater than or less than) and a value. For instance, you might set an alarm to trigger when vCPU usage approaches your service quota. Use the <strong>datapoints to alarm</strong> feature to avoid false alerts from brief spikes.</li>
+<li>Decide how to handle missing data. For metrics that report only during errors, treat missing data as "not breaching." For continuous metrics like CPU usage, treating missing data as "breaching" can help catch potential monitoring gaps.</li>
+<li>Configure notifications. <a href="/blog/cloudwatch-alarms-best-practices-for-thresholds-and-conditions/">CloudWatch alarms</a> have three states - <code>OK</code>, <code>ALARM</code>, and <code>INSUFFICIENT_DATA</code>. You can set up <a href="https://aws.amazon.com/sns/" rel="nofollow noopener noreferrer" target="_blank">Amazon SNS</a> notifications to alert you to state changes or trigger automated responses like Auto Scaling actions, Lambda functions, or <a href="https://aws.amazon.com/systems-manager/" rel="nofollow noopener noreferrer" target="_blank">Systems Manager</a> tasks.</li>
+<li>Review your settings and create the alarm.</li>
+</ul>
+
+<h2 id="using-cloudwatch-metrics-for-autoscaling-fargate-tasks">Using CloudWatch Metrics for Autoscaling Fargate Tasks</h2>
+<p><a href="/blog/custom-cloudwatch-metrics-setup-guide-2024/">CloudWatch metrics</a> play a key role in enabling autoscaling for Fargate workloads, automatically adjusting the number of tasks based on real-time performance data. By setting up detailed monitoring, you can ensure your Fargate tasks consistently meet demand without over-provisioning. This functionality builds on the earlier configuration of CloudWatch dashboards and alarms.</p>
+<h3 id="fargate-autoscaling-overview">Fargate Autoscaling Overview</h3>
+<p>Fargate autoscaling works by using CloudWatch alarms to trigger scaling actions whenever specific thresholds are reached. This allows your application to dynamically adjust to changes in demand, ensuring it runs efficiently.</p>
+<h3 id="configuring-autoscaling-with-cloudwatch-metrics">Configuring Autoscaling with CloudWatch Metrics</h3>
+<p>To set up autoscaling effectively, choose a metric that best reflects your workload's behavior. For CPU-bound applications, CPU utilization is often the most relevant. The metric <strong>ECSServiceAverageCPUUtilization</strong>, which corresponds to <code>CPUUtilization</code> in the AWS/ECS namespace, is a strong choice for such scenarios. By tailoring your scaling policies to align with your application's CPU usage, you can strike the right balance between maintaining performance and controlling costs.</p>
+<h2 id="best-practices-for-collecting-and-using-fargate-metrics">Best Practices for Collecting and Using Fargate Metrics</h2>
+<p>When using AWS Fargate with CloudWatch, it's essential to strike a balance between cost management and gathering the insights you need. A great starting point is to make the most of the free metrics that Fargate already provides.</p>
+<h3 id="optimizing-metric-collection">Optimizing Metric Collection</h3>
+<p>To get the most out of your monitoring efforts, begin with Fargate's free CPU metric. This built-in metric offers a dependable starting point for assessing performance without adding extra costs. If you find that you need more detailed insights, you can expand your setup with custom metrics - but keep an eye on the costs as you do so.</p>
+<h3 id="limitations-and-considerations">Limitations and Considerations</h3>
+<p>Before diving into additional metrics, take a moment to evaluate whether the extra data will provide actionable value. A targeted approach ensures that any enhancements to your monitoring setup are worth the investment. This way, you can avoid unnecessary spending while still maintaining the visibility you need to keep operations running smoothly.</p>
+<h2 id="conclusion">Conclusion</h2>
+<p>Setting up CloudWatch to monitor AWS Fargate involves a series of steps that work together to give you a clear view of your containerized applications. While Fargate provides basic CPU and memory metrics out of the box, enabling <strong>Container Insights</strong> unlocks more detailed, per-task data for deeper analysis.</p>
+<p>To ensure accurate monitoring, it's crucial to select the right namespaces and understand how metric retention works. CloudWatch organizes Fargate metrics under the <code>AWS/ECS</code> and <code>ECS/ContainerInsights</code> namespaces, with data retained for up to 15 months at different levels of granularity. Knowing how this structure works allows you to plan your monitoring strategy and manage costs more effectively.</p>
+<p>Once your metrics are organized, the focus shifts to turning this data into actionable insights. Tools like custom dashboards, alarms, and <strong>Metric Math</strong> help you transform raw numbers into meaningful information that can drive decisions.</p>
+<p>Your monitoring strategy should reflect your operational goals and budget. Start with Fargate's default metrics and expand gradually, prioritizing metrics that add the most value to your operations. This careful approach ensures you maintain the visibility needed for smooth container operations without overspending on monitoring.</p>
+<h2 id="faqs">FAQs</h2>
+<h3 id="what-iam-permissions-do-i-need-to-monitor-aws-fargate-tasks-with-cloudwatch">What IAM permissions do I need to monitor AWS Fargate tasks with CloudWatch?</h3>
+<p>To keep an eye on your Fargate tasks using <strong>CloudWatch</strong>, your IAM role needs specific permissions. These include <code>logs:CreateLogStream</code>, <code>logs:PutLogEvents</code>, <code>cloudwatch:PutMetricData</code>, and <code>ecs:DescribeTasks</code>. You can either attach the <strong>CloudWatchFullAccess</strong> policy or set up a custom policy that covers these permissions.</p>
+<p>Don't forget to check that the <strong>ecsTaskExecutionRole</strong> is properly configured. This ensures your Fargate tasks can send their logs and metrics to CloudWatch without any hiccups.</p>
+<h3 id="what-are-the-advantages-of-using-container-insights-with-aws-fargate-for-monitoring">What are the advantages of using Container Insights with AWS Fargate for monitoring?</h3>
+<p>Enabling <strong>Container Insights</strong> for AWS Fargate gives you a clearer picture of your containerized applications by offering detailed metrics, logs, and resource usage data. It helps track key performance indicators like CPU and memory usage, network traffic, and storage consumption, making it easier to keep tabs on your application's health.</p>
+<p>By centralizing this critical data within Amazon CloudWatch, troubleshooting becomes more straightforward. You can quickly identify and address issues, saving time and effort. These insights also allow you to fine-tune resource allocation, improving the reliability and efficiency of your containerized workloads.</p>
+<h3 id="how-can-i-use-cloudwatch-alarms-and-dashboards-to-monitor-and-optimize-aws-fargate-performance">How can I use CloudWatch alarms and dashboards to monitor and optimize AWS Fargate performance?</h3>
+<p>To keep track of and improve the performance of AWS Fargate, leverage <strong>CloudWatch metrics</strong> to monitor CPU and memory usage. By setting up custom dashboards, you can view these metrics in real-time, making it easier to pinpoint performance issues or identify underutilized resources.</p>
+<p>You can also configure <strong>CloudWatch alarms</strong> for key metrics like high CPU or memory usage. These alarms can send alerts or even trigger automated responses, helping you address potential problems before they affect your application. Regularly review and fine-tune alarm thresholds to align with workload patterns, ensuring efficient resource use and keeping costs under control.</p>
+<h2>Related Blog Posts</h2><ul><li><a href="/blog/monitor-lambda-errors-with-cloudwatch/">Monitor Lambda Errors with CloudWatch</a></li><li><a href="/blog/best-practices-for-hpc-monitoring-on-aws/">Best Practices for HPC Monitoring on AWS</a></li><li><a href="/blog/how-to-monitor-ec2-with-cloudwatch/">How to Monitor EC2 with CloudWatch</a></li><li><a href="/blog/fargate-vs-ec2-launch-type-comparison/">Fargate vs. EC2: Launch Type Comparison</a></li></ul><script type="application/ld+json">{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"What IAM permissions do I need to monitor AWS Fargate tasks with CloudWatch?","acceptedAnswer":{"@type":"Answer","text":"<p>To keep an eye on your Fargate tasks using <strong>CloudWatch</strong>, your IAM role needs specific permissions. These include <code>logs:CreateLogStream</code>, <code>logs:PutLogEvents</code>, <code>cloudwatch:PutMetricData</code>, and <code>ecs:DescribeTasks</code>. You can either attach the <strong>CloudWatchFullAccess</strong> policy or set up a custom policy that covers these permissions.</p> <p>Don't forget to check that the <strong>ecsTaskExecutionRole</strong> is properly configured. This ensures your Fargate tasks can send their logs and metrics to CloudWatch without any hiccups.</p>"}},{"@type":"Question","name":"What are the advantages of using Container Insights with AWS Fargate for monitoring?","acceptedAnswer":{"@type":"Answer","text":"<p>Enabling <strong>Container Insights</strong> for AWS Fargate gives you a clearer picture of your containerized applications by offering detailed metrics, logs, and resource usage data. It helps track key performance indicators like CPU and memory usage, network traffic, and storage consumption, making it easier to keep tabs on your application's health.</p> <p>By centralizing this critical data within Amazon CloudWatch, troubleshooting becomes more straightforward. You can quickly identify and address issues, saving time and effort. These insights also allow you to fine-tune resource allocation, improving the reliability and efficiency of your containerized workloads.</p>"}},{"@type":"Question","name":"How can I use CloudWatch alarms and dashboards to monitor and optimize AWS Fargate performance?","acceptedAnswer":{"@type":"Answer","text":"<p>To keep track of and improve the performance of AWS Fargate, leverage <strong>CloudWatch metrics</strong> to monitor CPU and memory usage. By setting up custom dashboards, you can view these metrics in real-time, making it easier to pinpoint performance issues or identify underutilized resources.</p> <p>You can also configure <strong>CloudWatch alarms</strong> for key metrics like high CPU or memory usage. These alarms can send alerts or even trigger automated responses, helping you address potential problems before they affect your application. Regularly review and fine-tune alarm thresholds to align with workload patterns, ensuring efficient resource use and keeping costs under control.</p>"}}]}</script>

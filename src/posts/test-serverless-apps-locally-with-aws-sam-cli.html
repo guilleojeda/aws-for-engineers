@@ -1,0 +1,773 @@
+---
+layout: post.njk
+templateEngineOverride: html
+tags: posts
+title: "Test Serverless Apps Locally with AWS SAM CLI"
+description: "Learn how to test serverless apps locally with AWS SAM CLI. Install the necessary tools, create a SAM project, and test Lambda functions, API Gateway, and event-driven apps before deployment."
+date: "2024-07-30"
+datePublished: "2024-07-30T18:55:14.720000+00:00"
+heroImage: "/assets/media/aaa272194a4f4cde44ac.jpg"
+permalink: "/blog/test-serverless-apps-locally-with-aws-sam-cli/"
+sourceUrl: "https://awsforengineers.com/blog/test-serverless-apps-locally-with-aws-sam-cli/"
+---
+<p><a href="https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/using-sam-cli.html" target="_blank">AWS SAM CLI</a> lets you test serverless apps on your computer before deploying to AWS. Here's what you need to know:</p>
+<ul>
+<li>Install AWS SAM CLI, <a href="https://docs.aws.amazon.com/cli/" target="_blank">AWS CLI</a>, <a href="https://www.python.org/" target="_blank">Python</a>, and <a href="https://www.docker.com/" target="_blank">Docker</a></li>
+<li>Create a new SAM project and understand the template file</li>
+<li>Test Lambda functions, API Gateway, and event-driven apps locally</li>
+<li>Use advanced features like custom runtimes, Step Functions, and Lambda layers</li>
+</ul>
+<p>Key benefits of local testing:</p>
+<ul>
+<li>Find and fix issues quickly</li>
+<li>Save time and money on cloud testing</li>
+<li>Test thoroughly before AWS deployment</li>
+</ul>
+<figure><table>
+<thead>
+<tr>
+<th>Feature</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Local running</td>
+<td>Test functions without AWS account</td>
+</tr>
+<tr>
+<td>Debugging</td>
+<td>Use breakpoints to find issues</td>
+</tr>
+<tr>
+<td>Testing</td>
+<td>Check app functionality locally</td>
+</tr>
+<tr>
+<td>Deployment</td>
+<td>Push tested app to AWS</td>
+</tr>
+</tbody>
+</table></figure>
+<p>Follow best practices like organizing code, handling environment variables, and <a href="/blog/">simulating AWS services</a> for effective local testing. Common issues include permissions, dependencies, and Docker-related problems, but solutions are available.</p>
+<h2 id="related-video-from-youtube">Related video from YouTube</h2>
+<iframe allowfullscreen="" frameborder="0" loading="lazy" src="https://www.youtube.com/embed/iFdEZARU5iY"></iframe><h2 id="aws-sam-cli-basics"><a href="https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/using-sam-cli.html" target="_blank">AWS SAM CLI</a> basics</h2>
+<p><figure><img alt="AWS SAM CLI" loading="lazy" src="/assets/media/15a3764026ff79b17d21.jpg"/></figure></p>
+<h3 id="what-is-aws-sam-cli%3F">What is AWS SAM CLI?</h3>
+<p>AWS SAM CLI is a tool for building, testing, and deploying serverless apps on AWS. It works with the AWS SAM framework to help developers create and manage serverless apps. With SAM CLI, you can work on your apps locally before putting them on AWS.</p>
+<p>SAM CLI lets you:</p>
+<ul>
+<li>Make new serverless projects</li>
+<li>Build and package apps</li>
+<li>Run functions on your computer</li>
+<li>Test and fix bugs in your apps</li>
+<li>Put your apps on AWS</li>
+</ul>
+<h3 id="main-features-of-aws-sam-cli">Main features of AWS SAM CLI</h3>
+<p>Here are the key things SAM CLI can do:</p>
+<figure><table>
+<thead>
+<tr>
+<th>Feature</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Local running</td>
+<td>Use serverless functions on your computer without an AWS account</td>
+</tr>
+<tr>
+<td>Debugging</td>
+<td>Find and fix problems in your code with tools like breakpoints</td>
+</tr>
+<tr>
+<td>Testing</td>
+<td>Check if your app works correctly using built-in testing features</td>
+</tr>
+<tr>
+<td>Deployment</td>
+<td>Put your app on AWS using SAM CLI</td>
+</tr>
+</tbody>
+</table></figure>
+<h3 id="how-aws-sam-cli-helps-with-local-testing">How AWS SAM CLI helps with local testing</h3>
+<p>SAM CLI makes local testing better in these ways:</p>
+<ul>
+<li><strong>Faster</strong>: Test your apps quickly without using AWS</li>
+<li><strong>Cheaper</strong>: Save money by not using AWS resources for testing</li>
+<li><strong>Easier</strong>: Work on your app without needing an AWS account</li>
+<li><strong>More accurate</strong>: Test your app in a setup that's close to the real thing</li>
+</ul>
+<p>By using SAM CLI for local testing, you can:</p>
+<ul>
+<li>Try out new ideas quickly</li>
+<li>Find and fix problems in your code</li>
+<li>Make sure your app works well before putting it on AWS</li>
+</ul>
+<h2 id="before-you-start">Before you start</h2>
+<h3 id="setting-up-an-aws-account">Setting up an AWS account</h3>
+<p>To use AWS SAM CLI, you need an AWS account. Here's how to create one:</p>
+<ol>
+<li>Visit <a href="https://aws.amazon.com/" target="_blank">AWS website</a></li>
+<li>Click "Create an AWS account"</li>
+<li>Fill out the form</li>
+<li>Verify your email</li>
+<li>Provide payment info</li>
+</ol>
+<h3 id="installing-aws-cli">Installing <a href="https://docs.aws.amazon.com/cli/" target="_blank">AWS CLI</a></h3>
+<p><figure><img alt="AWS CLI" loading="lazy" src="/assets/media/99e010b28cb314abf20f.jpg"/></figure></p>
+<p>AWS CLI lets you manage <a href="/">AWS services</a> from your computer. To install:</p>
+<figure><table>
+<thead>
+<tr>
+<th>Operating System</th>
+<th>Installation Steps</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Windows</td>
+<td>1. Download installer from AWS website  <br/>2. Run installer</td>
+</tr>
+<tr>
+<td>macOS (Homebrew)</td>
+<td>Run: <code>brew install awscli</code></td>
+</tr>
+<tr>
+<td>Linux</td>
+<td>Run: <code>sudo apt-get install awscli</code></td>
+</tr>
+</tbody>
+</table></figure>
+<p>After installing, run <code>aws configure</code> to set up your account.</p>
+<h3 id="setting-up-python">Setting up <a href="https://www.python.org/" target="_blank">Python</a></h3>
+<p><figure><img alt="Python" loading="lazy" src="/assets/media/7d5f1d086925aca5d76d.jpg"/></figure></p>
+<p>AWS SAM CLI needs Python. To set it up:</p>
+<ol>
+<li>Download Python from <a href="https://www.python.org/downloads/" target="_blank">Python website</a></li>
+<li>Install Python 3.6 or later</li>
+<li>Check installation: Run <code>python --version</code></li>
+</ol>
+<h3 id="installing-docker">Installing <a href="https://www.docker.com/" target="_blank">Docker</a></h3>
+<p><figure><img alt="Docker" loading="lazy" src="/assets/media/1b1c971f6ea65ebe7969.jpg"/></figure></p>
+<p>Docker helps run serverless apps locally. To install:</p>
+<figure><table>
+<thead>
+<tr>
+<th>Operating System</th>
+<th>Installation Steps</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Windows/macOS</td>
+<td>1. Download installer from <a href="https://www.docker.com/products/docker-desktop" target="_blank">Docker website</a> <br/>2. Run installer</td>
+</tr>
+<tr>
+<td>Linux</td>
+<td>Run: <code>sudo apt-get install docker.io</code></td>
+</tr>
+</tbody>
+</table></figure>
+<p>Check installation: Run <code>docker --version</code></p>
+<h2 id="installing-aws-sam-cli">Installing AWS SAM CLI</h2>
+<h3 id="installation-steps-for-windows%2C-macos%2C-and-linux">Installation steps for Windows, macOS, and Linux</h3>
+<p>Here's how to install AWS SAM CLI on different operating systems:</p>
+<figure><table>
+<thead>
+<tr>
+<th>Operating System</th>
+<th>Installation Steps</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Windows</td>
+<td>1. Download the MSI installer from <a href="https://github.com/aws/aws-sam-cli/releases/latest" target="_blank">AWS SAM CLI GitHub releases</a> <br/>2. Run the installer  <br/>3. Follow the prompts</td>
+</tr>
+<tr>
+<td>macOS (Homebrew)</td>
+<td>Run these commands:  <br/><code>brew tap aws/tap</code> <br/><code>brew install aws-sam-cli</code></td>
+</tr>
+<tr>
+<td>Linux (Ubuntu)</td>
+<td>Run these commands:  <br/><code>sudo apt-get update</code> <br/><code>sudo apt-get install aws-sam-cli</code></td>
+</tr>
+</tbody>
+</table></figure>
+<p>After installing, open a new command prompt or terminal window.</p>
+<h3 id="checking-your-installation">Checking your installation</h3>
+<p>To make sure AWS SAM CLI is working:</p>
+<ol>
+<li>Open your terminal or command prompt</li>
+<li>Type this command:</li>
+</ol>
+<pre><code>sam --version
+</code></pre>
+<ol start="3">
+<li>You should see the version number of AWS SAM CLI</li>
+</ol>
+<p>If you have problems, check the AWS SAM CLI troubleshooting guide for help.</p>
+<h2 id="setting-up-your-development-environment">Setting up your development environment</h2>
+<p>To test serverless apps locally with AWS SAM CLI, you need to set up your development environment. This section will show you how to set up AWS credentials, make a new SAM project, and understand the SAM template file.</p>
+<h3 id="setting-up-aws-credentials">Setting up AWS credentials</h3>
+<p>To use AWS services, you need to set up your AWS credentials. You can do this in two ways:</p>
+<ol>
+<li>
+<p>Create a <code>credentials</code> file:</p>
+<ul>
+<li>
+<p>Make a new file named <code>credentials</code> in the <code>~/.aws/</code> folder</p>
+</li>
+<li>
+<p>Add your AWS access key ID and secret access key like this:</p>
+<pre><code>[default]
+aws_access_key_id = YOUR_ACCESS_KEY_ID
+aws_secret_access_key = YOUR_SECRET_ACCESS_KEY
+</code></pre>
+</li>
+</ul>
+</li>
+<li>
+<p>Use AWS CLI:</p>
+<ul>
+<li>Run <code>aws configure</code> in your terminal</li>
+<li>Follow the steps to enter your AWS access key ID and secret access key</li>
+</ul>
+</li>
+</ol>
+<h3 id="creating-a-new-sam-project">Creating a new SAM project</h3>
+<p>To make a new SAM project:</p>
+<ol>
+<li>Open your terminal</li>
+<li>Run <code>sam init</code></li>
+<li>Choose a project template when asked</li>
+<li>SAM will create a new folder with your project files</li>
+</ol>
+<h3 id="understanding-the-sam-template-file">Understanding the SAM template file</h3>
+<p>The SAM template file (<code>template.yaml</code>) defines your serverless app. It includes details about your Lambda functions, API Gateway, and other resources.</p>
+<p>Here's a simple SAM template file:</p>
+<pre><code>AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+
+Resources:
+  HelloWorldFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName:!Sub 'hello-world-${AWS::Region}'
+      Runtime: nodejs14.x
+      Handler: index.handler
+      CodeUri: hello-world/
+</code></pre>
+<p>This template defines a Lambda function called <code>HelloWorldFunction</code>. It uses Node.js and is in the <code>hello-world/</code> folder.</p>
+<p>In the next part, we'll look at how to test your serverless app locally using SAM CLI.</p>
+<h2 id="testing-locally-with-sam-cli">Testing locally with SAM CLI</h2>
+<p>Testing serverless apps locally with AWS SAM CLI helps you find and fix problems before putting your app on AWS.</p>
+<h3 id="running-lambda-functions-locally">Running Lambda functions locally</h3>
+<p>To run a Lambda function on your computer:</p>
+<ol>
+<li>Go to your SAM project folder</li>
+<li>Use this command:</li>
+</ol>
+<pre><code>sam local invoke FunctionName
+</code></pre>
+<p>This runs the function and shows the result in your terminal.</p>
+<p>To use test data:</p>
+<pre><code>sam local invoke FunctionName --event event.json
+</code></pre>
+<p>This runs the function with data from the <code>event.json</code> file.</p>
+<h3 id="testing-api-gateway-locally">Testing API Gateway locally</h3>
+<p>To test API Gateway on your computer:</p>
+<ol>
+<li>Use this command:</li>
+</ol>
+<pre><code>sam local start-api
+</code></pre>
+<ol start="2">
+<li>Test your API with a tool like <code>curl</code>:</li>
+</ol>
+<pre><code>curl http://localhost:3000/hello
+</code></pre>
+<p>This sends a GET request to <code>/hello</code> and shows the response.</p>
+<h3 id="testing-event-driven-apps">Testing event-driven apps</h3>
+<p>To test event-driven apps:</p>
+<ol>
+<li>Make a sample event:</li>
+</ol>
+<pre><code>sam local generate-event s3 &gt; event.json
+</code></pre>
+<ol start="2">
+<li>Use the event to test your function:</li>
+</ol>
+<pre><code>sam local invoke FunctionName --event event.json
+</code></pre>
+<h3 id="finding-and-fixing-problems">Finding and fixing problems</h3>
+<p>SAM CLI helps you find and fix problems in your app:</p>
+<figure><table>
+<thead>
+<tr>
+<th>Tool</th>
+<th>Command</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Debugging</td>
+<td><code>sam local invoke FunctionName --debug</code></td>
+<td>Lets you step through your code</td>
+</tr>
+<tr>
+<td>Logs</td>
+<td><code>sam local logs FunctionName</code></td>
+<td>Shows logs for your function</td>
+</tr>
+</tbody>
+</table></figure>
+<p>Use these tools to check your app and make sure it works well before putting it on AWS.</p>
+<h2 id="advanced-sam-cli-features">Advanced SAM CLI features</h2>
+<h3 id="using-custom-runtimes">Using custom runtimes</h3>
+<p>AWS SAM CLI lets you use custom runtimes for specific programming needs. A custom runtime is a package that includes the language runtime, libraries, and dependencies your app needs. With custom runtimes, you can:</p>
+<ul>
+<li>Use languages or frameworks not supported by <a href="https://docs.aws.amazon.com/lambda/" target="_blank">AWS Lambda</a></li>
+<li>Make your app run faster with a custom-compiled runtime</li>
+<li>Use specific versions of languages or libraries not available in standard AWS Lambda</li>
+</ul>
+<p>To create a custom runtime:</p>
+<ol>
+<li>Make a Docker image with your required language runtime, libraries, and dependencies</li>
+<li>Add a <code>runtime</code> section to your <code>template.yaml</code> file that points to the custom runtime image</li>
+<li>Use <code>sam build</code> to create a deployment package with the custom runtime</li>
+</ol>
+<p>Here's an example of a <code>runtime</code> section in <code>template.yaml</code>:</p>
+<pre><code>AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Resources:
+  MyFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: index.handler
+      Runtime: nodejs14.x
+      CodeUri: .
+      Environment:
+        Variables:
+          BUCKET_NAME: !Sub 'my-bucket-${AWS::Region}'
+      Events:
+        MyEvent:
+          Type: Api
+          Properties:
+            Path: '/my-path'
+            Method: get
+  CustomRuntime:
+    Type: AWS::EC2::Image
+    Properties:
+      Name: my-custom-runtime
+      Description: Custom Node.js 14.x runtime
+      BlockDeviceMappings:
+        - DeviceName: /dev/xvda
+          Ebs:
+            VolumeSize: 30
+            VolumeType: gp2
+            DeleteOnTermination: true
+      InstanceType: t2.micro
+      ImageLocation: my-custom-runtime-image
+</code></pre>
+<p>In this example, <code>CustomRuntime</code> defines a custom Node.js 14.x runtime image used by <code>MyFunction</code>.</p>
+<h3 id="working-with-step-functions">Working with Step Functions</h3>
+<p>AWS SAM CLI works with <a href="https://docs.aws.amazon.com/step-functions/" target="_blank">AWS Step Functions</a> to coordinate parts of distributed apps and microservices. Step Functions let you:</p>
+<ul>
+<li>Define a state machine to control your app components</li>
+<li>Use a visual tool to design and fix your state machine</li>
+<li>Work with other AWS services like Lambda, S3, and DynamoDB</li>
+</ul>
+<p>To use Step Functions with AWS SAM CLI:</p>
+<ol>
+<li>Add a <code>StepFunction</code> resource to your <code>template.yaml</code> file</li>
+<li>Use <code>sam build</code> to make a deployment package with the Step Functions state machine</li>
+<li>Use <code>sam deploy</code> to put your app on AWS, creating the state machine and setting up roles and permissions</li>
+</ol>
+<p>Here's an example of a <code>StepFunction</code> resource in <code>template.yaml</code>:</p>
+<pre><code>AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Resources:
+  MyStepFunction:
+    Type: AWS::StepFunctions::StateMachine
+    Properties:
+      DefinitionString: !Sub |
+        {
+          "StartAt": "FirstState",
+          "States": {
+            "FirstState": {
+              "Type": "Task",
+              "Resource": "${MyFunction}",
+              "Next": "SecondState"
+            },
+            "SecondState": {
+              "Type": "Task",
+              "Resource": "${MyOtherFunction}",
+              "End": true
+            }
+          }
+        }
+      RoleArn: !GetAtt 'MyExecutionRole.Arn'
+  MyFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: index.handler
+      Runtime: nodejs14.x
+      CodeUri: .
+      Environment:
+        Variables:
+          BUCKET_NAME: !Sub 'my-bucket-${AWS::Region}'
+      Events:
+        MyEvent:
+          Type: Api
+          Properties:
+            Path: '/my-path'
+            Method: get
+  MyOtherFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: index.handler
+      Runtime: nodejs14.x
+      CodeUri: .
+      Environment:
+        Variables:
+          BUCKET_NAME: !Sub 'my-bucket-${AWS::Region}'
+      Events:
+        MyOtherEvent:
+          Type: Api
+          Properties:
+            Path: '/my-other-path'
+            Method: get
+</code></pre>
+<p>This example shows <code>MyStepFunction</code> controlling two Lambda functions, <code>MyFunction</code> and <code>MyOtherFunction</code>.</p>
+<h3 id="using-lambda-layers">Using Lambda layers</h3>
+<p>AWS SAM CLI supports Lambda layers, which let you package app dependencies in a separate layer for reuse across functions. Lambda layers help you:</p>
+<ul>
+<li>Share dependencies across multiple functions</li>
+<li>Provide the same dependencies for multiple functions</li>
+<li>Make your deployment package smaller by excluding shared dependencies</li>
+</ul>
+<p>To use Lambda layers with AWS SAM CLI:</p>
+<ol>
+<li>Add a <code>LayerVersion</code> resource to your <code>template.yaml</code> file</li>
+<li>Use <code>sam build</code> to create a deployment package with the layer</li>
+<li>Use <code>sam deploy</code> to put your app on AWS, creating the layer and setting up roles and permissions</li>
+</ol>
+<p>Here's an example of a <code>LayerVersion</code> resource in <code>template.yaml</code>:</p>
+<pre><code>AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Resources:
+  MyLayer:
+    Type: AWS::Serverless::LayerVersion
+    Properties:
+      LayerName: !Sub 'my-layer-${AWS::Region}'
+      Description: My layer
+      Content:
+        S3Bucket: !Sub 'my-bucket-${AWS::Region}'
+        S3Key: my-layer.zip
+      CompatibleRuntimes:
+        - nodejs14.x
+      LicenseInfo: MIT
+  MyFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: index.handler
+      Runtime: nodejs14.x
+      CodeUri: .
+      Environment:
+        Variables:
+          BUCKET_NAME: !Sub 'my-bucket-${AWS::Region}'
+      Events:
+        MyEvent:
+          Type: Api
+          Properties:
+            Path: '/my-path'
+            Method: get
+      Layers:
+        - !Ref MyLayer
+</code></pre>
+<p>In this example, <code>MyLayer</code> is a layer with shared dependencies, and <code>MyFunction</code> uses this layer for its dependencies.</p>
+<h2 id="best-practices-for-local-testing">Best practices for local testing</h2>
+<h3 id="organizing-your-code-for-testing">Organizing your code for testing</h3>
+<p>When testing serverless apps locally, organize your code well. This helps you test and fix problems easily. Here's what to do:</p>
+<figure><table>
+<thead>
+<tr>
+<th>Practice</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Split code into modules</td>
+<td>Break code into small, separate parts</td>
+</tr>
+<tr>
+<td>Use clear names</td>
+<td>Name files, functions, and variables clearly</td>
+</tr>
+<tr>
+<td>Make code reusable</td>
+<td>Write code that can be used in different parts of your app</td>
+</tr>
+</tbody>
+</table></figure>
+<p>These practices make your code easier to test, fix, and use.</p>
+<h3 id="handling-environment-variables">Handling environment variables</h3>
+<p>Environment variables let you change how your app works without changing the code. Here's how to use them when testing locally:</p>
+<figure><table>
+<thead>
+<tr>
+<th>Practice</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Use a <code>.env</code> file</td>
+<td>Keep environment variables in one file</td>
+</tr>
+<tr>
+<td>Name variables clearly</td>
+<td>Use names that show what each variable does</td>
+</tr>
+<tr>
+<td>Keep secrets safe</td>
+<td>Store sensitive info like API keys separately</td>
+</tr>
+</tbody>
+</table></figure>
+<p>These practices help you manage environment variables well and keep your app safe.</p>
+<h3 id="simulating-aws-services">Simulating AWS services</h3>
+<p>Testing how your app works with AWS services is important. Here's how to do it:</p>
+<figure><table>
+<thead>
+<tr>
+<th>Practice</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Use AWS SAM CLI</td>
+<td>Test with API Gateway and Lambda on your computer</td>
+</tr>
+<tr>
+<td>Use mocking tools</td>
+<td>Test with other AWS services not in SAM CLI</td>
+</tr>
+<tr>
+<td>Check for problems</td>
+<td>Test what happens when things go wrong</td>
+</tr>
+</tbody>
+</table></figure>
+<p>These practices help you make sure your app works well with AWS services before you put it online.</p>
+<h2 id="common-issues-and-solutions">Common issues and solutions</h2>
+<h3 id="fixing-permission-problems">Fixing permission problems</h3>
+<p>When testing serverless apps locally with AWS SAM CLI, you might face permission issues. Here's how to fix them:</p>
+<figure><table>
+<thead>
+<tr>
+<th>Problem</th>
+<th>Solution</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>IAM permissions</td>
+<td>Check your IAM user or role has the right permissions</td>
+</tr>
+<tr>
+<td>AWS credentials</td>
+<td>Run <code>aws sts get-caller-identity</code> to verify your credentials</td>
+</tr>
+<tr>
+<td>AWS region</td>
+<td>Use the correct region in <code>samconfig.toml</code> or with <code>--region</code> option</td>
+</tr>
+</tbody>
+</table></figure>
+<h3 id="resolving-dependency-conflicts">Resolving dependency conflicts</h3>
+<p>To manage library dependencies:</p>
+<figure><table>
+<thead>
+<tr>
+<th>Method</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Virtual environment</td>
+<td>Use <code>virtualenv</code> or <code>conda</code> to isolate project dependencies</td>
+</tr>
+<tr>
+<td><code>requirements.txt</code></td>
+<td>List all needed dependencies in this file</td>
+</tr>
+<tr>
+<td>Dependency manager</td>
+<td>Use <code>pip</code> or <code>npm</code> to handle dependencies and versions</td>
+</tr>
+</tbody>
+</table></figure>
+<h3 id="solving-docker-related-issues">Solving Docker-related issues</h3>
+<p>Common Docker problems and fixes:</p>
+<figure><table>
+<thead>
+<tr>
+<th>Issue</th>
+<th>Solution</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Docker not installed</td>
+<td>Download and install from Docker website</td>
+</tr>
+<tr>
+<td>Docker not running</td>
+<td>Check status with <code>docker ps</code> command</td>
+</tr>
+<tr>
+<td>Permission issues</td>
+<td>Add user to Docker group: <code>sudo usermod -aG docker $USER</code></td>
+</tr>
+<tr>
+<td>Missing Docker image</td>
+<td>Pull image from Docker Hub: <code>docker pull &lt;image-name&gt;</code></td>
+</tr>
+</tbody>
+</table></figure>
+<p>These tips should help you tackle common problems when using AWS SAM CLI for local testing.</p>
+<h2 id="conclusion">Conclusion</h2>
+<h3 id="key-points-to-remember">Key points to remember</h3>
+<p>We covered how to test serverless apps locally using AWS SAM CLI. Here's what we learned:</p>
+<figure><table>
+<thead>
+<tr>
+<th>Topic</th>
+<th>Details</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Setup</td>
+<td>AWS account, AWS CLI, Docker</td>
+</tr>
+<tr>
+<td>AWS SAM CLI basics</td>
+<td>Main features, local testing benefits</td>
+</tr>
+<tr>
+<td>Development environment</td>
+<td>AWS credentials, new SAM project</td>
+</tr>
+<tr>
+<td>Local testing methods</td>
+<td>Lambda functions, API Gateway, event-driven apps</td>
+</tr>
+</tbody>
+</table></figure>
+<h3 id="the-value-of-local-testing">The value of local testing</h3>
+<p>Testing locally is important for serverless apps. It helps developers:</p>
+<ul>
+<li>Find and fix problems early</li>
+<li>Test code before putting it on AWS</li>
+<li>Save time and money</li>
+</ul>
+<p>AWS SAM CLI makes local testing easier by:</p>
+<ul>
+<li>Copying the AWS setup on your computer</li>
+<li>Letting you test and fix code locally</li>
+</ul>
+<p>To sum up, local testing is key for making good serverless apps. AWS SAM CLI is a helpful tool for this. By following the steps in this article, you can set up local testing and start improving your serverless apps today.</p>
+<p><strong>Best Practices for Local Testing</strong></p>
+<figure><table>
+<thead>
+<tr>
+<th>Practice</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Test thoroughly</td>
+<td>Check everything before putting it on AWS</td>
+</tr>
+<tr>
+<td>Use AWS SAM CLI</td>
+<td>Copy AWS on your computer</td>
+</tr>
+<tr>
+<td>Set up correctly</td>
+<td>Get AWS login info and make a new SAM project</td>
+</tr>
+<tr>
+<td>Test all parts</td>
+<td>Check Lambda, API Gateway, and event-driven apps</td>
+</tr>
+<tr>
+<td>Use debugging tools</td>
+<td>Fix problems with AWS SAM CLI</td>
+</tr>
+</tbody>
+</table></figure>
+<h2 id="faqs">FAQs</h2>
+<h3 id="how-do-i-test-a-serverless-application-locally%3F">How do I test a serverless application locally?</h3>
+<p>You can test a serverless application on your computer using AWS SAM CLI. Here's how:</p>
+<p>1. <strong>Install AWS SAM CLI</strong></p>
+<ul>
+<li>Go to the AWS website</li>
+<li>Follow the steps to install AWS SAM CLI</li>
+</ul>
+<p>2. <strong>Make a SAM project</strong></p>
+<ul>
+<li>Use AWS SAM CLI to create a new project</li>
+<li>This gives you a basic setup for your app</li>
+</ul>
+<p>3. <strong>Write your app code</strong></p>
+<ul>
+<li>Create Lambda functions</li>
+<li>Set up API Gateway</li>
+<li>Add any other needed code</li>
+</ul>
+<p>4. <strong>Test your app</strong></p>
+<ul>
+<li>Use <code>sam local start-api</code> to run a local API Gateway</li>
+<li>Use <code>sam local invoke</code> to run Lambda functions</li>
+</ul>
+<p>By doing this, you can check your app before putting it on AWS.</p>
+<figure><table>
+<thead>
+<tr>
+<th>Why test locally?</th>
+<th>How it helps</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Quick feedback</td>
+<td>See if your code works right away</td>
+</tr>
+<tr>
+<td>Save money</td>
+<td>Fewer uploads to AWS means lower costs</td>
+</tr>
+<tr>
+<td>Better code</td>
+<td>Find and fix problems early</td>
+</tr>
+</tbody>
+</table></figure>
+<p>Testing your app locally with AWS SAM CLI is a key part of making serverless apps. It helps you spot issues quickly and cheaply, leading to better apps overall.</p>
+<p>
+<h2>Related posts</h2>
+<ul>
+<li><a href="/blog/aws-lambda-getting-started-deploy-your-first-function/">AWS Lambda Getting Started: Deploy Your First Function</a></li><li><a href="/blog/10-best-practices-for-end-to-end-testing-aws-apps/">10 Best Practices for End-to-End Testing AWS Apps</a></li><li><a href="/blog/aws-lambda-unit-testing-best-practices-2024/">AWS Lambda Unit Testing Best Practices 2024</a></li><li><a href="/blog/aws-lambda-getting-started-first-steps/">AWS Lambda Getting Started: First Steps</a></li>
+</ul>
+</p>

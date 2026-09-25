@@ -1,0 +1,517 @@
+---
+layout: post.njk
+templateEngineOverride: html
+tags: posts
+title: "CloudWatch Alarms: Automate EC2 Recovery"
+description: "Learn how to automate EC2 instance recovery with CloudWatch alarms to ensure high availability and minimize downtime in your AWS environment."
+date: "2024-05-02"
+datePublished: "2024-05-02T01:57:56.197000+00:00"
+heroImage: "/assets/media/f548d1a62dabd6275314.jpg"
+permalink: "/blog/cloudwatch-alarms-automate-ec2-recovery/"
+sourceUrl: "https://awsforengineers.com/blog/cloudwatch-alarms-automate-ec2-recovery/"
+---
+<p><strong>Automatically recover impaired</strong> <a href="https://aws.amazon.com/ec2/" target="_blank"><strong>Amazon EC2</strong></a> <strong>instances using</strong> <a href="https://aws.amazon.com/cloudwatch/" target="_blank"><strong>CloudWatch</strong></a> <strong>alarms to minimize downtime and ensure high availability.</strong></p>
+<ul>
+<li>
+<p><strong>What are CloudWatch Alarms for EC2 Recovery?</strong></p>
+<ul>
+<li>
+<p>Monitor EC2 instances and trigger automatic recovery actions when issues are detected</p>
+</li>
+<li>
+<p>Recover option: Works for over 90% of instances, recovers from system check failures</p>
+</li>
+<li>
+<p>Terminate option: Instance cannot be recovered if terminated</p>
+</li>
+</ul>
+</li>
+<li>
+<p><strong>Why Recover EC2 Instances?</strong></p>
+<ul>
+<li>
+<p>Maintain high availability and business continuity</p>
+</li>
+<li>
+<p>Prevent data loss, service disruptions, and revenue loss</p>
+</li>
+<li>
+<p>Improve system reliability, customer satisfaction, and compliance</p>
+</li>
+</ul>
+</li>
+<li>
+<p><strong>Setting Up for Automated EC2 Recovery</strong></p>
+<ul>
+<li>
+<p>Ensure instance type supports recovery</p>
+</li>
+<li>
+<p>Configure IAM role with necessary permissions</p>
+</li>
+<li>
+<p>Use supported operating system and Amazon Machine Image (AMI)</p>
+</li>
+</ul>
+</li>
+<li>
+<p><strong>Creating CloudWatch Alarms for Recovery</strong></p>
+<ul>
+<li>
+<p>Choose monitoring metric: <code>StatusCheckFailed_System</code> or <code>StatusCheckFailed_Instance</code></p>
+</li>
+<li>
+<p>Set alarm details: Threshold, period, evaluation criteria</p>
+</li>
+<li>
+<p>Add recovery action: Toggle on "Recover" to automate recovery</p>
+</li>
+</ul>
+</li>
+<li>
+<p><strong>Getting Notifications with</strong> <a href="https://aws.amazon.com/sns/" target="_blank"><strong>SNS</strong></a></p>
+<ul>
+<li>
+<p>Set up an SNS topic and configure CloudWatch alarm to send notifications</p>
+</li>
+<li>
+<p>Receive timely alerts when instances require attention</p>
+</li>
+</ul>
+</li>
+<li>
+<p><strong>Testing Alarm Triggers</strong></p>
+<ul>
+<li>
+<p>Simulate failure scenarios to verify alarm triggers correctly</p>
+</li>
+<li>
+<p>Check alarm state, SNS notifications, and recovery action</p>
+</li>
+</ul>
+</li>
+<li>
+<p><strong>Troubleshooting Recovery Issues</strong></p>
+<ul>
+<li>
+<p>Understand instance store volume limitations and data loss risks</p>
+</li>
+<li>
+<p>Monitor for capacity and hardware failures</p>
+</li>
+</ul>
+</li>
+<li>
+<p><strong>Using</strong> <a href="https://aws.amazon.com/lambda/" target="_blank"><strong>Lambda</strong></a> <strong>for Advanced Recovery</strong></p>
+<ul>
+<li>
+<p>Execute custom code and logic with Lambda functions</p>
+</li>
+<li>
+<p>Integrate with other <a href="https://aws.amazon.com/" target="_blank">AWS</a> services for complex recovery scenarios</p>
+</li>
+</ul>
+</li>
+<li>
+<p><strong>Optimizing Alarm Settings</strong></p>
+<ul>
+<li>
+<p>Monitor alarm performance metrics</p>
+</li>
+<li>
+<p>Adjust thresholds, periods, and handle alarm overlap</p>
+</li>
+<li>
+<p>Review alarm history to identify patterns and refine settings</p>
+</li>
+</ul>
+</li>
+</ul>
+<p>By following these steps, you can automate the recovery of impaired EC2 instances, minimizing downtime and ensuring high availability in your AWS environment.</p>
+<h2 id="why-recover-ec2-instances%3F">Why Recover EC2 Instances?</h2>
+<p>Recovering EC2 instances is vital for maintaining high availability and minimizing downtime in your AWS environment. When an instance fails, it can lead to service disruptions, data loss, and revenue loss. By recovering instances quickly, you can ensure business continuity, protect your data, and maintain customer trust.</p>
+<p>EC2 instances can fail due to various reasons, including:</p>
+<ul>
+<li>
+<p>Hardware failures</p>
+</li>
+<li>
+<p>Software issues</p>
+</li>
+<li>
+<p>Human errors</p>
+</li>
+</ul>
+<p>Without a robust recovery strategy, instance failures can have a significant impact on your business. For example, if an e-commerce website's instance fails, customers may not be able to access the site, leading to lost sales and revenue.</p>
+<p>By automating EC2 instance recovery using CloudWatch alarms, you can respond swiftly to instance failures and minimize the impact on your business. CloudWatch alarms can detect instance failures and trigger automatic recovery actions, such as restarting the instance or replacing it with a new one. This ensures that your services are always available, even in the event of an instance failure.</p>
+<p>Recovering EC2 instances also provides several benefits, including:</p>
+<figure><table>
+<thead>
+<tr>
+<th><strong>Benefits</strong></th>
+<th><strong>Description</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Reduce data loss and corruption</td>
+<td>Ensure data integrity and availability</td>
+</tr>
+<tr>
+<td>Improve system reliability and uptime</td>
+<td>Minimize service disruptions and downtime</td>
+</tr>
+<tr>
+<td>Enhance customer satisfaction and trust</td>
+<td>Provide a seamless user experience</td>
+</tr>
+<tr>
+<td>Meet compliance and regulatory requirements</td>
+<td>Ensure adherence to industry standards and regulations</td>
+</tr>
+<tr>
+<td>Optimize resource utilization and reduce costs</td>
+<td>Efficiently manage resources and reduce expenses</td>
+</tr>
+</tbody>
+</table></figure>
+<p>In the next section, we'll explore how to set up CloudWatch alarms for automated EC2 instance recovery.</p>
+<h2 id="setting-up-for-automated-ec2-recovery">Setting Up for Automated EC2 Recovery</h2>
+<p>To automate EC2 recovery using CloudWatch alarms, you need to meet certain conditions and configure your instance accordingly. Here's what you need to know:</p>
+<h3 id="supported-instance-types">Supported Instance Types</h3>
+<p>Not all instance types support automated recovery. Check the AWS documentation to see if your instance type is eligible.</p>
+<h3 id="iam-role-requirements">IAM Role Requirements</h3>
+<p>To create a CloudWatch alarm that can recover an EC2 instance, you need the necessary IAM permissions. Ensure your IAM role has the <code>ec2:RecoverInstances</code> permission.</p>
+<h3 id="configuration-prerequisites">Configuration Prerequisites</h3>
+<p>Before setting up automated recovery, ensure your instance is configured correctly:</p>
+<figure><table>
+<thead>
+<tr>
+<th><strong>Configuration</strong></th>
+<th><strong>Description</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Operating System</td>
+<td>Ensure your instance is running with a supported operating system</td>
+</tr>
+<tr>
+<td>Amazon Machine Image (AMI)</td>
+<td>Configure your instance to use an AMI that supports recovery</td>
+</tr>
+<tr>
+<td>IAM Role</td>
+<td>Verify that your instance has a valid IAM role attached</td>
+</tr>
+</tbody>
+</table></figure>
+<p>By meeting these conditions and configuring your instance correctly, you can set up CloudWatch alarms to automate EC2 recovery and minimize downtime in your AWS environment. In the next section, we'll explore how to create CloudWatch alarms for recovery.</p>
+<h2 id="creating-cloudwatch-alarms-for-recovery">Creating <a href="https://aws.amazon.com/cloudwatch/" target="_blank">CloudWatch</a> Alarms for Recovery</h2>
+<p><figure><img alt="CloudWatch" loading="lazy" src="/assets/media/361c9f0e35d01f1b4cdc.jpg"/></figure></p>
+<p>Creating CloudWatch alarms is a crucial step in automating EC2 recovery. In this section, we'll explore how to set up CloudWatch alarms that can trigger recovery actions automatically.</p>
+<h3 id="choosing-the-right-monitoring-metric">Choosing the Right Monitoring Metric</h3>
+<p>When creating a CloudWatch alarm, you need to choose the right monitoring metric that will trigger the recovery action. There are two critical metrics for EC2 instance recovery:</p>
+<figure><table>
+<thead>
+<tr>
+<th><strong>Metric</strong></th>
+<th><strong>Description</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>StatusCheckFailed_System</code></td>
+<td>Checks for system-level issues, such as loss of network connectivity, power loss, or software issues on the physical host.</td>
+</tr>
+<tr>
+<td><code>StatusCheckFailed_Instance</code></td>
+<td>Checks for instance-level issues, such as instance status checks failing.</td>
+</tr>
+</tbody>
+</table></figure>
+<p>Choose the metric that aligns with your instance's requirements and the type of issues you want to detect.</p>
+<h3 id="setting-alarm-details">Setting Alarm Details</h3>
+<p>Once you've chosen the monitoring metric, you need to set up the alarm details. This includes:</p>
+<ul>
+<li>
+<p><strong>Threshold</strong>: Set the threshold value that will trigger the alarm.</p>
+</li>
+<li>
+<p><strong>Period</strong>: Set the time period over which the metric is evaluated.</p>
+</li>
+<li>
+<p><strong>Evaluation details</strong>: Set the number of consecutive periods that the metric must exceed the threshold before the alarm triggers.</p>
+</li>
+</ul>
+<h3 id="adding-recovery-actions">Adding Recovery Actions</h3>
+<p>The final step is to add the recovery action to the alarm. To do this, toggle on <strong>Alarm action</strong> and choose <strong>Recover</strong>. This will automate the process of instance recovery upon an alarm state.</p>
+<p>By following these steps, you can create a CloudWatch alarm that can trigger EC2 recovery actions automatically, minimizing downtime and ensuring high availability in your AWS environment.</p>
+<h2 id="getting-notifications-with-sns">Getting Notifications with <a href="https://aws.amazon.com/sns/" target="_blank">SNS</a></h2>
+<p><figure><img alt="SNS" loading="lazy" src="/assets/media/0f3da49ef848cf6dbacc.jpg"/></figure></p>
+<p>To receive timely notifications when your CloudWatch alarm enters an ALARM state, you can link it with an Amazon SNS topic. This enables you to take prompt action to recover your EC2 instance.</p>
+<h3 id="setting-up-an-sns-topic">Setting up an SNS Topic</h3>
+<p>Create an SNS topic using the AWS Management Console or the AWS CLI. Follow the step-by-step instructions in the AWS documentation to create a topic and subscribe to it.</p>
+<h3 id="configuring-cloudwatch-alarms-with-sns">Configuring CloudWatch Alarms with SNS</h3>
+<p>To configure your CloudWatch alarm to send notifications to an SNS topic, follow these steps:</p>
+<p>1. Open the CloudWatch console and navigate to the Alarms page. 2. Select the alarm you want to configure and click on the "Actions" tab. 3. Click on "Edit" and then toggle on "Alarm action". 4. Select "SNS topic" as the alarm action and choose the topic you created earlier. 5. Click "Save changes" to save your changes.</p>
+<h3 id="benefits-of-using-sns-with-cloudwatch-alarms">Benefits of Using SNS with CloudWatch Alarms</h3>
+<p>Using SNS with CloudWatch alarms provides the following benefits:</p>
+<figure><table>
+<thead>
+<tr>
+<th><strong>Benefits</strong></th>
+<th><strong>Description</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Timely notifications</td>
+<td>Receive notifications in real-time when your alarm enters an ALARM state.</td>
+</tr>
+<tr>
+<td>Customizable notifications</td>
+<td>Customize your notifications to suit your needs.</td>
+</tr>
+<tr>
+<td>Scalability</td>
+<td>Scale your notifications to meet the needs of your application.</td>
+</tr>
+</tbody>
+</table></figure>
+<p>By integrating SNS with CloudWatch alarms, you can ensure that you are always informed when your EC2 instance requires attention, enabling you to provide high availability and minimize downtime.</p>
+<h2 id="testing-alarm-triggers">Testing Alarm Triggers</h2>
+<p>To ensure your CloudWatch alarm works correctly during failure scenarios, it's essential to test it thoroughly. Testing helps you identify configuration issues, verify that the alarm triggers correctly, and gives you confidence in your automated recovery process.</p>
+<h3 id="simulating-a-failure-scenario">Simulating a Failure Scenario</h3>
+<p>One way to test your alarm is by simulating a failure scenario. For example, you can use the <code>stress-ng</code> tool to overwhelm the CPU and trigger the alarm. Here's a step-by-step guide to simulate a CPU spike:</p>
+<ol>
+<li>
+<p>Install the <code>stress-ng</code> tool on your EC2 instance.</p>
+</li>
+<li>
+<p>Run the command <code>sudo stress --cpu 2 --timeout 1h</code> to use two CPU cores at 100% for one hour.</p>
+</li>
+<li>
+<p>Open another terminal on the instance and use <code>htop</code> to monitor the CPU and system memory.</p>
+</li>
+<li>
+<p>Verify that the alarm triggers and sends a notification to your SNS topic.</p>
+</li>
+</ol>
+<h3 id="verifying-alarm-triggers">Verifying Alarm Triggers</h3>
+<p>After simulating a failure scenario, verify that the alarm triggers correctly by checking the following:</p>
+<figure><table>
+<thead>
+<tr>
+<th><strong>Verification Step</strong></th>
+<th><strong>Description</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Alarm state</td>
+<td>The alarm state changes to <code>ALARM</code> in the CloudWatch console.</td>
+</tr>
+<tr>
+<td>SNS notification</td>
+<td>The SNS topic receives a notification with the alarm details.</td>
+</tr>
+<tr>
+<td>Recovery action</td>
+<td>The recovery action is initiated, and the instance is recovered successfully.</td>
+</tr>
+</tbody>
+</table></figure>
+<p>By testing your CloudWatch alarm, you can ensure it triggers correctly during failure scenarios, and your automated recovery process works as expected. This helps minimize downtime and ensures high availability for your EC2 instances.</p>
+<p>Remember to test your alarm regularly to ensure it continues to work correctly and make any necessary adjustments to your configuration.</p>
+
+<h2 id="troubleshooting-recovery-issues">Troubleshooting Recovery Issues</h2>
+<p>Addressing common issues and how to resolve them, ensuring the recovery process works seamlessly.</p>
+<h3 id="instance-store-volume-limitations">Instance Store Volume Limitations</h3>
+<p>When using CloudWatch alarms for EC2 instance recovery, it's essential to understand the limitations of instance store volumes. <strong>Data loss</strong> can occur if your instance has an instance store volume. To mitigate this, regularly back up your instance store volume data to more persistent storage, such as <a href="https://aws.amazon.com/ebs/" target="_blank">Amazon EBS</a>, <a href="https://aws.amazon.com/s3/" target="_blank">Amazon S3</a>, or <a href="https://aws.amazon.com/efs/" target="_blank">Amazon EFS</a>.</p>
+<figure><table>
+<thead>
+<tr>
+<th><strong>Storage Option</strong></th>
+<th><strong>Description</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Amazon EBS</td>
+<td>Provides block-level storage for EC2 instances</td>
+</tr>
+<tr>
+<td>Amazon S3</td>
+<td>Offers object-level storage for data archiving and retrieval</td>
+</tr>
+<tr>
+<td>Amazon EFS</td>
+<td>Provides file-level storage for EC2 instances</td>
+</tr>
+</tbody>
+</table></figure>
+<h3 id="capacity-and-hardware-failures">Capacity and Hardware Failures</h3>
+<p>In some cases, instances may fail to recover due to insufficient capacity or ongoing hardware issues on AWS. To troubleshoot these issues, check the instance's system logs for any error messages related to capacity or hardware failures. You can also use AWS <a href="https://aws.amazon.com/cloudtrail/" target="_blank">CloudTrail</a> to monitor API calls and identify any issues with instance creation or modification.</p>
+<p>By understanding these common issues and taking steps to address them, you can ensure that your CloudWatch alarms and automated recovery process work seamlessly, minimizing downtime and ensuring high availability for your EC2 instances.</p>
+<h2 id="using-lambda-for-advanced-recovery">Using <a href="https://aws.amazon.com/lambda/" target="_blank">Lambda</a> for Advanced Recovery</h2>
+<p><figure><img alt="Lambda" loading="lazy" src="/assets/media/5c80186f74defaa9acf3.jpg"/></figure></p>
+<p>Using Lambda functions with CloudWatch alarms enables more sophisticated recovery scenarios. This approach allows you to execute custom code in response to alarm triggers, enabling more complex logic and decision-making.</p>
+<h3 id="benefits-of-lambda-integration">Benefits of Lambda Integration</h3>
+<p>Here are the benefits of combining Lambda functions with CloudWatch alarms:</p>
+<figure><table>
+<thead>
+<tr>
+<th><strong>Benefits</strong></th>
+<th><strong>Description</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Custom recovery logic</td>
+<td>Execute custom code to handle specific recovery scenarios</td>
+</tr>
+<tr>
+<td>Enhanced alarm processing</td>
+<td>Perform additional processing or validation before triggering a recovery action</td>
+</tr>
+<tr>
+<td>Integration with other AWS services</td>
+<td>Leverage Lambda functions to interact with other AWS services</td>
+</tr>
+</tbody>
+</table></figure>
+<h3 id="creating-a-lambda-function-for-recovery">Creating a Lambda Function for Recovery</h3>
+<p>To create a Lambda function for recovery, follow these steps:</p>
+<p>1. <strong>Create a new Lambda function</strong>: In the AWS Management Console, navigate to the Lambda dashboard and create a new function. 2. <strong>Choose the correct runtime</strong>: Select a runtime that matches your programming language of choice. 3. <strong>Define the function handler</strong>: Write a function handler that processes the alarm event and executes the desired recovery logic. 4. <strong>Configure the function trigger</strong>: Set up the Lambda function to be triggered by the CloudWatch alarm.</p>
+<p>By using Lambda functions with CloudWatch alarms, you can create more advanced and sophisticated recovery scenarios, ensuring that your EC2 instances are recovered quickly and efficiently in the event of a failure.</p>
+<h2 id="optimizing-alarm-settings">Optimizing Alarm Settings</h2>
+<p>Optimize your CloudWatch alarm settings to ensure efficient and effective recovery of your EC2 instances. Here are some tips to help you fine-tune your alarm settings:</p>
+<h3 id="monitoring-alarm-performance">Monitoring Alarm Performance</h3>
+<p>Regularly review your alarm performance metrics to identify areas for improvement. Check the alarm's <strong>Success Rate</strong>, <strong>Latency</strong>, and <strong>Error Rate</strong> to determine if the alarm is triggering correctly and if the recovery actions are successful.</p>
+<h3 id="adjusting-alarm-thresholds">Adjusting Alarm Thresholds</h3>
+<p>Adjust the alarm thresholds to minimize false positives and false negatives. For example, if you're using a CPU utilization metric, you may want to adjust the threshold to 80% instead of 90% to account for temporary spikes in usage.</p>
+<h3 id="refining-alarm-periods">Refining Alarm Periods</h3>
+<p>Optimize the alarm period to ensure that the alarm is triggered at the right time. For instance, if you're monitoring a metric that changes rapidly, you may want to set a shorter alarm period to detect issues quickly.</p>
+<h3 id="handling-alarm-overlap">Handling Alarm Overlap</h3>
+<p>Be cautious of alarm overlap, where multiple alarms are triggered simultaneously. To avoid this, set up alarms with distinct metrics and thresholds or use a single alarm with multiple metrics.</p>
+<h3 id="reviewing-alarm-history">Reviewing Alarm History</h3>
+<p>Regularly review your alarm history to identify patterns and trends. This can help you refine your alarm settings and improve overall system reliability.</p>
+<p>Here are some best practices to keep in mind:</p>
+<figure><table>
+<thead>
+<tr>
+<th><strong>Best Practice</strong></th>
+<th><strong>Description</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Regularly review alarm performance</td>
+<td>Identify areas for improvement and optimize alarm settings</td>
+</tr>
+<tr>
+<td>Adjust alarm thresholds</td>
+<td>Minimize false positives and false negatives</td>
+</tr>
+<tr>
+<td>Refine alarm periods</td>
+<td>Ensure alarms are triggered at the right time</td>
+</tr>
+<tr>
+<td>Handle alarm overlap</td>
+<td>Avoid multiple alarms triggering simultaneously</td>
+</tr>
+<tr>
+<td>Review alarm history</td>
+<td>Identify patterns and trends to refine alarm settings</td>
+</tr>
+</tbody>
+</table></figure>
+<p>By following these tips and best practices, you can optimize your CloudWatch alarm settings to ensure that your EC2 instances are recovered quickly and efficiently in the event of a failure.</p>
+<h2 id="wrapping-up">Wrapping Up</h2>
+<h3 id="key-takeaways">Key Takeaways</h3>
+<p>In this article, we've explored how to automate EC2 instance recovery using CloudWatch alarms. By following the step-by-step guide, you can set up a robust monitoring system that detects potential issues and takes proactive measures to minimize downtime.</p>
+<p>Here's a summary of the key points:</p>
+<figure><table>
+<thead>
+<tr>
+<th><strong>Key Point</strong></th>
+<th><strong>Description</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Automate recovery</td>
+<td>Use CloudWatch alarms to quickly respond to potential issues</td>
+</tr>
+<tr>
+<td>Set up alarms</td>
+<td>Choose the right monitoring metric, set alarm details, and add recovery actions</td>
+</tr>
+<tr>
+<td>Test and troubleshoot</td>
+<td>Ensure alarm triggers work correctly and troubleshoot common issues</td>
+</tr>
+<tr>
+<td>Optimize alarm settings</td>
+<td>Refine alarm periods, handle alarm overlap, and review alarm history</td>
+</tr>
+</tbody>
+</table></figure>
+<p>By implementing these strategies, you can ensure that your EC2 instances are recovered quickly and efficiently in the event of a failure, minimizing the impact on your applications and users.</p>
+<h2 id="faqs">FAQs</h2>
+<h3 id="how-do-i-set-up-a-cloudwatch-alarm-to-automatically-recover-my-ec2-instance%3F">How do I set up a CloudWatch alarm to automatically recover my EC2 instance?</h3>
+<p>To set up a CloudWatch alarm to automatically recover your EC2 instance, follow these steps:</p>
+<ol>
+<li>
+<p>Open the Amazon EC2 console.</p>
+</li>
+<li>
+<p>In the navigation pane, choose <strong>Instances</strong>.</p>
+</li>
+<li>
+<p>Select the instance you want to configure.</p>
+</li>
+<li>
+<p>Choose <strong>Actions</strong>, and then choose <strong>Monitor and troubleshoot</strong>.</p>
+</li>
+<li>
+<p>Choose <strong>Create an alarm</strong>.</p>
+</li>
+<li>
+<p>For <strong>Alarm notification</strong>, choose an existing Amazon Simple Notification Service (Amazon SNS) topic.</p>
+</li>
+</ol>
+<h3 id="can-cloudwatch-restart-my-ec2-instance%3F">Can CloudWatch restart my EC2 instance?</h3>
+<p>Yes, you can create an Amazon CloudWatch alarm that monitors an Amazon EC2 instance and automatically restarts the instance. This is recommended for Instance Health Check failures.</p>
+<h3 id="how-do-i-recover-an-ec2-instance-using-cloudwatch%3F">How do I recover an EC2 instance using CloudWatch?</h3>
+<p>To recover an EC2 instance using CloudWatch, follow these steps:</p>
+<ol>
+<li>
+<p>Open the Amazon EC2 console.</p>
+</li>
+<li>
+<p>In the navigation pane, choose <strong>Instances</strong>.</p>
+</li>
+<li>
+<p>Select the instance you want to configure.</p>
+</li>
+<li>
+<p>Choose <strong>Actions</strong>, and then choose <strong>Monitor and troubleshoot</strong>.</p>
+</li>
+<li>
+<p>Choose <strong>Create an alarm</strong>.</p>
+</li>
+<li>
+<p>For <strong>Alarm notification</strong>, choose an existing Amazon Simple Notification Service (Amazon SNS) topic.</p>
+</li>
+</ol>
+<h3 id="can-cloudwatch-reboot-my-ec2-instance%3F">Can CloudWatch reboot my EC2 instance?</h3>
+<p>Yes, you can create an Amazon CloudWatch alarm that monitors an Amazon EC2 instance and automatically reboots the instance. This is recommended for Instance Health Check failures.</p>
+<p>
+<h2>Related posts</h2>
+<ul>
+<li><a href="/blog/aws-engineering-blog-autoscaling-for-high-availability/">AWS Engineering Blog: Autoscaling for High Availability</a></li><li><a href="/blog/aws-content-migration-best-practices/">AWS Content Migration Best Practices</a></li><li><a href="/blog/aws-dr-pilot-light-vs-warm-standby/">AWS DR: Pilot Light vs Warm Standby</a></li><li><a href="/blog/aws-ec2-basics-core-concepts-explained/">AWS EC2 Basics: Core Concepts Explained</a></li>
+</ul>
+</p>

@@ -1,0 +1,383 @@
+---
+layout: post.njk
+templateEngineOverride: html
+tags: posts
+title: "AWS SAM CLI: Local Development Tips"
+description: "Master local development with AWS SAM CLI to streamline testing, debugging, and deployment of serverless applications on your machine."
+date: "2024-11-11"
+datePublished: "2024-11-11T17:17:35.218000+00:00"
+heroImage: "/assets/media/748ceb4d6b2a22e6bf7a.jpg"
+permalink: "/blog/aws-sam-cli-local-development-tips/"
+sourceUrl: "https://awsforengineers.com/blog/aws-sam-cli-local-development-tips/"
+---
+<p><a href="https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/using-sam-cli.html" rel="nofollow noopener noreferrer" target="_blank">AWS SAM CLI</a> supercharges your serverless app development. Here's why it's a game-changer:</p>
+<ul>
+<li>Test Lambda functions locally without cloud deployment</li>
+<li>Debug step-by-step in your IDE</li>
+<li>Deploy faster with <code>sam build</code> and <code>sam deploy</code></li>
+<li>Mimic Lambda environment on your machine using <a href="https://www.docker.com/" rel="nofollow noopener noreferrer" target="_blank">Docker</a></li>
+<li>Run integration tests locally with <code>sam local start-lambda</code></li>
+</ul>
+<p>Key tips for AWS SAM CLI mastery:</p>
+<ol>
+<li>Use <code>sam local invoke</code> for single function testing</li>
+<li>Fire up a local API Gateway with <code>sam local start-api</code></li>
+<li>Speed up development with <code>sam sync --stack-name &lt;your-stack&gt; --watch</code></li>
+<li>Optimize Docker usage to reduce container startup times</li>
+<li>Validate templates with <code>sam validate --lint</code></li>
+</ol>
+<p>Remember: While local testing is crucial, always do final tests in AWS before going live.</p>
+<h2 id="related-video-from-youtube">Related video from YouTube</h2>
+<iframe allowfullscreen="" frameborder="0" loading="lazy" src="https://www.youtube-nocookie.com/embed/AUQRyl1SNcU"></iframe><h2 id="setup-requirements">Setup Requirements</h2>
+<p>Let's get you set up with AWS SAM CLI for local development. Here's what you need:</p>
+<h3 id="install-aws-sam-cli">Install <a href="https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/using-sam-cli.html" rel="nofollow noopener noreferrer" target="_blank">AWS SAM CLI</a></h3>
+<p><figure><img alt="AWS SAM CLI" loading="lazy" src="/assets/media/15a3764026ff79b17d21.jpg"/></figure></p>
+<p>First, make sure you have:</p>
+<ol>
+<li>An <a href="/blog/">AWS account</a></li>
+<li>AWS CLI installed</li>
+<li>Docker installed</li>
+<li>Python installed (optional, but useful)</li>
+</ol>
+<p>Now, let's install AWS SAM CLI:</p>
+<ul>
+<li>
+<strong>macOS</strong>: Download the <code>.pkg</code> file for your processor from AWS. Run it and follow the prompts.
+</li>
+<li>
+<strong>Windows</strong>: Grab the 64-bit MSI installer from AWS. Install it, then open a new command prompt and run:
+<pre><code>sam --version
+</code></pre>
+</li>
+<li>
+<strong>Linux</strong>: It depends on your distro. For <a href="https://aws.amazon.com/amazon-linux-2/" rel="nofollow noopener noreferrer" target="_blank">Amazon Linux</a> 2:
+<pre><code>sudo amazon-linux-extras install docker
+sudo service docker start
+sudo usermod -a -G docker ec2-user
+</code></pre>
+Then follow AWS's Linux install guide for SAM CLI.
+</li>
+</ul>
+<p>After installing, check everything's working:</p>
+<pre><code>aws --version
+sam --version
+docker --version
+</code></pre>
+<p>If you see version numbers, you're all set!</p>
+<h3 id="set-up-aws-credentials">Set Up AWS Credentials</h3>
+<p>Now, let's get your AWS credentials sorted:</p>
+<ol>
+<li>
+Create an IAM user in AWS with the right permissions
+</li>
+<li>
+Get an access key ID and secret access key for this user
+</li>
+<li>
+In your terminal, run:
+<pre><code>aws configure
+</code></pre>
+</li>
+<li>
+Enter your access key ID, secret access key, default region, and output format
+</li>
+</ol>
+<p>This creates a <code>credentials</code> file in your home folder's <code>.aws</code> directory.</p>
+<blockquote>
+<p>"AWS CLI stores your settings in a <code>default</code> profile in the <code>credentials</code> file." - AWS Docs</p>
+</blockquote>
+<h2 id="local-testing-basics">Local Testing Basics</h2>
+<p>AWS SAM CLI makes testing Lambda functions on your machine a piece of cake. Let's jump into the key parts of local testing with SAM.</p>
+<h3 id="run-functions-with-sam-local-invoke">Run Functions with sam local invoke</h3>
+<p>Want to run Lambda functions locally? The <code>sam local invoke</code> command is your best friend. Here's how to use it:</p>
+<ol>
+<li>Go to your project's root directory in the terminal.</li>
+<li>Type: <code>sam local invoke &lt;FunctionName&gt;</code></li>
+</ol>
+<p>Let's say you have a function called "HelloWorldFunction". You'd run:</p>
+<pre><code>sam local invoke HelloWorldFunction
+</code></pre>
+<p>This builds your function in a local Docker container and runs it. You'll see the function's output in <code>stdout</code> and logs in <code>stderr</code>.</p>
+<p>Want to test with a specific event? No problem. Use the <code>--event</code> option:</p>
+<pre><code>sam local invoke --event events/s3.json S3JsonLoggerFunction
+</code></pre>
+<p>This shows you how your function would handle a real S3 event in AWS.</p>
+<h3 id="set-up-template.yaml-files">Set Up template.yaml Files</h3>
+<p>Your <code>template.yaml</code> file is the heart of your SAM app. It's where you define your Lambda functions and their settings. Here's a simple example:</p>
+<pre><code>AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: My Serverless Application
+
+Resources:
+  MyFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: ./
+      Handler: app.lambda_handler
+      Runtime: python3.8
+</code></pre>
+<p>This template sets up a basic Python Lambda function. <code>CodeUri</code> points to your code, <code>Handler</code> is the entry point, and <code>Runtime</code> is the execution environment.</p>
+<p>Make sure your <code>template.yaml</code> is in the project root or a <code>.aws-sam</code> subfolder. That's where SAM CLI looks for it.</p>
+<p>Testing API Gateway-triggered functions? Add an <code>Events</code> section like this:</p>
+<pre><code>Events:
+  ApiEvent:
+    Type: Api
+    Properties:
+      Path: /hello
+      Method: get
+</code></pre>
+<p>Now you can use <code>sam local start-api</code> to fire up a local API Gateway for testing.</p>
+<p>Local testing is great for quick checks, but it's not the whole story. Always do final tests in the AWS cloud before you go live.</p>
+<h2 id="debug-your-code">Debug Your Code</h2>
+<p>Let's dive into debugging AWS Lambda functions locally. With AWS SAM CLI, you can catch bugs before they hit the cloud. Here's how to set up debugging and add useful logs.</p>
+<h3 id="connect-your-ide-debugger">Connect Your IDE Debugger</h3>
+<p><a href="https://code.visualstudio.com/" rel="nofollow noopener noreferrer" target="_blank">VSCode</a> is a go-to for debugging AWS SAM apps. Here's the setup:</p>
+<ol>
+<li>Get the <a href="https://docs.aws.amazon.com/toolkit-for-vscode/" rel="nofollow noopener noreferrer" target="_blank">AWS Toolkit</a> for VSCode</li>
+<li>Make sure Docker's on your machine</li>
+<li>In your <code>.vscode</code> folder, create a <code>launch.json</code> file:</li>
+</ol>
+<pre><code>{
+  "version": "0.2.0",
+  "configurations": [{
+    "name": "Attach to SAM CLI",
+    "type": "node",
+    "request": "attach",
+    "address": "localhost",
+    "port": 5858,
+    "localRoot": "${workspaceRoot}/",
+    "remoteRoot": "/var/task",
+    "protocol": "inspector",
+    "stopOnEntry": false,
+    "sourceMaps": true
+  }]
+}
+</code></pre>
+<p>Ready to debug? Here's what to do:</p>
+<ol>
+<li>Drop some breakpoints in your code</li>
+<li>Fire up your function with SAM CLI in debug mode:</li>
+</ol>
+<pre><code>sam local invoke -e ./events/event.json -d 5858
+</code></pre>
+<ol start="3">
+<li>Hit F5 in VSCode to latch onto the running function</li>
+</ol>
+<p>Now you're set to step through your code, peek at variables, and squash bugs like a pro.</p>
+<h3 id="add-useful-logs">Add Useful Logs</h3>
+<p>Good logging is your best friend when hunting down Lambda function issues. Here's how to make the most of AWS SAM CLI's logging:</p>
+<p>Sprinkle <code>console.log()</code> statements throughout your code to spit out key info. Then, use <code>sam logs</code> to see what's going on:</p>
+<pre><code>sam logs -n HelloWorldFunction --stack-name mystack
+</code></pre>
+<p>This grabs logs for <code>HelloWorldFunction</code> in the <code>mystack</code> stack.</p>
+<p>Want to watch logs in real-time? Tack on <code>--tail</code>:</p>
+<pre><code>sam logs -n HelloWorldFunction --stack-name mystack --tail
+</code></pre>
+<p>Need to zero in on errors? Filter your logs:</p>
+<pre><code>sam logs -n HelloWorldFunction --stack-name mystack --filter "error"
+</code></pre>
+<p>You can even snag logs from a specific time window:</p>
+<pre><code>sam logs -n HelloWorldFunction --stack-name mystack -s '10min ago' -e '2min ago'
+</code></pre>
+<p>AWS SAM CLI's got your back - it highlights timeout messages in red and prettifies JSON log messages. Makes parsing those logs a breeze.</p>
+<h2 id="daily-development-tips">Daily Development Tips</h2>
+<p>Want to supercharge your AWS SAM CLI workflow? Here's how:</p>
+<h3 id="watch-mode%3A-your-new-best-friend">Watch Mode: Your New Best Friend</h3>
+<p>Sick of manual deployments? SAM CLI's watch mode has your back. It's like having a personal assistant that updates your code in the cloud every time you hit save.</p>
+<p>Here's how to turn it on:</p>
+<pre><code>sam sync --stack-name &lt;your-stack-name&gt; --watch
+</code></pre>
+<p>Got a stack named "blog"? Just run:</p>
+<pre><code>sam sync --stack-name blog --watch
+</code></pre>
+<p>Now SAM CLI's got its eyes on your project files. Change your Lambda function code, and BOOM - it's in AWS. No more context switching. No more waiting. Just code, save, and test.</p>
+<p>And here's a cool trick: <code>sam sync</code> is smart. It knows the difference between tweaking your code and overhauling your infrastructure. So it'll update your Lambda function without rebuilding everything else. Time = saved.</p>
+<h3 id="taming-your-dependencies">Taming Your Dependencies</h3>
+<p>Let's face it: messy dependencies can turn your serverless project into a nightmare. Here's how to keep things clean:</p>
+<p>1. <strong>Dependency managers are your friends</strong></p>
+<p>Use npm for Node.js or pip for Python. They're like bouncers for your project, making sure only the right versions get in.</p>
+<p>2. <strong><a href="https://docs.aws.amazon.com/lambda/latest/dg/chapter-layers.html" rel="nofollow noopener noreferrer" target="_blank">Lambda Layers</a>: Share the love</strong></p>
+<p>Got libraries that multiple functions use? Lambda Layers are your answer. They'll slim down your deployment package and make updates a breeze.</p>
+<p>3. <strong>Size matters</strong></p>
+<p>Use tools like webpack or rollup to shrink your dependencies. Smaller packages mean faster deployments and quicker cold starts. Win-win.</p>
+<p>4. <strong>Version control is key</strong></p>
+<p>Always commit your <code>package.json</code> or <code>requirements.txt</code>. It's like a recipe for your project - everyone needs to use the same ingredients.</p>
+<p>5. <strong>Stack smart</strong></p>
+<p>Look at how your functions depend on each other. Can you reuse packages? It'll make your life easier down the road.</p>
+<p>Here's what a solid <code>package.json</code> might look like for a Node.js project:</p>
+<pre><code>{
+  "name": "my-sam-project",
+  "version": "1.0.0",
+  "dependencies": {
+    "aws-sdk": "^2.1001.0",
+    "lodash": "^4.17.21"
+  },
+  "devDependencies": {
+    "aws-sam-webpack-plugin": "^0.7.0",
+    "webpack": "^5.65.0"
+  }
+}
+</code></pre>
+<h2 id="speed-up-development">Speed Up Development</h2>
+<p>AWS SAM CLI is great, but it can slow down as your projects grow. Let's look at some ways to make your local development faster.</p>
+<h3 id="reuse-containers">Reuse Containers</h3>
+<p>Creating and cleaning up Docker containers can eat up a lot of time. Here's how to fix that:</p>
+<p>1. <strong>Skip pulling images</strong></p>
+<p>Add this flag when starting your local API:</p>
+<pre><code>sam local start-api --skip-pull-image
+</code></pre>
+<p>It's a simple change, but it works wonders. One developer said it cut their request times to under a second.</p>
+<p>2. <strong>Use Docker's layer caching</strong></p>
+<p>Docker builds images in layers and can reuse unchanged ones. To make the most of this:</p>
+<ul>
+<li>Put stable stuff at the top of your Dockerfile</li>
+<li>Group related commands into single RUN instructions</li>
+<li>Use multi-stage builds to separate build and runtime environments</li>
+</ul>
+<h3 id="reduce-build-times">Reduce Build Times</h3>
+<p>Faster builds mean a smoother workflow. Try these:</p>
+<p>1. <strong>Make your Dockerfile better</strong></p>
+<p>A good Dockerfile can make a big difference. Here's an example:</p>
+<pre><code># Base layer
+FROM node:14 AS base
+WORKDIR /app
+COPY package*.json ./
+RUN npm install
+
+# Build stage
+FROM base AS build
+COPY . .
+RUN npm run build
+
+# Production stage
+FROM node:14-alpine
+COPY --from=build /app/dist /app
+CMD ["node", "/app/index.js"]
+</code></pre>
+<p>This setup separates dependencies, building, and runtime. The result? A smaller, faster final image.</p>
+<p>2. <strong>Try SAM Accelerate</strong></p>
+<p>SAM Accelerate is a game-changer. It's way faster than the old <a href="https://docs.aws.amazon.com/cloudformation/" rel="nofollow noopener noreferrer" target="_blank">CloudFormation</a> way for single function changes. Use this command to sync your local changes to AWS:</p>
+<pre><code>sam sync --stack-name mystack --watch
+</code></pre>
+<p>3. <strong>Use caching</strong></p>
+<p>Turn on SAM CLI caching:</p>
+<pre><code>sam build --cached
+</code></pre>
+<p>This reuses built layers, saving you time.</p>
+<p>4. <strong>Windows tweaks</strong></p>
+<p>If you're on Windows:</p>
+<ul>
+<li>Make a <code>.dockerignore</code> file to skip unnecessary files</li>
+<li>Give Docker Desktop more memory and CPU in its settings</li>
+<li>Run SAM CLI commands in <a href="https://learn.microsoft.com/en-us/windows/wsl/" rel="nofollow noopener noreferrer" target="_blank">WSL2</a> for better speed</li>
+</ul>
+<p>These tips should help speed up your AWS SAM development. Remember, faster builds mean more time for coding!</p>
+<h2 id="fix-common-problems">Fix Common Problems</h2>
+<p>Let's tackle some common AWS SAM CLI issues head-on. We'll focus on Docker problems and template errors.</p>
+<h3 id="fix-docker-issues">Fix <a href="https://www.docker.com/" rel="nofollow noopener noreferrer" target="_blank">Docker</a> Issues</h3>
+<p><figure><img alt="Docker" loading="lazy" src="/assets/media/1b1c971f6ea65ebe7969.jpg"/></figure></p>
+<p>Docker powers AWS SAM CLI's local testing. Here are some typical Docker hiccups and how to solve them:</p>
+<p>1. <strong>"Running AWS SAM projects locally requires Docker" error</strong></p>
+<p>This means Docker's missing or not running. Here's the fix:</p>
+<ul>
+<li>Download and install Docker from their website</li>
+<li>Fire up the Docker daemon</li>
+<li>Check it's working by typing <code>docker --version</code> in your terminal</li>
+</ul>
+<p>2. <strong>Slow container startup</strong></p>
+<p>Speed things up with these tricks:</p>
+<ul>
+<li>
+Use <code>--skip-pull-image</code> when starting your local API:
+<pre><code>sam local start-api --skip-pull-image
+</code></pre>
+This can slash request times to under a second.
+</li>
+<li>
+Optimize your Dockerfile to use Docker's layer caching:
+<pre><code>FROM node:14 AS base
+WORKDIR /app
+COPY package*.json ./
+RUN npm install
+
+FROM base AS build
+COPY . .
+RUN npm run build
+
+FROM node:14-alpine
+COPY --from=build /app/dist /app
+CMD ["node", "/app/index.js"]
+</code></pre>
+This multi-stage build separates dependencies, building, and runtime. Result? A smaller, faster image.
+</li>
+</ul>
+<p>3. <strong>"Failed to create managed resources: Unable to locate credentials" error</strong></p>
+<p>AWS credentials aren't set up right. Here's how to fix it:</p>
+<ul>
+<li>Run <code>aws configure</code> in your terminal</li>
+<li>Enter your AWS access key ID, secret access key, region, and output format</li>
+<li>Test with a simple AWS CLI command like <code>aws s3 ls</code></li>
+</ul>
+<h3 id="fix-template-errors">Fix Template Errors</h3>
+<p>AWS SAM templates are your serverless app's blueprint. Here's how to squash common template bugs:</p>
+<p>1. <strong>Template validation errors</strong></p>
+<p>Use <code>sam validate</code> to spot template errors:</p>
+<pre><code>sam validate --lint
+</code></pre>
+<p>This uses cfn-lint to check your template, giving you detailed error messages and suggestions.</p>
+<p>2. <strong>"Can't find exact resource information with given stack name" error</strong></p>
+<p>This often pops up when using <code>sam remote invoke</code> without <code>--stack-name</code>. To fix:</p>
+<ul>
+<li>Always include the <code>--stack-name</code> option</li>
+<li>If it persists, try the function's logical ID instead of its ARN</li>
+<li>Check your <code>samconfig.toml</code> for conflicting stack names</li>
+</ul>
+<p>3. <strong>API Gateway endpoint resolution issues</strong></p>
+<p>If you're seeing "curl: (6) Could not resolve: endpointdomain (Domain name not found)" when invoking your API Gateway endpoint, try these:</p>
+<ul>
+<li>Check if your app deployed successfully in the AWS CloudFormation console or AWS CLI</li>
+<li>Double-check your curl command for typos in the URL</li>
+<li>Make sure your API Gateway stage deployed correctly</li>
+</ul>
+<h2 id="summary">Summary</h2>
+<p>AWS SAM CLI is a game-changer for serverless app development. It brings AWS to your computer, making it easier to build, test, and deploy Lambda functions.</p>
+<p>Here's why AWS SAM CLI rocks for local development:</p>
+<p>1. <strong>Local Testing</strong></p>
+<p>Test Lambda functions on your machine without cloud deployment. It's faster and easier to fix bugs. Use <code>sam local invoke</code> for single functions or <code>sam local start-api</code> for a local API Gateway.</p>
+<p>2. <strong>Easy Debugging</strong></p>
+<p>Debug your code step-by-step in your favorite IDE. SAM CLI's debug mode works great with tools like VS Code, helping you squash bugs before they hit production.</p>
+<p>3. <strong>Quick Deployments</strong></p>
+<p><code>sam build</code> packages your code and dependencies, while <code>sam deploy</code> pushes your app to AWS. This cuts down deployment times big time.</p>
+<p>4. <strong>Matching Environments</strong></p>
+<p>SAM CLI uses Docker to mimic the Lambda environment on your machine. This means what works locally should work in the cloud, reducing those "but it worked on my machine" moments.</p>
+<p>5. <strong>Automated Testing</strong></p>
+<p>Use <code>sam local start-lambda</code> to run integration tests against a local Lambda-like endpoint. Test thoroughly without racking up cloud costs.</p>
+<p>But remember: local testing is great, but it's not everything. Always do final tests in AWS before going live.</p>
+<blockquote>
+<p>"Local step-through debugging tightens the feedback loop by making it possible for you to find and troubleshoot issues that you might run into in the cloud." - AWS Documentation</p>
+</blockquote>
+<p>To get the most out of AWS SAM CLI:</p>
+<ul>
+<li>Run <code>sam build</code> after changing your code to update the <code>.aws-sam</code> directory.</li>
+<li>Use <code>--use-container</code> with <code>sam build</code> to compile functions in a Docker container that matches Lambda.</li>
+<li>Try <code>sam sync --stack-name &lt;your-stack-name&gt; --watch</code> for real-time updates while you work.</li>
+</ul>
+<h2 id="faqs">FAQs</h2>
+<h3 id="what-python-versions-are-supported-by-aws-sam%3F">What Python versions are supported by AWS SAM?</h3>
+<p>AWS SAM CLI runs on Python 3.7 and 3.8. But don't mix this up with the Python versions you can use for your Lambda functions.</p>
+<p>Jeff Gebhart, Sr. Specialist TAM for Serverless at AWS, puts it simply:</p>
+<blockquote>
+<p>"AWS SAM CLI is mainly written in Python 3 and we support Python 3.7 and 3.8."</p>
+</blockquote>
+<p>Here's the cool part: You can still use newer Python versions in your Lambda functions. Want to use Python 3.11? Just set <code>Runtime: python3.11</code> in your SAM template. Python 3.12? Same deal: <code>Runtime: python3.12</code>.</p>
+<p>But here's a pro tip: Use a Python virtual environment for your AWS SAM projects. It's like giving your project its own sandbox to play in, away from other Python stuff on your computer.</p>
+<p>Oh, and heads up: AWS has a preview Lambda container base image for Python 3.11. Sounds exciting, right? Just remember:</p>
+<ul>
+<li>It might change</li>
+<li>It's not ready for prime time (production) yet</li>
+</ul>
+<p>So, while AWS SAM CLI sticks with 3.7 and 3.8, you've got options for your actual Lambda functions. Just pick the right tool for the job!</p>
+<h2>Related posts</h2>
+<ul>
+<li><a href="/blog/10-best-practices-for-end-to-end-testing-aws-apps/">10 Best Practices for End-to-End Testing AWS Apps</a></li><li><a href="/blog/aws-lambda-unit-testing-best-practices-2024/">AWS Lambda Unit Testing Best Practices 2024</a></li><li><a href="/blog/nodejs-unit-testing-for-aws-lambda-functions/">Node.js Unit Testing for AWS Lambda Functions</a></li><li><a href="/blog/test-serverless-apps-locally-with-aws-sam-cli/">Test Serverless Apps Locally with AWS SAM CLI</a></li>
+</ul>

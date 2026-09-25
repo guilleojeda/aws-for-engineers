@@ -1,0 +1,286 @@
+---
+layout: post.njk
+templateEngineOverride: html
+tags: posts
+title: "Best Practices for HPC Monitoring on AWS"
+description: "Learn best practices for monitoring HPC workloads on AWS, including key tools and metrics to optimize performance and ensure compliance."
+date: "2025-02-10"
+datePublished: "2025-02-10T00:34:48.449000+00:00"
+heroImage: "/assets/media/1724a78e0db55df18bc7.jpg"
+permalink: "/blog/best-practices-for-hpc-monitoring-on-aws/"
+sourceUrl: "https://awsforengineers.com/blog/best-practices-for-hpc-monitoring-on-aws/"
+---
+<p>Running <a href="/blog/hpc-workload-profiling-on-aws-best-practices/">HPC workloads</a> on AWS requires precise monitoring to handle unique challenges like <a href="/blog/aws-engineering-blog-autoscaling-for-high-availability/">large-scale auto-scaling</a>, strict security standards, and specialized hardware metrics. Here's what you need to know:</p>
+<ul>
+<li><strong>Key Benefits</strong>: Proper monitoring can reduce job failures by <strong>40%</strong> and cut costs by <strong>25%</strong>.</li>
+<li><strong>Core Tools</strong>: Use <a href="https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/WhatIsCloudWatch.html" rel="nofollow noopener noreferrer" target="_blank">AWS CloudWatch</a>, CloudTrail, and Config for infrastructure monitoring, security compliance, and workload-specific metrics.</li>
+<li><strong>Specialized Metrics</strong>: Track GPU usage, Lustre FS performance, and Elastic Fabric Adapter (EFA) network health.</li>
+<li><strong>Advanced Tools</strong>: Integrate <a href="https://docs.aws.amazon.com/grafana/" rel="nofollow noopener noreferrer" target="_blank">Amazon Managed Grafana</a> for real-time dashboards and <a href="https://docs.aws.amazon.com/dcv/" rel="nofollow noopener noreferrer" target="_blank">NICE DCV</a> for visualization performance.</li>
+</ul>
+<p>This guide covers everything from setting up basic monitoring to advanced tools, helping you optimize performance and ensure compliance for your HPC workloads.</p>
+<h2 id="setting-up-basic-monitoring">Setting Up Basic Monitoring</h2>
+<p>To monitor HPC workloads effectively, you'll need to configure AWS's core observability tools to track compute resources, API activities, and network traffic.</p>
+<h3 id="aws-cloudwatch-setup-for-hpc"><a href="https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/WhatIsCloudWatch.html" rel="nofollow noopener noreferrer" target="_blank">AWS CloudWatch</a> Setup for HPC</h3>
+<p><figure><img alt="AWS CloudWatch" loading="lazy" src="/assets/media/ac909202fc6113c8743d.jpg"/></figure></p>
+<p>Set up <strong>CloudWatch</strong> with a 1-minute monitoring interval for compute nodes using AWS ParallelCluster's built-in agent <a href="https://aws.amazon.com/blogs/hpc/category/post-types/best-practices/" rel="nofollow noopener noreferrer" target="_blank"><sup>[5]</sup></a>.</p>
+<p>Key metrics to configure:</p>
+<figure><table>
+<thead>
+<tr>
+<th>Metric Category</th>
+<th>Metrics to Track</th>
+<th>Collection Interval</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Compute</td>
+<td>CPU/GPU Utilization, Instance States</td>
+<td>1 minute</td>
+</tr>
+<tr>
+<td>Storage</td>
+<td>EBS Volume Read/Write Operations</td>
+<td>1 minute</td>
+</tr>
+<tr>
+<td>Network</td>
+<td>NetworkIn/NetworkOut, NetworkPacketsOut (EFA packet drops)</td>
+<td>1 minute</td>
+</tr>
+<tr>
+<td>Custom</td>
+<td>MPI Job Completion Rates</td>
+<td>1 minute</td>
+</tr>
+</tbody>
+</table></figure>
+<p>For GPU metrics, use <a href="https://docs.nvidia.com/datacenter/dcgm/latest/index.html" rel="nofollow noopener noreferrer" target="_blank">NVIDIA DCGM</a> and a custom namespace (e.g., <code>ClusterName/GPU</code>) with 5-second granularity during peak usage <a href="https://aws.amazon.com/blogs/hpc/category/post-types/best-practices/" rel="nofollow noopener noreferrer" target="_blank"><sup>[5]</sup></a>.</p>
+<h3 id="aws-cloudtrail-api-monitoring"><a href="https://docs.aws.amazon.com/awscloudtrail/latest/userguide/cloudtrail-user-guide.html" rel="nofollow noopener noreferrer" target="_blank">AWS CloudTrail</a> API Monitoring</h3>
+<p><figure><img alt="AWS CloudTrail" loading="lazy" src="/assets/media/2774418a8a93884b07df.jpg"/></figure></p>
+<p>Set up <strong>CloudTrail</strong> to log and track HPC API activities:</p>
+<ul>
+<li><strong>Log File Validation</strong>: Enable SHA-256 hashing to ensure log integrity <a href="https://aws.amazon.com/blogs/hpc/building-a-secure-and-compliant-hpc-environment-on-aws-following-nist-sp-800-223/" rel="nofollow noopener noreferrer" target="_blank"><sup>[2]</sup></a>.</li>
+<li><strong>Event Selection</strong>: Monitor critical events such as <code>RunInstances</code> and <code>BatchSubmitJob</code> <a href="https://bluexp.netapp.com/blog/aws-blg-aws-monitoring-tools-and-best-practices-monitor-what-matters" rel="nofollow noopener noreferrer" target="_blank"><sup>[4]</sup></a>.</li>
+<li><strong>Real-time Alerts</strong>: Use CloudWatch Logs to get immediate notifications for unauthorized actions <a href="https://bluexp.netapp.com/blog/aws-blg-aws-monitoring-tools-and-best-practices-monitor-what-matters" rel="nofollow noopener noreferrer" target="_blank"><sup>[4]</sup></a>.</li>
+</ul>
+<h3 id="multi-zone-monitoring-setup">Multi-Zone Monitoring Setup</h3>
+<p>Enable <strong>VPC flow logs</strong> across all Availability Zones (AZs) to focus on REJECTED security group rules <a href="https://bluexp.netapp.com/blog/aws-blg-aws-monitoring-tools-and-best-practices-monitor-what-matters" rel="nofollow noopener noreferrer" target="_blank"><sup>[4]</sup></a>.</p>
+<p>For cross-account monitoring, follow these steps:</p>
+<ul>
+<li>Set up the service-linked role <code>AWSServiceRoleForCloudWatchCrossAccount</code> in the monitoring account <a href="https://aws.amazon.com/blogs/hpc/cross-account-hpc-cluster-monitoring-using-amazon-eventbridge/" rel="nofollow noopener noreferrer" target="_blank"><sup>[1]</sup></a>.</li>
+<li>Define resource-based policies to allow cross-account role assumption <a href="https://aws.amazon.com/blogs/hpc/cross-account-hpc-cluster-monitoring-using-amazon-eventbridge/" rel="nofollow noopener noreferrer" target="_blank"><sup>[1]</sup></a>.</li>
+</ul>
+<p>Leverage <strong>CloudWatch cross-account observability</strong> for centralized monitoring of HPC workloads <a href="https://aws.amazon.com/blogs/hpc/cross-account-hpc-cluster-monitoring-using-amazon-eventbridge/" rel="nofollow noopener noreferrer" target="_blank"><sup>[1]</sup></a>. Pay special attention to Elastic Fabric Adapter (EFA) performance by tracking the <code>NetworkPacketsOut</code> metric <a href="https://aws.amazon.com/blogs/hpc/cross-account-hpc-cluster-monitoring-using-amazon-eventbridge/" rel="nofollow noopener noreferrer" target="_blank"><sup>[1]</sup></a>.</p>
+<p>These configurations lay the groundwork for monitoring HPC performance, which will be expanded upon in the next section.</p>
+<h2 id="hpc-performance-monitoring">HPC Performance Monitoring</h2>
+<p>After setting up the initial CloudWatch configurations, it's time to refine monitoring for specific workloads.</p>
+<h3 id="aws-parallelcluster-metrics"><a href="https://docs.aws.amazon.com/parallelcluster/" rel="nofollow noopener noreferrer" target="_blank">AWS ParallelCluster</a> Metrics</h3>
+<p><figure><img alt="AWS ParallelCluster" loading="lazy" src="/assets/media/871b601f762a02ce0a62.jpg"/></figure></p>
+<p>Create <a href="/blog/aws-health-dashboards-monitoring-and-debugging-guide/">CloudWatch dashboards</a> to keep an eye on cluster-wide performance. Use these metrics and thresholds to ensure smooth operations:</p>
+<figure><table>
+<thead>
+<tr>
+<th><strong>Metric</strong></th>
+<th><strong>Threshold</strong></th>
+<th><strong>Alert Condition</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>ClusterUtilization</td>
+<td>80%</td>
+<td>Monitors percentage usage</td>
+</tr>
+<tr>
+<td>ActiveJobs</td>
+<td>Queue depth &gt; nodes × 1.5</td>
+<td>Sustained for over 10 minutes</td>
+</tr>
+<tr>
+<td>NetworkThroughput</td>
+<td>&gt;500K packets/sec</td>
+<td>Important for CFD workloads</td>
+</tr>
+<tr>
+<td>EFA NetworkLatency</td>
+<td>&gt;50μs</td>
+<td>Key for molecular dynamics tasks</td>
+</tr>
+</tbody>
+</table></figure>
+<h3 id="instance-specific-monitoring">Instance-Specific Monitoring</h3>
+<p>Different instance types come with their own monitoring needs. For example, Graviton instances require close tracking of core usage. Specifically, for C7g instances, keep an eye on ARMv9 core utilization, ensuring it doesn't exceed an 85% sustained load threshold <a href="https://www.cloudjournee.com/blog/revolutionizing-cae-and-cfd-simulations-with-aws-hpc/" rel="nofollow noopener noreferrer" target="_blank"><sup>[6]</sup></a>.</p>
+<h3 id="workload-metrics-configuration">Workload Metrics Configuration</h3>
+<p>Tailor your monitoring setup to match the demands of specific applications. Expand on the basic EFA monitoring to capture patterns unique to each workload:</p>
+<ul>
+<li>
+<strong>CFD Workloads</strong>: Set alerts for NetworkPpsRx exceeding 500K packets/sec and FSx Lustre BurstCreditBalance dropping below 20% <a href="https://www.cloudjournee.com/blog/revolutionizing-cae-and-cfd-simulations-with-aws-hpc/" rel="nofollow noopener noreferrer" target="_blank"><sup>[6]</sup></a>.
+</li>
+<li>
+<strong>Molecular Dynamics (<a href="https://www.gromacs.org/" rel="nofollow noopener noreferrer" target="_blank">GROMACS</a>)</strong>:
+<ul>
+<li>Monitor MPI wait times (over 5ms) and EFA credits (below 10%).</li>
+<li>Use Grafana to track CollectiveOpLatency <a href="https://aws.amazon.com/solutions/guidance/deploying-high-performance-computing-clusters-on-aws/?did=sl_card&amp;trk=sl_card" rel="nofollow noopener noreferrer" target="_blank"><sup>[3]</sup></a>.</li>
+</ul>
+</li>
+<li>
+<strong>Weather Modeling (WRF)</strong>:
+<ul>
+<li>Trigger alerts for sustained DiskQueueDepth values greater than 5.</li>
+<li>Ensure compliance with NIST SP 800-223 by linking performance alerts to CloudTrail events <a href="https://aws.amazon.com/blogs/hpc/building-a-secure-and-compliant-hpc-environment-on-aws-following-nist-sp-800-223/" rel="nofollow noopener noreferrer" target="_blank"><sup>[2]</sup></a>.</li>
+</ul>
+</li>
+</ul>
+<p>For visualization tasks using NICE DCV, set up alerts for frame rates dropping below 24 FPS and client latency exceeding 100ms <a href="https://aws.amazon.com/solutions/guidance/deploying-high-performance-computing-clusters-on-aws/?did=sl_card&amp;trk=sl_card" rel="nofollow noopener noreferrer" target="_blank"><sup>[3]</sup></a>. These thresholds help maintain a seamless user experience.</p>
+
+<h2 id="security-and-compliance-monitoring">Security and Compliance Monitoring</h2>
+<p>While performance monitoring focuses on optimizing workloads, security monitoring ensures your systems adhere to compliance standards. Tools like <strong>AWS Config</strong>, <strong>KMS encryption</strong>, and compliance alerts are key to building a secure monitoring framework.</p>
+<h3 id="aws-config-compliance-rules">AWS Config Compliance Rules</h3>
+<p>AWS Config continuously evaluates the security of your HPC environment. It automates compliance checks across your infrastructure, addressing both scale and security challenges:</p>
+<figure><table>
+<thead>
+<tr>
+<th>Rule Name</th>
+<th>Purpose</th>
+<th>Compliance Control</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>cloudwatch-log-group-encrypted</td>
+<td>Ensures monitoring data is encrypted</td>
+<td>NIST AU-9</td>
+</tr>
+<tr>
+<td>restricted-ssh</td>
+<td>Blocks unauthorized cluster access</td>
+<td>NIST SC-7</td>
+</tr>
+<tr>
+<td>ec2-volume-inuse-check</td>
+<td>Verifies storage usage compliance</td>
+<td>-</td>
+</tr>
+</tbody>
+</table></figure>
+<p>You can also create custom rules using <strong>Lambda functions</strong> to check ParallelCluster configurations against specific NIST SP 800-223 standards. These rules can monitor changes to instances, network setups, and access patterns.</p>
+<h3 id="log-encryption-with-aws-kms">Log Encryption with AWS KMS</h3>
+<p>All monitoring data should be encrypted using <strong>AWS KMS</strong>. Set up a dedicated KMS key specifically for HPC monitoring and define service access policies accordingly. For CloudWatch log groups, enable encryption and configure retention periods based on data type:</p>
+<ul>
+<li><strong>Operational metrics</strong>: Retain for 90 days</li>
+<li><strong>Security logs</strong>: Retain for 1 year</li>
+<li><strong>Compliance data</strong>: Retain for 7 years (use S3 Glacier for long-term storage)</li>
+</ul>
+<p>If you're monitoring across multiple accounts, ensure the KMS key policies allow the necessary roles to decrypt data.</p>
+<h3 id="setting-up-compliance-alerts">Setting Up Compliance Alerts</h3>
+<p>Set up <strong><a href="/blog/cloudwatch-alarms-best-practices-for-thresholds-and-conditions/">CloudWatch alarms</a></strong> to monitor for issues like unauthorized API calls (via CloudTrail), Config rule violations, KMS access problems, and unauthorized instance changes.</p>
+<p>Use <strong><a href="/blog/10-eventbridge-best-practices-for-optimal-performance/">EventBridge rules</a></strong> paired with Lambda functions to automate responses. For example, you can enable encryption on newly created log groups or quarantine non-compliant instances using AWS Systems Manager.</p>
+<p>These measures not only strengthen security but also provide detailed audit trails that enhance both security and operational visibility.</p>
+<h2 id="additional-monitoring-tools">Additional Monitoring Tools</h2>
+<p>These tools are designed to work with <a href="/blog/">AWS services</a>, tackling common challenges in monitoring HPC environments:</p>
+<h3 id="amazon-managed-grafana-setup"><a href="https://docs.aws.amazon.com/grafana/" rel="nofollow noopener noreferrer" target="_blank">Amazon Managed Grafana</a> Setup</h3>
+<p><figure><img alt="Amazon Managed Grafana" loading="lazy" src="/assets/media/a6c0cade8703d8187282.jpg"/></figure></p>
+<p>Amazon Managed Grafana offers a centralized way to visualize HPC metrics across clusters. To set it up effectively, integrate it with CloudWatch and use the following recommended settings:</p>
+<figure><table>
+<thead>
+<tr>
+<th><strong>Dashboard Panel</strong></th>
+<th><strong>Metrics Source</strong></th>
+<th><strong>Refresh Rate</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Cluster Heatmap</td>
+<td>AWS/EC2 CPUUtilization</td>
+<td>30 seconds</td>
+</tr>
+<tr>
+<td>Node Distribution</td>
+<td>ClusterName dimension</td>
+<td>1 minute</td>
+</tr>
+<tr>
+<td>Resource Allocation</td>
+<td>ParallelCluster logs</td>
+<td>5 minutes</td>
+</tr>
+</tbody>
+</table></figure>
+<p>The Cluster Heatmap is especially useful for managing auto-scaling fleets. To get the most out of your dashboard, separate operational metrics from analytical ones for better performance.</p>
+<h3 id="nice-dcv-performance-tracking"><a href="https://docs.aws.amazon.com/dcv/" rel="nofollow noopener noreferrer" target="_blank">NICE DCV</a> Performance Tracking</h3>
+<p><figure><img alt="NICE DCV" loading="lazy" src="/assets/media/f2204e65f85f0e276b59.jpg"/></figure></p>
+<p>For workloads that rely heavily on visualization, monitor these key metrics:</p>
+<figure><table>
+<thead>
+<tr>
+<th><strong>Metric</strong></th>
+<th><strong>Threshold</strong></th>
+<th><strong>Duration</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Frame Rate</td>
+<td>≥30 FPS (4K)</td>
+<td>Below 25 FPS for 5 minutes</td>
+</tr>
+<tr>
+<td>Network Latency</td>
+<td>&lt;100ms</td>
+<td>Above 150ms for 2 minutes</td>
+</tr>
+<tr>
+<td>GPU Utilization</td>
+<td>&lt;85%</td>
+<td>Above 90% for 10 minutes</td>
+</tr>
+<tr>
+<td>Session Bandwidth</td>
+<td>&lt;50 Mbps/session</td>
+<td>Above 60 Mbps for 15 minutes</td>
+</tr>
+</tbody>
+</table></figure>
+<p>Tracking these thresholds ensures smooth performance for visualization-heavy tasks.</p>
+<h3 id="enginframe-dashboard-configuration"><a href="https://docs.aws.amazon.com/enginframe/" rel="nofollow noopener noreferrer" target="_blank">Enginframe</a> Dashboard Configuration</h3>
+<p><figure><img alt="Enginframe" loading="lazy" src="/assets/media/c0c8d0fbdd9f27ed8f26.jpg"/></figure></p>
+<p>Enginframe simplifies HPC job monitoring by integrating Lustre FS and scheduler metrics. Key features include:</p>
+<ul>
+<li><strong>Job queue status</strong> with color-coded priorities for quick assessment.</li>
+<li><strong>User resource analytics</strong> powered by CloudWatch for better insights.</li>
+<li><strong>Direct scheduler metrics</strong> from systems like Slurm or PBS for detailed tracking.</li>
+</ul>
+<p>These features make it easier to manage and optimize HPC workloads effectively.</p>
+<h2 id="summary">Summary</h2>
+<p>Monitoring HPC environments on AWS effectively involves combining AWS-native services with specialized tools, focusing on three main goals: <strong>visibility across accounts</strong>, <strong>automated compliance checks</strong>, and <strong>metrics tailored to workloads</strong>.</p>
+<figure><table>
+<thead>
+<tr>
+<th><strong>Monitoring Layer</strong></th>
+<th><strong>Key Tools</strong></th>
+<th><strong>Focus Areas</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Infrastructure</td>
+<td>CloudWatch, CloudTrail</td>
+<td>Instance health, VPC flow logs</td>
+</tr>
+<tr>
+<td>Application</td>
+<td>ParallelCluster, Enginframe</td>
+<td>Job queue times, cluster utilization</td>
+</tr>
+<tr>
+<td>Security</td>
+<td>AWS Config, Security Hub</td>
+<td>Compliance scores, encryption status</td>
+</tr>
+</tbody>
+</table></figure>
+<p>A <a href="/blog/custom-cloudwatch-metrics-setup-guide-2024/">CloudWatch-based monitoring setup</a> offers broad visibility while keeping operational complexity low. By utilizing AWS's built-in integrations, organizations can monitor key performance indicators across their entire HPC setup.</p>
+<p>This layered approach - combining insights into infrastructure, workload-specific metrics, and automated security measures - helps ensure that HPC systems run efficiently while meeting performance and compliance standards.</p>
+<h2>Related Blog Posts</h2><ul><li><a href="/blog/aws-devops-monitoring-metrics-tools-best-practices/">AWS DevOps Monitoring: Metrics, Tools, Best Practices</a></li><li><a href="/blog/hpc-workload-profiling-on-aws-best-practices/">HPC Workload Profiling on AWS: Best Practices</a></li><li><a href="/blog/monitor-lambda-errors-with-cloudwatch/">Monitor Lambda Errors with CloudWatch</a></li><li><a href="/blog/5-best-practices-for-aws-operational-excellence/">5 Best Practices for AWS Operational Excellence</a></li></ul>

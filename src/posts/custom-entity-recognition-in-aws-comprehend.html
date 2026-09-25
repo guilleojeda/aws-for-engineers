@@ -1,0 +1,427 @@
+---
+layout: post.njk
+templateEngineOverride: html
+tags: posts
+title: "Custom Entity Recognition in AWS Comprehend"
+description: "Explore how custom entity recognition in AWS Comprehend allows businesses to extract specific terms from documents without requiring AI expertise."
+date: "2024-11-11"
+datePublished: "2024-11-11T14:15:24.939000+00:00"
+heroImage: "/assets/media/ed5edd35070682d8ec13.jpg"
+permalink: "/blog/custom-entity-recognition-in-aws-comprehend/"
+sourceUrl: "https://awsforengineers.com/blog/custom-entity-recognition-in-aws-comprehend/"
+---
+<p><a href="https://docs.aws.amazon.com/comprehend/" target="_blank">AWS Comprehend</a>'s custom entity recognition lets you train models to find specific terms in your documents - no AI expertise needed. Here's what you need to know:</p>
+<ul>
+<li>Identify industry-specific entities beyond standard NLP categories</li>
+<li>Works with plaintext, PDFs, images, and Word docs</li>
+<li>Train on up to 25 custom entity types</li>
+<li>No machine learning experience required</li>
+</ul>
+<p>To get started:</p>
+<ol>
+<li>Prepare training data (entity lists or annotated docs)</li>
+<li>Set up an entity recognizer in <a href="https://aws.amazon.com/" target="_blank">AWS</a></li>
+<li>Train the model</li>
+<li>Deploy for real-time or batch processing</li>
+<li>Monitor performance metrics</li>
+</ol>
+<p>Key benefits:</p>
+<ul>
+<li>Automate data extraction from industry-specific documents</li>
+<li>Improve data quality for better decision making</li>
+<li>Save time and money vs manual review</li>
+</ul>
+<p>Whether you're in finance, manufacturing, healthcare or another field, custom entity recognition can pull out the exact information you need from your documents.</p>
+<h2 id="related-video-from-youtube">Related video from YouTube</h2>
+<iframe allowfullscreen="" frameborder="0" loading="lazy" src="https://www.youtube-nocookie.com/embed/u1mbzgU6Nmg"></iframe><h2 id="prerequisites">Prerequisites</h2>
+<p>Before you start with custom entity recognition in AWS Comprehend, you need to set up a few things. Let's go through them:</p>
+<h3 id="set-up-aws-account">Set Up <a href="https://aws.amazon.com/" target="_blank">AWS</a> Account</h3>
+<p><figure><img alt="AWS" loading="lazy" src="/assets/media/2d135ce4df17cc4bb773.jpg"/></figure></p>
+<p>First, you need an AWS account. Don't have one? Here's what to do:</p>
+<ol>
+<li>Go to the AWS website and hit "Create an AWS Account"</li>
+<li>Fill in your email and payment info</li>
+<li>Finish the verification process</li>
+</ol>
+<p>Once you're done, you can log into the <a href="https://docs.aws.amazon.com/awsconsolehelpdocs/" target="_blank">AWS Management Console</a> and use AWS services, including Comprehend.</p>
+<h3 id="set-up-iam-permissions">Set Up IAM Permissions</h3>
+<p>Next up: IAM permissions. These are crucial for using Comprehend safely. Here's how:</p>
+<ol>
+<li>Log into the AWS Management Console</li>
+<li>Head to the IAM service</li>
+<li>Create a new IAM user (or use an existing one)</li>
+<li>Add the right permission policies</li>
+</ol>
+<p>For basic access, attach the <code>ComprehendReadOnly</code> policy. But for custom entity recognition, you'll need more.</p>
+<p>Here's an example policy for managing flywheels in Comprehend:</p>
+<pre><code>{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Effect": "Allow",
+            "Action": [
+                "comprehend:CreateFlywheel",
+                "comprehend:DeleteFlywheel",
+                "comprehend:StartFlywheelIteration"
+            ],
+            "Resource": "*"
+        }
+    ]
+}
+</code></pre>
+<blockquote>
+<p>"Identity-based policies determine whether someone can create, access, or delete Amazon Comprehend resources in your account." - Amazon Comprehend Documentation</p>
+</blockquote>
+<p>Remember: Only give the permissions needed for specific tasks.</p>
+<h3 id="set-up-s3-bucket">Set Up S3 Bucket</h3>
+<p>Lastly, you need an <a href="/blog/learn-aws-s3-fundamentals/">S3 bucket</a> for your training data and Comprehend output. Here's how to make one:</p>
+<ol>
+<li>Open the S3 console in AWS</li>
+<li>Click "Create bucket"</li>
+<li>Pick a unique name</li>
+<li>Choose your AWS Region (make sure it supports Comprehend)</li>
+<li>Set up the bucket (default settings are fine for now)</li>
+</ol>
+<p><strong>Note</strong>: Your IAM role for Comprehend must be able to read from this S3 bucket.</p>
+<p>Want to use the <a href="https://docs.aws.amazon.com/cli/" target="_blank">AWS CLI</a> instead? Try this command:</p>
+<pre><code>aws s3api create-bucket --bucket your-unique-bucket-name --region your-preferred-region
+</code></pre>
+<p>With these steps done, you're ready to dive into custom entity recognition with AWS Comprehend.</p>
+<h2 id="prepare-your-data">Prepare Your Data</h2>
+<p>Getting your data ready is key for a solid custom entity recognition model in AWS Comprehend. Here's what you need to know:</p>
+<h3 id="data-format-types">Data Format Types</h3>
+<p>AWS Comprehend works with these formats:</p>
+<ul>
+<li>Plaintext: Simple and versatile</li>
+<li>PDF files: Great for annotated training data (English only)</li>
+<li>Image files: JPG, PNG, and TIFF for input (not for annotation)</li>
+<li>Word documents: For input (not for annotation)</li>
+</ul>
+<p>Pro tip: Use annotated PDF files to create a model that works with all these formats. No extra steps needed.</p>
+<h3 id="create-entity-lists">Create Entity Lists</h3>
+<p>New to this? Entity lists are a good starting point:</p>
+<ol>
+<li>List your entities</li>
+<li>Group them by type (max 25 custom types)</li>
+<li>Make a plaintext file: one entity and its type per line</li>
+</ol>
+<p>Like this:</p>
+<pre><code>Amazon,COMPANY
+Jeff Bezos,PERSON
+AWS,PRODUCT
+</code></pre>
+<p>Entity lists work best when:</p>
+<ul>
+<li>You have a ready-made list of entities</li>
+<li>Entities make sense without context</li>
+<li>You're only using plaintext docs</li>
+</ul>
+<h3 id="check-data-quality">Check Data Quality</h3>
+<p>Good data = accurate model. Remember:</p>
+<ul>
+<li>Label entities consistently</li>
+<li>Include diverse examples for each type</li>
+<li>For annotations, provide context</li>
+<li>More manually annotated docs = better accuracy</li>
+</ul>
+<blockquote>
+<p>"Bad data in, bad results out." - Amazon Comprehend Team</p>
+</blockquote>
+<p>For annotations:</p>
+<ul>
+<li>Test data needs at least one annotation per entity type</li>
+<li>They're crucial for tricky or context-dependent entities</li>
+</ul>
+<h2 id="set-up-entity-recognizer">Set Up Entity Recognizer</h2>
+<p>Want to make AWS Comprehend work for your specific business? Let's set up a custom entity recognizer. This tool helps you train models to spot industry-specific terms in your docs.</p>
+<h3 id="configure-model-settings">Configure Model Settings</h3>
+<p>Here's how to get your custom entity recognizer up and running:</p>
+<ol>
+<li>Log into AWS Management Console</li>
+<li>Find Amazon Comprehend</li>
+<li>Click "Custom" &gt; "Entity recognition"</li>
+<li>Hit "Create entity recognizer"</li>
+</ol>
+<p>You'll need to provide:</p>
+<ul>
+<li>A unique name for your recognizer</li>
+<li>Your training data's language (only English for now with annotated PDFs)</li>
+<li>Your preferred AWS Region</li>
+</ul>
+<p>Now, let's talk training data. You've got two options:</p>
+<ol>
+<li>
+<strong>Entity List</strong>: Simple and great for plaintext docs with clear-cut entities.
+</li>
+<li>
+<strong>Annotations</strong>: Better for image files, PDFs, or Word docs. It's your go-to for context-dependent entities.
+</li>
+</ol>
+<p>For the Entity List method, whip up a CSV file like this:</p>
+<pre><code>Text,Type
+iPhone X,DEVICE
+Samsung Galaxy,DEVICE
+Android,DEVICE
+</code></pre>
+<p>Going with Annotations? You'll need at least 1,000 annotated docs with your custom entities.</p>
+<h3 id="set-up-entity-types">Set Up Entity Types</h3>
+<p>A few things to keep in mind:</p>
+<ul>
+<li>You can have up to 25 custom entity types</li>
+<li>Use clear labels (like DEVICE, PRODUCT_CODE, ROUTE_NUMBER)</li>
+<li>Be consistent with your labeling</li>
+</ul>
+<p>Let's say you're in manufacturing. Your entity types might look like:</p>
+<ul>
+<li>PART_ID</li>
+<li>ROUTE_NUMBER</li>
+<li>WAREHOUSE_CODE</li>
+</ul>
+<p>Remember: Your recognizer will only spot the entity types you train it on. Want to catch standard entities like LOCATION or DATE? Include them in your training data.</p>
+<p>Once you've set everything up, it's training time. AWS Comprehend handles the heavy lifting, so you can focus on your specific needs.</p>
+<blockquote>
+<p>"Customers can now train state-of-the-art entity recognition models to extract their specific terms, completely automatically. No machine learning experience required." - Nino Bice, Sr. Product Manager leading product for Amazon Comprehend</p>
+</blockquote>
+<p>Keep an eye on the training progress with the DescribeEntityRecognizer operation. When it says TRAINED, you're good to go!</p>
+<h2 id="train-and-track-model">Train and Track Model</h2>
+<p>You've set up your custom entity recognizer. Now it's time to train it and keep an eye on how it's doing. Let's break it down.</p>
+<h3 id="start-the-training-process">Start the Training Process</h3>
+<p>To get the ball rolling:</p>
+<ol>
+<li>Head to the Amazon Comprehend console</li>
+<li>Pick your custom entity recognizer</li>
+<li>Hit "Train"</li>
+</ol>
+<p>Amazon Comprehend takes it from there. The training time? It depends. Could be minutes, could be hours. It's all about your dataset's size and complexity.</p>
+<p>During this process, Amazon Comprehend does the heavy lifting. It picks the best algorithm, handles sampling, and tweaks the models to find the perfect fit for your data.</p>
+<h3 id="monitor-training-progress">Monitor Training Progress</h3>
+<p>Want to check how things are going? Use the DescribeEntityRecognizer operation. Here's a quick example using the AWS CLI:</p>
+<pre><code>aws comprehend describe-entity-recognizer --entity-recognizer-arn "arn:aws:comprehend:us-east-1:1234567890:entity-recognizer/my-custom-recognizer"
+</code></pre>
+<p>This command shows you where your entity recognizer is at. Keep an eye on the <code>Status</code> field:</p>
+<ul>
+<li><code>SUBMITTED</code>: We got your request</li>
+<li><code>TRAINING</code>: Your model's learning the ropes</li>
+<li><code>TRAINED</code>: All done and ready to go</li>
+<li><code>IN_ERROR</code>: Oops, something went wrong</li>
+</ul>
+<p>When you see <code>TRAINED</code>, your custom entity recognizer is good to go.</p>
+<h3 id="check-model-performance">Check Model Performance</h3>
+<p>After training, you'll want to see how well your model's doing. Amazon Comprehend gives you three key metrics:</p>
+<ol>
+<li><strong>Precision</strong>: How accurate are the positive predictions?</li>
+<li><strong>Recall</strong>: How many actual positives did we catch?</li>
+<li><strong>F1 Score</strong>: A balance between precision and recall</li>
+</ol>
+<p>These metrics come from true positives (TP), false positives (FP), and false negatives (FN):</p>
+<ul>
+<li>Precision = TP / (TP + FP)</li>
+<li>Recall = TP / (TP + FN)</li>
+<li>F1 Score = 2 * (Precision * Recall) / (Precision + Recall)</li>
+</ul>
+<p>Let's look at a real example:</p>
+<p>Say you've trained a custom entity recognizer for a financial services company to spot PERSON and COMPANY entities. After training on 10,000 documents, here's what you get:</p>
+<figure><table>
+<thead>
+<tr>
+<th>Entity Type</th>
+<th>Precision</th>
+<th>Recall</th>
+<th>F1 Score</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>PERSON</td>
+<td>0.92</td>
+<td>0.88</td>
+<td>0.90</td>
+</tr>
+<tr>
+<td>COMPANY</td>
+<td>0.85</td>
+<td>0.79</td>
+<td>0.82</td>
+</tr>
+</tbody>
+</table></figure>
+<p>These numbers show your model's doing pretty well, especially with PERSON entities. But there's room to grow when it comes to COMPANY entities.</p>
+<blockquote>
+<p>"When the training is completed the custom model is ready to go. To start analyzing documents looking for custom entities, either use the portal or APIs via the AWS SDK." - Nino Bice, Sr. Product Manager leading product for Amazon Comprehend</p>
+</blockquote>
+<h3 id="improve-model-performance">Improve Model Performance</h3>
+<p>Not happy with your model's performance? Try these:</p>
+<ol>
+<li><strong>Boost data quality</strong>: Stick to Amazon Comprehend's guidelines for annotations or entity lists.</li>
+<li><strong>Use annotations</strong>: If you're using entity lists now, switching to annotations often works better.</li>
+<li><strong>Expand your dataset</strong>: More high-quality, annotated documents can bump up accuracy.</li>
+<li><strong>Balance your entities</strong>: Make sure all entity types are well-represented in your training data.</li>
+</ol>
+<h2 id="deploy-your-model">Deploy Your Model</h2>
+<p>You've trained and fine-tuned your custom entity recognition model. Now it's time to use it. AWS Comprehend gives you two main options: real-time processing for quick results and batch processing for bigger datasets.</p>
+<h3 id="real-time-processing">Real-time Processing</h3>
+<p>Want quick entity detection for single documents or small batches? Here's how to set it up:</p>
+<p>1. Create an endpoint using the AWS CLI:</p>
+<pre><code>aws comprehend create-endpoint \
+--desired-inference-units 1 \
+--endpoint-name my-custom-entity-endpoint \
+--model-arn arn:aws:comprehend:us-east-1:123456789012:model/my-custom-model \
+--tags Key=Project,Value=EntityRecognition
+</code></pre>
+<p>This sets up an endpoint with 1 inference unit (IU), processing 100 characters per second. Need more speed? Just bump up the <code>--desired-inference-units</code>.</p>
+<p>2. Start detecting entities in real-time:</p>
+<pre><code>aws comprehend detect-entities \
+--endpoint-arn arn:aws:comprehend:us-east-1:123456789012:endpoint/my-custom-entity-endpoint \
+--language-code en \
+--text "Andy Jassy became the CEO of Amazon in 2021."
+</code></pre>
+<p>You'll get back detected entities with their types and confidence scores.</p>
+<blockquote>
+<p>"Customers can now train state-of-the-art entity recognition models to extract their specific terms, completely automatically. No machine learning experience required." - Nino Bice, Sr. Product Manager leading product for Amazon Comprehend</p>
+</blockquote>
+<p>Keep an eye on your endpoint's performance with <a href="https://docs.aws.amazon.com/cloudwatch/" target="_blank">Amazon CloudWatch</a>. It'll help you tweak the number of inference units to balance cost and speed.</p>
+<h3 id="batch-processing">Batch Processing</h3>
+<p>Got a ton of data? Batch processing is your friend. Here's how:</p>
+<p>1. Put your documents in an S3 bucket (e.g., <code>s3://my-comprehend-bucket/input/</code>).</p>
+<p>2. Kick off a batch job:</p>
+<pre><code>aws comprehend start-entities-detection-job \
+--entity-recognizer-arn arn:aws:comprehend:us-east-1:123456789012:entity-recognizer/my-custom-recognizer \
+--job-name batch-entity-job-1 \
+--data-access-role-arn arn:aws:iam::123456789012:role/ComprehendAccessRole \
+--language-code en \
+--input-data-config S3Uri=s3://my-comprehend-bucket/input/ \
+--output-data-config S3Uri=s3://my-comprehend-bucket/output/ \
+--region us-east-1
+</code></pre>
+<p>This processes all docs in your input bucket and saves results to the output bucket.</p>
+<p>3. Check on your job:</p>
+<pre><code>aws comprehend describe-entities-detection-job \
+--job-id your-job-id
+</code></pre>
+<p>When it's done, you'll find JSON files with detected entities in your output bucket.</p>
+<p>Here's a real-world example: A financial services company used custom entity recognition on 10,000 quarterly reports. They ran a batch job overnight, spotting custom entities like specific financial products and company terms with 92% accuracy. It saved their analysts over 200 hours of manual review time.</p>
+<p>Don't forget to delete your endpoint when you're done to avoid extra charges. You can always create a new one later.</p>
+<h2 id="fix-common-problems">Fix Common Problems</h2>
+<p>Custom entity recognition in AWS Comprehend can be tricky. Let's look at some common issues and how to solve them.</p>
+<h3 id="fix-api-errors">Fix API Errors</h3>
+<p>API errors are a pain, but you can usually fix them. Here are some you might run into:</p>
+<p><strong>1. Missing Annotations Error</strong></p>
+<p>If you see this:</p>
+<pre><code>"The augmented manifest referenced in your InputDataConfig.AugmentedManifests at index 0 doesn't have any annotations"
+</code></pre>
+<p>Your input data is missing annotations. To fix it:</p>
+<ul>
+<li>Check your augmented manifest files</li>
+<li>Make sure they have correct annotation references</li>
+<li>Check that annotation files exist and you can access them</li>
+</ul>
+<p><strong>2. Authorization Errors</strong></p>
+<p>You might see something like:</p>
+<pre><code>"User: arn:aws:iam::123456789012:user/mateojackson is not authorized to perform: comprehend:GetWidget on resource: my-example-widget"
+</code></pre>
+<p>This means you don't have the right permissions. Here's what to do:</p>
+<ul>
+<li>Look at your IAM policies</li>
+<li>Make sure they allow the right actions in Amazon Comprehend</li>
+<li>Ask your AWS admin for help if needed</li>
+</ul>
+<p><strong>3. iam:PassRole Error</strong></p>
+<p>If you see:</p>
+<pre><code>"User: arn:aws:iam::123456789012:user/marymajor is not authorized to perform: iam:PassRole"
+</code></pre>
+<p>Your policies need updating to let you pass a role to Amazon Comprehend. Talk to your AWS admin about this.</p>
+<h3 id="improve-model-performance-1">Improve Model Performance</h3>
+<p>If your model isn't working as well as you'd like, try these:</p>
+<p><strong>1. Enhance Data Quality</strong></p>
+<p>Bad data leads to bad results. To make it better:</p>
+<ul>
+<li>Follow Amazon Comprehend's rules for annotations or entity lists</li>
+<li>Label everything the same way</li>
+<li>Use different examples for each entity type</li>
+</ul>
+<p><strong>2. Increase Dataset Size</strong></p>
+<p>More good data usually means better results. Amazon Comprehend doesn't need as much data as before, but more is still better:</p>
+<ul>
+<li>Try for at least 25 annotations per entity type</li>
+<li>With just 25 annotations per type, some users got an average F1 score of 84%</li>
+</ul>
+<p><strong>3. Use Annotations Instead of Entity Lists</strong></p>
+<p>If entity lists aren't working, try annotations. They're good for:</p>
+<ul>
+<li>Entities that depend on context</li>
+<li>Training models for image files, PDFs, or Word documents</li>
+</ul>
+<p><strong>4. Balance Your Entities</strong></p>
+<p>Make sure you have enough examples of all entity types. If you don't, some might not work well.</p>
+<h3 id="handle-incorrect-results">Handle Incorrect Results</h3>
+<p>Sometimes, even after training, things go wrong. One user said:</p>
+<blockquote>
+<p>"AWS returned the value of 'select common flexbase' as one single 'material' type. This should have been three separate 'material' types (and was annotated hundreds, if not thousands, of times separately in the training annotations)."</p>
+</blockquote>
+<p>To fix this:</p>
+<ul>
+<li>Check your annotations to make sure they're right</li>
+<li>Try adding more examples for types that aren't working</li>
+<li>If it's still not working, you might need to train your model again with different examples</li>
+</ul>
+<p>Nino Bice, Sr. Product Manager for Amazon Comprehend, said:</p>
+<blockquote>
+<p>"Customers can now train state-of-the-art entity recognition models to extract their specific terms, completely automatically. No machine learning experience required."</p>
+</blockquote>
+<p>This makes it easier, but you still need good data to get good results.</p>
+<h2 id="summary">Summary</h2>
+<p>Custom entity recognition in AWS Comprehend lets businesses pull specific info from text. Here's how it works:</p>
+<p>1. <strong>Data Prep</strong></p>
+<p>Gather your entity list or annotated docs. A finance company might list bankruptcy terms or mark up quarterly reports.</p>
+<p>2. <strong>Set Up the Recognizer</strong></p>
+<p>Choose your model settings and entity types. You can train on up to 25 custom entities at once - great for specialized industries.</p>
+<p>3. <strong>Train the Model</strong></p>
+<p>AWS Comprehend does the heavy lifting. It picks the best algorithm and fine-tunes based on your data.</p>
+<p>4. <strong>Deploy</strong></p>
+<p>Go for real-time processing for quick results or batch processing for bigger datasets.</p>
+<p>5. <strong>Keep an Eye on Performance</strong></p>
+<p>Watch precision, recall, and F1 scores to see how well your model's doing.</p>
+<p>Custom entity recognition works across industries:</p>
+<ul>
+<li>Finance: Spot bankruptcy terms in market reports</li>
+<li>Manufacturing: Pull part IDs and route numbers from logistics docs</li>
+<li>Healthcare: Find medical terms and treatments in patient records</li>
+<li>Legal: Catch case numbers and legal jargon</li>
+</ul>
+<p>Nino Bice, Sr. Product Manager for Amazon Comprehend, says:</p>
+<blockquote>
+<p>"Customers can now train state-of-the-art entity recognition models to extract their specific terms, completely automatically. No machine learning experience required."</p>
+</blockquote>
+<p>This tech is now open to businesses of all sizes. For example, a mid-sized manufacturer used it to analyze 10,000 logistics docs overnight. They found part IDs and route numbers with 92% accuracy, saving 200+ hours of manual review.</p>
+<h2 id="faqs">FAQs</h2>
+<h3 id="which-of-the-following-ai-services-does-amazon-comprehend-provide%3F">Which of the following AI services does <a href="https://www.aboutamazon.com/" target="_blank">Amazon</a> Comprehend provide?</h3>
+<p><figure><img alt="Amazon" loading="lazy" src="/assets/media/09997d6e91a1bf526f96.jpg"/></figure></p>
+<p>Amazon Comprehend packs a punch with its AI-powered natural language processing (NLP) services. Here's what it can do:</p>
+<p>1. <strong>Entity Recognition</strong></p>
+<p>Spots people, places, and organizations in text. It even does custom recognition for industry-specific terms.</p>
+<p>2. <strong>Sentiment Analysis</strong></p>
+<p>Figures out if a piece of text is happy, sad, neutral, or a mix of emotions.</p>
+<p>3. <strong>Key Phrase Extraction</strong></p>
+<p>Pulls out the most important bits from a document.</p>
+<p>4. <strong>Language Detection</strong></p>
+<p>Tells you what language the text is in.</p>
+<p>5. <strong>Topic Modeling</strong></p>
+<p>Groups text documents into topics.</p>
+<p>6. <strong>Syntax Analysis</strong></p>
+<p>Breaks down text to show how words relate to each other.</p>
+<p>7. <strong>PII Detection</strong></p>
+<p>Finds and removes sensitive personal info from documents.</p>
+<p>8. <strong>Document Classification</strong></p>
+<p>Sorts documents into categories, including custom ones for specific needs.</p>
+<p>Amazon Comprehend isn't picky - it works with plain text, PDFs, Word docs, and even images (JPG, PNG, TIFF). It speaks multiple languages too, including English, Spanish, German, Italian, Portuguese, French, and Japanese.</p>
+<blockquote>
+<p>"Amazon Comprehend uses deep learning technology to accurately analyze text." - Amazon Comprehend Team</p>
+</blockquote>
+<p>The best part? You don't need to be a machine learning guru to use it. It's fully managed and always learning.</p>
+<p>Here's a real-world example: A financial services company used custom entity recognition to analyze 10,000 quarterly reports overnight. They picked out specific financial products and company terms with 92% accuracy. Not too shabby!</p>
+<p>
+<h2>Related posts</h2>
+<ul>
+<li><a href="/blog/aws-services-overview-core-components/">AWS Services Overview: Core Components</a></li><li><a href="/blog/10-aws-cost-optimization-strategies-2024/">10 AWS Cost Optimization Strategies 2024</a></li><li><a href="/blog/image-dataset-labeling-with-sagemaker-ground-truth/">Image Dataset Labeling with SageMaker Ground Truth</a></li><li><a href="/blog/custom-cloudwatch-metrics-setup-guide-2024/">Custom CloudWatch Metrics: Setup Guide 2024</a></li>
+</ul>
+</p>

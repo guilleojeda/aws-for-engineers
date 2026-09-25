@@ -1,0 +1,696 @@
+---
+layout: post.njk
+templateEngineOverride: html
+tags: posts
+title: "AWS Fault Injection Service: Simulate Outages, Test Resilience"
+description: "Learn how to use AWS Fault Injection Service to test your system's resilience and improve reliability. Find out how to simulate outages and analyze results."
+date: "2024-07-09"
+datePublished: "2024-07-09T01:34:11.782000+00:00"
+heroImage: "/assets/media/c4e2e72d6dccb393838b.jpg"
+permalink: "/blog/aws-fault-injection-service-simulate-outages-test-resilience/"
+sourceUrl: "https://awsforengineers.com/blog/aws-fault-injection-service-simulate-outages-test-resilience/"
+---
+<p><a href="https://docs.aws.amazon.com/fis/" target="_blank">AWS Fault Injection Service</a> (FIS) helps you test your AWS systems' resilience by simulating controlled disruptions. Here's what you need to know:</p>
+<ul>
+<li><strong>Purpose</strong>: Find and fix weak spots in your applications before real outages occur</li>
+<li><strong>Key features</strong>:
+<ul>
+<li>Simulate resource disruptions, API issues, network problems, and resource stress</li>
+<li>Target specific parts of your system</li>
+<li>Work with other AWS tools like <a href="https://docs.aws.amazon.com/cloudwatch/" target="_blank">CloudWatch</a> and <a href="https://docs.aws.amazon.com/iam/" target="_blank">IAM</a></li>
+</ul>
+</li>
+</ul>
+<p>To get started:</p>
+<ol>
+<li>Set up your AWS account and IAM permissions</li>
+<li>Create test resources (<a href="https://docs.aws.amazon.com/vpc/" target="_blank">VPC</a>, <a href="https://docs.aws.amazon.com/ec2/" target="_blank">EC2</a> instances, <a href="https://docs.aws.amazon.com/rds/" target="_blank">RDS</a> databases)</li>
+<li>Make an experiment template</li>
+<li>Run your first test</li>
+<li>Analyze results and improve your system</li>
+</ol>
+<figure><table>
+<thead>
+<tr>
+<th>Test Scenario</th>
+<th>What It Does</th>
+<th>Why It's Useful</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>EC2 instance failure</td>
+<td>Stops or removes an EC2 instance</td>
+<td>Shows how your app handles sudden server loss</td>
+</tr>
+<tr>
+<td>Network issues</td>
+<td>Slows down or cuts off network connections</td>
+<td>Checks if your app works with poor internet</td>
+</tr>
+<tr>
+<td>CPU overload</td>
+<td>Makes the CPU very busy</td>
+<td>Tests if your app can handle high demand</td>
+</tr>
+<tr>
+<td>Storage problems</td>
+<td>Simulates disk errors or data access issues</td>
+<td>Checks how your app deals with data storage problems</td>
+</tr>
+</tbody>
+</table></figure>
+<p>Remember to start small, test regularly, and use the results to make your applications stronger and more reliable.</p>
+<h2 id="related-video-from-youtube">Related video from YouTube</h2>
+<iframe allowfullscreen="" frameborder="0" loading="lazy" src="https://www.youtube.com/embed/sa4NTbzQG0w"></iframe><h2 id="2.-before-you-start">2. Before you start</h2>
+<h3 id="2.1-setting-up-your-aws-account">2.1 Setting up your AWS account</h3>
+<p>To use AWS Fault Injection Service (<a href="/blog/">AWS FIS</a>), you need:</p>
+<ul>
+<li>An active AWS account</li>
+<li>The right permissions to use AWS FIS</li>
+</ul>
+<h3 id="2.2-required-iam-permissions">2.2 Required <a href="https://docs.aws.amazon.com/iam/" target="_blank">IAM</a> permissions</h3>
+<p><figure><img alt="IAM" loading="lazy" src="/assets/media/85cf269673807fcbdef1.jpg"/></figure></p>
+<p>To use AWS FIS, you need specific IAM permissions:</p>
+<figure><table>
+<thead>
+<tr>
+<th>Permission Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>IAM role</td>
+<td>Grants AWS FIS permission to run experiments</td>
+</tr>
+<tr>
+<td>IAM policy</td>
+<td>Allows modification of resources specified in your experiment template</td>
+</tr>
+<tr>
+<td>Service-linked role</td>
+<td>Named AWSServiceRoleForFIS, manages monitoring and resource selection</td>
+</tr>
+</tbody>
+</table></figure>
+<p>For more details on multi-account experiment permissions, check the <a href="https://docs.aws.amazon.com/fis/latest/userguide/permissions.html#permissions-for-multi-account-experiments" target="_blank">AWS documentation</a>.</p>
+<h3 id="2.3-basic-aws-knowledge-needed">2.3 Basic AWS knowledge needed</h3>
+<p>Before using AWS FIS, you should know:</p>
+<ul>
+<li>Basic AWS services like EC2, <a href="https://docs.aws.amazon.com/ecs/" target="_blank">ECS</a>, <a href="https://docs.aws.amazon.com/eks/" target="_blank">EKS</a>, RDS, and <a href="https://docs.aws.amazon.com/systems-manager/" target="_blank">SSM</a></li>
+<li>How IAM roles and permissions work</li>
+</ul>
+<p>If you're new to AWS, start with the basics before using AWS FIS.</p>
+<h2 id="3.-aws-fault-injection-service-basics">3. <a href="https://docs.aws.amazon.com/fis/" target="_blank">AWS Fault Injection Service</a> basics</h2>
+<p><figure><img alt="AWS Fault Injection Service" loading="lazy" src="/assets/media/74eeb9c983b2961b880a.jpg"/></figure></p>
+<h3 id="3.1-key-terms-and-concepts">3.1 Key terms and concepts</h3>
+<p>AWS Fault Injection Service (AWS FIS) lets you test how your AWS systems handle problems. It's based on chaos engineering, which means creating controlled disruptions to see how your system responds. This helps you find weak spots and fix them.</p>
+<h3 id="3.2-types-of-fault-injections">3.2 Types of fault injections</h3>
+<p>AWS FIS offers several ways to test your system:</p>
+<figure><table>
+<thead>
+<tr>
+<th>Fault Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Resource disruption</td>
+<td>Stopping or terminating <a href="/blog/aws-ec2-basics-core-concepts-explained/">EC2 instances</a> or <a href="/blog/aws-performance-insights-monitoring-rds-databases/">RDS databases</a></td>
+</tr>
+<tr>
+<td>API issues</td>
+<td>Forcing failovers or slowing down API calls</td>
+</tr>
+<tr>
+<td>Network problems</td>
+<td>Adding delays or dropping packets in network traffic</td>
+</tr>
+<tr>
+<td>Resource stress</td>
+<td>Putting pressure on CPU or memory</td>
+</tr>
+</tbody>
+</table></figure>
+<p>You can target these tests at specific parts of your system, like certain EC2 instances, RDS databases, or entire Availability Zones.</p>
+<h3 id="3.3-why-use-aws-fis%3F">3.3 Why use AWS FIS?</h3>
+<p>AWS FIS helps you:</p>
+<ul>
+<li>Test your system's ability to handle problems</li>
+<li>Find weak spots before they cause real issues</li>
+<li>Make your applications more reliable</li>
+<li>Work with other AWS tools like CloudWatch and IAM for better testing</li>
+</ul>
+<h2 id="4.-preparing-your-aws-environment">4. Preparing your AWS environment</h2>
+<h3 id="4.1-creating-test-resources">4.1 Creating test resources</h3>
+<p>Before testing with AWS FIS, set up:</p>
+<figure><table>
+<thead>
+<tr>
+<th>Resource</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>AWS account</td>
+<td>Main access point</td>
+</tr>
+<tr>
+<td>VPC</td>
+<td>Network for your resources</td>
+</tr>
+<tr>
+<td>EC2 instances or RDS databases</td>
+<td>Targets for your tests</td>
+</tr>
+</tbody>
+</table></figure>
+<p>Follow the AWS guide to create a default VPC and EC2 instances.</p>
+<h3 id="4.2-setting-up-iam-roles">4.2 Setting up IAM roles</h3>
+<p>To use AWS FIS, create an IAM role:</p>
+<figure><table>
+<thead>
+<tr>
+<th>Role Name</th>
+<th>Trust</th>
+<th>Policy</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>AWSServiceRoleForFIS</td>
+<td>fis.amazonaws.com</td>
+<td>AmazonFISServiceRolePolicy</td>
+</tr>
+</tbody>
+</table></figure>
+<p>This role lets AWS FIS run tests and manage resources for you.</p>
+<h3 id="4.3-creating-cloudwatch-alarms">4.3 Creating <a href="https://docs.aws.amazon.com/cloudwatch/" target="_blank">CloudWatch</a> alarms</h3>
+<p><figure><img alt="CloudWatch" loading="lazy" src="/assets/media/dc68ec38c865a196a5b7.jpg"/></figure></p>
+<p>Set up CloudWatch alarms to watch your resources during tests:</p>
+<figure><table>
+<thead>
+<tr>
+<th>Metric to Monitor</th>
+<th>Why It's Important</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>CPU use</td>
+<td>Shows how busy your systems are</td>
+</tr>
+<tr>
+<td>Memory use</td>
+<td>Indicates if your systems have enough memory</td>
+</tr>
+<tr>
+<td>Network traffic</td>
+<td>Helps spot unusual activity</td>
+</tr>
+</tbody>
+</table></figure>
+<p>These alarms help you see how your system responds to the tests.</p>
+<h2 id="5.-making-an-experiment-template">5. Making an experiment template</h2>
+<h3 id="5.1-opening-the-aws-fis-console">5.1 Opening the AWS FIS console</h3>
+<p>To create an experiment template:</p>
+<ol>
+<li>Go to the AWS FIS console: <a href="https://console.aws.amazon.com/fis/" target="_blank">https://console.aws.amazon.com/fis/</a></li>
+<li>Click on <strong>Experiment templates</strong> in the menu</li>
+</ol>
+<h3 id="5.2-setting-up-experiment-actions">5.2 Setting up experiment actions</h3>
+<p>Actions are the tests AWS FIS runs on your resources. To add actions:</p>
+<ol>
+<li>Click <strong>Add action</strong></li>
+<li>Name your action</li>
+<li>Pick the action type</li>
+<li>Set the action details</li>
+</ol>
+<figure><table>
+<thead>
+<tr>
+<th>Action Example</th>
+<th>Duration</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Network disruption</td>
+<td>2 minutes</td>
+<td>Test system response to connection loss</td>
+</tr>
+<tr>
+<td>EC2 instance stop</td>
+<td>5 minutes</td>
+<td>Check recovery from sudden instance failure</td>
+</tr>
+</tbody>
+</table></figure>
+<h3 id="5.3-choosing-targets">5.3 Choosing targets</h3>
+<p>Targets are the resources you want to test. To set targets:</p>
+<ol>
+<li>Click <strong>Edit</strong> on the auto-created target</li>
+<li>Pick the resource type (e.g., EC2, RDS)</li>
+<li>Choose how to select the target (e.g., by tag, by ID)</li>
+</ol>
+<figure><table>
+<thead>
+<tr>
+<th>Target Type</th>
+<th>Selection Method</th>
+<th>Example</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>EC2 instance</td>
+<td>By tag</td>
+<td>All instances tagged "Test"</td>
+</tr>
+<tr>
+<td>RDS database</td>
+<td>By ID</td>
+<td>Specific database "prod-db-1"</td>
+</tr>
+</tbody>
+</table></figure>
+<h3 id="5.4-adding-stop-conditions">5.4 Adding stop conditions</h3>
+<p>Stop conditions end the test if something goes wrong. To add a stop condition:</p>
+<ol>
+<li>Click <strong>Add stop condition</strong></li>
+<li>Pick a CloudWatch alarm you made earlier</li>
+</ol>
+<h3 id="5.5-linking-iam-roles">5.5 Linking IAM roles</h3>
+<p>Link an IAM role to let AWS FIS run the test:</p>
+<ol>
+<li>Choose <strong>Use an existing IAM role</strong></li>
+<li>Pick the IAM role you made for AWS FIS</li>
+</ol>
+<h2 id="6.-running-your-first-test">6. Running your first test</h2>
+<h3 id="6.1-starting-the-experiment">6.1 Starting the experiment</h3>
+<p>To run your first test:</p>
+<ol>
+<li>Go to the AWS FIS console</li>
+<li>Select your experiment template</li>
+<li>Click <strong>Start experiment</strong></li>
+<li>Enter a unique client token</li>
+</ol>
+<p>The client token helps identify the experiment and stops accidental duplicate runs.</p>
+<h3 id="6.2-watching-the-test-progress">6.2 Watching the test progress</h3>
+<p>During the test:</p>
+<ul>
+<li>Use the AWS FIS console to track progress</li>
+<li>See which actions are happening</li>
+<li>Check which targets are being affected</li>
+</ul>
+<h3 id="6.3-understanding-the-results">6.3 Understanding the results</h3>
+<p>After the test ends:</p>
+<figure><table>
+<thead>
+<tr>
+<th>Step</th>
+<th>Action</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>Look at the experiment report</td>
+</tr>
+<tr>
+<td>2</td>
+<td>Check which actions were done</td>
+</tr>
+<tr>
+<td>3</td>
+<td>See which targets were affected</td>
+</tr>
+<tr>
+<td>4</td>
+<td>Note any errors that happened</td>
+</tr>
+</tbody>
+</table></figure>
+<p>Use CloudWatch metrics and logs to get more details about how your system behaved during the test.</p>
+<h2 id="7.-common-test-scenarios">7. Common test scenarios</h2>
+<p>Here are some basic test scenarios you can use with AWS Fault Injection Service to check how well your applications handle problems:</p>
+<h3 id="7.1-ec2-instance-failure">7.1 <a href="https://docs.aws.amazon.com/ec2/" target="_blank">EC2</a> instance failure</h3>
+<p><figure><img alt="EC2" loading="lazy" src="/assets/media/b44e314cb7f1481fa4e3.jpg"/></figure></p>
+<p>Test what happens when an EC2 instance stops working by turning it off or removing it. This helps you see how your application deals with sudden instance problems.</p>
+<h3 id="7.2-network-issues">7.2 Network issues</h3>
+<p>Check how your application handles network problems like slow connections or no connection at all. This test shows if your application can work when the network isn't perfect.</p>
+<h3 id="7.3-cpu-overload">7.3 CPU overload</h3>
+<p>See how your application performs when the CPU is very busy. This test helps you understand if your application can handle lots of work or many users at once.</p>
+<h3 id="7.4-storage-problems">7.4 Storage problems</h3>
+<p>Test how your application reacts when storage doesn't work right. This could be disk errors or not being able to read or write data.</p>
+<figure><table>
+<thead>
+<tr>
+<th>Test Scenario</th>
+<th>What It Does</th>
+<th>Why It's Useful</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>EC2 instance failure</td>
+<td>Stops or removes an EC2 instance</td>
+<td>Shows how your app handles sudden server loss</td>
+</tr>
+<tr>
+<td>Network issues</td>
+<td>Slows down or cuts off network connections</td>
+<td>Checks if your app works with poor internet</td>
+</tr>
+<tr>
+<td>CPU overload</td>
+<td>Makes the CPU very busy</td>
+<td>Tests if your app can handle high demand</td>
+</tr>
+<tr>
+<td>Storage problems</td>
+<td>Simulates disk errors or data access issues</td>
+<td>Checks how your app deals with data storage problems</td>
+</tr>
+</tbody>
+</table></figure>
+<p>These tests help you find weak spots in your application before they cause real problems for users.</p>
+<h2 id="8.-tips-for-effective-testing">8. Tips for effective testing</h2>
+<h3 id="8.1-creating-useful-experiments">8.1 Creating useful experiments</h3>
+<p>When making tests with AWS Fault Injection Service:</p>
+<ol>
+<li>Copy real-world problems</li>
+<li>Set clear goals for your system</li>
+<li>Guess how your system will react to issues</li>
+</ol>
+<figure><table>
+<thead>
+<tr>
+<th>Test Example</th>
+<th>What It Does</th>
+<th>Why It's Useful</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>EC2 instance stops</td>
+<td>Turns off a server</td>
+<td>Shows how your app handles server loss</td>
+</tr>
+<tr>
+<td>Network slows down</td>
+<td>Makes internet connection poor</td>
+<td>Checks if your app works with bad internet</td>
+</tr>
+</tbody>
+</table></figure>
+<h3 id="8.2-keeping-tests-safe">8.2 Keeping tests safe</h3>
+<p>To run safe tests:</p>
+<ul>
+<li>Use a test environment, not your live system</li>
+<li>Have a plan to undo changes if needed</li>
+<li>Start small and grow your tests slowly</li>
+</ul>
+<h3 id="8.3-regular-testing-and-updates">8.3 Regular testing and updates</h3>
+<p>To get the most from AWS Fault Injection Service:</p>
+<figure><table>
+<thead>
+<tr>
+<th>Action</th>
+<th>Frequency</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Run tests</td>
+<td>Every new release</td>
+<td>Find problems early</td>
+</tr>
+<tr>
+<td>Update test plans</td>
+<td>When system changes</td>
+<td>Keep tests useful</td>
+</tr>
+<tr>
+<td>Review results</td>
+<td>After each test</td>
+<td>Learn and improve</td>
+</tr>
+</tbody>
+</table></figure>
+<h2 id="9.-automating-your-tests">9. Automating your tests</h2>
+<h3 id="9.1-using-aws-cli-for-experiments">9.1 Using <a href="https://docs.aws.amazon.com/cli/" target="_blank">AWS CLI</a> for experiments</h3>
+<p><figure><img alt="AWS CLI" loading="lazy" src="/assets/media/99e010b28cb314abf20f.jpg"/></figure></p>
+<p>You can use the AWS Command Line Interface (CLI) to run tests with AWS Fault Injection Service (FIS). This helps you add testing to your development process.</p>
+<p>To create a test template with AWS CLI:</p>
+<ol>
+<li>Make a JSON file with your test details</li>
+<li>Use the <code>aws fis create-experiment-template</code> command</li>
+<li>Start the test with <code>aws fis start-experiment</code></li>
+</ol>
+<p>Here's an example of a JSON file for a test template:</p>
+<pre><code>{
+  "actions": {
+    "terminate-instance": {
+      "actionId": "terminate-instance",
+      "description": "Stop an EC2 instance",
+      "actionType": "aws:ec2:stopInstances",
+      "targets": {
+        "instances": "EC2InstancesTarget"
+      },
+      "parameters": {}
+    }
+  },
+  "description": "Test EC2 instance failure",
+  "roleArn": "arn:aws:iam::&lt;ACCOUNT_ID&gt;:role/&lt;ROLE_NAME&gt;",
+  "stopConditions": [],
+  "targets": {
+    "EC2InstancesTarget": {
+      "resourceType": "aws:ec2:instance",
+      "selectionMode": "COUNT(1)",
+      "filters": [
+        {
+          "path": "tags.your-key",
+          "values": [
+            "your-value"
+          ]
+        }
+      ]
+    }
+  }
+}
+</code></pre>
+<p>Replace <code>&lt;ACCOUNT_ID&gt;</code>, <code>&lt;ROLE_NAME&gt;</code>, <code>your-key</code>, and <code>your-value</code> with your own details.</p>
+<h3 id="9.2-adding-tests-to-ci%2Fcd-pipelines">9.2 Adding tests to CI/CD pipelines</h3>
+<p>You can add FIS tests to your CI/CD pipeline. This runs tests every time you update your code.</p>
+<p>For example, use <a href="https://docs.aws.amazon.com/codepipeline/" target="_blank">AWS CodePipeline</a> to:</p>
+<ol>
+<li>Detect code changes</li>
+<li>Run your normal tests</li>
+<li>Run FIS tests</li>
+<li>Deploy if all tests pass</li>
+</ol>
+<p>This helps catch problems early.</p>
+<h3 id="9.3-scheduling-regular-tests">9.3 Scheduling regular tests</h3>
+<p>Running tests often helps keep your system strong. You can set up FIS to run tests on a schedule.</p>
+<figure><table>
+<thead>
+<tr>
+<th>Scheduling Option</th>
+<th>How to Set It Up</th>
+<th>Benefits</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Daily tests</td>
+<td>Use AWS CloudWatch Events</td>
+<td>Catch daily issues</td>
+</tr>
+<tr>
+<td>Weekly tests</td>
+<td>Use AWS CloudWatch Events</td>
+<td>Find less common problems</td>
+</tr>
+<tr>
+<td>After major changes</td>
+<td>Add to your deployment process</td>
+<td>Test new code right away</td>
+</tr>
+</tbody>
+</table></figure>
+<p>Regular testing helps you find and fix issues before they affect users.</p>
+<h2 id="10.-improving-system-reliability">10. Improving system reliability</h2>
+<h3 id="10.1-reading-test-results">10.1 Reading test results</h3>
+<p>After running a test with AWS FIS, you'll get a report showing how your system handled the fake outage. To understand these results:</p>
+<ol>
+<li>Look at key numbers like error rates and response times</li>
+<li>Check how your system used resources during the test</li>
+<li>Note any parts that didn't work well or failed</li>
+</ol>
+<h3 id="10.2-finding-weak-spots">10.2 Finding weak spots</h3>
+<p>By looking closely at your test results, you can spot areas in your system that need work. Use this table to help identify problems:</p>
+<figure><table>
+<thead>
+<tr>
+<th>What to Look For</th>
+<th>Why It Matters</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Parts that didn't recover</td>
+<td>These could cause long outages</td>
+</tr>
+<tr>
+<td>Overloaded resources</td>
+<td>May lead to slow performance or crashes</td>
+</tr>
+<tr>
+<td>High error rates</td>
+<td>Could mean poor user experience</td>
+</tr>
+<tr>
+<td>Slow response times</td>
+<td>Might frustrate users or cause timeouts</td>
+</tr>
+</tbody>
+</table></figure>
+<h3 id="10.3-making-system-improvements">10.3 Making system improvements</h3>
+<p>Once you know where the problems are, you can fix them. Here's how to make your system stronger:</p>
+<figure><table>
+<thead>
+<tr>
+<th>Improvement</th>
+<th>How It Helps</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Add backup systems</td>
+<td>Keeps things running if one part fails</td>
+</tr>
+<tr>
+<td>Spread out the workload</td>
+<td>Stops any one part from getting too busy</td>
+</tr>
+<tr>
+<td>Update your design</td>
+<td>Makes your system better at handling problems</td>
+</tr>
+<tr>
+<td>Test often</td>
+<td>Helps you catch and fix issues early</td>
+</tr>
+</tbody>
+</table></figure>
+<h2 id="11.-fixing-common-problems">11. Fixing common problems</h2>
+<h3 id="11.1-when-experiments-fail">11.1 When experiments fail</h3>
+<p>Sometimes, AWS FIS experiments don't work as planned. Here's how to fix common issues:</p>
+<ol>
+<li>Check the AWS FIS console for error messages</li>
+<li>Look over your experiment template for mistakes</li>
+<li>Make sure you have the right permissions</li>
+</ol>
+<h3 id="11.2-unexpected-system-reactions">11.2 Unexpected system reactions</h3>
+<p>Your system might act strangely during a test. To avoid this:</p>
+<figure><table>
+<thead>
+<tr>
+<th>Action</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Watch system performance</td>
+<td>Spot problems early</td>
+</tr>
+<tr>
+<td>Use safety measures</td>
+<td>Stop small issues from getting bigger</td>
+</tr>
+<tr>
+<td>Test how your system handles failures</td>
+<td>Find weak spots</td>
+</tr>
+</tbody>
+</table></figure>
+<h3 id="11.3-permission-issues">11.3 Permission issues</h3>
+<p>Not having the right permissions is a common problem. To fix this:</p>
+<ul>
+<li>Give the right permissions to IAM users and roles</li>
+<li>Let AWS FIS run tests for you</li>
+<li>Use service-linked roles to make managing permissions easier</li>
+</ul>
+<figure><table>
+<thead>
+<tr>
+<th>Permission Type</th>
+<th>What It Does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Identity-based policies</td>
+<td>Control what users and roles can do</td>
+</tr>
+<tr>
+<td>AWS FIS permissions</td>
+<td>Allow AWS FIS to run tests</td>
+</tr>
+<tr>
+<td>Service-linked roles</td>
+<td>Make it easier to manage permissions</td>
+</tr>
+</tbody>
+</table></figure>
+<h2 id="12.-wrap-up">12. Wrap-up</h2>
+<h3 id="12.1-key-points-to-remember">12.1 Key points to remember</h3>
+<p>This guide showed you how to use AWS Fault Injection Service (FIS) to test your applications for outages. Here's what to keep in mind:</p>
+<figure><table>
+<thead>
+<tr>
+<th>Key Point</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Start small</td>
+<td>Begin with simple tests and slowly make them harder</td>
+</tr>
+<tr>
+<td>Watch closely</td>
+<td>Look at how your system acts during and after tests</td>
+</tr>
+<tr>
+<td>Find weak spots</td>
+<td>Use test results to see where your system needs work</td>
+</tr>
+<tr>
+<td>Test often</td>
+<td>Set up automatic tests to check your system regularly</td>
+</tr>
+</tbody>
+</table></figure>
+<h3 id="12.2-next-steps">12.2 Next steps</h3>
+<p>Now that you know how to use AWS FIS, it's time to put it to work:</p>
+<ol>
+<li>Set up your first test using the steps in this guide</li>
+<li>Run the test and look at the results</li>
+<li>Fix any problems you find</li>
+<li>Make your tests harder over time</li>
+<li>Keep testing and fixing to make your applications stronger</li>
+</ol>
+<p>
+<h2>Related posts</h2>
+<ul>
+<li><a href="/blog/10-best-practices-for-end-to-end-testing-aws-apps/">10 Best Practices for End-to-End Testing AWS Apps</a></li><li><a href="/blog/aws-engineering-blog-autoscaling-for-high-availability/">AWS Engineering Blog: Autoscaling for High Availability</a></li><li><a href="/blog/aws-cross-service-resilience-patterns/">AWS Cross-Service Resilience Patterns</a></li><li><a href="/blog/aws-lambda-unit-testing-best-practices-2024/">AWS Lambda Unit Testing Best Practices 2024</a></li>
+</ul>
+</p>

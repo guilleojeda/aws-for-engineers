@@ -1,0 +1,120 @@
+---
+layout: post.njk
+templateEngineOverride: html
+tags: posts
+title: "How to Reduce DynamoDB Throttling Issues"
+description: "Learn effective strategies to minimize DynamoDB throttling issues, optimize capacity, and enhance query performance for better application efficiency."
+date: "2025-04-21"
+datePublished: "2025-04-21T01:40:13.229000+00:00"
+heroImage: "/assets/media/3e3fc73b05c1988696dc.jpg"
+permalink: "/blog/how-to-reduce-dynamodb-throttling-issues/"
+sourceUrl: "https://awsforengineers.com/blog/how-to-reduce-dynamodb-throttling-issues/"
+---
+<p>Throttling happens when your <a href="https://aws.amazon.com/dynamodb/" rel="nofollow noopener noreferrer" target="_blank">DynamoDB</a> table or index can't handle the number of requests being made. This leads to failed operations, slower responses, and a bad user experience. Here's how to fix it:</p>
+<ul>
+<li><strong>Monitor Capacity Usage</strong>: Use <a href="https://aws.amazon.com/cloudwatch/" rel="nofollow noopener noreferrer" target="_blank">CloudWatch</a> to track <code>ThrottledRequests</code> and ensure your provisioned Read/Write Capacity Units (RCUs/WCUs) match your workload.</li>
+<li><strong>Balance Data Distribution</strong>: Avoid "hot partitions" by using high-cardinality partition keys and spreading traffic evenly.</li>
+<li><strong>Optimize Queries</strong>: Use targeted queries instead of full table scans and fetch only the data you need.</li>
+<li><strong>Enable Auto-Scaling</strong>: Dynamically adjust RCUs and WCUs to handle traffic spikes.</li>
+<li><strong>Retry with Backoff</strong>: Implement exponential backoff for retries to reduce pressure during throttling events.</li>
+<li><strong>Set Alerts</strong>: Configure <a href="/blog/cloudwatch-alarms-best-practices-for-thresholds-and-conditions/">CloudWatch alarms</a> to notify you of throttling issues before they escalate.</li>
+</ul>
+<h2 id="common-causes-of-dynamodb-throttling">Common Causes of <a href="https://aws.amazon.com/dynamodb/" rel="nofollow noopener noreferrer" target="_blank">DynamoDB</a> Throttling</h2>
+<p><figure><img alt="DynamoDB" loading="lazy" src="/assets/media/03419d3a5d8976808f1f.jpg"/></figure></p>
+<p>Pinpointing the reasons behind throttling helps you address issues and improve monitoring.</p>
+<h3 id="high-traffic-and-limited-capacity">High Traffic and Limited Capacity</h3>
+<p>When requests exceed the provisioned Read Capacity Units (RCUs) or Write Capacity Units (WCUs), DynamoDB responds with throughput-exceeded errors. This often happens due to:</p>
+<ul>
+<li>Sudden traffic spikes during peak usage times or special events</li>
+<li>Provisioned RCUs or WCUs being set too low for the workload</li>
+</ul>
+<h3 id="uneven-data-distribution">Uneven Data Distribution</h3>
+<p>Imbalanced partition key usage can lead to "hot partitions", even if the overall capacity seems sufficient. This occurs when:</p>
+<ul>
+<li>Partition keys are sequential or monotonic, like timestamps</li>
+<li>There aren't enough unique partition keys</li>
+<li>Access patterns repeatedly target the same items</li>
+</ul>
+<h3 id="resource-heavy-queries">Resource-Heavy Queries</h3>
+<p>Poorly optimized queries can consume excessive capacity and cause throttling. Common culprits include:</p>
+<ul>
+<li>Performing full table scans instead of using key-condition queries or indexed lookups</li>
+<li>Retrieving large datasets in a single operation</li>
+<li>Relying on filter expressions instead of key conditions to narrow results</li>
+</ul>
+<p>To address these issues, consider using secondary indexes, breaking results into smaller pages, applying key conditions before filters, and keeping a close eye on query patterns.</p>
+<p>Once you understand these causes, use <a href="/blog/custom-cloudwatch-metrics-setup-guide-2024/">CloudWatch metrics</a> to measure throttling events and identify problem areas more precisely.</p>
+<h2 id="finding-and-measuring-throttling-issues">Finding and Measuring Throttling Issues</h2>
+<h3 id="key-cloudwatch-metrics-to-monitor">Key <a href="https://aws.amazon.com/cloudwatch/" rel="nofollow noopener noreferrer" target="_blank">CloudWatch</a> Metrics to Monitor</h3>
+<p><figure><img alt="CloudWatch" loading="lazy" src="/assets/media/33f42a068ed860e1cdf7.jpg"/></figure></p>
+<p>CloudWatch can help you identify throttling problems by tracking specific metrics. Focus on these:</p>
+<ul>
+<li><strong>ThrottledRequests</strong>: Alerts you to throttling events.</li>
+<li><strong>ConsumedReadCapacityUnits</strong> and <strong>ConsumedWriteCapacityUnits</strong>: Show how much capacity your application is using.</li>
+<li><strong>ProvisionedReadCapacityUnits</strong> and <strong>ProvisionedWriteCapacityUnits</strong>: Indicate the capacity you’ve allocated.</li>
+</ul>
+<p>Set up alerts for any non-zero <strong>ThrottledRequests</strong> or when consumption approaches the provisioned capacity. To pinpoint issues, dive deeper into partition-level metrics to find "hot" partitions.</p>
+<h3 id="identifying-partition-level-performance-issues">Identifying Partition-Level Performance Issues</h3>
+<p>Sometimes, table-level metrics look fine, but throttling may still occur due to uneven load distribution across partitions. To uncover these "hot" partitions, compare capacity usage per key:</p>
+<ul>
+<li>Check <strong>per-key ConsumedReadCapacityUnits</strong> and <strong>ConsumedWriteCapacityUnits</strong> for imbalances.</li>
+<li>Look for partition keys consuming much higher throughput than others.</li>
+</ul>
+<p>If you spot uneven usage, consider redistributing the load. This could involve redesigning your partition key or implementing sharding to spread the load more evenly.</p>
+<h3 id="distinguishing-database-vs-application-issues">Distinguishing Database vs. Application Issues</h3>
+<p>Not all throttling problems are database-related. Here's how to tell the difference:</p>
+<ul>
+<li><strong>Database Issues</strong>: If <strong>ConsumedCapacity</strong> consistently matches or exceeds <strong>ProvisionedCapacity</strong>, you may need to increase capacity, enable auto-scaling, or set up alarms for <strong>ThrottledRequests</strong> and high capacity usage.</li>
+<li><strong>Application Issues</strong>: Look for inefficiencies such as large batch operations, poorly optimized queries, or skewed access patterns. Adjust your application logic to reduce these bottlenecks.</li>
+</ul>
+
+<h2 id="methods-to-reduce-throttling">Methods to Reduce Throttling</h2>
+<h3 id="error-handling-with-backoff">Error Handling with Backoff</h3>
+<p>Pair capacity and partition adjustments with retry mechanisms to handle temporary traffic spikes effectively.</p>
+<p>One approach is to use <strong>exponential backoff</strong> when retrying after a <code>ProvisionedThroughputExceededException</code>. Here's how:</p>
+<ul>
+<li>Adjust the base delay and maximum retries based on how often throttling occurs.</li>
+<li>Quickly stop retries for errors unrelated to throttling to identify and address issues promptly.</li>
+</ul>
+<pre><code>async function retryWithBackoff(call, maxRetries = 3, baseDelay = 100) {
+    let retryCount = 0;
+    while (retryCount &lt; maxRetries) {
+        try {
+            return await operation();
+        } catch (error) {
+            if (error.code === 'ProvisionedThroughputExceededException') {
+                retryCount++;
+                const delay = baseDelay * Math.pow(2, retryCount);
+                await new Promise(resolve =&gt; setTimeout(resolve, delay));
+            } else {
+                throw error;
+            }
+        }
+    }
+}
+</code></pre>
+<p>This method ensures a balance between retrying enough to handle temporary issues and avoiding excessive delays for unrelated errors.</p>
+<h2 id="preventing-future-throttling">Preventing Future Throttling</h2>
+<p>Stay ahead of throttling issues by using monitoring tools, setting up alerts, and fine-tuning your access patterns.</p>
+<h3 id="regular-usage-reviews">Regular Usage Reviews</h3>
+<p>Keep an eye on <strong>CloudWatch metrics</strong> to track how your capacity usage compares to the provisioned limits. Pay special attention to metrics like <strong>ThrottledRequests</strong> and look for unusual spikes or gradual increases in load by comparing current usage with historical trends.</p>
+<h3 id="setting-up-alerts">Setting Up Alerts</h3>
+<p>Configure <strong>CloudWatch alarms</strong> to track ThrottledRequests. Set thresholds that align with your performance goals and ensure your team gets notified promptly through email or SMS when these thresholds are crossed.</p>
+<h3 id="improving-access-patterns">Improving Access Patterns</h3>
+<p>Refine your access patterns to balance the load and avoid bottlenecks:</p>
+<ul>
+<li>Request only the attributes you need.</li>
+<li>Design partition keys that spread traffic evenly.</li>
+<li>Replace full table scans with specific, targeted queries.</li>
+</ul>
+<p>These adjustments can help your system handle traffic more efficiently and reduce the chances of throttling.</p>
+<h2 id="summary">Summary</h2>
+<p>Reduce DynamoDB throttling by focusing on monitoring, capacity management, and efficient design strategies.</p>
+<ul>
+<li><strong>Enable auto-scaling</strong> for Read and Write Capacity Units (RCUs and WCUs) to adjust capacity automatically.</li>
+<li><strong>Set up CloudWatch alarms</strong> to monitor metrics like <em>ConsumedCapacity</em> and <em>ThrottledRequests</em>.</li>
+<li><strong>Use high-cardinality partition keys</strong> to distribute data evenly and mitigate hot partitions.</li>
+<li><strong>Apply exponential backoff</strong> for retries to prevent overwhelming the system during throttling.</li>
+<li><strong>Review usage patterns regularly</strong> to identify and address inefficiencies.</li>
+</ul>
+<h2>Related posts</h2><ul><li><a href="/blog/aws-rds-blog-insights-performance-tuning/">AWS RDS Blog Insights: Performance Tuning</a></li><li><a href="/blog/aws-engineering-blog-autoscaling-for-high-availability/">AWS Engineering Blog: Autoscaling for High Availability</a></li><li><a href="/blog/dynamodb-burst-capacity-how-it-works/">DynamoDB Burst Capacity: How It Works</a></li><li><a href="/blog/rightsizing-rds-instances-step-by-step-guide/">Rightsizing RDS Instances: Step-by-Step Guide</a></li></ul>

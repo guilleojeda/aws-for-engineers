@@ -1,0 +1,15 @@
+---
+layout: base.njk
+isPost: true
+---
+<article class="article wrap">
+  <header class="article-header">
+    <h1>{{ title }}</h1>
+    <p class="article-date">Published on <time datetime="{{ date }}">{{ date | humanDate }}</time></p>
+  </header>
+  <div class="article-body">{{ content | safe }}</div>
+  <div class="article-tail">
+    <a href="/blog/">← Read more articles</a>
+    <div class="tinyadz" aria-label="Advertisement"></div>
+  </div>
+</article>

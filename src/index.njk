@@ -1,0 +1,128 @@
+---
+layout: base.njk
+title: AWS for Engineers
+description: The best guides and tutorials for software engineers to learn AWS. Tips and guides for developers and software engineers.
+permalink: /
+---
+<section class="hero">
+  <div class="wrap hero-inner">
+    <h1>AWS for Engineers</h1>
+    <p>The best guides and tutorials for software engineers to learn AWS</p>
+  </div>
+</section>
+
+<section class="section latest wrap">
+  <div class="section-heading centered">
+    <h2>Latest blog posts</h2>
+    <p>Level up your AWS skills with our tutorials, beginner guides and articles.</p>
+  </div>
+  <label class="visually-hidden" for="post-search">Search articles</label>
+  <input id="post-search" class="search-input" data-post-search type="search" placeholder="Search among 12 articles">
+  <p class="visually-hidden" aria-live="polite" data-search-status>12 articles shown</p>
+  <div class="home-post-grid">
+    {% for post in collections.posts | latest(12) %}
+    <a class="home-post-card" data-search-card href="{{ post.url }}">
+      {% if post.data.heroImage %}<img src="{{ post.data.heroImage }}" alt="" loading="lazy" width="480" height="280">{% endif %}
+      <h3>{{ post.data.title }}</h3>
+    </a>
+    {% endfor %}
+  </div>
+  <p class="centered"><a class="button button-dark" href="/blog/">View all articles</a></p>
+</section>
+
+<section class="section section-soft">
+  <div class="wrap">
+    <div class="section-heading centered">
+      <h2>Why Should Software Engineers Learn AWS?</h2>
+      <p>Developer-focused AWS guides that skip the fluff</p>
+    </div>
+    <div class="feature-grid">
+      <article class="feature-card">
+        <h3>Practical Solutions First</h3>
+        <p>Skip the theory overload. Our guides focus on real-world problems software engineers face with AWS. From Lambda cold starts to RDS performance tuning, learn what actually matters for your day-to-day work.</p>
+        <a href="/blog/amazon-redshift-data-sharing-setup-guide-2024/">Amazon Redshift Data Sharing Guide →</a>
+      </article>
+      <article class="feature-card">
+        <h3>Problem-Solving Focused</h3>
+        <p>Every tutorial includes troubleshooting guides and common pitfalls. We don't just teach you how to build — we teach you how to fix and optimize. Perfect for engineers who learn by doing.</p>
+        <a href="/blog/7-ways-to-mitigate-aws-lambda-cold-starts/">7 Ways to Mitigate AWS Lambda Cold Starts →</a>
+      </article>
+      <article class="feature-card">
+        <h3>Updated for 2024</h3>
+        <p>Cloud best practices change fast. Our guides are continuously updated with the latest AWS features, pricing changes, and performance optimization techniques. Stay current without the overwhelm.</p>
+        <a href="/blog/aws-developer-vs-solutions-architect-certifications/">AWS Developer vs Solutions Architect Certifications →</a>
+      </article>
+      <article class="feature-card">
+        <h3>Built for Developers</h3>
+        <p>Written by developers, for developers. No AWS certification prep fluff. Just clear, practical guides that assume you know how to code but are new to cloud infrastructure.</p>
+        <a href="/blog/nodejs-unit-testing-for-aws-lambda-functions/">Node.js Unit Testing for AWS Lambda Functions →</a>
+      </article>
+    </div>
+  </div>
+</section>
+
+<section class="section wrap">
+  <div class="section-heading centered"><h2>Level Up Your AWS Skills</h2></div>
+  <div class="offer-grid">
+    <article class="offer-card">
+      <h3>Simple AWS newsletter</h3>
+      <p>Stop copying cloud solutions, start understanding them. Join over 35k devs, tech leads, and experts learning how to architect cloud solutions, not pass exams.</p>
+      <p class="price">Free</p>
+      <a class="button button-dark" href="https://newsletter.simpleaws.dev/?utm_source=awsforengineers&utm_medium=home">Subscribe</a>
+    </article>
+    <article class="offer-card">
+      <h3>Node.js on AWS</h3>
+      <p>130-page ebook. A step-by-step journey from “I have a Node.js app, what is AWS?” to “I've containerized the app and deployed it in Amazon ECS with best practices, and it's scalable and highly available!”</p>
+      <p class="price">$10 <span>/year</span></p>
+      <a class="button button-dark" href="https://learning.simpleaws.dev/b/nodejsonaws?utm_source=awsforengineers&utm_medium=home">Buy now</a>
+    </article>
+    <article class="offer-card">
+      <h3>Deploying on AWS</h3>
+      <p>12-hour video course with 19 modules. Learn How to Leverage AWS Services and Tools to Deploy Highly Available and Scalable Applications.</p>
+      <p class="price">$150 <span>/year</span></p>
+      <a class="button button-dark" href="https://learning.simpleaws.dev/b/deployingonaws?utm_source=awsforengineers&utm_medium=home">Buy now</a>
+    </article>
+  </div>
+</section>
+
+<section class="section section-dark">
+  <div class="wrap split">
+    <div class="big-emoji" aria-hidden="true">🙌</div>
+    <div>
+      <h2>Want to advertise with us?</h2>
+      <a class="button button-light" href="https://www.passionfroot.me/guilleojeda">Review our ads options</a>
+    </div>
+  </div>
+</section>
+
+<section class="section wrap">
+  <div class="section-heading centered">
+    <h2>Our Approach to AWS Guides</h2>
+    <p>We break down AWS concepts from a software engineer's perspective. While most resources overwhelm you with infrastructure details or certification prep, we focus on what you actually need to know to use AWS in your development work.</p>
+  </div>
+  <div class="feature-grid three">
+    <article class="feature-card"><h3>Practical Understanding</h3><p>We explain AWS services in terms you already know as a software engineer. No DevOps jargon or infrastructure complexity unless it's actually relevant to your work.</p></article>
+    <article class="feature-card"><h3>Problem-Focused</h3><p>Each guide addresses specific challenges software engineers face with AWS. From understanding service limits to troubleshooting common issues, we focus on real problems you'll encounter.</p></article>
+    <article class="feature-card"><h3>Clear and Concise</h3><p>Our guides get straight to the point. We break down complex AWS topics into clear explanations that help you understand what you need to know to move forward with your work.</p></article>
+  </div>
+  <p class="centered section-cta"><a href="mailto:info@awsforengineers.com">Found something unclear? Have a specific AWS challenge? Let us know →</a></p>
+</section>
+
+<section class="section section-soft">
+  <div class="wrap split">
+    <div>
+      <h2>Become a Contributor</h2>
+      <p>Share your AWS knowledge with our community</p>
+      <a class="button button-dark" href="mailto:info@awsforengineers.com">Submit Article</a>
+    </div>
+    {% if imported.homeImages['Image of people contributing an article'] %}<img class="section-image" src="{{ imported.homeImages['Image of people contributing an article'] }}" alt="People contributing an article" loading="lazy">{% endif %}
+  </div>
+</section>
+
+<section class="section wrap team">
+  <div class="section-heading centered"><h2>Meet Our Team</h2><p>We're a team of AWS experts dedicated to helping you learn AWS.</p></div>
+  <div class="team-card">
+    {% if imported.homeImages['Linkedin profile pic (4)'] %}<img src="{{ imported.homeImages['Linkedin profile pic (4)'] }}" alt="Guille Ojeda" loading="lazy">{% endif %}
+    <div><h3>Guille Ojeda</h3><p class="eyebrow">Software Architect</p><p>Guille is a software architect and AWS expert. He published 2 books and a video course, publishes a weekly newsletter for over 40k subscribers, and has spoken at dozens of events.</p><a href="https://www.linkedin.com/in/guilleojeda/">LinkedIn →</a></div>
+  </div>
+</section>

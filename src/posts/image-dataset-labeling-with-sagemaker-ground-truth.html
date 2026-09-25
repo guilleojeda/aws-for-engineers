@@ -1,0 +1,443 @@
+---
+layout: post.njk
+templateEngineOverride: html
+tags: posts
+title: "Image Dataset Labeling with SageMaker Ground Truth"
+description: "Learn how to efficiently label image datasets with Amazon SageMaker Ground Truth for improved machine learning model accuracy."
+date: "2024-05-11"
+datePublished: "2024-05-11T07:32:42.953000+00:00"
+heroImage: "/assets/media/1a6b7a28f41c8bdb78df.jpg"
+permalink: "/blog/image-dataset-labeling-with-sagemaker-ground-truth/"
+sourceUrl: "https://awsforengineers.com/blog/image-dataset-labeling-with-sagemaker-ground-truth/"
+---
+<p><strong><a href="https://aws.amazon.com/sagemaker/groundtruth/" target="_blank">Amazon SageMaker Ground Truth</a></strong> is a fully managed service that simplifies the data labeling process for machine learning projects. It enables you to create high-quality training datasets quickly and efficiently using a combination of human labelers, active learning, and automated annotation models.</p>
+<h2 id="related-video-from-youtube">Related video from YouTube</h2>
+<iframe allowfullscreen="" frameborder="0" loading="lazy" src="https://www.youtube.com/embed/beknlA2BHGo"></iframe><h3 id="key-benefits%3A">Key Benefits:</h3>
+<ul>
+<li><strong>Improve Model Accuracy</strong>: Improve the accuracy and efficiency of your machine learning models with high-quality labeled data.</li>
+<li><strong>Accelerate Project Timelines</strong>: Accelerate your project timelines by streamlining the data labeling process.</li>
+<li><strong>Reduce Labeling Costs</strong>: Reduce labeling costs by leveraging automated data labeling and efficient workflows.</li>
+</ul>
+<h3 id="getting-started%3A">Getting Started:</h3>
+<p>To use SageMaker Ground Truth, you need:</p>
+<ul>
+<li>An AWS account</li>
+<li>Basic understanding of machine learning concepts</li>
+<li><a href="https://aws.amazon.com/s3/" target="_blank">Amazon S3</a> bucket to store your dataset</li>
+<li>SageMaker notebook instance or compatible IDE</li>
+<li>Access to a labeling workforce (<a href="https://www.mturk.com/" target="_blank">Amazon Mechanical Turk</a>, private, or vendor)</li>
+</ul>
+<h3 id="labeling-workflow%3A">Labeling Workflow:</h3>
+<figure><table>
+<thead>
+<tr>
+<th>Step</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1. Choose a Labeling Workforce</td>
+<td>Select from Amazon Mechanical Turk, private workforce, or vendor workforce based on your requirements.</td>
+</tr>
+<tr>
+<td>2. Create an S3 Bucket</td>
+<td>Create a dedicated S3 bucket to store your image datasets and labeling outputs.</td>
+</tr>
+<tr>
+<td>3. Define Labeling Job Details</td>
+<td>Specify input data location, output data location, labeling task type, categories, workforce, and instructions.</td>
+</tr>
+<tr>
+<td>4. Launch and Manage Labeling Jobs</td>
+<td>Create, launch, and monitor the progress of your labeling jobs.</td>
+</tr>
+<tr>
+<td>5. Improve Label Accuracy</td>
+<td>Review labeled images, use automated data labeling, and implement strategies to enhance label accuracy.</td>
+</tr>
+<tr>
+<td>6. Use Labeled Data for Machine Learning</td>
+<td>Access the labeled dataset, train machine learning models, and deploy them using SageMaker.</td>
+</tr>
+</tbody>
+</table></figure>
+<p>By following this workflow, you can leverage SageMaker Ground Truth to create high-quality training datasets and improve the accuracy of your machine learning models.</p>
+<h2 id="what-is-amazon-sagemaker-ground-truth%3F">What is <a href="https://aws.amazon.com/sagemaker/groundtruth/" target="_blank">Amazon SageMaker Ground Truth</a>?</h2>
+<p><figure><img alt="Amazon SageMaker Ground Truth" loading="lazy" src="/assets/media/5f5244b2339718d84d93.jpg"/></figure></p>
+<p>Amazon SageMaker Ground Truth is a fully managed service offered by AWS that makes the data labeling process for machine learning (ML) projects easier and faster. It helps developers create high-quality training datasets quickly and efficiently using a combination of human labelers, active learning, and automatic annotation models.</p>
+<h3 id="key-features-of-ground-truth">Key Features of Ground Truth</h3>
+<p>Ground Truth offers the following features to streamline the labeling process:</p>
+<ul>
+<li><strong>Human Judgment</strong>: Integrates human judgment into the labeling process, providing access to a diverse workforce, including Amazon Mechanical Turk, private workforces, and vendor-managed labeling services.</li>
+<li><strong>Automated Data Labeling</strong>: Offers automated data labeling, quality control, and integration with other <a href="/blog/">AWS services</a>.</li>
+<li><strong>Flexibility</strong>: Allows project owners to choose the best option according to their data security and quality requirements.</li>
+</ul>
+<p>By using Ground Truth, ML practitioners can:</p>
+<ul>
+<li><strong>Improve Model Accuracy</strong>: Improve the accuracy and efficiency of their models</li>
+<li><strong>Accelerate Project Timelines</strong>: Accelerate project timelines</li>
+<li><strong>Reduce Labeling Costs</strong>: Reduce labeling costs</li>
+</ul>
+<p>Ground Truth enables developers to focus on building and training ML models, rather than spending time and resources on data labeling.</p>
+<h2 id="requirements-for-using-sagemaker-ground-truth">Requirements for Using SageMaker Ground Truth</h2>
+<p>To get started with Amazon SageMaker Ground Truth, you need to meet some basic requirements. These prerequisites ensure a smooth and efficient labeling process for your machine learning projects.</p>
+<h3 id="aws-account-and-machine-learning-basics">AWS Account and Machine Learning Basics</h3>
+<p>You'll need an AWS account to access SageMaker Ground Truth. If you don't have one, create an account on the AWS website. Additionally, you should have a basic understanding of machine learning concepts, including data labeling, model training, and deployment.</p>
+<h3 id="essential-tools-and-access">Essential Tools and Access</h3>
+<p>Before starting the labeling process, make sure you have the necessary tools and access:</p>
+<figure><table>
+<thead>
+<tr>
+<th><strong>Tool/Access</strong></th>
+<th><strong>Description</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Amazon S3 bucket</td>
+<td>Store your dataset</td>
+</tr>
+<tr>
+<td>SageMaker notebook instance or compatible IDE</td>
+<td>Create and manage labeling jobs</td>
+</tr>
+<tr>
+<td>Workforce access</td>
+<td>Public (Amazon Mechanical Turk) or private workforce for labeling tasks</td>
+</tr>
+<tr>
+<td>SageMaker Ground Truth understanding</td>
+<td>Familiarity with Ground Truth features and capabilities</td>
+</tr>
+</tbody>
+</table></figure>
+<p>By meeting these requirements, you'll be well-prepared to create high-quality training datasets using SageMaker Ground Truth, which will ultimately improve the accuracy and efficiency of your machine learning models.</p>
+<h2 id="setting-up-your-labeling-project">Setting Up Your Labeling Project</h2>
+<h3 id="choosing-a-labeling-workforce">Choosing a Labeling Workforce</h3>
+<p>When setting up your labeling project, you need to decide on a workforce to label your data. Amazon SageMaker Ground Truth offers three options:</p>
+<figure><table>
+<thead>
+<tr>
+<th><strong>Workforce Option</strong></th>
+<th><strong>Description</strong></th>
+<th><strong>Ideal For</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Amazon Mechanical Turk</td>
+<td>Global pool of workers</td>
+<td>Non-sensitive data labeling tasks</td>
+</tr>
+<tr>
+<td>Private Workforce</td>
+<td>Your own employees or contractors</td>
+<td>Sensitive data or domain expertise required</td>
+</tr>
+<tr>
+<td>Vendor Workforce</td>
+<td>Third-party vendors from <a href="https://aws.amazon.com/marketplace" target="_blank">AWS Marketplace</a></td>
+<td>Specialized labeling services</td>
+</tr>
+</tbody>
+</table></figure>
+<p>Consider factors like data sensitivity, required expertise, cost, and turnaround time when choosing a workforce. Private or vendor workforces are recommended for sensitive data or tasks requiring specialized knowledge.</p>
+<h3 id="creating-an-s3-bucket-for-data">Creating an S3 Bucket for Data</h3>
+<p>To store your image datasets and labeling outputs, create a dedicated S3 bucket:</p>
+<ol>
+<li>Log in to the AWS Management Console and navigate to the Amazon S3 service.</li>
+<li>Click "Create bucket" and provide a unique bucket name.</li>
+<li>Select the AWS region where you want to create the bucket (same region as your SageMaker resources is recommended).</li>
+<li>Configure additional bucket settings as needed (e.g., versioning, logging, or access control).</li>
+<li>Click "Create bucket" to finish the setup process.</li>
+</ol>
+<h3 id="defining-labeling-job-details">Defining Labeling Job Details</h3>
+<p>Before launching a labeling job, specify the following details:</p>
+<ol>
+<li><strong>Input Data Location</strong>: Provide the S3 path to your image dataset or manifest file.</li>
+<li><strong>Output Data Location</strong>: Specify the S3 path where Ground Truth should store the labeled data.</li>
+<li><strong>Labeling Task Type</strong>: Select the appropriate task type (e.g., "Image Classification" or "Object Detection").</li>
+<li><strong>Labeling Categories</strong>: Define the categories or labels that workers should assign to the images.</li>
+<li><strong>Workforce Selection</strong>: Choose the workforce option based on your requirements.</li>
+<li><strong>Instructions</strong>: Provide clear and concise instructions for the labeling task to ensure high-quality results.</li>
+</ol>
+<p>By carefully defining these job details, you can ensure that your labeling project is set up correctly and aligned with your specific requirements.</p>
+<h2 id="launching-and-managing-labeling-jobs">Launching and Managing Labeling Jobs</h2>
+<h3 id="creating-a-labeling-job">Creating a Labeling Job</h3>
+<p>To create a labeling job, follow these steps:</p>
+<ol>
+<li>Log in to the Amazon SageMaker console and navigate to the "Labeling jobs" section.</li>
+<li>Click "Create labeling job" and provide a descriptive job name.</li>
+<li>Specify the S3 location of your image dataset or manifest file under "Input data setup."</li>
+<li>Enter the S3 path where Ground Truth should store the labeled data for "Output data location."</li>
+<li>Select the appropriate "Task type" (e.g., Image Classification or Object Detection) and configure the labeling task details.</li>
+<li>Choose your preferred "Worker type" (Amazon Mechanical Turk, private workforce, or vendor workforce).</li>
+<li>Review the labeling job configuration and click "Create" to launch the job.</li>
+</ol>
+<h3 id="tracking-job-progress">Tracking Job Progress</h3>
+<p>Once the labeling job is launched, you can monitor its progress from the SageMaker console:</p>
+<figure><table>
+<thead>
+<tr>
+<th><strong>Job Status</strong></th>
+<th><strong>Description</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>In progress</td>
+<td>The job is currently being labeled by workers or automated labeling.</td>
+</tr>
+<tr>
+<td>Completed</td>
+<td>The job has finished labeling, and the output is available.</td>
+</tr>
+<tr>
+<td>Failed</td>
+<td>The job encountered an error and did not complete successfully.</td>
+</tr>
+</tbody>
+</table></figure>
+<p>To view detailed job information, click on the job name:</p>
+<ul>
+<li>Overall job progress (percentage of data labeled)</li>
+<li>Number of data objects labeled by workers vs. automated labeling</li>
+<li>Metrics like worker agreement and confidence scores</li>
+</ul>
+<p>Review the "Labeling job analytics" tab for insights on worker performance and labeling quality. If issues are identified, you can:</p>
+<ul>
+<li>Provide additional instructions or examples to workers</li>
+<li>Adjust automated labeling thresholds</li>
+<li>Stop and recreate the job with updated settings</li>
+</ul>
+<p>By closely tracking the job progress and performance metrics, you can ensure high-quality labeling results and make adjustments as needed throughout the project lifecycle.</p>
+<h2 id="improving-label-accuracy">Improving Label Accuracy</h2>
+<p>Improving label accuracy is crucial for training machine learning models on high-quality data. In this section, we'll explore strategies to review labeled data, assess its quality, and utilize Ground Truth features to enhance label accuracy and consistency.</p>
+<h3 id="reviewing-labeled-images">Reviewing Labeled Images</h3>
+<p>After the labeling job is complete, review the labeled images to ensure they meet your quality standards. You can access the labeled images in the S3 bucket specified during the labeling job setup. Reviewing the labeled images allows you to:</p>
+<ul>
+<li>Identify and correct labeling errors</li>
+<li>Check for consistency in labeling across different workers</li>
+<li>Verify that the labels align with your project requirements</li>
+</ul>
+<p>To review labeled images, follow these steps:</p>
+<p>1. Log in to the Amazon SageMaker console and navigate to the "Labeling jobs" section. 2. Click on the labeling job you want to review. 3. Click on the "Output data location" to access the labeled images in the S3 bucket. 4. Review the labeled images and verify that they meet your quality standards.</p>
+<h3 id="using-automated-data-labeling">Using Automated Data Labeling</h3>
+<p>Ground Truth's automated data labeling feature can significantly boost efficiency and reduce manual effort while maintaining high-quality labels. Automated data labeling uses machine learning algorithms to label your data, and you can configure the feature to meet your project requirements.</p>
+<p>To use automated data labeling, follow these steps:</p>
+<figure><table>
+<thead>
+<tr>
+<th><strong>Step</strong></th>
+<th><strong>Description</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>Log in to the Amazon SageMaker console and navigate to the "Labeling jobs" section.</td>
+</tr>
+<tr>
+<td>2</td>
+<td>Click on the labeling job you want to configure for automated data labeling.</td>
+</tr>
+<tr>
+<td>3</td>
+<td>Click on the "Automated data labeling" tab.</td>
+</tr>
+<tr>
+<td>4</td>
+<td>Configure the automated data labeling settings, such as the labeling task type and the confidence threshold.</td>
+</tr>
+<tr>
+<td>5</td>
+<td>Click "Save" to apply the changes.</td>
+</tr>
+</tbody>
+</table></figure>
+<p>By leveraging automated data labeling, you can reduce the manual effort required for labeling and focus on more strategic aspects of your machine learning project.</p>
+<h2 id="using-labeled-data-for-machine-learning">Using Labeled Data for Machine Learning</h2>
+<p>Now that you have a labeled image dataset, you can use it to train machine learning models. In this section, we'll explore the final steps for utilizing the annotated image dataset to train machine learning models, including importing the data into SageMaker and setting up model training jobs.</p>
+<h3 id="accessing-labeled-dataset">Accessing Labeled Dataset</h3>
+<p>To access the labeled dataset, navigate to the S3 bucket where you stored the labeled images. You can use the Amazon SageMaker console or the AWS CLI to retrieve the labeled data. Make sure to specify the correct S3 bucket and folder path to access the labeled images.</p>
+<figure><table>
+<thead>
+<tr>
+<th><strong>Step</strong></th>
+<th><strong>Description</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>Navigate to the S3 bucket where you stored the labeled images.</td>
+</tr>
+<tr>
+<td>2</td>
+<td>Use the Amazon SageMaker console or the AWS CLI to retrieve the labeled data.</td>
+</tr>
+<tr>
+<td>3</td>
+<td>Specify the correct S3 bucket and folder path to access the labeled images.</td>
+</tr>
+</tbody>
+</table></figure>
+<p>Once you have accessed the labeled dataset, you can prepare it for integration into machine learning workflows. This may involve converting the data into a suitable format, such as CSV or JSON, and splitting the data into training, validation, and testing sets.</p>
+<h3 id="training-models">Training Models</h3>
+<p>With the labeled dataset in hand, you can use SageMaker to train and validate machine learning models. SageMaker provides a range of algorithms and frameworks, including <a href="https://www.tensorflow.org/" target="_blank">TensorFlow</a>, <a href="https://pytorch.org/" target="_blank">PyTorch</a>, and <a href="https://scikit-learn.org/" target="_blank">Scikit-learn</a>, to support various machine learning tasks.</p>
+<p>To train a model, create a new SageMaker notebook instance and import the labeled dataset. Then, select the appropriate algorithm and framework for your machine learning task, and configure the hyperparameters as needed. Finally, run the training job and monitor its progress using the SageMaker console or the AWS CLI.</p>
+<figure><table>
+<thead>
+<tr>
+<th><strong>Step</strong></th>
+<th><strong>Description</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>Create a new SageMaker notebook instance.</td>
+</tr>
+<tr>
+<td>2</td>
+<td>Import the labeled dataset.</td>
+</tr>
+<tr>
+<td>3</td>
+<td>Select the appropriate algorithm and framework for your machine learning task.</td>
+</tr>
+<tr>
+<td>4</td>
+<td>Configure the hyperparameters as needed.</td>
+</tr>
+<tr>
+<td>5</td>
+<td>Run the training job and monitor its progress using the SageMaker console or the AWS CLI.</td>
+</tr>
+</tbody>
+</table></figure>
+<p>By following these steps, you can leverage the labeled image dataset to train accurate machine learning models that can help you achieve your project goals.</p>
+<h2 id="tips-for-efficient-labeling">Tips for Efficient Labeling</h2>
+<p>When labeling image datasets using Amazon SageMaker Ground Truth, efficiency is crucial. Here are some expert tips to help you maximize the efficiency and accuracy of the labeling process:</p>
+<h3 id="define-object-boundaries-clearly">Define Object Boundaries Clearly</h3>
+<p>Use tight bounding boxes or polygons to accurately define object coordinates. Avoid using bounding boxes for diagonal objects, as they may include background areas. For overlapping objects, use polygons and instance segmentation instead.</p>
+<h3 id="handle-uncertainty-and-ambiguity">Handle Uncertainty and Ambiguity</h3>
+<p>Images or videos may contain uncertain cases that are challenging to annotate. Communicate these cases to annotators and establish a feedback loop to address questions or ambiguities. Consistently handle uncertainties to ensure accurate labeling.</p>
+<h3 id="update-and-review-guidelines">Update and Review Guidelines</h3>
+<p>Project requirements may change over time. Evaluate and improve annotation guidelines to ensure maximum efficiency and productivity benefits. Analyze model performance, collect feedback from annotators, and address client challenges.</p>
+<h3 id="optimize-the-annotation-workflow">Optimize the Annotation Workflow</h3>
+<p>Establish a system to measure and monitor task completion, time taken, and mistakes or exceptions. Optimize your annotation workflow and address any issues or questions that arise during the process.</p>
+<p>By following these expert tips, you can streamline your labeling workflow, reduce costs, and improve the accuracy of your labeled image dataset.</p>
+<h2 id="common-challenges-and-solutions">Common Challenges and Solutions</h2>
+<p>When working with image dataset labeling using Amazon SageMaker Ground Truth, you may encounter some common challenges that can hinder the efficiency and accuracy of the labeling process. Here are some solutions to overcome these challenges:</p>
+<h3 id="handling-complex-image-data">Handling Complex Image Data</h3>
+<figure><table>
+<thead>
+<tr>
+<th><strong>Challenge</strong></th>
+<th><strong>Solution</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Images with multiple objects, varying lighting conditions, or noisy backgrounds</td>
+<td>Define clear object boundaries and use tight bounding boxes or polygons to accurately define object coordinates. Use instance segmentation for overlapping objects.</td>
+</tr>
+</tbody>
+</table></figure>
+<h3 id="ensuring-labeling-consistency">Ensuring Labeling Consistency</h3>
+<figure><table>
+<thead>
+<tr>
+<th><strong>Challenge</strong></th>
+<th><strong>Solution</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Inconsistent labeling across different annotators and datasets</td>
+<td>Establish a feedback loop to address questions or ambiguities. Consistently handle uncertainties to ensure accurate labeling. Regularly review and update annotation guidelines.</td>
+</tr>
+</tbody>
+</table></figure>
+<h3 id="managing-labeling-workforce">Managing Labeling Workforce</h3>
+<figure><table>
+<thead>
+<tr>
+<th><strong>Challenge</strong></th>
+<th><strong>Solution</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Managing a large labeling workforce</td>
+<td>Establish a system to measure and monitor task completion, time taken, and mistakes or exceptions. Optimize your annotation workflow and address any issues or questions that arise during the process.</td>
+</tr>
+</tbody>
+</table></figure>
+<p>By understanding these common challenges and implementing these solutions, you can streamline your labeling workflow, reduce costs, and improve the accuracy of your labeled image dataset.</p>
+<h2 id="conclusion-and-next-steps">Conclusion and Next Steps</h2>
+<h3 id="recap-of-labeling-workflow">Recap of Labeling Workflow</h3>
+<p>In this tutorial, we covered the step-by-step process of labeling image datasets using Amazon SageMaker Ground Truth. We discussed the importance of accurate image labeling for machine learning, setting up a labeling project, choosing a labeling workforce, creating an S3 bucket for data, defining labeling job details, launching and managing labeling jobs, improving label accuracy, and using labeled data for machine learning.</p>
+<h3 id="additional-resources">Additional Resources</h3>
+<p>To further develop your skills with SageMaker Ground Truth, explore the following resources:</p>
+<figure><table>
+<thead>
+<tr>
+<th><strong>Resource</strong></th>
+<th><strong>Description</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="https://docs.aws.amazon.com/sagemaker/latest/dg/ground-truth.html" target="_blank">Amazon SageMaker Ground Truth Documentation</a></td>
+<td>Official documentation for SageMaker Ground Truth</td>
+</tr>
+<tr>
+<td><a href="https://aws.amazon.com/blogs/machine-learning/" target="_blank">AWS SageMaker Blog</a></td>
+<td>Stay updated with the latest news and best practices in machine learning</td>
+</tr>
+<tr>
+<td><a href="https://forums.aws.amazon.com/forum.jspa?forumID=285" target="_blank">SageMaker Community Forum</a></td>
+<td>Engage with the SageMaker community and get help from experts</td>
+</tr>
+<tr>
+<td>AWS Machine Learning YouTube Channel</td>
+<td>Watch tutorials, webinars, and more on machine learning with AWS</td>
+</tr>
+</tbody>
+</table></figure>
+<p>By leveraging these resources, you can stay up-to-date with the latest features and best practices in SageMaker Ground Truth and continue to improve your image dataset labeling workflow.</p>
+<h2 id="faqs">FAQs</h2>
+<h3 id="what-are-the-key-benefits-of-amazon-sagemaker-ground-truth%3F">What are the key benefits of Amazon SageMaker Ground Truth?</h3>
+<p>Amazon SageMaker Ground Truth offers three main benefits:</p>
+<figure><table>
+<thead>
+<tr>
+<th><strong>Benefit</strong></th>
+<th><strong>Description</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>High-quality datasets</strong></td>
+<td>Create accurate training datasets for machine learning models.</td>
+</tr>
+<tr>
+<td><strong>Human-generated data</strong></td>
+<td>Customize models with specific data tailored to your needs.</td>
+</tr>
+<tr>
+<td><strong>Model evaluation</strong></td>
+<td>Compare and select the best model for your use case.</td>
+</tr>
+</tbody>
+</table></figure>
+<p>These benefits help you create high-quality training datasets, leading to improved model accuracy and reduced costs.</p>
+<p>
+<h2>Related posts</h2>
+<ul>
+<li><a href="/blog/aws-workforce-upskilling-for-legacy-system-modernization/">AWS Workforce Upskilling for Legacy System Modernization</a></li><li><a href="/blog/aws-services-overview-core-components/">AWS Services Overview: Core Components</a></li><li><a href="/blog/getting-started-with-aws-s3-essential-concepts/">Getting Started with AWS S3: Essential Concepts</a></li><li><a href="/blog/aws-glue-tutorial-for-beginners-core-concepts/">AWS Glue Tutorial for Beginners: Core Concepts</a></li>
+</ul>
+</p>

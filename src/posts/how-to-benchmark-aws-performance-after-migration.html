@@ -1,0 +1,196 @@
+---
+layout: post.njk
+templateEngineOverride: html
+tags: posts
+title: "How to Benchmark AWS Performance After Migration"
+description: "Learn how to effectively benchmark AWS performance after migration, focusing on metrics, testing, and resource optimization to ensure success."
+date: "2025-04-24"
+datePublished: "2025-04-24T01:11:09.300000+00:00"
+heroImage: "/assets/media/2724b6d507e4e9cd0b47.jpg"
+permalink: "/blog/how-to-benchmark-aws-performance-after-migration/"
+sourceUrl: "https://awsforengineers.com/blog/how-to-benchmark-aws-performance-after-migration/"
+---
+<p><strong>Want to ensure your <a href="/blog/">AWS migration</a> was successful?</strong> Benchmarking post-migration performance is key to optimizing resources, maintaining service quality, and preserving user experience. Here's how to get started:</p>
+<ul>
+<li><strong>Set Goals:</strong> Define metrics like response time, throughput, error rates, and cost limits.</li>
+<li><strong>Monitor Metrics:</strong> Use tools like <a href="https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/WhatIsCloudWatch.html" rel="nofollow noopener noreferrer" target="_blank">AWS CloudWatch</a> and X-Ray to track application health, resource usage, and costs.</li>
+<li><strong>Run Tests:</strong> Simulate real-world scenarios with tools like <a href="https://jmeter.apache.org/" rel="nofollow noopener noreferrer" target="_blank">Apache JMeter</a> or <a href="https://locust.io/" rel="nofollow noopener noreferrer" target="_blank">Locust</a> to measure performance under load.</li>
+<li><strong>Analyze Results:</strong> Identify bottlenecks in CPU, memory, or I/O and fine-tune AWS resources.</li>
+<li><strong>Regular Testing:</strong> Integrate performance tests into CI/CD pipelines and maintain a routine testing schedule.</li>
+</ul>
+<h2 id="setting-performance-goals">Setting Performance Goals</h2>
+<h3 id="key-performance-metrics">Key Performance Metrics</h3>
+<figure><table>
+<thead>
+<tr>
+<th>Metric Category</th>
+<th>Key Indicators</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Response Time</strong></td>
+<td>- API latency, page load time, database query speed  <br/>- Lambda cold start time  <br/>- Query execution duration</td>
+</tr>
+<tr>
+<td><strong>Resource Usage</strong></td>
+<td>- CPU utilization, memory consumption, storage IOPS  <br/>- RDS performance tuning metrics</td>
+</tr>
+<tr>
+<td><strong>Application Health</strong></td>
+<td>- Error rates, success rate, availability</td>
+</tr>
+<tr>
+<td><strong>Cost Metrics</strong></td>
+<td>- AWS resource costs, data transfer, storage usage</td>
+</tr>
+</tbody>
+</table></figure>
+<h3 id="business-requirements">Business Requirements</h3>
+<p>Clearly define the following:</p>
+<ul>
+<li><strong>Maximum latency</strong>: Specify acceptable delays for API responses or page loads.</li>
+<li><strong>Throughput</strong>: Determine the target number of requests per second your system should handle.</li>
+<li><strong>Error-rate thresholds</strong>: Set acceptable failure rates for your application.</li>
+<li><strong>Monthly cost limits</strong>: Establish a budget for AWS resources, including data transfer and storage.</li>
+</ul>
+<p>Once these are outlined, prepare your test environment and configure monitoring tools to track these metrics effectively.</p>
+<h2 id="test-environment-setup">Test Environment Setup</h2>
+<h3 id="pre-migration-metrics">Pre-Migration Metrics</h3>
+<p>Start by gathering baseline metrics from your on-premises environment. Focus on data that affects both user experience and system performance:</p>
+<figure><table>
+<thead>
+<tr>
+<th>Metric Type</th>
+<th>Collection Method</th>
+<th>Key Data Points</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Application</td>
+<td>APM tools</td>
+<td>- Response times  <br/>- Error rates  <br/>- Transaction volumes</td>
+</tr>
+<tr>
+<td>Infrastructure</td>
+<td>System monitoring</td>
+<td>- CPU and memory usage  <br/>- Disk I/O  <br/>- Network throughput</td>
+</tr>
+<tr>
+<td>Database</td>
+<td>Query analysis</td>
+<td>- Query execution times  <br/>- Connection counts  <br/>- Cache hit rates</td>
+</tr>
+</tbody>
+</table></figure>
+<p>Make sure to record these metrics during both peak and off-peak hours for a comprehensive baseline. Store this data for direct comparison after migration. Tie these metrics to the performance benchmarks established earlier. Once the baseline is set, configure AWS monitoring tools to track the same metrics post-migration.</p>
+<h3 id="monitoring-tools-setup">Monitoring Tools Setup</h3>
+<p>Set up these AWS tools to monitor your environment effectively:</p>
+<ul>
+<li>
+<strong>CloudWatch</strong>
+<ul>
+<li>Adjust the collection interval: choose standard (five minutes) or detailed (one minute).</li>
+<li>Create custom metrics for application-specific tracking.</li>
+<li>Organize logs by creating log groups for centralized log management.</li>
+</ul>
+</li>
+<li>
+<strong>X-Ray</strong>
+<ul>
+<li>Install the X-Ray daemon on your EC2 instances.</li>
+<li>Use the X-Ray SDK to instrument your application.</li>
+<li>Trace distributed requests to identify bottlenecks and performance issues.</li>
+</ul>
+</li>
+</ul>
+<p>With monitoring tools configured, you're ready to run performance tests.</p>
+<h3 id="test-environment-configuration">Test Environment Configuration</h3>
+<p>Build a test environment that closely resembles production but is cost-efficient:</p>
+<ul>
+<li>Use the same AWS services, configurations, and deployment processes as production.</li>
+<li>Enable detailed monitoring for critical resources to ensure thorough tracking.</li>
+<li>Apply tags for better cost management and resource tracking.</li>
+</ul>
+<h2 id="running-performance-tests">Running Performance Tests</h2>
+<p>Start by aligning your test scenarios with the performance goals you've already established. Once that's done, choose the right tools for the job.</p>
+<h3 id="testing-tools">Testing Tools</h3>
+<p>Pick a load-testing tool you're comfortable with, like <strong>Apache JMeter</strong> or <strong>Locust</strong>. Set it up to mimic real user workflows, such as logging in, retrieving data, or completing transactions.</p>
+<h3 id="test-execution-steps">Test Execution Steps</h3>
+<p>Tie each testing phase to your business requirements and the key performance metrics you identified earlier. Here's how to proceed:</p>
+<ul>
+<li>Begin tests in a clean, stable environment to ensure consistent and reliable results.</li>
+<li>Start with a small load and gradually increase the number of users until you hit your peak traffic targets.</li>
+<li>Track essential metrics like response time, latency, throughput, CPU usage, memory, and disk I/O. Use tools like <strong>CloudWatch</strong> and <strong>X-Ray</strong> to gather this data, then consolidate it for analysis after testing.</li>
+</ul>
+
+<h2 id="results-analysis-and-improvements">Results Analysis and Improvements</h2>
+<h3 id="understanding-test-results">Understanding Test Results</h3>
+<p>Start by reviewing monitoring data and application metrics. Pay close attention to CPU usage, memory consumption, disk I/O, and network throughput. Compare these with response times and error rates to pinpoint performance issues. For example, CPU spikes, increasing memory usage under load, high I/O queue depths, or network saturation often indicate bottlenecks.</p>
+<p>Leverage <strong><a href="/blog/aws-health-dashboards-monitoring-and-debugging-guide/">CloudWatch dashboards</a></strong> to visualize these trends. If you notice Lambda latency spikes, check concurrent executions and cold start rates for potential culprits.</p>
+<h3 id="aws-resource-tuning">AWS Resource Tuning</h3>
+<p>Once you've identified bottlenecks, fine-tune your AWS resources in the following areas:</p>
+<ul>
+<li>
+<strong>Instance Types</strong><br/>
+If CPU or memory limits are being hit, consider upgrading to a larger, workload-specific instance family. For CPU-heavy tasks, go for compute-optimized instances, and for memory-intensive jobs, choose memory-optimized ones.
+</li>
+<li>
+<strong>Auto Scaling Configuration</strong><br/>
+Modify Auto Scaling policies to better handle your workload. Set thresholds for CPU usage or queue lengths and adjust cooldown periods based on actual load patterns.
+</li>
+<li>
+<strong>Storage Options</strong><br/>
+Address I/O issues by switching to higher-performance EBS volumes, adding read replicas, or enabling <a href="/blog/aws-performance-insights-monitoring-rds-databases/">RDS Performance Insights</a> to identify slow-running queries.
+</li>
+</ul>
+<h3 id="testing-changes">Testing Changes</h3>
+<p>After making adjustments, rerun the original load tests and scripts. Gather data on response times, resource usage, I/O rates, and error counts both before and after the changes. Be sure to document any AWS configuration updates and their impact on performance.</p>
+<p>Continue monitoring these metrics using <strong>CloudWatch dashboards</strong> and alarms. This ensures you maintain the improvements and sets the stage for the upcoming section on regular testing practices.</p>
+<h2 id="regular-testing-guidelines">Regular Testing Guidelines</h2>
+<h3 id="cicd-test-integration">CI/CD Test Integration</h3>
+<p>Incorporate performance tests into <a href="https://docs.aws.amazon.com/codepipeline/latest/userguide/welcome.html" rel="nofollow noopener noreferrer" target="_blank">AWS CodePipeline</a> and CodeBuild as part of your routine testing process. Start with smoke tests for key workflows, then expand to include load and endurance tests. Be sure to cover AWS-specific scenarios, such as Lambda cold starts and <a href="/blog/aws-rds-blog-insights-performance-tuning/">RDS query performance</a>. Update your tests whenever AWS introduces new features or optimizations.</p>
+<ul>
+<li>Run performance tests in a staging environment.</li>
+<li>Compare test results to your established performance benchmarks.</li>
+<li>Halt deployments if performance thresholds are exceeded.</li>
+<li>Save test results for trend tracking and ongoing improvements.</li>
+</ul>
+<h2 id="conclusion">Conclusion</h2>
+<h3 id="key-takeaways">Key Takeaways</h3>
+<p>Benchmarking performance after migrating to AWS requires a structured approach. Start by setting baseline metrics, then implement monitoring tools and run performance tests regularly. Focus on scenarios that reflect actual usage and ensure your test environment mirrors production settings. Adding performance tests to your CI/CD pipeline can help optimize resource use and maintain strong application performance. Regularly review your architecture to stay aligned with your goals. Use these steps to refine your performance strategy.</p>
+<h3 id="next-steps">Next Steps</h3>
+<ul>
+<li>Audit response times, resource usage, and costs to identify areas for improvement.</li>
+<li>Adjust resources based on audit results, paying close attention to database performance and cold starts.</li>
+<li>Update your test suite to incorporate new <a href="/">AWS features</a>.</li>
+<li>Compare your AWS architecture with current business needs to ensure alignment.</li>
+</ul>
+<h2 id="faqs">FAQs</h2>
+<h3 id="what-metrics-should-i-focus-on-to-benchmark-aws-performance-after-migration">What metrics should I focus on to benchmark AWS performance after migration?</h3>
+<p>When benchmarking AWS performance after a migration, prioritize metrics that reflect the efficiency, reliability, and scalability of your applications. Key metrics to monitor include:</p>
+<ul>
+<li><strong>Latency</strong>: Measure the time it takes for requests to be processed, especially for critical operations.</li>
+<li><strong>Throughput</strong>: Track how much data your application can handle over a specific period.</li>
+<li><strong>CPU and Memory Utilization</strong>: Ensure your instances are operating efficiently without overloading resources.</li>
+<li><strong>Disk I/O</strong>: Monitor read and write speeds to evaluate storage performance.</li>
+<li><strong>Network Bandwidth</strong>: Check data transfer rates to ensure smooth communication between services.</li>
+</ul>
+<p>By regularly monitoring these metrics, you can identify potential bottlenecks and optimize your AWS setup to meet performance goals effectively.</p>
+<h3 id="how-do-i-create-a-test-environment-in-aws-that-mirrors-my-production-setup">How do I create a test environment in AWS that mirrors my production setup?</h3>
+<p>To create a test environment in AWS that closely resembles your production setup, start by replicating your production architecture as accurately as possible. This includes using the same AWS services, configurations, and resources such as EC2 instances, VPC settings, security groups, and IAM roles.</p>
+<p>Ensure that the test environment matches the production environment in terms of <strong>instance types</strong>, <strong>network settings</strong>, and <strong>data configurations</strong>, but scale it down to minimize costs. For example, use smaller instance sizes or reduced storage where feasible. Additionally, simulate production-like traffic patterns using tools such as AWS CloudWatch or third-party testing solutions.</p>
+<p>Finally, automate the creation and teardown of the test environment using <strong><a href="/blog/aws-engineering-blog-mastering-infrastructure-as-code/">Infrastructure as Code</a></strong> (IaC) tools like AWS CloudFormation or Terraform. This ensures consistency and reduces the risk of configuration drift between environments.</p>
+<h3 id="what-are-the-most-common-performance-bottlenecks-after-migrating-to-aws-and-how-can-i-resolve-them">What are the most common performance bottlenecks after migrating to AWS, and how can I resolve them?</h3>
+<p>After migrating to AWS, some common performance bottlenecks include <strong>network latency</strong>, <strong>under-provisioned resources</strong>, and <strong>inefficient application architecture</strong>.</p>
+<p>To address these:</p>
+<ul>
+<li><strong>Network Latency</strong>: Use AWS services like CloudFront or Global Accelerator to optimize content delivery and reduce latency. Ensure your resources are deployed in regions closest to your users.</li>
+<li><strong>Under-Provisioned Resources</strong>: Monitor CPU, memory, and disk usage using Amazon CloudWatch. Scale your resources dynamically with Auto Scaling to match workload demands.</li>
+<li><strong>Inefficient Architecture</strong>: Review your application design to leverage AWS-native features such as serverless computing (<a href="https://docs.aws.amazon.com/lambda/" rel="nofollow noopener noreferrer" target="_blank">AWS Lambda</a>) or managed databases (RDS, DynamoDB) for better performance and scalability.</li>
+</ul>
+<p>Regularly testing and monitoring your application post-migration can help identify and resolve these issues early on, ensuring optimal performance on AWS.</p>
+<h2>Related posts</h2><ul><li><a href="/blog/aws-rds-blog-insights-performance-tuning/">AWS RDS Blog Insights: Performance Tuning</a></li><li><a href="/blog/aws-content-migration-best-practices/">AWS Content Migration Best Practices</a></li><li><a href="/blog/ultimate-guide-to-aws-network-performance-benchmarking/">Ultimate Guide to AWS Network Performance Benchmarking</a></li><li><a href="/blog/best-practices-for-hpc-monitoring-on-aws/">Best Practices for HPC Monitoring on AWS</a></li></ul><script type="application/ld+json">
+{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"What metrics should I focus on to benchmark AWS performance after migration?","acceptedAnswer":{"@type":"Answer","text":"<p>When benchmarking AWS performance after a migration, prioritize metrics that reflect the efficiency, reliability, and scalability of your applications. Key metrics to monitor include:</p>\n<ul>\n<li><strong>Latency</strong>: Measure the time it takes for requests to be processed, especially for critical operations.</li>\n<li><strong>Throughput</strong>: Track how much data your application can handle over a specific period.</li>\n<li><strong>CPU and Memory Utilization</strong>: Ensure your instances are operating efficiently without overloading resources.</li>\n<li><strong>Disk I/O</strong>: Monitor read and write speeds to evaluate storage performance.</li>\n<li><strong>Network Bandwidth</strong>: Check data transfer rates to ensure smooth communication between services.</li>\n</ul>\n<p>By regularly monitoring these metrics, you can identify potential bottlenecks and optimize your AWS setup to meet performance goals effectively.</p>"}},{"@type":"Question","name":"How do I create a test environment in AWS that mirrors my production setup?","acceptedAnswer":{"@type":"Answer","text":"<p>To create a test environment in AWS that closely resembles your production setup, start by replicating your production architecture as accurately as possible. This includes using the same AWS services, configurations, and resources such as EC2 instances, VPC settings, security groups, and IAM roles.</p>\n<p>Ensure that the test environment matches the production environment in terms of <strong>instance types</strong>, <strong>network settings</strong>, and <strong>data configurations</strong>, but scale it down to minimize costs. For example, use smaller instance sizes or reduced storage where feasible. Additionally, simulate production-like traffic patterns using tools such as AWS CloudWatch or third-party testing solutions.</p>\n<p>Finally, automate the creation and teardown of the test environment using <strong><a href=\"https://awsforengineers.com/blog/aws-engineering-blog-mastering-infrastructure-as-code/\">Infrastructure as Code</a></strong> (IaC) tools like AWS CloudFormation or Terraform. This ensures consistency and reduces the risk of configuration drift between environments.</p>"}},{"@type":"Question","name":"What are the most common performance bottlenecks after migrating to AWS, and how can I resolve them?","acceptedAnswer":{"@type":"Answer","text":"<p>After migrating to AWS, some common performance bottlenecks include <strong>network latency</strong>, <strong>under-provisioned resources</strong>, and <strong>inefficient application architecture</strong>.</p>\n<p>To address these:</p>\n<ul>\n<li><strong>Network Latency</strong>: Use AWS services like CloudFront or Global Accelerator to optimize content delivery and reduce latency. Ensure your resources are deployed in regions closest to your users.</li>\n<li><strong>Under-Provisioned Resources</strong>: Monitor CPU, memory, and disk usage using Amazon CloudWatch. Scale your resources dynamically with Auto Scaling to match workload demands.</li>\n<li><strong>Inefficient Architecture</strong>: Review your application design to leverage AWS-native features such as serverless computing (<a href=\"https://docs.aws.amazon.com/lambda/\" target=\"_blank\" rel=\"nofollow noopener noreferrer\">AWS Lambda</a>) or managed databases (RDS, DynamoDB) for better performance and scalability.</li>\n</ul>\n<p>Regularly testing and monitoring your application post-migration can help identify and resolve these issues early on, ensuring optimal performance on AWS.</p>"}}]}
+</script>

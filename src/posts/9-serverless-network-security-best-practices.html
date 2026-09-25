@@ -1,0 +1,784 @@
+---
+layout: post.njk
+templateEngineOverride: html
+tags: posts
+title: "9 Serverless Network Security Best Practices"
+description: "Learn the top 9 best practices for securing serverless networks in AWS, including least privilege access, API gateway security, VPC implementation, encryption, network activity monitoring, WAF deployment, data storage protection, error handling, and security audits."
+date: "2024-07-08"
+datePublished: "2024-07-08T00:15:32.152000+00:00"
+heroImage: "/assets/media/74cb4efbc1f46de9d285.jpg"
+permalink: "/blog/9-serverless-network-security-best-practices/"
+sourceUrl: "https://awsforengineers.com/blog/9-serverless-network-security-best-practices/"
+---
+<p>Protect your serverless applications with these key practices:</p>
+<ol>
+<li>Use least privilege access</li>
+<li>Secure API gateways</li>
+<li>Implement VPCs for sensitive tasks</li>
+<li>Apply strong encryption</li>
+<li>Monitor network activity</li>
+<li>Deploy Web Application Firewall (<a href="https://aws.amazon.com/waf/" target="_blank">WAF</a>)</li>
+<li>Safeguard data storage</li>
+<li>Handle errors securely</li>
+<li>Conduct regular security audits</li>
+</ol>
+<p>Quick Comparison:</p>
+<figure><table>
+<thead>
+<tr>
+<th>Practice</th>
+<th>Focus Area</th>
+<th>Key Tools</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Least privilege</td>
+<td>Access control</td>
+<td><a href="https://docs.aws.amazon.com/IAM/latest/UserGuide/introduction.html" target="_blank">IAM</a> roles, policies</td>
+</tr>
+<tr>
+<td><a href="https://docs.aws.amazon.com/apigateway/latest/developerguide/welcome.html" target="_blank">API gateway</a> security</td>
+<td>Entry point protection</td>
+<td>API keys, throttling</td>
+</tr>
+<tr>
+<td><a href="https://en.wikipedia.org/wiki/Amazon_Virtual_Private_Cloud" target="_blank">VPC</a> implementation</td>
+<td>Network isolation</td>
+<td>Private subnets, NAT gateways</td>
+</tr>
+<tr>
+<td>Encryption</td>
+<td>Data protection</td>
+<td><a href="https://aws.amazon.com/" target="_blank">AWS</a> <a href="https://docs.aws.amazon.com/kms/latest/developerguide/overview.html" target="_blank">KMS</a>, SSL/TLS</td>
+</tr>
+<tr>
+<td>Activity monitoring</td>
+<td>Threat detection</td>
+<td><a href="https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/WhatIsCloudWatch.html" target="_blank">CloudWatch</a>, <a href="https://docs.aws.amazon.com/awscloudtrail/latest/userguide/cloudtrail-user-guide.html" target="_blank">CloudTrail</a></td>
+</tr>
+<tr>
+<td>WAF deployment</td>
+<td>Attack prevention</td>
+<td>AWS WAF, web ACLs</td>
+</tr>
+<tr>
+<td>Data storage protection</td>
+<td>Resource security</td>
+<td><a href="https://en.wikipedia.org/wiki/Amazon_S3" target="_blank">S3</a> policies, <a href="https://en.wikipedia.org/wiki/Amazon_DynamoDB" target="_blank">DynamoDB</a> encryption</td>
+</tr>
+<tr>
+<td>Error handling</td>
+<td>Information security</td>
+<td>Custom error types, safe logging</td>
+</tr>
+<tr>
+<td>Security audits</td>
+<td>Vulnerability management</td>
+<td>AWS <a href="https://aws.amazon.com/premiumsupport/technology/trusted-advisor/" target="_blank">Trusted Advisor</a>, <a href="https://docs.aws.amazon.com/config/latest/developerguide/WhatIsConfig.html" target="_blank">Config</a></td>
+</tr>
+</tbody>
+</table></figure>
+<p>These practices help secure serverless networks, protect data, and maintain application integrity in <a href="/blog/">AWS environments</a>.</p>
+<h2 id="related-video-from-youtube">Related video from YouTube</h2>
+<iframe allowfullscreen="" frameborder="0" loading="lazy" src="https://www.youtube.com/embed/pOVx6ZUruKY"></iframe><h2 id="1.-use-least-privilege-access">1. Use Least Privilege Access</h2>
+<h3 id="what-is-least-privilege%3F">What is Least Privilege?</h3>
+<p>Least privilege means giving users or functions only the permissions they need to do their job. This helps keep your system safer by limiting what an attacker can do if they break in.</p>
+<h3 id="applying-least-privilege-in-serverless">Applying Least Privilege in Serverless</h3>
+<p>In serverless setups, using least privilege is key to keeping your functions and resources safe. This means setting up your IAM roles and policies to give only the needed permissions.</p>
+<h3 id="setting-up-iam-roles-and-policies">Setting Up <a href="https://docs.aws.amazon.com/IAM/latest/UserGuide/introduction.html" target="_blank">IAM</a> Roles and Policies</h3>
+<p><figure><img alt="IAM" loading="lazy" src="/assets/media/9d70035bb18d75c30340.jpg"/></figure></p>
+<p>To set up IAM roles and policies with least privilege:</p>
+<ol>
+<li>List what your function needs to do</li>
+<li>Figure out the smallest set of permissions it needs</li>
+<li>Make an IAM role with these permissions</li>
+<li>Link this role to your function</li>
+<li>Use IAM policies to control access to your resources</li>
+</ol>
+<p>For example, if your function needs to use an S3 bucket, give it a role that can only read or write to that specific bucket. Don't give it extra permissions it doesn't need.</p>
+<h3 id="checking-iam-policies">Checking IAM Policies</h3>
+<p>Keep an eye on your IAM policies to make sure they follow least privilege. Here's how:</p>
+<figure><table>
+<thead>
+<tr>
+<th>Action</th>
+<th>Tool</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Find extra permissions</td>
+<td>IAM Access Analyzer</td>
+</tr>
+<tr>
+<td>Track API calls</td>
+<td>AWS CloudTrail</td>
+</tr>
+</tbody>
+</table></figure>
+<p>Use these tools to spot and remove any permissions you don't need. This helps keep your serverless setup safe.</p>
+<h2 id="2.-protect-api-gateways">2. Protect API Gateways</h2>
+<p>API gateways are key in serverless setups. They're the main entry point for clients to use serverless functions. But they can be weak spots if not secured well.</p>
+<h3 id="api-gateways-in-serverless">API Gateways in Serverless</h3>
+<p>In serverless, API gateways:</p>
+<ul>
+<li>Handle incoming requests</li>
+<li>Check if clients can use the API</li>
+<li>Send requests to the right serverless function</li>
+</ul>
+<p>They give one entry point for clients, making it easier to manage and secure access to your functions.</p>
+<h3 id="securing-api-endpoints">Securing API Endpoints</h3>
+<p>To keep API endpoints safe:</p>
+<figure><table>
+<thead>
+<tr>
+<th>Method</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>API keys</td>
+<td>Check if clients can use the API</td>
+</tr>
+<tr>
+<td>Usage plans</td>
+<td>Limit how many requests a client can make</td>
+</tr>
+<tr>
+<td>Throttling</td>
+<td>Stop too many requests at once</td>
+</tr>
+</tbody>
+</table></figure>
+<p>More ways to secure endpoints:</p>
+<ul>
+<li>Use strong login methods (OAuth, JWT tokens)</li>
+<li>Encrypt data when it's sent</li>
+<li>Check and clean incoming requests</li>
+<li>Set limits on API use</li>
+<li>Watch API traffic for odd behavior</li>
+</ul>
+<h3 id="api-authentication-and-authorization">API Authentication and Authorization</h3>
+<p>Checking who can use your API is crucial. You can use AWS <a href="https://docs.aws.amazon.com/cognito/latest/developerguide/what-is-amazon-cognito.html" target="_blank">Cognito</a>, IAM roles, or OAuth for this.</p>
+<p>Tips for API auth:</p>
+<ul>
+<li>Pick a safe login method (OAuth, JWT tokens)</li>
+<li>Control who can use which parts of your API</li>
+<li>Use AWS Cognito to manage users</li>
+<li>Use IAM roles for serverless functions</li>
+</ul>
+<h3 id="watching-api-traffic">Watching API Traffic</h3>
+<p>Keeping an eye on API traffic helps spot issues and stop attacks. Use AWS CloudWatch, CloudTrail, and API Gateway logs for this.</p>
+<p>How to watch API traffic:</p>
+<figure><table>
+<thead>
+<tr>
+<th>Tool</th>
+<th>Use</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>AWS CloudWatch</td>
+<td>See API traffic and find odd patterns</td>
+</tr>
+<tr>
+<td>CloudTrail</td>
+<td>Track API calls and spot weird activity</td>
+</tr>
+<tr>
+<td>API Gateway logs</td>
+<td>Watch API traffic and find security problems</td>
+</tr>
+</tbody>
+</table></figure>
+<p>Set up alerts to tell you about possible security issues.</p>
+<h2 id="3.-use-vpcs-for-sensitive-tasks">3. Use VPCs for Sensitive Tasks</h2>
+<h3 id="vpcs-in-serverless">VPCs in Serverless</h3>
+<p>Virtual Private Clouds (VPCs) help keep serverless networks safe. They create a private network for your serverless functions, letting them safely use resources inside the VPC. This is key for tasks that need extra protection, like working with databases or internal APIs.</p>
+<p>Using a VPC with serverless functions (like <a href="/blog/aws-lambda-getting-started-first-steps/">AWS Lambda</a>) helps in these ways:</p>
+<figure><table>
+<thead>
+<tr>
+<th>Benefit</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Network isolation</td>
+<td>Keeps functions away from the public internet</td>
+</tr>
+<tr>
+<td>Safe connections</td>
+<td>Allows secure links to services like Amazon <a href="https://en.wikipedia.org/wiki/Amazon_Relational_Database_Service" target="_blank">RDS</a></td>
+</tr>
+<tr>
+<td>Extra protection</td>
+<td>Adds more layers of security to your app</td>
+</tr>
+</tbody>
+</table></figure>
+<h3 id="setting-up-vpc-for-lambda">Setting Up <a href="https://en.wikipedia.org/wiki/Amazon_Virtual_Private_Cloud" target="_blank">VPC</a> for <a href="https://en.wikipedia.org/wiki/AWS_Lambda" target="_blank">Lambda</a></h3>
+<p><figure><img alt="VPC" loading="lazy" src="/assets/media/a74bc709eb07bc1f23cc.jpg"/></figure></p>
+<p>To use a VPC with Lambda functions:</p>
+<ol>
+<li>Make a private subnet in your VPC</li>
+<li>Set up a NAT gateway in a public subnet</li>
+<li>Change your Lambda function to use these</li>
+</ol>
+<h3 id="managing-security-groups-and-acls">Managing Security Groups and ACLs</h3>
+<p>Security groups and network ACLs control traffic in your VPC. Here's what to do:</p>
+<ul>
+<li>Use security groups to control access to your Lambda function</li>
+<li>Set up network ACLs to manage traffic at the subnet level</li>
+<li>Only allow needed IP addresses and ports to access your resources</li>
+</ul>
+<h3 id="private-subnets-and-internet-access">Private Subnets and Internet Access</h3>
+<p>To keep your serverless functions safe while allowing some internet access:</p>
+<ul>
+<li>Put functions in private subnets to keep them away from the public internet</li>
+<li>Use NAT gateways for outbound traffic from private subnets</li>
+<li>Only allow internet access to necessary resources and services</li>
+</ul>
+<h2 id="4.-use-strong-encryption">4. Use Strong Encryption</h2>
+<p>Encryption is key to keeping data safe in serverless setups. This part covers how to protect data when it's stored and when it's moving, and how to use AWS Key Management Service (KMS).</p>
+<h3 id="encrypting-stored-data">Encrypting Stored Data</h3>
+<p>Protect data when it's not being used by encrypting it. AWS services like S3, DynamoDB, and RDS have built-in tools to do this. Here's how they work:</p>
+<figure><table>
+<thead>
+<tr>
+<th>Service</th>
+<th>How It Encrypts</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>S3</td>
+<td>Uses keys from Amazon, AWS KMS, or you</td>
+</tr>
+<tr>
+<td>DynamoDB</td>
+<td>Uses keys from AWS KMS</td>
+</tr>
+<tr>
+<td>RDS</td>
+<td>Uses keys from AWS KMS</td>
+</tr>
+</tbody>
+</table></figure>
+<h3 id="encrypting-data-in-transit">Encrypting Data in Transit</h3>
+<p>Keep data safe when it's moving by using SSL/TLS encryption. This stops others from seeing or changing your data as it travels between Lambda functions and other services.</p>
+<h3 id="using-aws-kms">Using <a href="https://aws.amazon.com/" target="_blank">AWS</a> <a href="https://docs.aws.amazon.com/kms/latest/developerguide/overview.html" target="_blank">KMS</a></h3>
+<p><figure><img alt="AWS" loading="lazy" src="/assets/media/2d135ce4df17cc4bb773.jpg"/></figure></p>
+<p>AWS KMS helps you make and manage encryption keys. It's useful for many tasks, from keeping S3 data safe to protecting app info. To use KMS well:</p>
+<ul>
+<li>Make and manage keys with KMS</li>
+<li>Use KMS to encrypt and decrypt data</li>
+<li>Change keys often to stay safe</li>
+</ul>
+<h3 id="managing-encryption-keys">Managing Encryption Keys</h3>
+<p>Taking care of encryption keys is vital. Here's what to do:</p>
+<figure><table>
+<thead>
+<tr>
+<th>Task</th>
+<th>Why It's Important</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Change keys often</td>
+<td>Limits damage if a key is stolen</td>
+</tr>
+<tr>
+<td>Use KMS to manage keys</td>
+<td>Keeps all keys in one safe place</td>
+</tr>
+<tr>
+<td>Limit who can use keys</td>
+<td>Stops unwanted access</td>
+</tr>
+<tr>
+<td>Watch how keys are used</td>
+<td>Helps spot possible issues</td>
+</tr>
+</tbody>
+</table></figure>
+<h2 id="5.-track-network-activity">5. Track Network Activity</h2>
+<p>Keeping an eye on network activity helps you spot security issues, fix problems, and make your serverless setup work better. Let's look at how to do this.</p>
+<h3 id="logging-in-serverless">Logging in Serverless</h3>
+<p>Logging is key in serverless setups. It helps you:</p>
+<ul>
+<li>Watch how your app is doing</li>
+<li>Find security problems</li>
+<li>Follow rules and laws</li>
+</ul>
+<p>Logging in serverless can be tricky because functions don't last long and the system is spread out. To fix this, use structured logging. This means putting log data in a standard format so it's easy to look at and search.</p>
+<h3 id="setting-up-cloudwatch">Setting Up <a href="https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/WhatIsCloudWatch.html" target="_blank">CloudWatch</a></h3>
+<p><figure><img alt="CloudWatch" loading="lazy" src="/assets/media/a959351eed02a04dccda.jpg"/></figure></p>
+<p>CloudWatch is an AWS tool that helps you watch and log what's happening in your app. To use it with serverless:</p>
+<ol>
+<li>Make a log group and stream for each function</li>
+<li>Set up your function to send logs to CloudWatch</li>
+<li>Use <a href="/blog/aws-lambda-insights-serverless-monitoring-guide/">CloudWatch Logs Insights</a> to look at log data and find patterns</li>
+</ol>
+<h3 id="checking-logs-for-security-issues">Checking Logs for Security Issues</h3>
+<p>Looking at logs helps you find possible threats. Here's how:</p>
+<figure><table>
+<thead>
+<tr>
+<th>Tool</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>CloudWatch Logs Insights</td>
+<td>Lets you search log data to find security problems</td>
+</tr>
+<tr>
+<td>AWS <a href="https://aws.amazon.com/security-hub/" target="_blank">Security Hub</a></td>
+<td>Looks at log data to spot security threats</td>
+</tr>
+</tbody>
+</table></figure>
+<h3 id="setting-up-alerts">Setting Up Alerts</h3>
+<p>Alerts help you act fast when there's a problem. To set them up:</p>
+<ol>
+<li>Make alarms based on log data, metrics, or other info</li>
+<li>Choose how you want to be told (email, text, etc.)</li>
+<li>Set up your team to get these alerts</li>
+</ol>
+<p>This helps you respond quickly to keep your app and users safe.</p>
+<h2 id="6.-use-web-application-firewall-(waf)">6. Use Web Application Firewall (<a href="https://aws.amazon.com/waf/" target="_blank">WAF</a>)</h2>
+<p><figure><img alt="WAF" loading="lazy" src="/assets/media/666467e3bab1924b7ed7.jpg"/></figure></p>
+<h3 id="waf-in-serverless-security">WAF in Serverless Security</h3>
+<p>A Web Application Firewall (WAF) helps keep serverless apps safe from common web attacks. It works like a shield between your app and the internet, stopping bad traffic and letting good traffic through. This is important for serverless setups because they're open to the internet and can be attacked easily.</p>
+<h3 id="setting-up-waf-rules">Setting Up WAF Rules</h3>
+<p>To set up WAF rules:</p>
+<ol>
+<li>Make a web ACL with AWS WAF managed rules and your own rules</li>
+<li>Use the AWS WAF console, SDK, or CLI to do this</li>
+</ol>
+<p>You can make rules to:</p>
+<ul>
+<li>Block traffic from certain IP addresses</li>
+<li>Stop requests that match specific patterns in HTTP headers, methods, or query strings</li>
+</ul>
+<h3 id="connecting-waf-to-api-gateway-and-cloudfront">Connecting WAF to <a href="https://docs.aws.amazon.com/apigateway/latest/developerguide/welcome.html" target="_blank">API Gateway</a> and <a href="https://en.wikipedia.org/wiki/Amazon_CloudFront" target="_blank">CloudFront</a></h3>
+<p><figure><img alt="API Gateway" loading="lazy" src="/assets/media/a9511e80471cd8edd9c8.jpg"/></figure></p>
+<p>To use WAF with API Gateway and CloudFront:</p>
+<figure><table>
+<thead>
+<tr>
+<th>Step</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>Link your WAF web ACL to your API Gateway or CloudFront</td>
+</tr>
+<tr>
+<td>2</td>
+<td>This lets WAF check incoming traffic</td>
+</tr>
+<tr>
+<td>3</td>
+<td>It blocks bad requests before they reach your app</td>
+</tr>
+</tbody>
+</table></figure>
+<p>For API Gateway, you can use WAF with regional apps or REST APIs. For CloudFront, you can use it with any distribution.</p>
+<h3 id="checking-waf-activity">Checking WAF Activity</h3>
+<p>To keep an eye on WAF:</p>
+<figure><table>
+<thead>
+<tr>
+<th>Tool</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>AWS WAF metrics and logs</td>
+<td>Show how many requests WAF blocked or allowed</td>
+</tr>
+<tr>
+<td>AWS CloudWatch</td>
+<td>Watch WAF metrics and set up alerts</td>
+</tr>
+<tr>
+<td><a href="/blog/automate-cross-account-security-scans-amazon-inspector-aws-security-hub/">AWS Security Hub</a></td>
+<td>Mix WAF with other security tools for a full view</td>
+</tr>
+</tbody>
+</table></figure>
+<p>These tools help you spot and fix security issues quickly.</p>
+<h2 id="7.-protect-data-storage">7. Protect Data Storage</h2>
+<h3 id="protecting-s3-buckets">Protecting <a href="https://en.wikipedia.org/wiki/Amazon_S3" target="_blank">S3</a> Buckets</h3>
+<p><figure><img alt="S3" loading="lazy" src="/assets/media/579b18cb94e96f98aaea.jpg"/></figure></p>
+<p>To keep <a href="/blog/learn-aws-s3-fundamentals/">S3 buckets</a> safe:</p>
+<ol>
+<li>Set up bucket policies to control access</li>
+<li>Use IAM roles and policies</li>
+<li>Turn on bucket encryption</li>
+<li>Use S3 Block Public Access</li>
+<li>Watch bucket access logs</li>
+<li>Use AWS CloudTrail to track API calls</li>
+<li>Set up AWS CloudWatch to monitor logs and alerts</li>
+</ol>
+<h3 id="protecting-dynamodb-tables">Protecting <a href="https://en.wikipedia.org/wiki/Amazon_DynamoDB" target="_blank">DynamoDB</a> Tables</h3>
+<p><figure><img alt="DynamoDB" loading="lazy" src="/assets/media/5d465abb8141e2b76787.jpg"/></figure></p>
+<p>For DynamoDB tables:</p>
+<ol>
+<li>Encrypt data at rest and in transit</li>
+<li>Use AWS KMS for encryption keys</li>
+<li>Set up IAM policies and roles for access control</li>
+<li>Monitor tables for odd activity</li>
+<li>Use AWS CloudWatch for alerts</li>
+</ol>
+<h3 id="setting-data-access-controls">Setting Data Access Controls</h3>
+<p>To control data access:</p>
+<figure><table>
+<thead>
+<tr>
+<th>Method</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>IAM policies</td>
+<td>Control access to S3 and DynamoDB</td>
+</tr>
+<tr>
+<td>Least privilege</td>
+<td>Give users only needed access</td>
+</tr>
+<tr>
+<td>AWS <a href="https://aws.amazon.com/lake-formation/" target="_blank">Lake Formation</a></td>
+<td>Manage data lake access</td>
+</tr>
+</tbody>
+</table></figure>
+<h3 id="data-encryption-tips">Data Encryption Tips</h3>
+<p>Best practices for data encryption:</p>
+<figure><table>
+<thead>
+<tr>
+<th>Tip</th>
+<th>Details</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Use AWS KMS</td>
+<td>Manage encryption keys securely</td>
+</tr>
+<tr>
+<td>Client-side encryption</td>
+<td>Encrypt data before sending</td>
+</tr>
+<tr>
+<td>Server-side encryption</td>
+<td>Encrypt data in S3 or DynamoDB</td>
+</tr>
+</tbody>
+</table></figure>
+<h2 id="8.-handle-errors-safely">8. Handle Errors Safely</h2>
+<h3 id="why-safe-error-handling-matters">Why Safe Error Handling Matters</h3>
+<p>Good error handling is key for serverless apps. Errors can happen for many reasons, like:</p>
+<ul>
+<li>Wrong data types</li>
+<li>Bugs in the code</li>
+<li>Problems with outside services</li>
+</ul>
+<p>If not handled well, errors can cause:</p>
+<ul>
+<li>App downtime</li>
+<li>Data problems</li>
+<li>Unhappy users</li>
+</ul>
+<p>By handling errors the right way, you can:</p>
+<ul>
+<li>Make users happier</li>
+<li>Find and fix issues faster</li>
+<li>Keep your app running smoothly</li>
+</ul>
+<h3 id="avoiding-information-leaks">Avoiding Information Leaks</h3>
+<p>When dealing with errors, don't show sensitive info in error messages. This includes:</p>
+<ul>
+<li>Database login details</li>
+<li>API keys</li>
+<li>Other secret data</li>
+</ul>
+<p>To stop info leaks:</p>
+<ul>
+<li>Use general error messages</li>
+<li>Make custom error types</li>
+</ul>
+<h3 id="logging-errors-safely">Logging Errors Safely</h3>
+<p>Logging errors helps fix issues, but do it safely. Use a main logging service like AWS CloudWatch or Azure Application Insights.</p>
+<p>These services offer:</p>
+<figure><table>
+<thead>
+<tr>
+<th>Feature</th>
+<th>Benefit</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Log filtering</td>
+<td>Find specific errors easily</td>
+</tr>
+<tr>
+<td>Encryption</td>
+<td>Keep log data safe</td>
+</tr>
+<tr>
+<td>Access controls</td>
+<td>Limit who can see logs</td>
+</tr>
+</tbody>
+</table></figure>
+<h3 id="setting-up-error-alerts">Setting Up Error Alerts</h3>
+<p>Quick responses to big errors are important. Use services like AWS CloudWatch or PagerDuty for alerts.</p>
+<p>These tools let you:</p>
+<figure><table>
+<thead>
+<tr>
+<th>Action</th>
+<th>Result</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Set alert levels</td>
+<td>Get notified for serious issues</td>
+</tr>
+<tr>
+<td>Choose how to be alerted</td>
+<td>Get messages via email, text, etc.</td>
+</tr>
+<tr>
+<td>Manage incidents</td>
+<td>Track and solve problems faster</td>
+</tr>
+</tbody>
+</table></figure>
+<p>By setting up alerts, you can:</p>
+<ul>
+<li>Reduce downtime</li>
+<li>Keep your app working well</li>
+</ul>
+<h2 id="9.-do-regular-security-checks">9. Do Regular Security Checks</h2>
+<p>Checking your serverless network often helps keep it safe. This means finding and fixing weak spots, updating parts, and watching for odd activity.</p>
+<h3 id="doing-security-audits">Doing Security Audits</h3>
+<p>Check your serverless setup regularly to find weak spots. You can do this by hand or use tools. Here's what to look at:</p>
+<figure><table>
+<thead>
+<tr>
+<th>Area to Check</th>
+<th>What to Do</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>IAM roles and policies</td>
+<td>Make sure they follow least privilege</td>
+</tr>
+<tr>
+<td>API Gateway and Lambda</td>
+<td>Look for setup problems</td>
+</tr>
+<tr>
+<td><a href="/blog/aws-vpc-tutorial-for-beginners-setup-and-configuration/">VPC and subnets</a></td>
+<td>Check if they're set up safely</td>
+</tr>
+</tbody>
+</table></figure>
+<h3 id="security-audit-tools">Security Audit Tools</h3>
+<p>Use these tools to help with security checks:</p>
+<ul>
+<li><a href="/blog/aws-experts-share-top-cloud-strategies/">AWS Trusted Advisor</a></li>
+<li>AWS Config</li>
+<li>AWS CloudTrail</li>
+</ul>
+<p>These tools give reports on security problems and rule-breaking, making it easier to find and fix issues.</p>
+<h3 id="updating-serverless-parts">Updating Serverless Parts</h3>
+<p>Keep your serverless parts up to date to stay safe. Update these often:</p>
+<ul>
+<li>Lambda function code</li>
+<li>API Gateway settings</li>
+<li>VPC settings</li>
+</ul>
+<p>Use AWS <a href="https://aws.amazon.com/codepipeline/" target="_blank">CodePipeline</a> and AWS <a href="https://aws.amazon.com/codebuild/" target="_blank">CodeBuild</a> to make updates easier and faster.</p>
+<h3 id="using-automated-testing">Using Automated Testing</h3>
+<p>Automated testing helps find security issues early. Use these tools:</p>
+<figure><table>
+<thead>
+<tr>
+<th>Tool</th>
+<th>What It Does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>AWS CodeBuild</td>
+<td>Runs tests automatically</td>
+</tr>
+<tr>
+<td>AWS CodePipeline</td>
+<td>Helps deploy code safely</td>
+</tr>
+</tbody>
+</table></figure>
+<h2 id="conclusion">Conclusion</h2>
+<h3 id="summary-of-best-practices">Summary of Best Practices</h3>
+<p>We've covered nine key ways to keep serverless networks safe in AWS:</p>
+<figure><table>
+<thead>
+<tr>
+<th>Practice</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Least privilege access</td>
+<td>Give users only the permissions they need</td>
+</tr>
+<tr>
+<td>Protect API gateways</td>
+<td>Secure the main entry point for clients</td>
+</tr>
+<tr>
+<td>Use VPCs for sensitive tasks</td>
+<td>Create private networks for extra safety</td>
+</tr>
+<tr>
+<td>Use strong encryption</td>
+<td>Keep data safe when stored and moving</td>
+</tr>
+<tr>
+<td>Track network activity</td>
+<td>Watch for issues and fix them quickly</td>
+</tr>
+<tr>
+<td>Use Web Application Firewall</td>
+<td>Stop common web attacks</td>
+</tr>
+<tr>
+<td>Protect data storage</td>
+<td>Keep S3 buckets and DynamoDB tables safe</td>
+</tr>
+<tr>
+<td>Handle errors safely</td>
+<td>Avoid showing sensitive info in error messages</td>
+</tr>
+<tr>
+<td>Do regular security checks</td>
+<td>Find and fix weak spots often</td>
+</tr>
+</tbody>
+</table></figure>
+<h3 id="keeping-your-network-safe">Keeping Your Network Safe</h3>
+<p>Keeping your serverless network safe is not a one-time job. You need to:</p>
+<ul>
+<li>Watch your network all the time</li>
+<li>Update your setup when needed</li>
+<li>Get better at spotting new threats</li>
+</ul>
+<p>By following these steps and always thinking about safety, you can:</p>
+<ul>
+<li>Lower risks</li>
+<li>Stop security problems</li>
+<li>Keep your serverless apps working well</li>
+</ul>
+<h2 id="faqs">FAQs</h2>
+<h3 id="how-to-secure-a-serverless-application%3F">How to secure a serverless application?</h3>
+<p>To keep a serverless app safe:</p>
+<figure><table>
+<thead>
+<tr>
+<th>Action</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Protect functions</td>
+<td>Set up security at the function level</td>
+</tr>
+<tr>
+<td>Limit roles</td>
+<td>Give functions only the access they need</td>
+</tr>
+<tr>
+<td>Check code</td>
+<td>Look for bad or unsafe code</td>
+</tr>
+<tr>
+<td>Use API gateways</td>
+<td>Control access to your app</td>
+</tr>
+<tr>
+<td>Watch and log</td>
+<td>Keep an eye on what your functions do</td>
+</tr>
+</tbody>
+</table></figure>
+<p>Also:</p>
+<ul>
+<li>Set up good access control (IAM)</li>
+<li>Use strong encryption to protect data</li>
+</ul>
+<h3 id="what-security-considerations-are-important-when-implementing-serverless-event-driven-systems%3F">What security considerations are important when implementing serverless event-driven systems?</h3>
+<p>When setting up serverless event-driven systems, watch out for these risks:</p>
+<figure><table>
+<thead>
+<tr>
+<th>Risk</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Event-data injection</td>
+<td>Bad data sent to functions</td>
+</tr>
+<tr>
+<td>Broken authentication</td>
+<td>Weak or missing login checks</td>
+</tr>
+<tr>
+<td>Unsafe code</td>
+<td>Bugs or flaws in your app code</td>
+</tr>
+<tr>
+<td>Third-party issues</td>
+<td>Problems with outside code you use</td>
+</tr>
+<tr>
+<td>Too much access</td>
+<td>Functions with more permissions than needed</td>
+</tr>
+</tbody>
+</table></figure>
+<p>To stay safe:</p>
+<ul>
+<li>Use good access control (IAM)</li>
+<li>Encrypt your data well</li>
+</ul>
+<p>
+<h2>Related posts</h2>
+<ul>
+<li><a href="/blog/aws-hybrid-cloud-security-compliance-best-practices/">AWS Hybrid Cloud Security: Compliance Best Practices</a></li><li><a href="/blog/aws-s3-guide-understanding-access-management/">AWS S3 Guide: Understanding Access Management</a></li><li><a href="/blog/5-common-aws-iac-pitfalls-and-solutions/">5 Common AWS IaC Pitfalls &amp; Solutions</a></li><li><a href="/blog/aws-cross-service-resilience-patterns/">AWS Cross-Service Resilience Patterns</a></li>
+</ul>
+</p>

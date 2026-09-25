@@ -1,0 +1,815 @@
+---
+layout: post.njk
+templateEngineOverride: html
+tags: posts
+title: "AWS S3 Storage Optimization: 12 Best Practices"
+description: "Learn how to optimize AWS S3 storage with these 12 best practices. Save money, improve efficiency, and cut costs with these expert tips."
+date: "2024-07-08"
+datePublished: "2024-07-08T00:25:31.357000+00:00"
+heroImage: "/assets/media/5863616c692400865279.jpg"
+permalink: "/blog/aws-s3-storage-optimization-12-best-practices/"
+sourceUrl: "https://awsforengineers.com/blog/aws-s3-storage-optimization-12-best-practices/"
+---
+<p>Here's a quick guide to save money on <a href="https://aws.amazon.com/s3/" target="_blank">AWS S3</a> storage:</p>
+<ol>
+<li>Choose the right storage class for your needs</li>
+<li>Use lifecycle policies to move data automatically</li>
+<li>Try <a href="https://docs.aws.amazon.com/AmazonS3/latest/userguide/intelligent-tiering.html" target="_blank">S3 Intelligent-Tiering</a> for mixed-use data</li>
+<li>Compress and archive old files</li>
+<li>Optimize object sizes for efficient storage</li>
+<li>Use S3 Bucket Keys for cheaper encryption</li>
+<li>Partition data for better management</li>
+<li>Use <a href="https://docs.aws.amazon.com/AmazonS3/latest/userguide/storage_lens_basics_metrics_recommendations.html" target="_blank">S3 Storage Lens</a> to monitor usage</li>
+<li>Optimize data transfer methods</li>
+<li>Implement version control wisely</li>
+<li>Use <a href="https://docs.aws.amazon.com/AmazonS3/latest/userguide/selecting-content-from-objects.html" target="_blank">S3 Select</a> and <a href="https://aws.amazon.com/blogs/aws/s3-glacier-select/" target="_blank">Glacier Select</a> for targeted data retrieval</li>
+<li>Regularly audit and clean up your storage</li>
+</ol>
+<figure><table>
+<thead>
+<tr>
+<th>Best Practice</th>
+<th>Key Benefit</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Right storage class</td>
+<td>Match cost to data access needs</td>
+</tr>
+<tr>
+<td>Lifecycle policies</td>
+<td>Automate data movement to cheaper tiers</td>
+</tr>
+<tr>
+<td>S3 Intelligent-Tiering</td>
+<td>Let AWS optimize storage costs</td>
+</tr>
+<tr>
+<td>Compression</td>
+<td>Reduce data size and storage costs</td>
+</tr>
+<tr>
+<td>Object size optimization</td>
+<td>Improve upload efficiency</td>
+</tr>
+<tr>
+<td>S3 Bucket Keys</td>
+<td>Lower encryption costs</td>
+</tr>
+<tr>
+<td>Data partitioning</td>
+<td>Easier management and faster access</td>
+</tr>
+<tr>
+<td>S3 Storage Lens</td>
+<td>Gain insights on usage patterns</td>
+</tr>
+<tr>
+<td>Transfer optimization</td>
+<td>Reduce data movement costs</td>
+</tr>
+<tr>
+<td>Version control</td>
+<td>Protect data without wasting space</td>
+</tr>
+<tr>
+<td>S3/Glacier Select</td>
+<td>Retrieve only needed data</td>
+</tr>
+<tr>
+<td>Regular audits</td>
+<td>Remove unused files and optimize storage</td>
+</tr>
+</tbody>
+</table></figure>
+<p>By following these practices, you can cut S3 costs and improve storage efficiency.</p>
+<h2 id="related-video-from-youtube">Related video from YouTube</h2>
+<iframe allowfullscreen="" frameborder="0" loading="lazy" src="https://www.youtube.com/embed/6ZIh5fb5nWw"></iframe><h2 id="1.-choose-the-right-storage-class">1. Choose the Right Storage Class</h2>
+<p>Picking the best storage class is key to saving money on AWS S3. S3 has different storage types, each with its own uses and costs. Knowing how these storage classes work helps you pick the cheapest option for your data.</p>
+<h3 id="storage-class-options">Storage Class Options</h3>
+<p>S3 has six storage classes:</p>
+<figure><table>
+<thead>
+<tr>
+<th>Storage Class</th>
+<th>Best For</th>
+<th>Features</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>S3 Standard</td>
+<td>Often-used data</td>
+<td>Fast access, higher cost</td>
+</tr>
+<tr>
+<td>S3 Intelligent-Tiering</td>
+<td>Mixed-use data</td>
+<td>Auto-moves data, saves money</td>
+</tr>
+<tr>
+<td>S3 Standard-IA</td>
+<td>Less-used data</td>
+<td>Cheaper than Standard</td>
+</tr>
+<tr>
+<td>S3 One Zone-IA</td>
+<td>Rarely used data</td>
+<td>Low cost, less backup</td>
+</tr>
+<tr>
+<td>S3 Glacier</td>
+<td>Long-term storage</td>
+<td>Very cheap, slow access</td>
+</tr>
+<tr>
+<td><a href="https://aws.amazon.com/s3/storage-classes/glacier/" target="_blank">S3 Glacier Deep Archive</a></td>
+<td>Backup data</td>
+<td>Cheapest, very slow access</td>
+</tr>
+</tbody>
+</table></figure>
+<p>When picking a storage class, think about:</p>
+<ul>
+<li>How often you use the data</li>
+<li>How fast you need to get it</li>
+<li>How safe it needs to be</li>
+<li>How much you can spend</li>
+</ul>
+<h2 id="2.-implement-lifecycle-policies">2. Implement Lifecycle Policies</h2>
+<h3 id="what-are-lifecycle-policies%3F">What are Lifecycle Policies?</h3>
+<p>Lifecycle policies are rules that tell S3 how to manage your files over time. They help you save money by moving or deleting files automatically.</p>
+<h3 id="how-to-create-a-lifecycle-policy">How to Create a Lifecycle Policy</h3>
+<p>You can set up a lifecycle policy using:</p>
+<ul>
+<li>S3 console</li>
+<li>REST API</li>
+<li>AWS SDKs</li>
+<li>AWS CLI</li>
+</ul>
+<p>S3 keeps these rules with your bucket.</p>
+<h3 id="moving-files-between-storage-classes">Moving Files Between Storage Classes</h3>
+<p>You can use lifecycle policies to move files to cheaper storage classes. For example:</p>
+<figure><table>
+<thead>
+<tr>
+<th>From</th>
+<th>To</th>
+<th>When</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>S3 Standard</td>
+<td>S3 Standard-IA</td>
+<td>After not using for a while</td>
+</tr>
+<tr>
+<td>S3 Standard-IA</td>
+<td>S3 Glacier</td>
+<td>After longer periods of no use</td>
+</tr>
+</tbody>
+</table></figure>
+<p>This helps cut down on storage costs.</p>
+<h3 id="getting-rid-of-old-files">Getting Rid of Old Files</h3>
+<p>Lifecycle policies can also delete files you don't need anymore. This is good for things like:</p>
+<ul>
+<li>Log files</li>
+<li>Temporary data</li>
+</ul>
+<h3 id="tips-for-using-lifecycle-policies">Tips for Using Lifecycle Policies</h3>
+<ol>
+<li>Know how often you use your files</li>
+<li>Use filters to apply rules to specific files</li>
+<li>Test your policies before using them on important data</li>
+<li>Keep an eye on your costs and change policies if needed</li>
+</ol>
+<h2 id="3.-utilize-s3-intelligent-tiering">3. Utilize <a href="https://docs.aws.amazon.com/AmazonS3/latest/userguide/intelligent-tiering.html" target="_blank">S3 Intelligent-Tiering</a></h2>
+<p><figure><img alt="S3 Intelligent-Tiering" loading="lazy" src="/assets/media/471a1224c7163f078a32.jpg"/></figure></p>
+<h3 id="what-is-s3-intelligent-tiering%3F">What is S3 Intelligent-Tiering?</h3>
+<p>S3 Intelligent-Tiering is a storage class that moves data between access tiers based on how often you use it. This helps cut costs without you having to do anything.</p>
+<h3 id="why-use-s3-intelligent-tiering%3F">Why Use S3 Intelligent-Tiering?</h3>
+<figure><table>
+<thead>
+<tr>
+<th>Benefit</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Cost savings</td>
+<td>Up to 40% less than S3 Standard</td>
+</tr>
+<tr>
+<td>Performance</td>
+<td>Fast access and high throughput</td>
+</tr>
+<tr>
+<td>Data safety</td>
+<td>99.999999999% durability, 99.9% availability</td>
+</tr>
+<tr>
+<td>Easy to use</td>
+<td>No extra fees or time limits</td>
+</tr>
+</tbody>
+</table></figure>
+<h3 id="how-it-works">How It Works</h3>
+<p>S3 Intelligent-Tiering looks at how you use your data and moves it to the right tier. It can handle lots of data and many users, so it works for big and small companies.</p>
+<figure><table>
+<thead>
+<tr>
+<th>Feature</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Automatic analysis</td>
+<td>Checks data usage patterns</td>
+</tr>
+<tr>
+<td>Smart moves</td>
+<td>Puts data in the best tier for cost</td>
+</tr>
+<tr>
+<td>Scalability</td>
+<td>Works with any amount of data</td>
+</tr>
+<tr>
+<td>No user action needed</td>
+<td>Manages tiers without your input</td>
+</tr>
+</tbody>
+</table></figure>
+<h2 id="4.-compress-and-archive-data">4. Compress and Archive Data</h2>
+<h3 id="data-compression">Data Compression</h3>
+<p>Squeezing your files before putting them on AWS S3 can help you save money on storage. Here's how:</p>
+<figure><table>
+<thead>
+<tr>
+<th>Method</th>
+<th>What it does</th>
+<th>Good for</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>gzip</td>
+<td>Shrinks files</td>
+<td>Text files, logs</td>
+</tr>
+<tr>
+<td>zip</td>
+<td>Packs files together</td>
+<td>Multiple files</td>
+</tr>
+<tr>
+<td>bzip</td>
+<td>Strong compression</td>
+<td>Large files</td>
+</tr>
+</tbody>
+</table></figure>
+<p>Smaller files mean less storage space, which costs less.</p>
+<h3 id="archiving-data">Archiving Data</h3>
+<p>Storing old files you don't use much can also cut costs. AWS S3 has special storage types for this:</p>
+<figure><table>
+<thead>
+<tr>
+<th>Storage Type</th>
+<th>Best for</th>
+<th>Cost</th>
+<th>Get files back</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>S3 Glacier</td>
+<td>Old files</td>
+<td>Cheap</td>
+<td>Hours</td>
+</tr>
+<tr>
+<td>S3 Glacier Deep Archive</td>
+<td>Very old files</td>
+<td>Very cheap</td>
+<td>Days</td>
+</tr>
+</tbody>
+</table></figure>
+<p>These storage types cost less than regular S3, but it takes longer to get your files when you need them.</p>
+<h2 id="5.-optimize-object-size">5. Optimize Object Size</h2>
+<p>Making sure your files are the right size can help you save money on <a href="/blog/getting-started-with-aws-s3-essential-concepts/">AWS S3 storage</a>. Files that are too big or too small can cost more to store and manage.</p>
+<h3 id="object-size">Object Size</h3>
+<p>When you put files in S3, think about how big they are:</p>
+<figure><table>
+<thead>
+<tr>
+<th>File Size</th>
+<th>What to Do</th>
+<th>Why</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Over 100 MB</td>
+<td>Use multipart uploads</td>
+<td>- Upload parts separately  <br/>- Fix network issues easily  <br/>- Pause and start again when needed</td>
+</tr>
+<tr>
+<td>Under 128 KB</td>
+<td>Group small files together</td>
+<td>- Save money on moving to Glacier  <br/>- Cut down on extra storage costs</td>
+</tr>
+</tbody>
+</table></figure>
+<p>Multipart uploads let you send big files in pieces. This helps if your internet is slow or cuts out.</p>
+<p>For tiny files, it's better to put them together before storing them long-term. This saves money when you move them to cheaper storage like Glacier.</p>
+<h2 id="6.-use-s3-bucket-keys-for-encryption">6. Use S3 Bucket Keys for Encryption</h2>
+<h3 id="encryption">Encryption</h3>
+<p>S3 Bucket Keys help cut costs when using <a href="https://aws.amazon.com/kms/" target="_blank">AWS KMS</a> for encryption in S3. They work by:</p>
+<ul>
+<li>Reducing calls from S3 to AWS KMS</li>
+<li>Lowering AWS KMS request costs by up to 99%</li>
+</ul>
+<p>Here's how S3 Bucket Keys function:</p>
+<figure><table>
+<thead>
+<tr>
+<th>Step</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>AWS makes a short-term key from AWS KMS</td>
+</tr>
+<tr>
+<td>2</td>
+<td>This key stays in S3 for a while</td>
+</tr>
+<tr>
+<td>3</td>
+<td>It creates data keys for new objects</td>
+</tr>
+</tbody>
+</table></figure>
+<p>S3 Bucket Keys work with:</p>
+<ul>
+<li>AWS KMS-made keys</li>
+<li>Imported key material</li>
+<li>Custom key store key material</li>
+</ul>
+<p>For old objects, use <code>CopyObject</code> to set up an S3 Bucket Key.</p>
+<p>In shared buckets, teams can use their own AWS KMS keys. This helps:</p>
+<ul>
+<li>Keep key info private</li>
+<li>Give access to the right people</li>
+<li>Meet rules about key control</li>
+</ul>
+<p>Before using S3 Bucket Keys:</p>
+<ol>
+<li>Update IAM policies</li>
+<li>Change AWS KMS key policies</li>
+<li>Use your bucket ARN as the encryption context</li>
+</ol>
+<p>This makes sure your policies work well with S3 Bucket Keys.</p>
+<h2 id="7.-implement-proper-data-partitioning">7. Implement Proper Data Partitioning</h2>
+<p>Splitting your data into smaller parts can help you save money and get your files faster in AWS S3. Here's how to do it right:</p>
+<h3 id="choose-the-right-way-to-split">Choose the Right Way to Split</h3>
+<p>Think about how you'll use your data when deciding how to split it. For example:</p>
+<figure><table>
+<thead>
+<tr>
+<th>Data Type</th>
+<th>Good Way to Split</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Time-based data</td>
+<td>By year/month/day</td>
+</tr>
+<tr>
+<td>Customer data</td>
+<td>By region or ID range</td>
+</tr>
+<tr>
+<td>Product data</td>
+<td>By category or brand</td>
+</tr>
+</tbody>
+</table></figure>
+<p>Splitting your data this way makes it easier to find and use later.</p>
+<h3 id="make-prefixes-work-for-you">Make Prefixes Work for You</h3>
+<p>Use smart prefixes to help S3 handle lots of requests at once. Put the most varied part of your prefix first. This helps S3 spread out the work.</p>
+<h3 id="help-s3-select-work-better">Help <a href="https://docs.aws.amazon.com/AmazonS3/latest/userguide/selecting-content-from-objects.html" target="_blank">S3 SELECT</a> Work Better</h3>
+<p><figure><img alt="S3 SELECT" loading="lazy" src="/assets/media/4779184021bf405c8d20.jpg"/></figure></p>
+<p>Good splitting also helps S3 SELECT look at less data when you ask for something. This makes it faster and cheaper to use.</p>
+<h3 id="tips-for-better-data-splitting">Tips for Better Data Splitting</h3>
+<ul>
+<li>Keep your split method simple</li>
+<li>Test different ways to see what works best</li>
+<li>Change your method if your data use changes</li>
+</ul>
+<h2 id="8.-use-s3-storage-lens">8. Use <a href="https://docs.aws.amazon.com/AmazonS3/latest/userguide/storage_lens_basics_metrics_recommendations.html" target="_blank">S3 Storage Lens</a></h2>
+<p><figure><img alt="S3 Storage Lens" loading="lazy" src="/assets/media/f6a1d0770168117752c1.jpg"/></figure></p>
+<p>S3 Storage Lens helps you see how you're using your S3 storage across your whole organization. It shows you trends in usage and activity, which can help you save money and keep your data safe.</p>
+<h3 id="what-s3-storage-lens-offers">What S3 Storage Lens Offers</h3>
+<figure><table>
+<thead>
+<tr>
+<th>Feature</th>
+<th>Free</th>
+<th>Paid</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Basic metrics</td>
+<td>✓</td>
+<td>✓</td>
+</tr>
+<tr>
+<td>Advanced metrics</td>
+<td>✗</td>
+<td>✓</td>
+</tr>
+<tr>
+<td>Recommendations</td>
+<td>✗</td>
+<td>✓</td>
+</tr>
+<tr>
+<td>Prefix grouping</td>
+<td>✗</td>
+<td>✓</td>
+</tr>
+<tr>
+<td>CloudWatch publishing</td>
+<td>✗</td>
+<td>✓</td>
+</tr>
+</tbody>
+</table></figure>
+<h3 id="how-s3-storage-lens-helps">How S3 Storage Lens Helps</h3>
+<p>Using S3 Storage Lens can help you:</p>
+<ul>
+<li>Cut storage costs</li>
+<li>Make your data safer</li>
+<li>Follow rules better</li>
+<li>Work more smoothly</li>
+</ul>
+<h3 id="starting-with-s3-storage-lens">Starting with S3 Storage Lens</h3>
+<p>To begin:</p>
+<ol>
+<li>Make a dashboard setup</li>
+<li>Pick your main region</li>
+<li>Choose which accounts and buckets to include</li>
+<li>Use the metrics to learn about your storage</li>
+</ol>
+<p>For example, you can find out:</p>
+<ul>
+<li>How much storage you're using overall</li>
+<li>Which buckets are growing the fastest</li>
+</ul>
+<h2 id="9.-optimize-data-transfer">9. Optimize Data Transfer</h2>
+<p>Moving data in and out of AWS S3 can cost money. Here's how to do it better and save:</p>
+<h3 id="data-transfer-tips">Data Transfer Tips</h3>
+<figure><table>
+<thead>
+<tr>
+<th>Tip</th>
+<th>What it does</th>
+<th>How it helps</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>S3 Transfer Acceleration</td>
+<td>Uses Amazon's global network</td>
+<td>Makes uploads faster</td>
+</tr>
+<tr>
+<td>VPC endpoints</td>
+<td>Connects S3 to your private network</td>
+<td>No extra charges in same region</td>
+</tr>
+<tr>
+<td>AWS Direct Connect</td>
+<td>Links your site to AWS</td>
+<td>Faster and cheaper transfers</td>
+</tr>
+<tr>
+<td>Keep data in one region</td>
+<td>Store data near where it's used</td>
+<td>Cuts down on moving costs</td>
+</tr>
+</tbody>
+</table></figure>
+<p>These tips can help you move data faster and cheaper in AWS S3.</p>
+<h4 id="using-s3-transfer-acceleration">Using <a href="https://docs.aws.amazon.com/AmazonS3/latest/userguide/transfer-acceleration.html" target="_blank">S3 Transfer Acceleration</a></h4>
+<p>This tool uses Amazon's worldwide network to speed up uploads. It's good for:</p>
+<ul>
+<li>Big files</li>
+<li>Far-away users</li>
+<li>Slow internet connections</li>
+</ul>
+<h4 id="setting-up-vpc-endpoints">Setting Up VPC Endpoints</h4>
+<p>VPC endpoints let you connect to S3 without going on the internet. This means:</p>
+<ul>
+<li>No data transfer fees in the same region</li>
+<li>Better security</li>
+<li>Faster connections</li>
+</ul>
+<h4 id="aws-direct-connect"><a href="https://aws.amazon.com/directconnect/" target="_blank">AWS Direct Connect</a></h4>
+<p>This service gives you a private line to AWS. It's helpful if you:</p>
+<ul>
+<li>Move lots of data often</li>
+<li>Need steady, fast connections</li>
+<li>Want to cut internet costs</li>
+</ul>
+<h4 id="staying-in-one-region">Staying in One Region</h4>
+<p>Keeping your data in the same region as your users or apps can save money. It stops you from paying to move data between regions.</p>
+<h2 id="10.-implement-version-control-wisely">10. Implement Version Control Wisely</h2>
+<h3 id="version-control-for-cost-optimization">Version Control for Cost Optimization</h3>
+<p>Using version control in AWS S3 can help you save money and manage your data better. Here's how to do it right:</p>
+<h4 id="enable-versioning-on-buckets">Enable Versioning on Buckets</h4>
+<p>Turn on versioning for buckets with important data. This lets you:</p>
+<ul>
+<li>Keep different versions of a file in one bucket</li>
+<li>Track changes easily</li>
+<li>Get back deleted or changed files</li>
+</ul>
+<h4 id="be-careful-with-lifecycle-rules">Be Careful with Lifecycle Rules</h4>
+<p>When setting up lifecycle rules:</p>
+<ul>
+<li>Check that you don't delete important versions by mistake</li>
+<li>Look at your versioning plan often to keep costs down</li>
+</ul>
+<h4 id="use-clear-names-for-files">Use Clear Names for Files</h4>
+<p>Give your files clear names. This helps you:</p>
+<ul>
+<li>Find different versions easily</li>
+<li>Manage old versions better</li>
+<li>Cut down on storage costs</li>
+</ul>
+<figure><table>
+<thead>
+<tr>
+<th>Tip</th>
+<th>What it does</th>
+<th>How it helps</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Enable versioning</td>
+<td>Keeps multiple file versions</td>
+<td>Protects against mistakes</td>
+</tr>
+<tr>
+<td>Check lifecycle rules</td>
+<td>Controls how versions are kept</td>
+<td>Stops accidental deletions</td>
+</tr>
+<tr>
+<td>Use clear file names</td>
+<td>Makes versions easy to find</td>
+<td>Helps manage storage better</td>
+</tr>
+</tbody>
+</table></figure>
+<h2 id="11.-use-s3-select-and-glacier-select">11. Use S3 Select and <a href="https://aws.amazon.com/blogs/aws/s3-glacier-select/" target="_blank">Glacier Select</a></h2>
+<p><figure><img alt="Glacier Select" loading="lazy" src="/assets/media/28e31ac89cd8afd71b62.jpg"/></figure></p>
+<h3 id="getting-only-the-data-you-need">Getting Only the Data You Need</h3>
+<p>S3 Select and Glacier Select help you get just the data you want from your files in S3, instead of downloading everything. This saves money and makes things faster.</p>
+<h4 id="what-they-do">What They Do</h4>
+<figure><table>
+<thead>
+<tr>
+<th>Feature</th>
+<th>S3 Select</th>
+<th>Glacier Select</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Works with</td>
+<td>CSV, JSON, Apache Parquet files</td>
+<td>Glacier objects</td>
+</tr>
+<tr>
+<td>How it works</td>
+<td>Uses simple SQL to filter data</td>
+<td>Uses SQL to filter data</td>
+</tr>
+<tr>
+<td>Good for</td>
+<td>Regular S3 storage</td>
+<td>Long-term, cheap storage</td>
+</tr>
+</tbody>
+</table></figure>
+<h4 id="how-they-help">How They Help</h4>
+<figure><table>
+<thead>
+<tr>
+<th>Benefit</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Lower costs</td>
+<td>Pay less for moving data</td>
+</tr>
+<tr>
+<td>Faster results</td>
+<td>Get data quicker</td>
+</tr>
+<tr>
+<td>Easier data work</td>
+<td>Filter out stuff you don't need</td>
+</tr>
+<tr>
+<td>Better security</td>
+<td>Only get the data you ask for</td>
+</tr>
+</tbody>
+</table></figure>
+<h4 id="using-s3-select">Using S3 Select</h4>
+<p>You can use basic SQL commands like SELECT and WHERE to get data from your files. It also works with:</p>
+<ul>
+<li>Files squeezed with GZIP or BZIP2 (for CSV and JSON)</li>
+<li>Files that are locked with encryption</li>
+</ul>
+<h4 id="using-glacier-select">Using Glacier Select</h4>
+<p>This is good for companies that need to keep data for a long time because of rules. You can look through your Glacier files without getting everything out first.</p>
+<h2 id="12.-regular-auditing-and-cleanup">12. Regular Auditing and Cleanup</h2>
+<p>Checking and cleaning up your AWS S3 storage often helps keep costs down. As you add more data, it's easy to forget about old or extra files, which can cost you money. Here's what to look at when you check your storage:</p>
+<h3 id="storage-class">Storage Class</h3>
+<p>Look at how you're storing your data. Make sure you're using the cheapest options that work for you. Move data you don't use much to cheaper storage types like S3 Standard-Infrequent Access or S3 Glacier.</p>
+<h3 id="lifecycle-policies">Lifecycle Policies</h3>
+<p>Check that your rules for moving or deleting data are set up right. This helps you avoid keeping data you don't need anymore.</p>
+<h3 id="data-retrieval">Data Retrieval</h3>
+<p>Watch how you get your data. Try using S3 Select and Glacier Select to get only the data you need, not whole files.</p>
+<h3 id="auditing">Auditing</h3>
+<p>Check your S3 buckets often to find and remove files you don't use. This saves you money. You can use AWS tools like S3 Storage Lens to see how you're using your storage and find ways to save.</p>
+<figure><table>
+<thead>
+<tr>
+<th>Task</th>
+<th>How It Helps</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Check storage classes</td>
+<td>Use cheaper options for old data</td>
+</tr>
+<tr>
+<td>Review lifecycle policies</td>
+<td>Move or delete data automatically</td>
+</tr>
+<tr>
+<td>Monitor data retrieval</td>
+<td>Get only the data you need</td>
+</tr>
+<tr>
+<td>Audit buckets</td>
+<td>Remove unused files</td>
+</tr>
+</tbody>
+</table></figure>
+<h2 id="conclusion">Conclusion</h2>
+<p>To wrap up, making AWS S3 storage work better helps save money in the cloud. By using the 12 tips we talked about, you can make your S3 storage cheaper, faster, and safer. Remember, keep checking and fixing your setup to keep S3 working well.</p>
+<p>Here's a quick look at what to do:</p>
+<figure><table>
+<thead>
+<tr>
+<th>Tip</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Pick the right storage type</td>
+<td>Saves money based on how you use data</td>
+</tr>
+<tr>
+<td>Use lifecycle rules</td>
+<td>Moves or deletes files automatically</td>
+</tr>
+<tr>
+<td>Try S3 Intelligent-Tiering</td>
+<td>Lets AWS move data to save money</td>
+</tr>
+<tr>
+<td>Squeeze and store old files</td>
+<td>Takes up less space, costs less</td>
+</tr>
+<tr>
+<td>Make files the right size</td>
+<td>Helps with uploads and long-term storage</td>
+</tr>
+<tr>
+<td>Use S3 Bucket Keys</td>
+<td>Makes encryption cheaper</td>
+</tr>
+<tr>
+<td>Split data smartly</td>
+<td>Makes finding and using data easier</td>
+</tr>
+<tr>
+<td>Use S3 Storage Lens</td>
+<td>Shows how you're using storage</td>
+</tr>
+<tr>
+<td>Move data carefully</td>
+<td>Saves money on data transfers</td>
+</tr>
+<tr>
+<td>Use version control wisely</td>
+<td>Keeps old versions without wasting space</td>
+</tr>
+<tr>
+<td>Try S3 Select and Glacier Select</td>
+<td>Gets only the data you need</td>
+</tr>
+<tr>
+<td>Check and clean up often</td>
+<td>Removes files you don't need anymore</td>
+</tr>
+</tbody>
+</table></figure>
+<p>By using these tips, you can make AWS S3 work better for you. This helps your cloud setup run smoothly and cheaply. Whether you're new to the cloud or have been using it for a while, these ideas can help you get more out of S3 storage.</p>
+<p>Keep looking at how you use S3 and make changes when you need to. This way, you'll keep your storage working well and save money over time.</p>
+<h2 id="faqs">FAQs</h2>
+<h3 id="what-is-the-best-storage-class-for-s3%3F">What is the best storage class for S3?</h3>
+<p>The best <a href="/blog/aws-s3-getting-started-understanding-storage-classes/">S3 storage class</a> depends on how often you need your data:</p>
+<figure><table>
+<thead>
+<tr>
+<th>Access Frequency</th>
+<th>Recommended Storage Class</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Often</td>
+<td>S3 Standard or Intelligent Tiering</td>
+</tr>
+<tr>
+<td>Less often</td>
+<td>Standard-IA, One Zone-IA, or Glacier</td>
+</tr>
+</tbody>
+</table></figure>
+<h3 id="what-is-the-cheapest-s3-storage%3F">What is the cheapest S3 storage?</h3>
+<p>S3 Glacier Deep Archive is the cheapest option. It's good for:</p>
+<ul>
+<li>Data you rarely need</li>
+<li>Files kept for rules and laws</li>
+<li>Information that can wait hours to get</li>
+</ul>
+<h3 id="how-can-i-lower-my-amazon-s3-costs%3F">How can I lower my Amazon S3 costs?</h3>
+<p>Use S3 Intelligent-Tiering to save money. It:</p>
+<ul>
+<li>Moves data between three quick access tiers</li>
+<li>Can store data you don't need right away</li>
+<li>Works without you having to do anything</li>
+</ul>
+<figure><table>
+<thead>
+<tr>
+<th>Feature</th>
+<th>Benefit</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Auto-tiering</td>
+<td>Saves money on storage</td>
+</tr>
+<tr>
+<td>Archive option</td>
+<td>Cuts costs for less-used data</td>
+</tr>
+<tr>
+<td>No extra work</td>
+<td>Manages data movement for you</td>
+</tr>
+</tbody>
+</table></figure>
+<p>
+<h2>Related posts</h2>
+<ul>
+<li><a href="/blog/10-amazon-s3-performance-optimization-tips/">10 Amazon S3 Performance Optimization Tips</a></li><li><a href="/blog/aws-s3-getting-started-understanding-storage-classes/">AWS S3 Getting Started: Understanding Storage Classes</a></li><li><a href="/blog/aws-backup-cost-optimization-guide-2024/">AWS Backup Cost Optimization Guide 2024</a></li><li><a href="/blog/learn-aws-s3-fundamentals/">Learn AWS S3 Fundamentals</a></li>
+</ul>
+</p>

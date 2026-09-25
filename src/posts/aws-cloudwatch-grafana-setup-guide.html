@@ -1,0 +1,376 @@
+---
+layout: post.njk
+templateEngineOverride: html
+tags: posts
+title: "AWS CloudWatch + Grafana: Setup Guide"
+description: "Learn how to set up AWS CloudWatch with Grafana for effective monitoring and visualization of your AWS resources with customizable dashboards."
+date: "2024-11-11"
+datePublished: "2024-11-11T14:13:24.942000+00:00"
+heroImage: "/assets/media/d51416cd199dcbc4e108.jpg"
+permalink: "/blog/aws-cloudwatch-grafana-setup-guide/"
+sourceUrl: "https://awsforengineers.com/blog/aws-cloudwatch-grafana-setup-guide/"
+---
+<p>Want to supercharge your AWS monitoring? Here's how to set up <a href="https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/WhatIsCloudWatch.html" target="_blank">AWS CloudWatch</a> with Grafana:</p>
+<ol>
+<li><strong>Prerequisites</strong>: <a href="/blog/">AWS account</a>, Grafana installed on EC2</li>
+<li><strong>Connect CloudWatch</strong>: Add as data source in Grafana</li>
+<li><strong>IAM Setup</strong>: Create role with <code>AmazonGrafanaCloudWatchAccess</code> policy</li>
+<li><strong>Build Dashboards</strong>: Use templates or custom queries</li>
+<li><strong>Troubleshoot</strong>: Fix common connection and performance issues</li>
+</ol>
+<p>Key benefits:</p>
+<ul>
+<li>Real-time AWS resource monitoring</li>
+<li>Customizable dashboards</li>
+<li>Pay-as-you-go pricing</li>
+<li>Scalable for large datasets</li>
+</ul>
+<p>83% of companies using this combo report time and effort savings.</p>
+<blockquote>
+<p>"Centralized observability is critical to fully understand the state of your systems." - Ana Ivanov, Grafana Labs</p>
+</blockquote>
+<p>Ready to dive in? Let's get your CloudWatch-Grafana integration up and running!</p>
+<h2 id="related-video-from-youtube">Related video from YouTube</h2>
+<iframe allowfullscreen="" frameborder="0" loading="lazy" src="https://www.youtube-nocookie.com/embed/y80Vn-FkBMc"></iframe><h2 id="prerequisites">Prerequisites</h2>
+<p>Let's get your setup ready for the AWS CloudWatch and Grafana integration. Here's what you need:</p>
+<h3 id="aws-account">AWS Account</h3>
+<p>You'll need an AWS account with access to the Management Console. Don't have one? Sign up on the AWS website. Make sure you can create and manage IAM roles and policies.</p>
+<h3 id="grafana-setup"><a href="https://grafana.com/" target="_blank">Grafana</a> Setup</h3>
+<p><figure><img alt="Grafana" loading="lazy" src="/assets/media/86ebbe29eff7d744496a.jpg"/></figure></p>
+<p>Install Grafana on an EC2 instance:</p>
+<ol>
+<li>Launch an EC2 instance with Amazon Linux.</li>
+<li>Open ports 22 (SSH), 80 (HTTP), and 3000 (Grafana) in your security group.</li>
+<li>SSH into your instance and install Grafana.</li>
+</ol>
+<p>Want high availability? Use a shared MySQL or Postgres database instead of sqlite3.</p>
+<h3 id="iam-access">IAM Access</h3>
+<p>Set up the right IAM permissions:</p>
+<ol>
+<li>Create a new IAM role.</li>
+<li>Attach the <code>AmazonGrafanaCloudWatchAccess</code> policy.</li>
+<li>Add a trust relationship with <code>grafana.amazonaws.com</code>.</li>
+</ol>
+<p>Your policy should allow:</p>
+<ul>
+<li><code>cloudwatch:ListMetrics</code></li>
+<li><code>cloudwatch:GetMetricStatistics</code></li>
+<li><code>cloudwatch:GetMetricData</code></li>
+</ul>
+<h3 id="network-configuration">Network Configuration</h3>
+<p>Make sure AWS and Grafana can talk to each other:</p>
+<ol>
+<li>Set up your <a href="/blog/aws-vpc-tutorial-for-beginners-setup-and-configuration/">VPC and subnets</a>.</li>
+<li>Configure routing tables.</li>
+<li>Allow necessary traffic in your security groups.</li>
+</ol>
+<h2 id="setting-up-cloudwatch-data-source">Setting Up CloudWatch Data Source</h2>
+<p>Let's connect CloudWatch as a data source in Grafana. This step is key for your AWS monitoring setup.</p>
+<h3 id="adding-cloudwatch-to-grafana">Adding CloudWatch to Grafana</h3>
+<p>Here's how to add CloudWatch:</p>
+<ol>
+<li>Go to <strong>Connections</strong> in Grafana's left menu</li>
+<li>Click <strong>Data sources</strong> under "Your connections"</li>
+<li>Search for "CloudWatch"</li>
+<li>Click <strong>CloudWatch</strong> to open settings</li>
+</ol>
+<p>Only organization admins can add data sources. Check your permissions if you don't see these options.</p>
+<h3 id="choosing-authentication-method">Choosing Authentication Method</h3>
+<p>Grafana offers several ways to authenticate with CloudWatch:</p>
+<figure><table>
+<thead>
+<tr>
+<th>Auth Method</th>
+<th>When to Use</th>
+<th>Good</th>
+<th>Not So Good</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>AWS SDK Default</td>
+<td>Open-source Grafana</td>
+<td>Uses workspace permissions</td>
+<td>Less flexible</td>
+</tr>
+<tr>
+<td>Access &amp; Secret Key</td>
+<td>Quick setup</td>
+<td>Easy to set up</td>
+<td>Keys can be exposed</td>
+</tr>
+<tr>
+<td>IAM Roles</td>
+<td>Production use</td>
+<td>Secure, no key management</td>
+<td>More complex</td>
+</tr>
+<tr>
+<td>Grafana Assume Role</td>
+<td>Advanced setups</td>
+<td>Flexible, multi-account access</td>
+<td>Needs extra config</td>
+</tr>
+</tbody>
+</table></figure>
+<p>IAM roles are usually best for security and ease. But for testing, Access &amp; Secret Key gets you started fast.</p>
+<h3 id="aws-region-setup">AWS Region Setup</h3>
+<p>Set the right AWS region:</p>
+<ol>
+<li>Find <strong>Default Region</strong> in CloudWatch settings</li>
+<li>Pick your AWS resources' region</li>
+<li>Use template variables in dashboards for multi-region setups</li>
+</ol>
+<p><strong>Tip</strong>: For resources across regions, set up separate data sources per region. It'll make your queries faster.</p>
+<h3 id="api-settings">API Settings</h3>
+<p>Tweak these settings for better Grafana-CloudWatch integration:</p>
+<ol>
+<li>
+<strong>Timeout</strong>: Balance between allowing complex queries and preventing slowdowns. Try 30 seconds to start.
+</li>
+<li>
+<strong>Assume Role ARN</strong>: For Grafana Assume Role, paste your role's ARN. Crucial for multi-account setups.
+</li>
+<li>
+<strong>External ID</strong>: Needed for assuming roles in other AWS accounts. Grafana generates this for you.
+</li>
+<li>
+<strong>Custom Endpoints</strong>: For VPC endpoints or custom AWS setups, specify them here.
+</li>
+</ol>
+<p>These settings impact Grafana's performance and security. Adjust them as you go to fit your needs.</p>
+<h2 id="iam-configuration">IAM Configuration</h2>
+<p>Let's set up IAM roles and policies for secure CloudWatch-Grafana integration:</p>
+<h3 id="creating-a-new-iam-role">Creating a New IAM Role</h3>
+<p>Here's how to create an IAM role for Grafana:</p>
+<ol>
+<li>Open AWS Management Console</li>
+<li>Go to IAM service</li>
+<li>Click "Roles" in sidebar</li>
+<li>Hit "Create role"</li>
+<li>Pick "AWS service" as trusted entity</li>
+<li>Choose "EC2" for use case</li>
+<li>Click "Next: Permissions"</li>
+</ol>
+<h3 id="adding-iam-policies">Adding IAM Policies</h3>
+<p>Attach these to your new role:</p>
+<ul>
+<li><code>AmazonGrafanaCloudWatchAccess</code></li>
+<li><code>CloudWatchReadOnlyAccess</code></li>
+</ul>
+<p>Want more control? Use this custom policy:</p>
+<pre><code>{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Action": [
+        "cloudwatch:PutMetricData",
+        "cloudwatch:GetMetricStatistics",
+        "cloudwatch:GetMetricData",
+        "cloudwatch:ListMetrics"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Effect": "Allow",
+      "Action": [
+        "logs:DescribeLogGroups",
+        "logs:GetLogGroupFields",
+        "logs:StartQuery",
+        "logs:StopQuery",
+        "logs:GetQueryResults",
+        "logs:GetLogEvents"
+      ],
+      "Resource": "*"
+    }
+  ]
+}
+</code></pre>
+<p>This policy gives the necessary permissions while keeping things tight.</p>
+<h3 id="multi-account-access">Multi-Account Access</h3>
+<p>Need CloudWatch data from multiple AWS accounts?</p>
+<ol>
+<li>Make a role in each target account</li>
+<li>In the Grafana AWS account, create a role with <code>sts:AssumeRole</code> permission</li>
+<li>Add this policy to the Grafana role:</li>
+</ol>
+<pre><code>{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Action": "sts:AssumeRole",
+      "Resource": [
+        "arn:aws:iam::ACCOUNT-ID-1:role/GrafanaCloudWatchRole",
+        "arn:aws:iam::ACCOUNT-ID-2:role/GrafanaCloudWatchRole"
+      ]
+    }
+  ]
+}
+</code></pre>
+<p>Don't forget to swap out <code>ACCOUNT-ID-1</code> and <code>ACCOUNT-ID-2</code> with real AWS account IDs.</p>
+<h3 id="trust-settings">Trust Settings</h3>
+<p>To get AWS and Grafana talking:</p>
+<ol>
+<li>Edit the trust relationship of the IAM role in each target AWS account</li>
+<li>Use this trust policy:</li>
+</ol>
+<pre><code>{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Principal": {
+        "AWS": "arn:aws:iam::GRAFANA-ACCOUNT-ID:role/GrafanaAssumeRole"
+      },
+      "Action": "sts:AssumeRole",
+      "Condition": {
+        "StringEquals": {
+          "sts:ExternalId": "UNIQUE-EXTERNAL-ID"
+        }
+      }
+    }
+  ]
+}
+</code></pre>
+<p>Replace <code>GRAFANA-ACCOUNT-ID</code> with your Grafana AWS account ID and <code>UNIQUE-EXTERNAL-ID</code> with a random string.</p>
+<blockquote>
+<p>The Amazon Managed Grafana team says: "Using an External ID helps prevent the 'confused deputy' problem when allowing access between accounts."</p>
+</blockquote>
+<h2 id="building-grafana-dashboards">Building Grafana Dashboards</h2>
+<p>Let's talk about creating killer dashboards for monitoring your AWS resources with CloudWatch. Here's how to make Grafana dashboards that actually tell you something useful.</p>
+<h3 id="ready-made-dashboards%3A-a-shortcut">Ready-Made Dashboards: A Shortcut</h3>
+<p>Grafana's got pre-built dashboards for popular AWS services. Here's how to grab them:</p>
+<ol>
+<li>Hit up your CloudWatch data source config page</li>
+<li>Click the <strong>Dashboards</strong> tab</li>
+<li>See a dashboard you like? Click <strong>Import</strong></li>
+</ol>
+<blockquote>
+<p>Pro tip: Save the imported dashboard with a new name. That way, you won't mess up the original when you start tweaking things.</p>
+</blockquote>
+<h3 id="custom-metric-queries%3A-getting-specific">Custom Metric Queries: Getting Specific</h3>
+<p>Want to create your own panels? Here's the drill:</p>
+<ol>
+<li>Click <strong>Add panel</strong> on your dashboard</li>
+<li>Pick CloudWatch as your data source</li>
+<li>Choose your AWS region and namespace</li>
+<li>Pick your metric and statistic</li>
+</ol>
+<p>Let's say you want to keep an eye on your RDS CPU usage:</p>
+<ul>
+<li>Region: eu-west-1</li>
+<li>Namespace: AWS/RDS</li>
+<li>Metric Name: CPUUtilization</li>
+<li>Statistic: Average</li>
+<li>Dimensions: DBInstanceIdentifier = [Your RDS Instance]</li>
+</ul>
+<h3 id="log-queries%3A-digging-into-the-details">Log Queries: Digging into the Details</h3>
+<p>Need to visualize log data? Grafana's got you covered:</p>
+<ol>
+<li>Add a new panel, choose CloudWatch</li>
+<li>Switch Query Mode to <strong>CloudWatch Logs</strong></li>
+<li>Pick your log group and set up filters</li>
+</ol>
+<blockquote>
+<p>Heads up: To keep things running smooth, limit the number of lines shown. Tweak <strong>Max data points</strong> in <strong>Query options</strong>.</p>
+</blockquote>
+<h3 id="dashboard-management%3A-keeping-it-clean">Dashboard Management: Keeping It Clean</h3>
+<p>Managing your dashboards well is key to getting a clear picture of your AWS setup. Here's how to do it right:</p>
+<p>1. <strong>Use variables</strong></p>
+<p>Make your dashboards dynamic. Set up variables for things like EC2 InstanceId or RDS Cluster Name. It'll make filtering a breeze.</p>
+<p>2. <strong>Organize your panels</strong></p>
+<p>Group related stuff together. Keep all your EC2 metrics in one row, RDS in another. It'll make sense at a glance.</p>
+<p>3. <strong>Set smart refresh intervals</strong></p>
+<p>Auto-refresh is great, but don't go overboard. You want up-to-date data, not a CloudWatch query overload.</p>
+<p>4. <strong>Use Grafana folders</strong></p>
+<p>Organize your dashboards into folders. Maybe by service, maybe by team. Whatever makes sense for you.</p>
+<p>The goal? Dashboards that give you the info you need, fast. Don't try to show everything – focus on what matters most for each service.</p>
+<blockquote>
+<p>"Good dashboards don't show all the data. They show the right data, in the right way." - Torkel Ödegaard, the guy who made Grafana</p>
+</blockquote>
+<h2 id="fixing-common-problems">Fixing Common Problems</h2>
+<p>Setting up AWS CloudWatch with Grafana can be a pain. Let's look at some issues you might run into and how to fix them.</p>
+<h3 id="connection-issues">Connection Issues</h3>
+<p>Can't connect? It's probably your network settings or IAM setup. Here's what to do:</p>
+<p>Check your VPC and subnet settings. Make sure your Grafana instance can actually reach AWS services.</p>
+<p>Look at your security group rules. You need to allow outbound traffic to CloudWatch endpoints.</p>
+<p>Test it out. Use the AWS CLI to run a simple CloudWatch query from your Grafana server.</p>
+<p>Still not working? Double-check your AWS region settings in Grafana. People mess this up all the time.</p>
+<h3 id="login-problems">Login Problems</h3>
+<p>IAM and credential issues can block your Grafana-CloudWatch connection. Here's how to fix them:</p>
+<p>Check your IAM role permissions. Make sure it has the <code>AmazonGrafanaCloudWatchAccess</code> policy.</p>
+<p>If you're using access keys, rotate them regularly. And make sure they're set up right in Grafana.</p>
+<p>For cross-account setups, check the trust relationship. Here's what it should look like:</p>
+<pre><code>{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Principal": {
+        "AWS": "arn:aws:iam::YOUR-GRAFANA-ACCOUNT-ID:root"
+      },
+      "Action": "sts:AssumeRole"
+    }
+  ]
+}
+</code></pre>
+<p>Just swap out <code>YOUR-GRAFANA-ACCOUNT-ID</code> with your actual Grafana AWS account ID.</p>
+<h3 id="access-errors">Access Errors</h3>
+<p>Getting "not authorized" errors? Time to look at your IAM policies:</p>
+<p>Make sure your policy includes all the CloudWatch actions you need. The big ones are:</p>
+<ul>
+<li><code>cloudwatch:GetMetricData</code></li>
+<li><code>cloudwatch:ListMetrics</code></li>
+<li><code>logs:StartQuery</code></li>
+<li><code>logs:StopQuery</code></li>
+<li><code>logs:GetQueryResults</code></li>
+</ul>
+<p>Check your resource ARNs. Your policy needs to cover the specific CloudWatch resources you're trying to use.</p>
+<p>If you see a <code>iam:PassRole</code> error, add that action to your policy for the specific role ARN Grafana needs to assume.</p>
+<h3 id="query-speed-issues">Query Speed Issues</h3>
+<p>Slow queries can make your dashboards useless. Here's how to speed things up:</p>
+<p>Limit your data points. In Grafana's query options, set a reasonable <code>Max data points</code> value. Start with 1000 and go from there.</p>
+<p>Increase the minimum interval. Set the <code>Min interval</code> in query options to fetch fewer data points.</p>
+<p>Write better queries. Don't use wildcards in metric names and dimensions if you can help it.</p>
+<p>Use downsampling for big datasets. <a href="https://www.timescale.com/" target="_blank">TimescaleDB</a>'s hyperfunctions like <code>lttb()</code> (Largest Triangle Three Buckets) can help a lot.</p>
+<p>Here's a real example: One Grafana user had a dashboard showing stock prices over 30 days. It had over 10,000 points per day for each stock symbol. By using <code>lttb()</code> downsampling, they cut 315,000 rows down to just 1,404. Load time went from over 5 seconds to less than 1 second.</p>
+<blockquote>
+<p>"Using lttb(), the downsampled data looks almost the same as the original, but with less than 0.5% of the points!"</p>
+</blockquote>
+<h2 id="conclusion">Conclusion</h2>
+<p>Setting up AWS CloudWatch with Grafana is a game-changer for monitoring your AWS setup. Here's a quick rundown of what we covered:</p>
+<p>1. <strong>Prerequisites</strong></p>
+<p>Make sure you've got an AWS account and Grafana installed.</p>
+<p>2. <strong>CloudWatch Data Source Setup</strong></p>
+<p>We walked through connecting CloudWatch to Grafana, including auth methods and API settings.</p>
+<p>3. <strong>IAM Configuration</strong></p>
+<p>We tackled creating roles and policies for secure access.</p>
+<p>4. <strong>Building Grafana Dashboards</strong></p>
+<p>From using pre-made templates to crafting custom queries for metrics and logs.</p>
+<p>5. <strong>Troubleshooting</strong></p>
+<p>We covered common hiccups and how to fix them.</p>
+<p>Remember, good monitoring isn't just about data collection. It's about storytelling. As the Amazon Managed Grafana Team says, <strong>"A dashboard should tell a story or answer a question."</strong> Keep that in mind when you're building.</p>
+<p>Here are some pro tips to level up your CloudWatch-Grafana game:</p>
+<ul>
+<li>Clean up your dashboards regularly. Ditch the ones you don't need and create a "master dashboard" for easy navigation.</li>
+<li>Use templates and variables. They'll keep things consistent and make your dashboards work across different setups.</li>
+<li>Don't go overboard with refresh rates. Too much refreshing can slow things down.</li>
+</ul>
+<p>Kyle Kodani from FloQast shared a cool insight: "This one graph about counting sync jobs ended up helping debug other issues we encountered later." It just goes to show how useful well-designed dashboards can be.</p>
+<p>Want to dig deeper into AWS? Check out <a href="/">AWS for Engineers</a>. They've got solid, tech-focused guides that can help you get even more out of your AWS setup.</p>
+<h2 id="faqs">FAQs</h2>
+<h3 id="how-to-get-cloudwatch-logs-in-grafana%3F">How to get CloudWatch logs in Grafana?</h3>
+<p>Getting CloudWatch logs in Grafana isn't rocket science, but you do need to set up the right permissions. Here's the deal:</p>
+<p>First, you've got to give Grafana the green light to peek at your CloudWatch stuff. This means granting permissions to read metrics, EC2 tags, instances, regions, and alarms.</p>
+<p>Next, you need to hook these permissions up to the IAM role or user you're using for AWS in Grafana. It's like giving Grafana a special backstage pass to your AWS show.</p>
+<p>But here's the kicker: make sure that IAM role or user can specifically access CloudWatch logs. It's not enough to have general AWS permissions - you need the VIP access for logs.</p>
+<p>As one smart cookie on the Grafana Community Forum put it: "Double-check that your Grafana user has the CloudWatch logs permission in IAM. It's easy to miss!"</p>
+<p>Get these permissions sorted, and you'll be pulling CloudWatch logs into Grafana like a pro. It's a game-changer for keeping an eye on your AWS setup all in one place.</p>
+<p>
+<h2>Related posts</h2>
+<ul>
+<li><a href="/blog/aws-devops-monitoring-metrics-tools-best-practices/">AWS DevOps Monitoring: Metrics, Tools, Best Practices</a></li><li><a href="/blog/custom-cloudwatch-metrics-setup-guide-2024/">Custom CloudWatch Metrics: Setup Guide 2024</a></li><li><a href="/blog/aws-health-dashboards-monitoring-and-debugging-guide/">AWS Health Dashboards: Monitoring &amp; Debugging Guide</a></li><li><a href="/blog/aws-logicmonitor-integration-7-best-practices/">AWS LogicMonitor Integration: 7 Best Practices</a></li>
+</ul>
+</p>

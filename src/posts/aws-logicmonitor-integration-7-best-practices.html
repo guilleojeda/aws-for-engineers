@@ -1,0 +1,553 @@
+---
+layout: post.njk
+templateEngineOverride: html
+tags: posts
+title: "AWS LogicMonitor Integration: 7 Best Practices"
+description: "Discover essential best practices for integrating AWS with LogicMonitor to enhance monitoring, optimize costs, and improve performance."
+date: "2024-10-01"
+datePublished: "2024-10-01T00:17:44.871000+00:00"
+heroImage: "/assets/media/ec38193e661028a10d7d.jpg"
+permalink: "/blog/aws-logicmonitor-integration-7-best-practices/"
+sourceUrl: "https://awsforengineers.com/blog/aws-logicmonitor-integration-7-best-practices/"
+---
+<p>Want to supercharge your <a href="https://aws.amazon.com/" target="_blank">AWS</a> monitoring? Here's how to nail the <a href="https://aws.amazon.com/" target="_blank">AWS</a>-<a href="https://www.logicmonitor.com/" target="_blank">LogicMonitor</a> integration:</p>
+<ol>
+<li>Set up accounts correctly</li>
+<li>Collect data efficiently</li>
+<li>Use <a href="https://docs.aws.amazon.com/cloudwatch/" target="_blank">CloudWatch</a> features</li>
+<li>Set up good alerts</li>
+<li>Use LogicMonitor's AWS tools</li>
+<li>Manage AWS resources in LogicMonitor</li>
+<li>Improve performance and lower costs</li>
+</ol>
+<p>Quick Comparison:</p>
+<figure><table>
+<thead>
+<tr>
+<th>Best Practice</th>
+<th>Key Benefit</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Correct account setup</td>
+<td>Secure, smooth integration</td>
+</tr>
+<tr>
+<td>Efficient data collection</td>
+<td>Focused, relevant monitoring</td>
+</tr>
+<tr>
+<td><a href="/blog/cloudwatch-standard-vs-detailed-monitoring-key-differences/">CloudWatch features</a></td>
+<td>Extended data retention, combined metrics</td>
+</tr>
+<tr>
+<td>Good alerts</td>
+<td>Timely, actionable notifications</td>
+</tr>
+<tr>
+<td><a href="/blog/aws-devops-monitoring-metrics-tools-best-practices/">LogicMonitor AWS tools</a></td>
+<td>Automated resource discovery, custom dashboards</td>
+</tr>
+<tr>
+<td>Resource management</td>
+<td>Organized, easily navigable AWS assets</td>
+</tr>
+<tr>
+<td>Performance and cost optimization</td>
+<td>Better AWS performance, lower bills</td>
+</tr>
+</tbody>
+</table></figure>
+<p>These practices help you get a clear view of your AWS setup, catch issues fast, and save money. Let's dive in and see how to make it happen.</p>
+<h2 id="related-video-from-youtube">Related video from YouTube</h2>
+<iframe allowfullscreen="" frameborder="0" loading="lazy" src="https://www.youtube-nocookie.com/embed/NW7B7fvd494"></iframe><h2 id="1.-set-up-accounts-correctly">1. Set up accounts correctly</h2>
+<p>Setting up AWS and LogicMonitor accounts is crucial for smooth integration. Here's what you need to do:</p>
+<h3 id="create-iam-roles-and-policies">Create <a href="https://docs.aws.amazon.com/iam/" target="_blank">IAM</a> roles and policies</h3>
+<p><figure><img alt="IAM" loading="lazy" src="/assets/media/85cf269673807fcbdef1.jpg"/></figure></p>
+<ol>
+<li>Open the IAM section in your AWS Management Console</li>
+<li>Create a new IAM policy using LogicMonitor's JSON</li>
+<li>Make an IAM role and attach this policy</li>
+<li>Use LogicMonitor's Account ID and External ID for the trust relationship</li>
+</ol>
+<h3 id="get-permissions-right">Get permissions right</h3>
+<p>Permissions are key. Here's the deal:</p>
+<ul>
+<li>Stick to the minimum permissions needed</li>
+<li>'<a href="https://docs.aws.amazon.com/s3/" target="_blank">s3</a>:GetObjects' is a must for billing monitoring</li>
+<li>Start with AWS's 'ReadOnlyAccess' policy if you're unsure</li>
+</ul>
+<figure><table>
+<thead>
+<tr>
+<th>Permission</th>
+<th>What it's for</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>s3:GetObjects</td>
+<td>Billing monitoring</td>
+</tr>
+<tr>
+<td>cloudwatch:ListMetrics</td>
+<td>List <a href="/blog/custom-cloudwatch-metrics-setup-guide-2024/">CloudWatch metrics</a></td>
+</tr>
+<tr>
+<td><a href="https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/concepts.html" target="_blank">ec2</a>:DescribeInstances</td>
+<td>Describe <a href="/blog/aws-ec2-basics-core-concepts-explained/">EC2 instances</a></td>
+</tr>
+<tr>
+<td><a href="https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/Welcome.html" target="_blank">rds</a>:DescribeDBInstances</td>
+<td>Describe RDS instances</td>
+</tr>
+</tbody>
+</table></figure>
+<p>These are just examples. Your needs might be different.</p>
+<blockquote>
+<p>"The principle of least privilege is key in information security. LogicMonitor's Role-Based Access Control system lets you apply this easily", - LogicMonitor docs</p>
+</blockquote>
+<p>Remember: Only give the permissions you absolutely need. It's safer that way.</p>
+<h2 id="2.-collect-data-efficiently">2. Collect data efficiently</h2>
+<p>Collecting data efficiently is crucial when integrating AWS with LogicMonitor. Here's how to do it:</p>
+<h3 id="choose-which-services-to-monitor">Choose which services to monitor</h3>
+<p>Don't monitor everything. Pick the <a href="/blog/">AWS services</a> that matter most to your business. LogicMonitor supports over 70 <a href="/blog/">AWS services</a>, so be picky.</p>
+<p>Focus on:</p>
+<ul>
+<li>Services that keep your business running</li>
+<li>Components with lots of traffic</li>
+<li>Resources that cost you the most</li>
+</ul>
+<p>Running a web app? You might want to watch:</p>
+<ul>
+<li>EC2 for compute</li>
+<li>RDS for databases</li>
+<li>S3 for storage</li>
+<li><a href="https://docs.aws.amazon.com/cloudfront/" target="_blank">CloudFront</a> for content delivery</li>
+</ul>
+<h3 id="adjust-data-collection-timing">Adjust data collection timing</h3>
+<p>Balance accuracy and performance by setting the right collection intervals:</p>
+<figure><table>
+<thead>
+<tr>
+<th>Service Type</th>
+<th>Recommended Interval</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Core services (EC2, RDS)</td>
+<td>Every 5 minutes</td>
+</tr>
+<tr>
+<td>Less critical services</td>
+<td>Every 15-30 minutes</td>
+</tr>
+<tr>
+<td>Auto Scaling groups</td>
+<td>Every 10 minutes</td>
+</tr>
+</tbody>
+</table></figure>
+<p>For Amazon EC2 Auto Scaling, LogicMonitor says:</p>
+<blockquote>
+<p>"Select 'Every 10 Minutes' from the NetScan Frequency option to enable LogicMonitor to check for new EC2 instances more frequently."</p>
+</blockquote>
+<p>This helps you keep up with resource changes without overloading your system.</p>
+<h3 id="tips-for-efficient-data-collection">Tips for efficient data collection</h3>
+<ol>
+<li>Use LogicMonitor's Amazon SDK to measure app performance from your servers' view.</li>
+<li>Let LogicMonitor automatically find all your AWS services.</li>
+<li>Pull business-level metrics from services like <a href="https://docs.aws.amazon.com/dynamodb/" target="_blank">DynamoDB</a> for targeted monitoring.</li>
+</ol>
+<p>Need specific metrics? You can customize CloudWatch DataSources. Here's how to monitor SSL Handshake Time for <a href="https://docs.aws.amazon.com/route53/" target="_blank">Route53</a>:</p>
+<ol>
+<li>Clone an existing datapoint in the AWS_Route53 DataSource</li>
+<li>Change the metric path to: <code>AWS/Route53&gt;HealthCheckId:##system.aws.resourceId##&gt;Region:##system.aws.region##&gt;SSLHandshakeTime&gt;Average</code></li>
+</ol>
+<h2 id="3.-use-cloudwatch-features">3. Use <a href="https://docs.aws.amazon.com/cloudwatch/" target="_blank">CloudWatch</a> features</h2>
+<p><figure><img alt="CloudWatch" loading="lazy" src="/assets/media/dc68ec38c865a196a5b7.jpg"/></figure></p>
+<p>CloudWatch can supercharge your AWS monitoring in LogicMonitor. Here's how:</p>
+<h3 id="keep-data-for-longer">Keep data for longer</h3>
+<p>CloudWatch keeps log data forever by default. But that can get pricey. To manage it:</p>
+<ol>
+<li>Set up a log retention policy for all log groups.</li>
+<li>Use AWS CLI to set a retention period:</li>
+</ol>
+<pre><code>aws logs put-retention-policy --log-group-name my-curr-aws-logs --retention-in-days 365
+</code></pre>
+<p>This keeps data for a year, balancing availability and cost.</p>
+<h3 id="mix-different-data-types">Mix different data types</h3>
+<p>Combine CloudWatch data with other metrics for a complete picture:</p>
+<ol>
+<li>Use LogicMonitor's AWS DataSources to query CloudWatch API.</li>
+<li>Customize metric paths with dimensions:</li>
+</ol>
+<pre><code>Namespace&gt;Dimensions&gt;Metric&gt;AggregationMethod
+</code></pre>
+<p>Example for Route53 SSL Handshake Time:</p>
+<pre><code>AWS/Route53&gt;HealthCheckId:##system.aws.resourceId##&gt;Region:##system.aws.region##&gt;SSLHandshakeTime&gt;Average
+</code></pre>
+<ol start="3">
+<li>Mix CloudWatch metrics with your app data:</li>
+</ol>
+<figure><table>
+<thead>
+<tr>
+<th>Data Type</th>
+<th>Source</th>
+<th>Use Case</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Infrastructure metrics</td>
+<td>CloudWatch</td>
+<td><a href="/blog/aws-services-overview-core-components/">Monitor AWS services</a></td>
+</tr>
+<tr>
+<td>Application metrics</td>
+<td>Your code</td>
+<td>Track app performance</td>
+</tr>
+<tr>
+<td>Custom metrics</td>
+<td>Published to CloudWatch</td>
+<td>Monitor business KPIs</td>
+</tr>
+</tbody>
+</table></figure>
+<p>This combo gives you a full view of your AWS setup and apps.</p>
+<blockquote>
+<p>Pro tip: CloudWatch API requests cost $0.01 per 1,000. To save money:</p>
+<ul>
+<li>Use LogicMonitor's Collector for EC2 instances</li>
+<li>Increase polling intervals for less critical resources</li>
+<li>Use LogicMonitor's Complex datapoints for calculations</li>
+</ul>
+</blockquote>
+<h2 id="4.-set-up-good-alerts">4. Set up good alerts</h2>
+<p>Good alerts are key for keeping your AWS apps running smoothly. Here's how to do it:</p>
+<h3 id="set-the-right-alert-levels">Set the right alert levels</h3>
+<p>Don't get swamped with alerts. Be smart about it:</p>
+<ol>
+<li>Only send alerts that need quick action.</li>
+<li>Give specific rules higher priority.</li>
+<li>Use sensible thresholds. For example:</li>
+</ol>
+<figure><table>
+<thead>
+<tr>
+<th>Metric</th>
+<th>Warning</th>
+<th>Critical</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>CPU Use</td>
+<td>70%</td>
+<td>90%</td>
+</tr>
+<tr>
+<td>Disk Space</td>
+<td>80% full</td>
+<td>95% full</td>
+</tr>
+<tr>
+<td>Response Time</td>
+<td>2 seconds</td>
+<td>5 seconds</td>
+</tr>
+</tbody>
+</table></figure>
+<ol start="4">
+<li>Test your alerts to make sure they work.</li>
+</ol>
+<h3 id="create-alert-response-plans">Create alert response plans</h3>
+<p>Know what to do when alerts hit:</p>
+<ol>
+<li>Make a clear plan for each alert type.</li>
+<li>Use LogicMonitor's tools:
+<ul>
+<li>Acknowledge alerts</li>
+<li>Escalate to the right team</li>
+<li>Schedule downtime for maintenance</li>
+</ul>
+</li>
+<li>Set up a main dashboard showing:
+<ul>
+<li>App component status</li>
+<li>Monitored component widgets</li>
+<li>Front-end performance checks</li>
+</ul>
+</li>
+</ol>
+<p>This setup helps you spot issues fast.</p>
+<h2 id="5.-use-logicmonitor's-aws-tools">5. Use <a href="https://www.logicmonitor.com/" target="_blank">LogicMonitor</a>'s <a href="https://aws.amazon.com/" target="_blank">AWS</a> tools</h2>
+<p><figure><img alt="LogicMonitor" loading="lazy" src="/assets/media/ec8386a47602764f6ea7.jpg"/></figure></p>
+<p>LogicMonitor offers two key features to simplify AWS monitoring:</p>
+<h3 id="automatic-resource-finding">Automatic resource finding</h3>
+<p>LogicMonitor finds and adds AWS resources automatically. Here's how:</p>
+<ol>
+<li>Set up Active Discovery in a DataSource</li>
+<li>LogicMonitor checks for changes regularly</li>
+<li>New resources are added automatically</li>
+</ol>
+<p>To enable:</p>
+<ol>
+<li>Go to <strong>Settings &gt; LogicModules &gt; DataSources</strong></li>
+<li>Select "DataSource" from the <strong>Add</strong> drop-down</li>
+<li>Fill in required fields</li>
+<li>Enable <strong>Multi-instance</strong> and <strong>Enable Active Discovery</strong></li>
+</ol>
+<h3 id="aws-specific-dashboards">AWS-specific dashboards</h3>
+<p>Create AWS resource dashboards:</p>
+<ol>
+<li>Click <strong>Dash</strong> in the left-hand menu</li>
+<li>Choose <strong>Add | New Dashboard</strong></li>
+<li>Name and describe your dashboard</li>
+<li>Use <strong>Make Default</strong> for main view</li>
+<li>Pick <strong>Make Private</strong> for testing</li>
+</ol>
+<p>AWS dashboard widgets:</p>
+<figure><table>
+<thead>
+<tr>
+<th>Widget Type</th>
+<th>Use Case</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>CustomGraph</td>
+<td>Show trends over time</td>
+</tr>
+<tr>
+<td>Gauge</td>
+<td>Display current metric values</td>
+</tr>
+<tr>
+<td>Table</td>
+<td>List multiple metrics or resources</td>
+</tr>
+<tr>
+<td>NOC</td>
+<td>Overview of system status</td>
+</tr>
+<tr>
+<td>SLA</td>
+<td>Track service level agreements</td>
+</tr>
+<tr>
+<td>BigNumber</td>
+<td>Highlight key metrics</td>
+</tr>
+<tr>
+<td>Pie Chart</td>
+<td>Show resource allocation</td>
+</tr>
+<tr>
+<td>Alert list</td>
+<td>Display active alerts</td>
+</tr>
+</tbody>
+</table></figure>
+<blockquote>
+<p>Jon Davis, Integration Engineer at LogicMonitor: "I've built various dashboards, including a Fun Widgets dashboard that tracks alerts and devices with color-coded symbols for different alert levels."</p>
+</blockquote>
+<p>Tips for effective AWS dashboards:</p>
+<ul>
+<li>Group related metrics</li>
+<li>Use color coding for quick status checks</li>
+<li>Include high-level and detailed views</li>
+<li>Update as your AWS setup changes</li>
+</ul>
+<h2 id="6.-manage-aws-resources-in-logicmonitor">6. Manage AWS resources in LogicMonitor</h2>
+<p>LogicMonitor makes finding and organizing your AWS resources a breeze. Here's how it works and how to make it work for you.</p>
+<h3 id="resource-discovery">Resource discovery</h3>
+<p>LogicMonitor's hosted collector automatically finds your AWS resources:</p>
+<ul>
+<li>Runs a NetScan every 5 minutes</li>
+<li>Looks for resources based on your settings</li>
+<li>Applies your tag filters</li>
+</ul>
+<p>Need a fresh scan? Just hit 'Save' in your AWS Account group's 'Manage' section.</p>
+<h3 id="naming-and-organization">Naming and organization</h3>
+<p>LogicMonitor names your AWS stuff like this:</p>
+<figure><table>
+<thead>
+<tr>
+<th>Type</th>
+<th>Format</th>
+<th>Example</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Device groups</td>
+<td>AWS Service name</td>
+<td>EC2, S3, SQS</td>
+</tr>
+<tr>
+<td>Devices</td>
+<td>region : instance name/id</td>
+<td>US-W2:i-ca7777</td>
+</tr>
+</tbody>
+</table></figure>
+<p>You can rename EC2 resources, but others keep their default names.</p>
+<p>Keep it tidy:</p>
+<ol>
+<li>Use AWS tags smartly. They become device properties in LogicMonitor.</li>
+<li>Create dynamic groups with tags: <code>system.aws.tag._NAME_=~"VALUE"</code></li>
+<li>Set up AWS dashboards for easy viewing</li>
+</ol>
+<p><strong>Heads up</strong>: AWS tag filters are case-sensitive. Double-check your spelling!</p>
+<h2 id="7.-improve-performance-and-lower-costs">7. Improve performance and lower costs</h2>
+<p>LogicMonitor helps you get more out of AWS while spending less. Here's how:</p>
+<h3 id="track-aws-usage-and-bills">Track AWS usage and bills</h3>
+<p>Get a clear view of your <a href="/">AWS spending</a> with LogicMonitor:</p>
+<ol>
+<li>Set up an S3 bucket for your AWS Cost and Usage Report</li>
+<li>Enable cost allocation tags in AWS</li>
+<li>Import billing DataSources into LogicMonitor</li>
+</ol>
+<p>Build dashboards to spot trends:</p>
+<figure><table>
+<thead>
+<tr>
+<th>Dashboard Widget</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Service Costs</td>
+<td>Top-spending services</td>
+</tr>
+<tr>
+<td>Regional Costs</td>
+<td>Expensive regions</td>
+</tr>
+<tr>
+<td>Monthly Comparisons</td>
+<td>Spending over time</td>
+</tr>
+<tr>
+<td>Cost vs. Threshold</td>
+<td>Budget adherence</td>
+</tr>
+<tr>
+<td>Total AWS Costs</td>
+<td>Month-to-date spending</td>
+</tr>
+</tbody>
+</table></figure>
+<h3 id="use-data-to-cut-costs">Use data to cut costs</h3>
+<p>Now, let's optimize:</p>
+<p>1. <strong>Find over-provisioned resources</strong></p>
+<p>Create dashboards for underused assets:</p>
+<figure><table>
+<thead>
+<tr>
+<th>Dashboard</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Bottom 10 EC2 CPUs</td>
+<td>Oversized instances</td>
+</tr>
+<tr>
+<td>Bottom 10 DynamoDB Capacities</td>
+<td>Excess capacity</td>
+</tr>
+<tr>
+<td>Bottom 10 EBS IOPS</td>
+<td>Unnecessary IOPS</td>
+</tr>
+</tbody>
+</table></figure>
+<p>2. <strong>Hunt for unused resources</strong></p>
+<p>Use 'count' in Big Number Widgets to find:</p>
+<ul>
+<li>Stopped EC2 instances</li>
+<li>Unattached EBS volumes</li>
+</ul>
+<p>3. <strong>Tweak your monitoring</strong></p>
+<p>Balance cost and performance:</p>
+<ul>
+<li>Use Collector DataSources when possible</li>
+<li>Increase polling intervals (watch for alert impacts)</li>
+<li>Cut unnecessary datapoints</li>
+<li>Deselect unused AWS regions</li>
+<li>Use tag filtering for resource discovery</li>
+</ul>
+<p>4. <strong>Set smart alerts</strong></p>
+<p>Create spend thresholds to get notified when costs approach your budget.</p>
+<blockquote>
+<p>Pro tip: Switching from CloudWatch to Collector DataSources for EC2 monitoring can save about $0.95 per instance per month. Small changes add up!</p>
+</blockquote>
+<h2 id="conclusion">Conclusion</h2>
+<p>Let's recap the 7 best practices for AWS LogicMonitor integration:</p>
+<ol>
+<li>Set up accounts correctly</li>
+<li>Collect data efficiently</li>
+<li>Use CloudWatch features</li>
+<li>Set up good alerts</li>
+<li>Use LogicMonitor's AWS tools</li>
+<li>Manage AWS resources in LogicMonitor</li>
+<li>Improve performance and lower costs</li>
+</ol>
+<p>These practices help you get the most out of your AWS and LogicMonitor setup. You'll have better control over your cloud infrastructure and can spot issues early.</p>
+<h3 id="keep-improving">Keep improving</h3>
+<p>AWS moves fast. Your monitoring needs to keep up. Here's how:</p>
+<p>1. <strong>Check for updates</strong></p>
+<p>AWS and LogicMonitor release new features often. Review these monthly.</p>
+<p>2. <strong>Test new metrics</strong></p>
+<p>As AWS adds services, try new metrics in LogicMonitor. Find what works for your setup.</p>
+<p>3. <strong>Refine alerts</strong></p>
+<p>Look at your alert history quarterly. Too many false alarms? Not enough warnings? Adjust.</p>
+<p>4. <strong>Learn from others</strong></p>
+<p>Join AWS and LogicMonitor user groups. Pick up tips from others facing similar challenges.</p>
+<p>5. <strong>Regular audits</strong></p>
+<p>Every six months, review your entire monitoring setup. Make sure it matches your current AWS use.</p>
+<p>Good monitoring is ongoing. Keep tweaking to get the best results.</p>
+<blockquote>
+<p>"By setting up appropriate alarms and taking a proactive approach to observability, you can mitigate event delivery problems and build resilient, scalable, event-driven applications on AWS with EventBridge." - Maximilian Schellhorn, Senior Solutions Architect</p>
+</blockquote>
+<p>This advice applies to your entire AWS setup. Stay alert, keep learning, and your AWS-LogicMonitor integration will serve you well.</p>
+<h2 id="faqs">FAQs</h2>
+<h3 id="how-to-add-aws-to-logicmonitor%3F">How to add AWS to LogicMonitor?</h3>
+<p>Adding AWS to LogicMonitor is simple. Here's how:</p>
+<ol>
+<li>Go to <strong>Resources &gt; Add</strong> in LogicMonitor</li>
+<li>Choose <strong>Cloud and SaaS</strong></li>
+<li>Click <strong>Add</strong> for Amazon Web Services</li>
+<li>Name your AWS account</li>
+<li>Click <strong>Next: Permissions</strong></li>
+<li>Use LogicMonitor's values to set up in AWS:
+<ul>
+<li>Create an IAM policy</li>
+<li>Make an IAM role</li>
+</ul>
+</li>
+<li>Select <strong>Next: Services</strong></li>
+<li>Pick AWS services to monitor</li>
+<li>Hit <strong>Test Permissions</strong></li>
+</ol>
+<p>You'll need to create that IAM policy and role in AWS. This lets LogicMonitor safely access your AWS data.</p>
+<p>Once set up, LogicMonitor auto-discovers your AWS resources every 5 minutes. It uses your chosen services, regions, and tags to find what to monitor.</p>
+<blockquote>
+<p>"A LogicMonitor hosted collector will search for and auto-discover AWS resources every five minutes using NetScan functionality."</p>
+</blockquote>
+<p>This setup keeps your AWS monitoring current without manual updates.</p>
+<p>
+<h2>Related posts</h2>
+<ul>
+<li><a href="/blog/aws-engineering-blog-autoscaling-for-high-availability/">AWS Engineering Blog: Autoscaling for High Availability</a></li><li><a href="/blog/aws-content-migration-best-practices/">AWS Content Migration Best Practices</a></li><li><a href="/blog/10-aws-cost-optimization-strategies-2024/">10 AWS Cost Optimization Strategies 2024</a></li><li><a href="/blog/aws-devops-monitoring-metrics-tools-best-practices/">AWS DevOps Monitoring: Metrics, Tools, Best Practices</a></li>
+</ul>
+</p>

@@ -1,0 +1,2 @@
+# Imported HTML preserves source code examples, including their trailing spaces.
+src/posts/*.html -whitespace

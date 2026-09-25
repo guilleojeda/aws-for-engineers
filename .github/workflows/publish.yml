@@ -1,0 +1,42 @@
+name: Publish site
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: publish-site
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+      - run: npm run check
+      - uses: aws-actions/configure-aws-credentials@v6.3.0
+        with:
+          aws-region: us-east-1
+          role-to-assume: ${{ vars.AWS_PUBLISH_ROLE_ARN }}
+          role-session-name: awsforengineers-publish
+      - name: Upload and remove obsolete files
+        run: aws s3 sync _site "s3://${{ vars.SITE_BUCKET_NAME }}/" --delete --cache-control "public,max-age=3600"
+      - name: Refresh CloudFront and wait until published
+        run: |
+          invalidation_id=$(aws cloudfront create-invalidation --distribution-id "${{ vars.SITE_DISTRIBUTION_ID }}" --paths '/*' --query 'Invalidation.Id' --output text)
+          aws cloudfront wait invalidation-completed --distribution-id "${{ vars.SITE_DISTRIBUTION_ID }}" --id "$invalidation_id"
+      - name: Verify preview site
+        run: |
+          curl --fail --silent --show-error --retry 5 --retry-delay 4 "${{ vars.SITE_PREVIEW_URL }}/" > /dev/null
+          curl --fail --silent --show-error --retry 5 --retry-delay 4 "${{ vars.SITE_PREVIEW_URL }}/blog/" > /dev/null

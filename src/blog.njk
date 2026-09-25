@@ -1,0 +1,31 @@
+---
+layout: base.njk
+title: AWS for Engineers
+description: The best blog for software engineers to learn AWS. Beginner-friendly tutorials created by AWS experts.
+pagination:
+  data: collections.posts
+  size: 15
+  reverse: true
+  alias: posts
+permalink: "{% if pagination.pageNumber == 0 %}/blog/{% else %}/blog/page/{{ pagination.pageNumber + 1 }}/{% endif %}"
+---
+<section class="blog-list wrap">
+  <div class="section-heading">
+    <p class="eyebrow">AWS for Engineers</p>
+    <h1>Blog</h1>
+    <p>Practical AWS guides and tutorials for software engineers.</p>
+  </div>
+  <div class="post-grid">
+    {% for post in posts %}
+    <a class="post-card" href="{{ post.url }}">
+      {% if post.data.heroImage %}<img src="{{ post.data.heroImage }}" alt="" loading="lazy" width="720" height="420">{% endif %}
+      <h2>{{ post.data.title }}</h2>
+    </a>
+    {% endfor %}
+  </div>
+  <nav class="pagination" aria-label="Blog pages">
+    {% if pagination.href.previous %}<a href="{{ pagination.href.previous }}">← Newer posts</a>{% endif %}
+    <span>Page {{ pagination.pageNumber + 1 }} of {{ pagination.pages.length }}</span>
+    {% if pagination.href.next %}<a href="{{ pagination.href.next }}">Older posts →</a>{% endif %}
+  </nav>
+</section>

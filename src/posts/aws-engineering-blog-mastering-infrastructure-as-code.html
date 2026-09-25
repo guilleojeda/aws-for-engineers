@@ -1,0 +1,362 @@
+---
+layout: post.njk
+templateEngineOverride: html
+tags: posts
+title: "AWS Engineering Blog: Mastering Infrastructure as Code"
+description: "Explore mastering infrastructure as code on AWS with CloudFormation and Terraform. Learn how to automate, manage, and optimize cloud infrastructure efficiently."
+date: "2024-01-30"
+datePublished: "2024-01-30T18:47:45.495000+00:00"
+heroImage: "/assets/media/0fa1db63eb0312493dff.jpg"
+permalink: "/blog/aws-engineering-blog-mastering-infrastructure-as-code/"
+sourceUrl: "https://awsforengineers.com/blog/aws-engineering-blog-mastering-infrastructure-as-code/"
+---
+<p>Most readers would agree that managing infrastructure can be complex and time-consuming.</p>
+<p>Mastering infrastructure as code techniques on AWS promises to simplify infrastructure automation across development environments.</p>
+<p>This in-depth guide from the AWS engineering team covers the key concepts and tools - AWS CloudFormation and Terraform - that allow you to treat infrastructure as software for consistent, efficient provisioning and management at scale.</p>
+<h2 id="introduction-to-infrastructure-as-code-on-aws">Introduction to Infrastructure as Code on AWS</h2>
+<p>Infrastructure as Code (IaC) enables software engineers to automate and manage cloud infrastructure through code. This introductory section will provide an overview of IaC concepts and benefits on AWS.</p>
+<h3 id="defining-infrastructure-as-code-and-its-relevance-to-aws">Defining Infrastructure as Code and Its Relevance to AWS</h3>
+<p>IaC allows engineers to provision and configure infrastructure resources like servers and databases through machine-readable definition files rather than manual processes. This enables consistency, efficiency, and infrastructure automation.</p>
+<p>Some key aspects of IaC:</p>
+<ul>
+<li>Describe desired infrastructure state in template files using a domain-specific language like JSON or YAML</li>
+<li>Templates can be version controlled for change tracking</li>
+<li>Infrastructure can be provisioned automatically based on templates</li>
+<li>Promotes consistency and reduces human error from manual work</li>
+</ul>
+<p>IaC principles facilitate robust infrastructure management on AWS by enabling engineers to programmatically create, update, and delete cloud resources.</p>
+<h3 id="the-advantages-of-automating-infrastructure-on-aws">The Advantages of Automating Infrastructure on AWS</h3>
+<p>Implementing IaC practices on AWS unlocks advantages like:</p>
+<ul>
+<li><strong>Improved efficiency</strong> - Engineers can spin up infrastructure faster by automating provisioning and config based on templates</li>
+<li><strong>Consistency</strong> - IaC ensures environments are provisioned correctly every time</li>
+<li><strong>Cost optimization</strong> - Unused resources can be deprovisioned programmatically to save costs</li>
+<li><strong>Infrastructure automation</strong> - Self-healing and auto-scaling capabilities can be implemented programmatically</li>
+</ul>
+<p>By enabling robust automation and management of cloud infrastructure, IaC allows software teams to focus less on infra maintenance and more on application development.</p>
+<h3 id="overview-of-aws-cloudformation-and-terraform">Overview of AWS CloudFormation and Terraform</h3>
+<p>The main IaC-enabling services on AWS are:</p>
+<ul>
+<li><strong>AWS CloudFormation</strong> - AWS native declarative IaC tool for provisioning AWS resources</li>
+<li><strong>Terraform</strong> - Flexible imperative IaC tool that can provision resources across AWS, Azure, GCP and other clouds</li>
+</ul>
+<p>Both tools allow engineers to define and automate their AWS infrastructure based on code templates versioned in source control. Key differences involve templating formats and architectural paradigms.</p>
+<h2 id="mastering-aws-cloudformation-for-infrastructure-automation">Mastering AWS CloudFormation for Infrastructure Automation</h2>
+<p>AWS CloudFormation allows you to model your infrastructure resources through template files for consistent, automated provisioning. We'll cover the basics of getting started with CloudFormation.</p>
+<h3 id="crafting-aws-cloudformation-templates-for-resource-management">Crafting AWS CloudFormation Templates for Resource Management</h3>
+<p>CloudFormation uses JSON or YAML templates to model the AWS resources needed for an application. These template files allow you to define the various infrastructure components and configurations required to run your software.</p>
+<p>Some key aspects of CloudFormation templates:</p>
+<ul>
+<li><strong>Resources</strong> - Specify the AWS resources you want to launch, like EC2 instances, RDS databases, S3 buckets, etc.</li>
+<li><strong>Parameters</strong> - Custom inputs that allow flexibility and reuse of templates.</li>
+<li><strong>Mappings</strong> - Lookup tables for customizing resource properties based on location.</li>
+<li><strong>Outputs</strong> - References to resources once the stack creates successfully.</li>
+<li><strong>Intrinsic Functions</strong> - Dynamic variables for transformations within templates.</li>
+</ul>
+<p>When building a CloudFormation template, it's best to start simple and add complexity gradually. Define the essential infrastructure first, launch your stack to verify it works, then incrementally increase sophistication.</p>
+<p>Follow AWS best practices around security groups, IAM policies, tagging, and other areas to ensure stable and secure applications.</p>
+<h3 id="launching-and-managing-your-first-aws-stack">Launching and Managing Your First AWS Stack</h3>
+<p>Using the AWS Management Console, we'll walk through launching a CloudFormation stack using one of the quickstart templates like a basic VPC or EC2 instance.</p>
+<p>To get started:</p>
+<ol>
+<li>Access the CloudFormation section of the AWS Console</li>
+<li>Click "Create Stack"</li>
+<li>Select a template (you can upload your own or choose an AWS sample)</li>
+<li>Input any required parameters</li>
+<li>Configure stack options like tags and permissions</li>
+<li>Click through to launch your stack</li>
+</ol>
+<p>Monitor the "Events" tab to track the provisioning status. Once the stack reaches a CREATE_COMPLETE status, the resources defined in the template will be live.</p>
+<p>From there, you can modify template parameters to update the stack and change configurations. You can also delete the stack when finished to terminate all associated resources.</p>
+<h3 id="monitoring-aws-cloudformation-stack-resources-and-events">Monitoring AWS CloudFormation Stack Resources and Events</h3>
+<p>The CloudFormation console provides insight into the component resources provisioned for a stack and tracks status events during launches.</p>
+<p>The "Resources" tabs lists all infrastructure components deployed by the stack, like EC2 instances, security groups, S3 buckets, etc. You can click through to inspect settings of each individual resource.</p>
+<p>The "Events" tab records every step during stack creation and updates. This serves as an audit trail for troubleshooting errors. Any issues around insufficient permissions, unavailable resources, or unsupported parameters will surface in the event log.</p>
+<p>Tagging stack resources is highly recommended for tracking origins across deployments. Resource groups can also help organize infrastructure deployed via CloudFormation.</p>
+<p>Thorough monitoring through CloudFormation events and resource exploration helps maintain stable stacks and quickly address provisioning failures.</p>
+<h2 id="advanced-aws-cloudformation-techniques-for-infrastructure-management">Advanced AWS CloudFormation Techniques for Infrastructure Management</h2>
+<p>Now that we've covered the basics, we'll explore some of the central concepts and capabilities that unlock the power of infrastructure as code with CloudFormation.</p>
+<h3 id="dynamic-infrastructure-provisioning-with-cloudformation-parameters">Dynamic Infrastructure Provisioning with CloudFormation Parameters</h3>
+<p>Parameters allow custom inputs to be passed in at stack launch time for dynamic, flexible template reuse. For example, you can define parameters for resource properties like instance type, VPC ID, and security group ID. This enables a single CloudFormation template to be reused across environments by customizing these parameters.</p>
+<p>Some key benefits of using parameters:</p>
+<ul>
+<li><strong>Dynamic infrastructure</strong> - No need to hardcode values, parameters can be changed per deployment to create different stack configurations.</li>
+<li><strong>Reusable templates</strong> - The same template can be used across dev, test, prod with parameterized differences.</li>
+<li><strong>Flexibility</strong> - Stack instances can be customized at launch instead of maintaining separate templates.</li>
+</ul>
+<p>When defining parameters, you can specify type constraints, allowed values, default values, descriptions and more for validation and ease of use.</p>
+<p>Here is an example parameter definition:</p>
+<pre><code>"InstanceTypeParameter": {
+  "Type": "String",
+  "Default": "t2.micro",
+  "AllowedValues": [
+    "t2.micro",
+    "t2.small"
+  ],
+  "Description": "Enter t2 instance type"  
+}
+</code></pre>
+<p>This allows the InstanceType parameter to be customized at stack launch.</p>
+<h3 id="utilizing-cloudformation-intrinsic-functions-for-automated-dependencies">Utilizing CloudFormation Intrinsic Functions for Automated Dependencies</h3>
+<p>Intrinsic functions like <code>Ref</code> and <code>GetAtt</code> enable templates to programmatically reference resources and data. This eliminates hard-coded values and enables resources to dynamically relate to each other.</p>
+<p>For example, the <code>Ref</code> function can reference other resource logical IDs to pass values between resources:</p>
+<pre><code>"SecurityGroup": {
+  "Type": "AWS::EC2::SecurityGroup",
+  "Properties": {
+    "VpcId": { "Ref": "VPC" },
+    "GroupDescription": "Allow HTTP traffic"
+  }
+}
+</code></pre>
+<p>Here the security group is dynamically associated with the <code>VPC</code> resource.</p>
+<p>Similarly, <code>GetAtt</code> retrieves resource attributes:</p>
+<pre><code>"BucketPolicy": {
+  "Type": "AWS::S3::BucketPolicy",    
+  "Properties": {
+    "Bucket": { "Ref": "S3Bucket" },
+    "PolicyDocument": {
+      "Id": "MyPolicy",
+      "Statement": [{ 
+        "Action": "s3:*",
+        "Effect": "Allow",
+        "Resource": { "Fn::GetAtt": ["S3Bucket", "Arn"] },
+      }]
+    }
+  }  
+}
+</code></pre>
+<p>This allows the bucket ARN to be dynamically retrieved at runtime for the policy statement.</p>
+<p>Intrinsic functions enable advanced automation by removing hard-coded dependencies.</p>
+<h3 id="orchestrating-complex-environments-with-cloudformation-resource-dependencies">Orchestrating Complex Environments with CloudFormation Resource Dependencies</h3>
+<p>CloudFormation handles resource management order and dependencies automatically to orchestrate full environment deployments in the correct sequence.</p>
+<p>For example, when launching a stack with an Auto Scaling group, CloudFormation will first create the VPC, subnets, security groups, launch configuration, etc. before attempting to create the ASG resource. This ensures all dependency resources are in place first.</p>
+<p>You can customize the deployment sequence using resource metadata properties:</p>
+<pre><code>"DependsOn": ["GatewayAttachment", "VPC"] 
+</code></pre>
+<p>This ensures the resource is deployed after the dependencies are created successfully.</p>
+<p>Additional metadata can control update policies, deletion policies, creation policies and more.</p>
+<p>With full control over resource dependencies, CloudFormation can deploy intricate architectures predictably and reliably via infrastructure as code.</p>
+<h2 id="reusable-patterns-in-aws-cloudformation-for-efficient-infrastructure-code">Reusable Patterns in AWS CloudFormation for Efficient Infrastructure Code</h2>
+<p>CloudFormation provides powerful abstraction capabilities to reuse infrastructure code through mappings, modules, and stacks.</p>
+<h3 id="strategies-for-cloudformation-mappings-in-template-reusability">Strategies for CloudFormation Mappings in Template Reusability</h3>
+<p>Mappings allow templates to define sets of named values that can be referenced throughout the template code. Some effective strategies for using mappings to improve template reusability include:</p>
+<ul>
+<li>
+<p>Define region-specific configuration data like AMI IDs, instance types, etc. in a mapping, allowing the same template to be reused across regions.</p>
+</li>
+<li>
+<p>Store common or shared values like VPC CIDR blocks, subnet configurations, resource tags in a mapping to avoid hard-coding values.</p>
+</li>
+<li>
+<p>Parameterize mapping keys to make mapping lookups dynamic based on user-provided input.</p>
+</li>
+<li>
+<p>Break down large mappings into multiple individual mappings based on concern for easier manageability.</p>
+</li>
+<li>
+<p>Reference mappings from nested stacks to pass values down the stack hierarchy.</p>
+</li>
+</ul>
+<h3 id="composing-reusable-components-with-nested-cloudformation-stacks">Composing Reusable Components with Nested CloudFormation Stacks</h3>
+<p>Nested stacks enable templates to be broken into reusable, composable code components. Benefits include:</p>
+<ul>
+<li>
+<p><strong>Encapsulation</strong> - Each nested stack can be developed, updated and managed independently.</p>
+</li>
+<li>
+<p><strong>Separation of Concerns</strong> - Infrastructure can be broken down into logical building blocks.</p>
+</li>
+<li>
+<p><strong>Reusability</strong> - Common patterns can be defined once and reused multiple times.</p>
+</li>
+<li>
+<p><strong>Abstraction</strong> - Hide unnecessary details through abstraction.</p>
+</li>
+<li>
+<p><strong>Modularity</strong> - Build large systems by combining smaller modular units.</p>
+</li>
+</ul>
+<p>Best practices for nested stacks:</p>
+<ul>
+<li>
+<p>Keep them small and focused on a single concern.</p>
+</li>
+<li>
+<p>Minimize stack inter-dependencies.</p>
+</li>
+<li>
+<p>Use stack outputs to pass data between stacks.</p>
+</li>
+<li>
+<p>Watch out for circular dependencies!</p>
+</li>
+</ul>
+<h3 id="encapsulating-common-patterns-with-cloudformation-modules">Encapsulating Common Patterns with CloudFormation Modules</h3>
+<p>CloudFormation module packages encapsulate, distribute and reuse infrastructure definitions. Key highlights:</p>
+<ul>
+<li>
+<p><strong>Versioning</strong> - module versions allow breaking changes without impacting downstream stacks.</p>
+</li>
+<li>
+<p><strong>Access Control</strong> - control module access through AWS Identity and Access Management.</p>
+</li>
+<li>
+<p><strong>Composition</strong> - compose complex systems by combining modules.</p>
+</li>
+<li>
+<p><strong>Encapsulation</strong> - hide unnecessary template details.</p>
+</li>
+<li>
+<p><strong>Reusability</strong> - leverage pre-built, high-quality modules.</p>
+</li>
+</ul>
+<p>Module best practices:</p>
+<ul>
+<li>
+<p>Make modules self-contained, configurable and reusable.</p>
+</li>
+<li>
+<p>Avoid hard coding values, leverage mappings and parameters.</p>
+</li>
+<li>
+<p>Document modules clearly outlining functionality, inputs and outputs.</p>
+</li>
+<li>
+<p>Use semantic versioning to manage module versions rigorously.</p>
+</li>
+<li>
+<p>Monitor module usage through CloudTrail to improve quality.</p>
+</li>
+</ul>
+<h2 id="leveraging-terraform-for-multi-cloud-infrastructure-automation">Leveraging Terraform for Multi-Cloud Infrastructure Automation</h2>
+<p>Now that we've covered CloudFormation, we'll explore infrastructure automation across clouds with HashiCorp Terraform.</p>
+<h3 id="comparative-analysis%3A-terraform-versus-aws-cloudformation">Comparative Analysis: Terraform Versus AWS CloudFormation</h3>
+<p>Terraform is a popular open source tool for automating infrastructure provisioning across public and private clouds. In contrast, AWS CloudFormation is a proprietary service tightly integrated with other AWS services.</p>
+<p>Here's a comparison of some key differences between the two tools:</p>
+<ul>
+<li><strong>Cloud Support</strong>: Terraform works across AWS, Azure, Google Cloud, OpenStack, etc. CloudFormation only works with AWS infrastructure.</li>
+<li><strong>Language</strong>: Terraform uses HCL syntax while CloudFormation uses JSON/YAML.</li>
+<li><strong>State Management</strong>: Terraform actively manages state to map real infrastructure. CloudFormation relies on AWS APIs to determine state.</li>
+<li><strong>Abstraction</strong>: Terraform manages infrastructure resources directly. CloudFormation works at higher levels using stacks.</li>
+</ul>
+<p>Overall, Terraform provides a flexible multi-cloud approach while CloudFormation offers richer native AWS functionality.</p>
+<h3 id="building-modular-infrastructure-with-terraform-modules">Building Modular Infrastructure with Terraform Modules</h3>
+<p>Terraform modules allow you to create reusable components that can be composed together:</p>
+<ul>
+<li><strong>Encapsulation</strong> - Modules bundle one or more infrastructure resources together behind an interface.</li>
+<li><strong>Reusability</strong> - Modules can be used multiple times to create distinct copies.</li>
+<li><strong>Abstraction</strong> - Modules hide unnecessary details from the user.</li>
+</ul>
+<p>For example, you could create a reusable module for a load balanced auto-scaled web application server that encapsulates the details of how it works internally.</p>
+<p>Modules are analogous to CloudFormation stacks but are natively supported by Terraform.</p>
+<h3 id="executing-and-managing-changes-with-terraform-apply">Executing and Managing Changes with Terraform Apply</h3>
+<p>The <code>terraform apply</code> command handles infrastructure provisioning and changes safely using an atomic plan &amp; execute model:</p>
+<ol>
+<li><strong>Refresh</strong> - Refresh state to match real infrastructure</li>
+<li><strong>Plan</strong> - Propose changes needed make the infrastructure match the configuration</li>
+<li><strong>Review Plan Changes</strong> - Manually verify the proposed changes</li>
+<li><strong>Apply Changes</strong> - Provision, update, and destroy infrastructure to match configuration</li>
+</ol>
+<p>This workflow allows you to preview infrastructure changes before Terraform executes them. It prevents unwanted changes and provides greater control.</p>
+<p>For ongoing management, Terraform stores state which helps it determine what changes are necessary. It offers many capabilities to collaborate on infrastructure changes as a team.</p>
+<h2 id="optimizing-infrastructure-management-with-terraform-workflows">Optimizing Infrastructure Management with Terraform Workflows</h2>
+<p>Terraform enables powerful version control and collaboration workflows around infrastructure through remote state storage and execution plans.</p>
+<h3 id="implementing-remote-state-storage-for-terraform-collaboration">Implementing Remote State Storage for Terraform Collaboration</h3>
+<p>Remote backends like S3 or DynamoDB provide a shared source of truth for teams to collaborate on infrastructure. By storing state remotely, multiple engineers can work on the same Terraform configurations. Some benefits include:</p>
+<ul>
+<li><strong>Version Control</strong> - State changes are logged over time so you can see who changed what and when.</li>
+<li><strong>Access Control</strong> - Use IAM policies to control who can access and modify state.</li>
+<li><strong>Locking</strong> - Lock state while Terraform runs to prevent concurrent modifications.</li>
+<li><strong>Backup</strong> - Data is stored durably so infrastructure can be easily recovered.</li>
+</ul>
+<p>Steps to enable remote state storage:</p>
+<ol>
+<li>Create an S3 bucket and DynamoDB table for storage.</li>
+<li>Configure Terraform backend to use S3/DynamoDB.</li>
+<li>Reference backend and provide access credentials.</li>
+</ol>
+<p>Remote state improves Terraform workflows and enables teams to safely collaborate.</p>
+<h3 id="previewing-and-validating-changes-with-terraform-plans">Previewing and Validating Changes with Terraform Plans</h3>
+<p>Terraform plan shows changes that will occur if the configuration is applied. This allows validation before infrastructure changes:</p>
+<ul>
+<li>Review plan output to verify correctness.</li>
+<li>Share and discuss plan to align team expectations.</li>
+<li>Reject unwanted changes by not applying plan.</li>
+</ul>
+<p>Benefits of using plans:</p>
+<ul>
+<li><strong>Safety</strong> - Avoid mistakes by reviewing first.</li>
+<li><strong>Visibility</strong> - Provide transparency to all stakeholders.</li>
+<li><strong>Governance</strong> - Enable oversight before changes occur.</li>
+</ul>
+<p>Steps to use Terraform plan:</p>
+<ol>
+<li>Make changes to Terraform configuration.</li>
+<li>Run <code>terraform plan</code> to preview changes.</li>
+<li>Review plan output and make adjustments if needed.</li>
+<li>Confirm and apply changes with <code>terraform apply</code>.</li>
+</ol>
+<p>Plans enable collaboration by facilitating discussion before applying changes.</p>
+<h3 id="integrating-terraform-with-ci%2Fcd-pipelines-for-automated-deployments">Integrating Terraform with CI/CD Pipelines for Automated Deployments</h3>
+<p>Terraform can integrate with CI/CD pipelines to enable automated infrastructure deployments:</p>
+<ul>
+<li><strong>Testing</strong> - Validate infrastructure changes in pull requests.</li>
+<li><strong>Deployment</strong> - Apply infrastructure changes post merge to main.</li>
+<li><strong>Destroy</strong> - Tear down temporary infrastructure when done.</li>
+</ul>
+<p>Example workflow:</p>
+<ol>
+<li>Developer commits Terraform changes to GitHub.</li>
+<li>GitHub Actions runs <code>terraform plan</code> to validate changes.</li>
+<li>After approval, pipeline runs <code>terraform apply</code> to provision real infrastructure.</li>
+<li>When feature branch is deleted, infrastructure is destroyed automatically.</li>
+</ol>
+<p>Benefits include:</p>
+<ul>
+<li>Speed and safety from test and prod separation.</li>
+<li>Developer productivity freed from manual tasks.</li>
+<li>Infrastructure versioned alongside application code changes.</li>
+</ul>
+<p>Automating Terraform through CI/CD improves efficiency and enables scalable infrastructure practices.</p>
+<h2 id="conclusion%3A-embracing-infrastructure-as-code-for-aws-cloud-infrastructure">Conclusion: Embracing Infrastructure as Code for AWS Cloud Infrastructure</h2>
+<p>In this post, we've covered the basics of infrastructure as code with AWS CloudFormation and Terraform. To build on these fundamentals, explore implementing these tools in your own projects.</p>
+<h3 id="summarizing-key-takeaways-on-aws-services-and-iac-tools">Summarizing Key Takeaways on AWS Services and IaC Tools</h3>
+<p>Infrastructure as Code (IaC) brings major benefits for managing AWS cloud infrastructure:</p>
+<ul>
+<li>
+<p><strong>Consistency</strong> - IaC ensures consistent environments by codifying infrastructure in configuration files that can be version controlled and shared across teams.</p>
+</li>
+<li>
+<p><strong>Efficiency</strong> - With IaC, engineers can spin up and manage infrastructure faster through automation instead of manual processes. This accelerates development cycles.</p>
+</li>
+<li>
+<p><strong>Cost Savings</strong> - By programmatically managing AWS resources, companies reduce waste from orphaned resources and right-size infrastructure to workload demands.</p>
+</li>
+<li>
+<p><strong>Infrastructure Automation</strong> - IaC tools like AWS CloudFormation and Terraform provide declarative infrastructure automation capabilities, abstracting manual management.</p>
+</li>
+</ul>
+<p>As covered in this <strong>aws engineering blog</strong> post, CloudFormation offers native AWS infrastructure as code, while Terraform provides flexibility across cloud providers. Both enable key IaC advantages.</p>
+<h3 id="identifying-next-steps-for-aws-cloud-infrastructure-mastery">Identifying Next Steps for AWS Cloud Infrastructure Mastery</h3>
+<p>To build on these IaC foundations, here are some recommended next steps:</p>
+<ul>
+<li>
+<p>Work through <strong>AWS CloudFormation</strong> and <strong>Terraform</strong> tutorials to gain hands-on experience with syntax, features, and workflows.</p>
+</li>
+<li>
+<p>Explore infrastructure as code best practices like modularity, testing, and organizational collaboration.</p>
+</li>
+<li>
+<p>Implement IaC tools in your own <strong>AWS</strong> environments to automate management of <strong>cloud infrastructure</strong> resources like VPCs, instances, and databases.</p>
+</li>
+<li>
+<p>Leverage IaC to enforce organizational standards, achieve consistency, and scale cloud management as your infrastructure grows.</p>
+</li>
+</ul>
+<p>As covered in this <strong>aws engineering blog</strong>, IaC unlocks game-changing automation for your <strong>AWS services</strong>. Put these capabilities into practice to streamline cloud operations.</p>
+<p>
+<h2>Related posts</h2>
+<ul>
+<li><a href="/blog/aws-ec2-and-s3-for-beginners/">AWS EC2 and S3 for Beginners</a></li><li><a href="/blog/aws-engineering-blog-autoscaling-for-high-availability/">AWS Engineering Blog: Autoscaling for High Availability</a></li><li><a href="/blog/aws-tutorial-for-beginners-step-by-step-core-concepts/">AWS Tutorial for Beginners Step by Step: Core Concepts</a></li><li><a href="/blog/aws-ec2-basics-core-concepts-explained/">AWS EC2 Basics: Core Concepts Explained</a></li>
+</ul>
+</p>

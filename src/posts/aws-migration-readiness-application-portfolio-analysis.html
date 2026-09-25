@@ -1,0 +1,397 @@
+---
+layout: post.njk
+templateEngineOverride: html
+tags: posts
+title: "AWS Migration Readiness: Application Portfolio Analysis"
+description: "Learn about AWS Migration Readiness, Application Portfolio Analysis, and the 7 Rs of migration strategies. Discover the benefits of automated tools and manual inventory processes."
+date: "2024-07-06"
+datePublished: "2024-07-06T00:45:52.963000+00:00"
+heroImage: "/assets/media/641a8bd6b842e26fafaa.jpg"
+permalink: "/blog/aws-migration-readiness-application-portfolio-analysis/"
+sourceUrl: "https://awsforengineers.com/blog/aws-migration-readiness-application-portfolio-analysis/"
+---
+<p>Application portfolio analysis is crucial for a successful move to <a href="https://aws.amazon.com/" target="_blank">AWS</a>. Here's what you need to know:</p>
+<ul>
+<li>It assesses your programs' readiness for cloud migration</li>
+<li>Key aspects: business importance, functionality, technical setup, cost, and modernity</li>
+<li>Benefits: identify migration candidates, understand dependencies, choose update strategies</li>
+</ul>
+<p>Main approaches:</p>
+<ol>
+<li>Automated Discovery Tools (e.g., <a href="https://docs.aws.amazon.com/application-discovery/" target="_blank">AWS Application Discovery Service</a>)</li>
+<li>Manual Inventory Processes</li>
+<li>Hybrid Approaches</li>
+<li><a href="https://aws.amazon.com/migration-evaluator/resources/" target="_blank">AWS Migration Evaluator</a></li>
+</ol>
+<p>Quick Comparison:</p>
+<figure><table>
+<thead>
+<tr>
+<th>Approach</th>
+<th>Speed</th>
+<th>Accuracy</th>
+<th>Effort Required</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Automated</td>
+<td>Fast</td>
+<td>Good</td>
+<td>Low</td>
+</tr>
+<tr>
+<td>Manual</td>
+<td>Slow</td>
+<td>High</td>
+<td>High</td>
+</tr>
+<tr>
+<td>Hybrid</td>
+<td>Moderate</td>
+<td>Very High</td>
+<td>Moderate</td>
+</tr>
+<tr>
+<td>AWS Evaluator</td>
+<td>Fast</td>
+<td>High</td>
+<td>Moderate</td>
+</tr>
+</tbody>
+</table></figure>
+<p>The "7 Rs" of AWS migration strategies:</p>
+<ul>
+<li>Retire</li>
+<li>Retain</li>
+<li>Rehost</li>
+<li>Relocate</li>
+<li>Repurchase</li>
+<li>Replatform</li>
+<li>Refactor</li>
+</ul>
+<p>Proper analysis ensures smoother migration, cost savings, and improved cloud performance.</p>
+<h2 id="related-video-from-youtube">Related video from YouTube</h2>
+<iframe allowfullscreen="" frameborder="0" loading="lazy" src="https://www.youtube.com/embed/SrPi1TLn_bs"></iframe><h2 id="1.-automated-discovery-tools">1. Automated Discovery Tools</h2>
+<p>Automated discovery tools help analyze your computer programs for moving to AWS. These tools gather information about your current setup and programs.</p>
+<h3 id="discovery-and-initial-planning">Discovery and Initial Planning</h3>
+<p>AWS Application Discovery Service (ADS) is a tool that helps big companies plan their move to AWS. It does this by:</p>
+<ul>
+<li>Collecting data about your current computers and programs</li>
+<li>Storing this data safely</li>
+<li>Letting you download the data as a file</li>
+</ul>
+<p>ADS works in two ways:</p>
+<ol>
+<li>Without installing anything extra (agentless)</li>
+<li>By installing a small program on your computers (agent-based)</li>
+</ol>
+<h3 id="application-assessment-techniques">Application Assessment Techniques</h3>
+<p>ADS helps you understand:</p>
+<ul>
+<li>How your programs work together</li>
+<li>What each program needs to run</li>
+</ul>
+<p>It works with other AWS tools to help you keep track of your move to the cloud.</p>
+<h3 id="tool-features-and-capabilities">Tool Features and Capabilities</h3>
+<figure><table>
+<thead>
+<tr>
+<th>Feature</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Data Collection</td>
+<td>Gathers information about your current setup</td>
+</tr>
+<tr>
+<td>Cost Estimation</td>
+<td>Helps figure out how much running on AWS might cost</td>
+</tr>
+<tr>
+<td>Migration Planning</td>
+<td>Assists in planning your move to AWS</td>
+</tr>
+<tr>
+<td>Portfolio Analysis</td>
+<td>Looks at all your programs to see which ones are ready for AWS</td>
+</tr>
+</tbody>
+</table></figure>
+<p>Other tools like AWS Migration Evaluator can also help with these tasks.</p>
+<h2 id="2.-manual-inventory-processes">2. Manual Inventory Processes</h2>
+<p>Manual inventory processes involve a hands-on approach to checking if applications are ready to move to AWS. This method requires a good understanding of your applications and involves gathering data by hand.</p>
+<h3 id="discovery-and-initial-planning-1">Discovery and Initial Planning</h3>
+<p>In a manual inventory process, you need to collect information about your current setup and applications. This includes:</p>
+<ul>
+<li>Details about the applications</li>
+<li>How applications depend on each other</li>
+<li>The computers and systems the applications run on</li>
+</ul>
+<p>You can gather this information by:</p>
+<ul>
+<li>Talking to the people who own or manage the applications</li>
+<li>Looking at existing documents</li>
+<li>Checking system records</li>
+</ul>
+<h3 id="application-assessment-techniques-1">Application Assessment Techniques</h3>
+<p>After collecting the data, you need to look at it closely to understand:</p>
+<ul>
+<li>How applications work together</li>
+<li>What each application needs to run</li>
+<li>Which applications depend on others</li>
+</ul>
+<p>This helps you spot possible problems that might come up when moving to AWS and helps plan the move.</p>
+<h3 id="portfolio-rationalization-strategies">Portfolio Rationalization Strategies</h3>
+<p>When doing a manual inventory, you also need to decide which applications should move to AWS. This involves looking at:</p>
+<figure><table>
+<thead>
+<tr>
+<th>Aspect</th>
+<th>What to Consider</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Business Value</td>
+<td>How important is the application for the company?</td>
+</tr>
+<tr>
+<td>Technical Fit</td>
+<td>Can the application work well on AWS?</td>
+</tr>
+<tr>
+<td>Benefits</td>
+<td>What good things could happen by moving to AWS?</td>
+</tr>
+</tbody>
+</table></figure>
+<h2 id="3.-hybrid-approaches">3. Hybrid Approaches</h2>
+<h3 id="discovery-and-initial-planning-2">Discovery and Initial Planning</h3>
+<p>Hybrid approaches mix automatic tools and manual checks. This method uses tools to gather data, then people review and improve the results. This can make the data more accurate and save time compared to doing everything by hand.</p>
+<p>For example, you can use AWS Application Discovery Service (ADS) to automatically collect information about your current setup. Then, people can check this information to make sure it's correct. This helps find possible problems that the tools might miss.</p>
+<h3 id="tool-features-and-capabilities-1">Tool Features and Capabilities</h3>
+<p>Hybrid approaches use different tools to help with discovery and planning. Here's a table showing some tools and what they do:</p>
+<figure><table>
+<thead>
+<tr>
+<th>Tool</th>
+<th>What it Does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>AWS Application Discovery Service (ADS)</td>
+<td>Automatically finds applications and how they connect</td>
+</tr>
+<tr>
+<td>AWS Migration Evaluator</td>
+<td>Gathers data about your current setup and applications</td>
+</tr>
+</tbody>
+</table></figure>
+<p>These tools can help you:</p>
+<ul>
+<li>Find possible problems</li>
+<li>See how applications depend on each other</li>
+<li>Guess how much AWS might cost</li>
+<li>Try out different ways to move to AWS</li>
+</ul>
+<h2 id="4.-aws-migration-evaluator">4. <a href="https://aws.amazon.com/migration-evaluator/resources/" target="_blank">AWS Migration Evaluator</a></h2>
+<p><figure><img alt="AWS Migration Evaluator" loading="lazy" src="/assets/media/530535120a5568a6b7f6.jpg"/></figure></p>
+<h3 id="discovery-and-initial-planning-3">Discovery and Initial Planning</h3>
+<p>AWS Migration Evaluator helps companies plan their move to AWS. It works in three steps:</p>
+<ol>
+<li>Discover: Scans your current computer setup</li>
+<li>Assess: Looks at the information it found</li>
+<li>Report: Gives you a summary of what it learned</li>
+</ol>
+<p>The tool checks your:</p>
+<ul>
+<li>Servers</li>
+<li>Storage</li>
+<li>Databases</li>
+<li>Computer programs</li>
+</ul>
+<p>It collects details about how these things are set up and how well they work.</p>
+<h3 id="tool-features-and-capabilities-2">Tool Features and Capabilities</h3>
+<p>AWS Migration Evaluator offers several helpful features:</p>
+<figure><table>
+<thead>
+<tr>
+<th>Feature</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Cost Estimation</td>
+<td>Figures out how much running on AWS might cost</td>
+</tr>
+<tr>
+<td>Performance Analysis</td>
+<td>Suggests ways to make programs run better in the cloud</td>
+</tr>
+<tr>
+<td>Detailed Reports</td>
+<td>Shows clear pictures of your current setup</td>
+</tr>
+<tr>
+<td>Problem Spotting</td>
+<td>Finds possible issues that could happen during the move</td>
+</tr>
+</tbody>
+</table></figure>
+<p>The tool gives you reports that show:</p>
+<ul>
+<li>How ready you are to move to AWS</li>
+<li>Ways to save money</li>
+<li>How to make your programs work better</li>
+<li>How to keep your data safe</li>
+</ul>
+<p>These reports help you make a good plan for moving to AWS. They show you what might go wrong and how to avoid problems.</p>
+<h2 id="strengths-and-weaknesses">Strengths and Weaknesses</h2>
+<p>The AWS Migration Evaluator has good points and not-so-good points. Let's look at what it does well and where it could be better.</p>
+<figure><table>
+<thead>
+<tr>
+<th>Good Points</th>
+<th>Not-So-Good Points</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Gives lots of details about your current setup</td>
+<td>Takes time to put in all the information at first</td>
+</tr>
+<tr>
+<td>Helps figure out how much AWS might cost</td>
+<td>Can be hard to learn how to use</td>
+</tr>
+<tr>
+<td>Suggests ways to make your programs work better</td>
+<td>Only as good as the information you give it</td>
+</tr>
+</tbody>
+</table></figure>
+<p><strong>Good Points Explained:</strong></p>
+<ul>
+<li>It looks at all parts of your computer setup</li>
+<li>It helps you guess how much money you might spend on AWS</li>
+<li>It tells you how to make your programs run better in the cloud</li>
+</ul>
+<p><strong>Not-So-Good Points Explained:</strong></p>
+<ul>
+<li>You need to spend time putting in information about your current setup</li>
+<li>It might take a while to learn how to use all its features</li>
+<li>If you put in wrong information, you might get wrong answers</li>
+</ul>
+<p>The AWS Migration Evaluator can be very helpful, but it's important to know that it has both good and not-so-good parts. It's a tool that can give you a lot of useful information, but you need to be careful about how you use it.</p>
+<h2 id="summary">Summary</h2>
+<h3 id="summary-1">Summary</h3>
+<p>Checking if your computer programs are ready to move to AWS is a key step for a good cloud move. By looking at all your programs, you can:</p>
+<ul>
+<li>Find which ones can move to AWS</li>
+<li>Decide which to move first</li>
+<li>Make a plan for moving</li>
+</ul>
+<p>The AWS Migration Evaluator is a tool that helps with this. It looks at your current setup and tells you how ready you are to move. But like any tool, it has good and not-so-good points.</p>
+<p>Here's a quick look at what the AWS Migration Evaluator does:</p>
+<figure><table>
+<thead>
+<tr>
+<th>What it Does Well</th>
+<th>What it Doesn't Do Well</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Gives lots of details about your setup</td>
+<td>Takes time to set up at first</td>
+</tr>
+<tr>
+<td>Helps guess AWS costs</td>
+<td>Can be hard to learn</td>
+</tr>
+<tr>
+<td>Suggests ways to make programs work better</td>
+<td>Only as good as the info you give it</td>
+</tr>
+</tbody>
+</table></figure>
+<p>To check if your programs are ready for AWS, you need to look at:</p>
+<ul>
+<li>How important each program is for your business</li>
+<li>Any problems with current programs</li>
+<li>Which programs to work on first</li>
+</ul>
+<p>By doing this check carefully, you can:</p>
+<ul>
+<li>Make your programs work better</li>
+<li>Save money</li>
+<li>Get more from cloud computing</li>
+</ul>
+<p>A good plan for checking your programs is key to moving to AWS successfully.</p>
+<h2 id="faqs">FAQs</h2>
+<h3 id="what-are-the-seven-migration-strategies-for-aws%3F">What are the seven migration strategies for <a href="https://aws.amazon.com/" target="_blank">AWS</a>?</h3>
+<p><figure><img alt="AWS" loading="lazy" src="/assets/media/2d135ce4df17cc4bb773.jpg"/></figure></p>
+<p>When moving computer programs to AWS, there are seven main ways to do it. These are called the "7 Rs":</p>
+<figure><table>
+<thead>
+<tr>
+<th>Strategy</th>
+<th>What it Means</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Retire</td>
+<td>Stop using the program</td>
+</tr>
+<tr>
+<td>Retain</td>
+<td>Keep the program as it is</td>
+</tr>
+<tr>
+<td>Rehost</td>
+<td>Move the program to AWS without changes</td>
+</tr>
+<tr>
+<td>Relocate</td>
+<td>Move the program to a different place in AWS</td>
+</tr>
+<tr>
+<td>Repurchase</td>
+<td>Buy a new version of the program</td>
+</tr>
+<tr>
+<td>Replatform</td>
+<td>Make small changes to the program for AWS</td>
+</tr>
+<tr>
+<td>Refactor</td>
+<td>Rebuild the program for AWS</td>
+</tr>
+</tbody>
+</table></figure>
+<p>These strategies help companies choose the best way to move their programs to AWS. They look at:</p>
+<ul>
+<li>What the company needs</li>
+<li>How the program works</li>
+<li>How much it will cost</li>
+</ul>
+<p>By picking the right strategy, companies can:</p>
+<ul>
+<li>Make their programs work better</li>
+<li>Save money</li>
+<li>Use AWS in the best way</li>
+</ul>
+<p>It's important to think carefully about which strategy to use for each program.</p>
+<p>
+<h2>Related posts</h2>
+<ul>
+<li><a href="/blog/aws-services-overview-core-components/">AWS Services Overview: Core Components</a></li><li><a href="/blog/aws-ec2-basics-core-concepts-explained/">AWS EC2 Basics: Core Concepts Explained</a></li><li><a href="/blog/aws-workforce-upskilling-for-legacy-system-modernization/">AWS Workforce Upskilling for Legacy System Modernization</a></li><li><a href="/blog/aws-content-migration-best-practices/">AWS Content Migration Best Practices</a></li>
+</ul>
+</p>
