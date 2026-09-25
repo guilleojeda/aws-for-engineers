@@ -58,6 +58,10 @@ for (const file of pages) {
 
 if (!existsSync(join(root, "robots.txt"))) failures.push("Missing robots.txt");
 if (!existsSync(join(root, "404.html"))) failures.push("Missing 404.html");
+const adsFile = join(root, "ads.txt");
+if (!existsSync(adsFile) || readFileSync(adsFile, "utf8").trim() !== "google.com, pub-9639896081226655, DIRECT, f08c47fec0942fa0") {
+  failures.push("AdSense ads.txt publisher declaration is missing or incorrect");
+}
 
 if (failures.length) {
   console.error(failures.slice(0, 50).join("\n"));
