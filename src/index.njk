@@ -123,6 +123,6 @@ permalink: /
   <div class="section-heading centered"><h2>Meet Our Team</h2><p>We're a team of AWS experts dedicated to helping you learn AWS.</p></div>
   <div class="team-card">
     {% if imported.homeImages['Linkedin profile pic (4)'] %}<img src="{{ imported.homeImages['Linkedin profile pic (4)'] }}" alt="Guille Ojeda" eleventy:widths="170,340" sizes="170px" loading="lazy">{% endif %}
-    <div><h3>Guille Ojeda</h3><p class="eyebrow">Software Architect</p><p>Guille is a software architect and AWS expert. He published 2 books and a video course, publishes a weekly newsletter for over 40k subscribers, and has spoken at dozens of events.</p><a href="https://www.linkedin.com/in/guilleojeda/">LinkedIn →</a></div>
+    <div><h3><a href="{{ identity.authorPath }}" rel="author">{{ identity.author.name }}</a></h3><p class="eyebrow">{{ identity.author.jobTitle }}</p><p>{{ identity.author.description }}</p><a href="{{ identity.authorPath }}">About Guille →</a></div>
   </div>
 </section>

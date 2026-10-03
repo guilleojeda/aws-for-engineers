@@ -1,0 +1,21 @@
+{
+  "authorPath": "/authors/guille-ojeda/",
+  "author": {
+    "@type": "Person",
+    "@id": "https://awsforengineers.com/authors/guille-ojeda/#person",
+    "name": "Guille Ojeda",
+    "url": "https://awsforengineers.com/authors/guille-ojeda/",
+    "jobTitle": "Principal Innovation Architect",
+    "description": "Guille Ojeda writes about AWS and cloud architecture for software engineers and is the author of all articles on AWS for Engineers.",
+    "sameAs": [
+      "https://guilleojeda.com/",
+      "https://www.linkedin.com/in/guilleojeda/"
+    ]
+  },
+  "publisher": {
+    "@type": "Organization",
+    "@id": "https://awsforengineers.com/#publisher",
+    "name": "AWS for Engineers",
+    "url": "https://awsforengineers.com/"
+  }
+}

@@ -4,6 +4,8 @@ import { join, relative, resolve } from "node:path";
 const root = resolve("_site");
 const posts = resolve("src/posts");
 const failures = [];
+const identity = JSON.parse(readFileSync(resolve("src/_data/identity.json"), "utf8"));
+const profileUrl = `https://awsforengineers.com${identity.authorPath}`;
 
 function visit(path) {
   return readdirSync(path).flatMap((entry) => {
@@ -25,6 +27,33 @@ function attribute(tag, name) {
   return tag.match(new RegExp(`\\b${name}="([^"]*)"`))?.[1];
 }
 
+function schemasIn(html, name) {
+  const schemas = [];
+  for (const [, attributes, text] of html.matchAll(/<script\b([^>]*)>([\s\S]*?)<\/script>/g)) {
+    if (attribute(attributes, "type") !== "application/ld+json") continue;
+    try {
+      schemas.push(JSON.parse(text));
+    } catch {
+      failures.push(`Invalid JSON-LD: ${name}`);
+    }
+  }
+  return schemas;
+}
+
+function validDate(value) {
+  if (typeof value !== "string" || !/^\d{4}-\d{2}-\d{2}(?:T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2}))?$/.test(value)) return false;
+  const [year, month, day] = value.slice(0, 10).split("-").map(Number);
+  const calendar = new Date(Date.UTC(year, month - 1, day));
+  return calendar.getUTCFullYear() === year && calendar.getUTCMonth() === month - 1 && calendar.getUTCDate() === day && !Number.isNaN(Date.parse(value));
+}
+
+function checkIdentity(schema, key, expected, name) {
+  const actual = schema?.[key];
+  if (!actual || ["@type", "@id", "name", "url"].some((field) => actual[field] !== expected[field])) {
+    failures.push(`Incorrect ${key} identity: ${name}`);
+  }
+}
+
 const files = visit(root);
 const pages = files.filter((file) => file.endsWith(".html"));
 const articleFiles = readdirSync(posts).filter((file) => file.endsWith(".md") || file.endsWith(".html"));
@@ -32,6 +61,9 @@ const articleSlugs = new Set(articleFiles.map((file) => file.replace(/\.(md|html
 if (articleFiles.length < 141) failures.push(`Expected at least 141 migrated articles; found ${articleFiles.length}`);
 
 const sitemap = readFileSync(join(root, "sitemap.xml"), "utf8");
+const sitemapDates = new Map([...sitemap.matchAll(/<url>\s*<loc>([^<]+)<\/loc>(?:\s*<lastmod>([^<]+)<\/lastmod>)?\s*<\/url>/g)].map(([, url, modified]) => [url, modified]));
+if (identity.author.url !== profileUrl || identity.author["@id"] !== `${profileUrl}#person`) failures.push("Author identity and profile URL differ");
+if (!existsSync(targetFor(identity.authorPath)) || !sitemapDates.has(profileUrl)) failures.push("Author profile is missing from output or sitemap");
 for (const file of articleFiles) {
   const slug = file.replace(/\.(md|html)$/, "");
   const path = `/blog/${slug}/`;
@@ -44,6 +76,7 @@ for (const file of pages) {
   const articleMatch = name.match(/^blog\/([^/]+)\/index\.html$/);
   if (articleMatch && !articleSlugs.has(articleMatch[1])) failures.push(`Stale article output: ${name}`);
   const html = readFileSync(file, "utf8");
+  const schemas = schemasIn(html, name);
   if (!/<title>[^<]+<\/title>/.test(html)) failures.push(`Missing title: ${name}`);
   if (!/<link rel="canonical" href="https:\/\/awsforengineers\.com\//.test(html)) failures.push(`Missing canonical: ${name}`);
   if (!/<meta name="description" content="[^"]+"/.test(html)) failures.push(`Missing description: ${name}`);
@@ -93,6 +126,55 @@ for (const file of pages) {
   if (name.startsWith("blog/") && !name.includes("/page/") && name !== "blog/index.html") {
     if (!/<article class="article wrap">/.test(html)) failures.push(`Missing article container: ${name}`);
     if (!/<meta property="og:image"/.test(html)) failures.push(`Missing social image: ${name}`);
+    const articleSchemas = schemas.filter((schema) => schema["@type"] === "BlogPosting");
+    if (articleSchemas.length !== 1) failures.push(`Expected one BlogPosting: ${name}`);
+    const article = articleSchemas[0];
+    checkIdentity(article, "author", identity.author, name);
+    checkIdentity(article, "publisher", identity.publisher, name);
+    if (!html.includes(`<meta name="author" content="${identity.author.name}">`)) failures.push(`Missing author meta: ${name}`);
+    const header = html.match(/<header class="article-header">([\s\S]*?)<\/header>/)?.[1] || "";
+    const authorLink = [...header.matchAll(/<a\b([^>]*)>([^<]+)<\/a>/g)].find(([, attrs, text]) =>
+      attribute(attrs, "href") === identity.authorPath && attribute(attrs, "rel")?.split(/\s+/).includes("author") && text === identity.author.name,
+    );
+    if (!authorLink) failures.push(`Missing linked author byline: ${name}`);
+    if (!html.includes(`Published by <a href="/">${identity.publisher.name}</a>`)) failures.push(`Missing visible publisher: ${name}`);
+    const visibleDates = [...header.matchAll(/<time\b([^>]*)>/g)].map(([, attrs]) => attribute(attrs, "datetime"));
+    if (!validDate(article?.datePublished) || visibleDates[0] !== article?.datePublished) failures.push(`Publication date mismatch: ${name}`);
+    const url = article?.mainEntityOfPage;
+    const canonical = [...html.matchAll(/<link\b[^>]*>/g)].map(([tag]) => tag).find((tag) => attribute(tag, "rel") === "canonical");
+    if (url !== attribute(canonical || "", "href")) failures.push(`Article schema and canonical differ: ${name}`);
+    const source = articleFiles.find((source) => source.replace(/\.(md|html)$/, "") === articleMatch?.[1]);
+    const frontMatter = source ? readFileSync(join(posts, source), "utf8").match(/^---\r?\n([\s\S]*?)\r?\n---/)?.[1] || "" : "";
+    const sourceModified = frontMatter.match(/^dateModified:\s*["']?([^"'\s]+)["']?\s*$/m)?.[1];
+    const hasUpdateNote = /<p class="article-update-note">\s*\S[\s\S]*?<\/p>/.test(header);
+    if (sourceModified) {
+      if (!validDate(article?.dateModified) || article?.dateModified !== sourceModified || visibleDates[1] !== sourceModified || sitemapDates.get(url) !== sourceModified) {
+        failures.push(`Modification date mismatch: ${name}`);
+      }
+      // A date-only update denotes a calendar day, not an invented midnight timestamp.
+      if (validDate(article?.dateModified) && validDate(article?.datePublished)) {
+        const precedesPublication = article.dateModified.includes("T") && article.datePublished.includes("T")
+          ? Date.parse(article.dateModified) < Date.parse(article.datePublished)
+          : article.dateModified.slice(0, 10) < article.datePublished.slice(0, 10);
+        if (precedesPublication) failures.push(`Modification precedes publication: ${name}`);
+      }
+      if (!hasUpdateNote) failures.push(`Missing editorial update note: ${name}`);
+    } else if (article?.dateModified !== undefined || visibleDates.length !== 1 || sitemapDates.get(url) !== undefined || hasUpdateNote) {
+      failures.push(`Unrecorded editorial modification: ${name}`);
+    }
+  }
+  if (name === "authors/guille-ojeda/index.html") {
+    const profileSchemas = schemas.filter((schema) => schema["@type"] === "ProfilePage");
+    if (profileSchemas.length !== 1) failures.push("Expected one ProfilePage");
+    const profile = profileSchemas[0];
+    checkIdentity(profile, "mainEntity", identity.author, name);
+    checkIdentity(profile, "publisher", identity.publisher, name);
+    if (profile?.url !== profileUrl || !html.includes(`<h1>${identity.author.name}</h1>`)) failures.push("Profile identity does not match the visible page");
+    for (const url of identity.author.sameAs) {
+      if (!html.includes(`href="${url}"`)) failures.push(`Profile is missing verified identity link: ${url}`);
+    }
+    const profileDate = html.match(/Profile updated on <time datetime="([^"]+)"/)?.[1];
+    if (!validDate(profile?.dateCreated) || !validDate(profile?.dateModified) || profileDate !== profile?.dateModified || sitemapDates.get(profileUrl) !== profile?.dateModified) failures.push("Profile dates are invalid or inconsistent");
   }
 }
 

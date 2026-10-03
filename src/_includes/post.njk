@@ -5,10 +5,17 @@ isPost: true
 <article class="article wrap">
   <header class="article-header">
     <h1>{{ title }}</h1>
-    <p class="article-date">Published on <time datetime="{{ date }}">{{ date | humanDate }}</time></p>
+    <p class="article-byline">By <a href="{{ identity.authorPath }}" rel="author">{{ identity.author.name }}</a></p>
+    <p class="article-date">Published on <time datetime="{{ datePublished or date }}">{{ date | humanDate }}</time>{% if dateModified %} · Updated on <time datetime="{{ dateModified }}">{{ dateModified | humanDate }}</time>{% endif %}</p>
+    {% if updateNote %}<p class="article-update-note">{{ updateNote }}</p>{% endif %}
   </header>
   <div class="article-body">{{ content | safe }}</div>
   <div class="article-tail">
+    <section class="article-author" aria-label="About the author">
+      <h2><a href="{{ identity.authorPath }}" rel="author">{{ identity.author.name }}</a></h2>
+      <p>{{ identity.author.description }}</p>
+      <p>Published by <a href="/">{{ identity.publisher.name }}</a>.</p>
+    </section>
     <a href="/blog/">← Read more articles</a>
     <div class="tinyadz" aria-label="Advertisement"></div>
   </div>

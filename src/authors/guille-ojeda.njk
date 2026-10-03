@@ -1,0 +1,36 @@
+---
+layout: base.njk
+title: Guille Ojeda | Author at AWS for Engineers
+description: Meet Guille Ojeda, the author of AWS for Engineers and a cloud architect, author, and speaker focused on AWS and applied AI.
+permalink: /authors/guille-ojeda/
+isAuthorProfile: true
+datePublished: "2026-10-03"
+dateModified: "2026-10-03"
+---
+<article class="author-profile wrap">
+  <header class="author-profile-header">
+    <div>
+      <p class="eyebrow">Author at AWS for Engineers</p>
+      <h1>{{ identity.author.name }}</h1>
+      <p class="author-role">{{ identity.author.jobTitle }}</p>
+    </div>
+    <img class="author-portrait" src="{{ imported.homeImages['Linkedin profile pic (4)'] }}" alt="Guille Ojeda" loading="eager" width="170" height="170" eleventy:widths="170,340,510" sizes="170px">
+  </header>
+  <div class="author-profile-body">
+    <p>Guille Ojeda is the author of all articles on <a href="/">AWS for Engineers</a>. He writes about AWS and cloud architecture for software engineers, with a focus on understanding how cloud services work and when to use them.</p>
+    <p>He is a Principal Innovation Architect at Caylent and an author and speaker on AWS and applied AI. His work includes the <a href="https://newsletter.simpleaws.dev/">Simple AWS newsletter</a> and the books <cite>Node.js on AWS</cite> and <cite>AWS Made Simple and Fun</cite>.</p>
+    <p>The guides on AWS for Engineers are developed with AI assistance. Guille is responsible for their authorship and published content.</p>
+    <p>Find his current work, books, talks, and professional background on <a href="https://guilleojeda.com/" rel="me">his personal website</a> and <a href="https://www.linkedin.com/in/guilleojeda/" rel="me">LinkedIn</a>.</p>
+    <h2>Article dates and updates</h2>
+    <p>Each article keeps its original publication date. When an article is updated, its update note explains what changed. An update to author information records that editorial change; it does not establish a new technical review date.</p>
+    <h2>Recent articles by Guille Ojeda</h2>
+    <ul class="author-articles">
+      {% for post in collections.posts | latest(6) %}
+      <li><a href="{{ post.url }}">{{ post.data.title }}</a></li>
+      {% endfor %}
+    </ul>
+    <p><a href="/blog/">Browse all {{ collections.posts | length }} articles</a></p>
+    <p class="author-contact">Questions or corrections? <a href="mailto:info@awsforengineers.com">Contact AWS for Engineers</a>.</p>
+    <p class="article-date">Profile updated on <time datetime="{{ dateModified }}">{{ dateModified | humanDate }}</time></p>
+  </div>
+</article>

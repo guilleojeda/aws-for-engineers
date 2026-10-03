@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>{{ title }}</title>
     <meta name="description" content="{{ description }}">
+    {% if isPost or isAuthorProfile %}<meta name="author" content="{{ identity.author.name }}">{% endif %}
     <meta name="google-adsense-account" content="ca-pub-9639896081226655">
     <link rel="canonical" href="https://awsforengineers.com{{ page.url }}">
     <meta property="og:type" content="{% if isPost %}article{% else %}website{% endif %}">
@@ -39,7 +40,9 @@
         }
       }
     </script>
-    {% if isPost %}<script type="application/ld+json">{{ {"@context":"https://schema.org","@type":"BlogPosting","headline":title,"description":description,"image":["https://awsforengineers.com" + (heroImage or imported.homeOgImage)],"datePublished":datePublished or date,"mainEntityOfPage":"https://awsforengineers.com" + page.url} | jsonScript | safe }}</script>{% endif %}
+    {% if isPost %}<script type="application/ld+json">{{ {"@context":"https://schema.org","@type":"BlogPosting","@id":"https://awsforengineers.com" + page.url + "#article","headline":title,"description":description,"image":["https://awsforengineers.com" + (heroImage or imported.homeOgImage)],"datePublished":datePublished or date,"dateModified":dateModified,"author":identity.author,"publisher":identity.publisher,"mainEntityOfPage":"https://awsforengineers.com" + page.url} | jsonScript | safe }}</script>{% endif %}
+    {% if isAuthorProfile %}<script type="application/ld+json">{{ {"@context":"https://schema.org","@type":"ProfilePage","@id":"https://awsforengineers.com" + page.url + "#profile","url":"https://awsforengineers.com" + page.url,"name":identity.author.name,"description":description,"dateCreated":datePublished,"dateModified":dateModified,"mainEntity":identity.author,"publisher":identity.publisher} | jsonScript | safe }}</script>{% endif %}
+    {% if page.url == '/' %}<script type="application/ld+json">{{ {"@context":"https://schema.org","@type":"WebSite","@id":"https://awsforengineers.com/#website","name":identity.publisher.name,"url":identity.publisher.url,"publisher":identity.publisher} | jsonScript | safe }}</script>{% endif %}
   </head>
   <body>
     <a class="skip-link" href="#main">Skip to content</a>
@@ -49,6 +52,7 @@
         <div class="nav-links">
           <a href="/">Home</a>
           <a href="/blog/">Blog</a>
+          <a href="{{ identity.authorPath }}">Author</a>
           <a href="mailto:contact@awsforengineers.com">Contact</a>
         </div>
       </nav>
