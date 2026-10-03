@@ -20,8 +20,9 @@ export default function (eleventyConfig) {
   eleventyConfig.addPassthroughCopy({ "src/ads.txt": "ads.txt" });
   eleventyConfig.setNunjucksEnvironmentOptions({ autoescape: true });
   eleventyConfig.addGlobalData("buildYear", () => new Date().getUTCFullYear());
-  eleventyConfig.addGlobalData("stylesheetVersion", () =>
-    createHash("sha256").update(readFileSync("src/assets/site.css")).digest("hex").slice(0, 12),
+  eleventyConfig.addGlobalData("siteStyles", () => readFileSync("src/assets/site.css", "utf8"));
+  eleventyConfig.addGlobalData("scriptVersion", () =>
+    createHash("sha256").update(readFileSync("src/assets/site.js")).digest("hex").slice(0, 12),
   );
 
   eleventyConfig.addFilter("latest", (posts, count) =>
