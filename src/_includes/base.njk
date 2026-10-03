@@ -17,7 +17,7 @@
     <meta name="twitter:card" content="summary_large_image">
     {% if socialImage %}<meta name="twitter:image" content="https://awsforengineers.com{{ socialImage }}">{% endif %}
     <link rel="preload" href="/assets/fonts/sora-latin.woff2" as="font" type="font/woff2" crossorigin>
-    <link rel="stylesheet" href="/assets/site.css">
+    <link rel="stylesheet" href="/assets/site.css?v={{ stylesheetVersion }}">
     <link rel="icon" href="{{ imported.favicon or '/assets/favicon.svg' }}">
     <script>
       // Only the public domain sends production analytics and ad requests.

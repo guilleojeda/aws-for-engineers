@@ -1,11 +1,13 @@
 import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
 import { join, relative, resolve } from "node:path";
+import { createHash } from "node:crypto";
 
 const root = resolve("_site");
 const posts = resolve("src/posts");
 const failures = [];
 const identity = JSON.parse(readFileSync(resolve("src/_data/identity.json"), "utf8"));
 const profileUrl = `https://awsforengineers.com${identity.authorPath}`;
+const stylesheetVersion = createHash("sha256").update(readFileSync(resolve("src/assets/site.css"))).digest("hex").slice(0, 12);
 
 function visit(path) {
   return readdirSync(path).flatMap((entry) => {
@@ -80,6 +82,7 @@ for (const file of pages) {
   if (!/<title>[^<]+<\/title>/.test(html)) failures.push(`Missing title: ${name}`);
   if (!/<link rel="canonical" href="https:\/\/awsforengineers\.com\//.test(html)) failures.push(`Missing canonical: ${name}`);
   if (!/<meta name="description" content="[^"]+"/.test(html)) failures.push(`Missing description: ${name}`);
+  if (!html.includes(`<link rel="stylesheet" href="/assets/site.css?v=${stylesheetVersion}">`)) failures.push(`Stale or unversioned stylesheet: ${name}`);
   if (/(?:app|assets)\.seobotai\.com|unicornplatform\.com|mars-images\.imgix\.net/.test(html)) {
     failures.push(`Old platform dependency in generated HTML: ${name}`);
   }
