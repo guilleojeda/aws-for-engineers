@@ -84,6 +84,37 @@ h1,h2,h3{line-height:1.25;letter-spacing:-.025em}
 .post-card:first-child img{aspect-ratio:1.65}
 .pagination{display:flex;justify-content:center;align-items:center;gap:28px;flex-wrap:wrap;margin-top:58px;font-size:14px}
 .pagination a{font-weight:700;text-underline-offset:4px}
+.page-numbers{display:flex;justify-content:center;flex-wrap:wrap;gap:6px;list-style:none;padding:0;margin:0}
+.page-numbers a{display:flex;align-items:center;justify-content:center;min-width:42px;min-height:44px;border:1px solid #ddd;border-radius:4px;text-decoration:none}
+.page-numbers a[aria-current=page]{background:#252525;color:#fff;border-color:#252525}
+.pagination-status{text-align:center;color:#555;font-size:14px;margin-top:16px}
+.topic-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:20px}
+.topic-card{display:block;padding:24px;background:#fff;border:1px solid #ddd;border-radius:6px;text-decoration:none}
+.topic-card:hover{border-color:#a64e28}
+.topic-card h2,.topic-card h3{font-size:22px;margin:0 0 12px}
+.topic-card p{font-size:15px;margin:0 0 16px;line-height:1.7}
+.topic-card span{color:#a64e28;font-size:14px;font-weight:600}
+.topic-index,.topic-guide{padding-block:50px 90px}
+.topic-guide{max-width:850px}
+.topic-index .section-heading{max-width:800px}
+.topic-index h1,.topic-guide h1{font-size:clamp(36px,5vw,54px);margin:10px 0 24px}
+.topic-start{padding:18px;background:#f5f5f5;border-radius:5px}
+.topic-section{margin-block:42px}
+.topic-section h2{font-size:27px;margin:0 0 16px}
+.topic-guide a,.topic-index .section-heading a{color:#a64e28;text-underline-offset:3px}
+.topic-articles{padding-left:24px}
+.topic-articles li{margin-block:12px}
+.article-topics{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
+.article-topics a{font-size:13px;padding:4px 10px;background:#f5f5f5;border-radius:4px;text-decoration:none;color:#a64e28}
+.article-contents{width:min(680px,100%);margin:36px auto 0;padding:16px 20px;border:1px solid #ddd;border-radius:5px;background:#fafafa}
+.article-contents summary{font-weight:600;cursor:pointer}
+.article-contents ol{padding-left:24px;margin:16px 0 4px;font-size:15px}
+.article-contents li{margin-block:9px}
+.article-contents a{color:#a64e28;text-underline-offset:3px}
+.article-contents + .article-body{margin-top:28px}
+.article-body h2[id],.article-body h3[id]{scroll-margin-top:24px}
+@media(max-width:900px){.topic-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.nav-links{gap:24px}}
+@media(max-width:600px){.topic-grid{grid-template-columns:1fr}.topic-index,.topic-guide{padding-block:28px 70px}.topic-card{padding:20px}.pagination{gap:18px}.article-contents{padding:14px 16px}.nav{gap:12px}}
 .article{padding-block:38px 90px}
 .article-header h1{font-size:clamp(36px,5vw,60px);margin:0 0 25px}
 .article-byline{border-top:1px solid #e8e8e8;margin:0;padding-top:23px;font-size:16px;font-weight:600}

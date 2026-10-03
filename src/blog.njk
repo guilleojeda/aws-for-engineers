@@ -1,7 +1,8 @@
 ---
 layout: base.njk
-title: AWS for Engineers
-description: The best blog for software engineers to learn AWS. Beginner-friendly tutorials created by AWS experts.
+eleventyComputed:
+  title: "AWS Tutorials and Guides{% if pagination.pageNumber > 0 %} Page {{ pagination.pageNumber + 1 }}{% endif %} | AWS for Engineers"
+  description: "Browse page {{ pagination.pageNumber + 1 }} of {{ pagination.pages.length }} of our AWS guides for software engineers, including {{ posts[0].data.title }}{% if posts | length > 1 %} and {{ posts[1].data.title }}{% endif %}."
 pagination:
   data: collections.posts
   size: 15
@@ -12,8 +13,9 @@ permalink: "{% if pagination.pageNumber == 0 %}/blog/{% else %}/blog/page/{{ pag
 <section class="blog-list wrap">
   <div class="section-heading">
     <p class="eyebrow">AWS for Engineers</p>
-    <h1>Blog</h1>
+    <h1>AWS tutorials and guides</h1>
     <p>Practical AWS guides and tutorials for software engineers.</p>
+    <p><a href="/topics/">Browse guides by topic</a></p>
   </div>
   <div class="post-grid">
     {% for post in posts %}
@@ -25,7 +27,12 @@ permalink: "{% if pagination.pageNumber == 0 %}/blog/{% else %}/blog/page/{{ pag
   </div>
   <nav class="pagination" aria-label="Blog pages">
     {% if pagination.href.previous %}<a href="{{ pagination.href.previous }}">← Newer posts</a>{% endif %}
-    <span>Page {{ pagination.pageNumber + 1 }} of {{ pagination.pages.length }}</span>
+    <ol class="page-numbers">
+      {% for href in pagination.hrefs %}
+      <li><a href="{{ href }}" aria-label="Page {{ loop.index }}"{% if href == page.url %} aria-current="page"{% endif %}>{{ loop.index }}</a></li>
+      {% endfor %}
+    </ol>
     {% if pagination.href.next %}<a href="{{ pagination.href.next }}">Older posts →</a>{% endif %}
   </nav>
+  <p class="pagination-status">Page {{ pagination.pageNumber + 1 }} of {{ pagination.pages.length }}</p>
 </section>

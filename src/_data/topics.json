@@ -1,0 +1,406 @@
+[
+  {
+    "slug": "fundamentals",
+    "title": "AWS fundamentals and architecture",
+    "description": "AWS guides for software engineers learning cloud concepts, architecture, infrastructure as code, and certification paths.",
+    "intro": "Start with the cloud concepts that explain how AWS services fit together, then move to architecture and the development practices you need for a real application. If you already know the basics, use the architecture and infrastructure sections to explore a specific design question. Certification guides are collected separately so you can choose a learning path without confusing exam preparation with application design.",
+    "startWith": "understanding-aws-a-beginners-guide",
+    "sections": [
+      {
+        "title": "Understand the core concepts",
+        "intro": "Use these introductions to build a vocabulary for accounts, compute, storage, and managed services. The EC2 and S3 guide connects two common starting points; the service overview helps you locate a subject before moving to a more focused topic guide.",
+        "slugs": [
+          "understanding-aws-a-beginners-guide",
+          "aws-tutorial-for-beginners-step-by-step-core-concepts",
+          "aws-services-overview-core-components",
+          "aws-ec2-and-s3-for-beginners"
+        ]
+      },
+      {
+        "title": "Plan and manage an architecture",
+        "intro": "Explore application tiers, infrastructure as code, and operational principles. Start with the design that matches your application, then use the drift and testing guides when you need to check whether deployed resources behave as intended.",
+        "slugs": [
+          "3-tier-architecture-on-aws-key-components",
+          "aws-multi-tier-patterns-best-practices",
+          "aws-engineering-blog-mastering-infrastructure-as-code",
+          "5-common-aws-iac-pitfalls-and-solutions",
+          "aws-cloudformation-drift-detection-guide",
+          "10-best-practices-for-end-to-end-testing-aws-apps",
+          "aws-operational-excellence-pillar-key-concepts",
+          "5-best-practices-for-aws-operational-excellence",
+          "aws-well-architected-framework-sustainability-pillar",
+          "5-principles-for-designing-sustainable-aws-architectures",
+          "aws-experts-share-top-cloud-strategies"
+        ]
+      },
+      {
+        "title": "Choose a certification path",
+        "intro": "Compare the developer and solutions architect paths before planning an exam. Scheduling and career guides address different questions from the implementation tutorials; keep those goals separate when deciding what to read next.",
+        "slugs": [
+          "aws-developer-vs-solutions-architect-certifications",
+          "how-to-schedule-aws-certification-exam-2025",
+          "aws-certifications-salary-and-job-market-impact"
+        ]
+      }
+    ]
+  },
+  {
+    "slug": "serverless",
+    "title": "Lambda and serverless development",
+    "description": "AWS Lambda, SAM, API Gateway, EventBridge, and Step Functions guides for building, testing, and troubleshooting serverless applications.",
+    "intro": "Follow a first Lambda function through local development, testing, and application integration. The sections separate setup from workflow design and production troubleshooting, so you can go directly to the task you are working on. For questions about the networks or security around these applications, continue to the networking and security topic guides.",
+    "startWith": "aws-lambda-getting-started-deploy-your-first-function",
+    "sections": [
+      {
+        "title": "Build and test a function",
+        "intro": "Start with a first function, then choose a SAM guide for your local development task. The unit-testing articles focus on application behavior; the pipeline guide covers the publishing workflow rather than local invocation.",
+        "slugs": [
+          "aws-lambda-getting-started-deploy-your-first-function",
+          "aws-lambda-getting-started-first-steps",
+          "aws-sam-local-setup-guide",
+          "test-aws-lambda-locally-with-sam-cli",
+          "test-serverless-apps-locally-with-aws-sam-cli",
+          "aws-sam-cli-local-development-tips",
+          "nodejs-unit-testing-for-aws-lambda-functions",
+          "aws-lambda-unit-testing-best-practices-2024",
+          "aws-sam-pipelines-setup-guide"
+        ]
+      },
+      {
+        "title": "Connect services and manage state",
+        "intro": "Use the comparison and pattern guides when your problem involves routing events, coordinating steps, or maintaining application state. The BFF guide addresses an application interface, while the saga and integration articles cover workflows spanning multiple operations.",
+        "slugs": [
+          "eventbridge-vs-sqs-choosing-the-right-event-router",
+          "10-eventbridge-best-practices-for-optimal-performance",
+          "enterprise-integration-patterns-with-aws-services",
+          "aws-step-functions-saga-pattern-implementation",
+          "5-patterns-for-resilient-serverless-state-management",
+          "session-management-in-aws-lambda-guide",
+          "serverless-bff-pattern-with-aws-lambda",
+          "aws-api-gateway-pricing-explained"
+        ]
+      },
+      {
+        "title": "Observe performance and control cost",
+        "intro": "Move from metric definitions to a focused troubleshooting or alerting task. Cold starts, error monitoring, and cost allocation are separate concerns; choose the guide that matches the symptom or operational decision you need to investigate.",
+        "slugs": [
+          "7-ways-to-mitigate-aws-lambda-cold-starts",
+          "aws-lambda-metrics-explained",
+          "how-to-analyze-lambda-metrics-in-cloudwatch",
+          "aws-lambda-insights-serverless-monitoring-guide",
+          "monitor-lambda-errors-with-cloudwatch",
+          "lambda-error-monitoring-best-practices",
+          "how-to-set-up-cloudwatch-alarms-for-lambda",
+          "how-to-use-cloudwatch-metrics-to-lower-lambda-costs",
+          "aws-serverless-cost-allocation-tagging-best-practices"
+        ]
+      }
+    ]
+  },
+  {
+    "slug": "compute-and-containers",
+    "title": "EC2 and container workloads",
+    "description": "EC2, Auto Scaling, Fargate, EBS, and HPC guides covering workload choices, scaling, monitoring, and performance.",
+    "intro": "Choose a compute model before diving into scaling and performance details. These guides cover virtual machines, container launch types, workload profiling, and related developer tools. Use the monitoring topic when your main task is defining metrics or alarms; use migration and cost guides when you are moving an existing application or evaluating its resource use.",
+    "startWith": "aws-ec2-basics-core-concepts-explained",
+    "sections": [
+      {
+        "title": "Choose and run compute",
+        "intro": "Build familiarity with EC2 instances and compare container launch types. The integration references explore supporting tools around a workload; they are distinct from the core instance or container setup path.",
+        "slugs": [
+          "aws-ec2-basics-core-concepts-explained",
+          "ec2-instance-families-comparison",
+          "fargate-vs-ec2-launch-type-comparison",
+          "aws-elastic-load-balancing-setup-guide",
+          "aws-codeartifact-intro-features-faqs",
+          "aws-app-mesh-for-service-mesh-integration"
+        ]
+      },
+      {
+        "title": "Scale an application",
+        "intro": "Begin with Auto Scaling setup, then compare dynamic and predictive behavior for the traffic pattern you are investigating. The high-availability article discusses scaling in a wider architecture context rather than replacing a complete recovery plan.",
+        "slugs": [
+          "aws-auto-scaling-setup-best-practices-tips",
+          "predictive-scaling-for-ec2-auto-scaling",
+          "predictive-scaling-vs-dynamic-scaling-in-aws",
+          "aws-engineering-blog-autoscaling-for-high-availability"
+        ]
+      },
+      {
+        "title": "Investigate workload performance",
+        "intro": "Use workload profiling and monitoring together to narrow a performance problem. EBS bottlenecks, instance right sizing, and Fargate metrics address different parts of the compute stack, so choose an entry that matches the resource or symptom you can observe.",
+        "slugs": [
+          "top-10-ebs-performance-bottlenecks-and-solutions",
+          "aws-ec2-right-sizing-cost-performance-optimization",
+          "hpc-workload-profiling-on-aws-best-practices",
+          "best-practices-for-hpc-monitoring-on-aws",
+          "aws-fargate-metrics-with-cloudwatch"
+        ]
+      }
+    ]
+  },
+  {
+    "slug": "storage",
+    "title": "S3 and storage",
+    "description": "AWS storage guides for S3 buckets, access management, storage classes, lifecycle rules, replication, backup, and file transfer.",
+    "intro": "Start with buckets and storage concepts, then explore the access, lifecycle, and transfer decisions around your data. Object storage, shared file systems, and backup address different workloads and are grouped separately below. For Glue, Redshift, or DynamoDB data workflows, continue to the data and AI topic guide.",
+    "startWith": "getting-started-with-aws-s3-essential-concepts",
+    "sections": [
+      {
+        "title": "Learn storage and access concepts",
+        "intro": "Read a bucket introduction before choosing a storage class or access-management guide. The EC2 and S3 introduction provides an application context when you are learning both compute and storage at the same time.",
+        "slugs": [
+          "getting-started-with-aws-s3-essential-concepts",
+          "learn-aws-s3-fundamentals",
+          "create-s3-bucket-on-aws-step-by-step-guide",
+          "aws-s3-getting-started-understanding-storage-classes",
+          "aws-s3-guide-understanding-access-management",
+          "aws-ec2-and-s3-for-beginners"
+        ]
+      },
+      {
+        "title": "Manage lifecycle and performance",
+        "intro": "Separate storage cost, data transfer, request performance, and audit requirements when choosing a guide. These articles let you explore each concern without having to repeat the basic bucket setup in every reading path.",
+        "slugs": [
+          "s3-lifecycle-rules-automate-storage-and-cut-costs",
+          "aws-s3-storage-optimization-12-best-practices",
+          "10-amazon-s3-performance-optimization-tips",
+          "data-compression-in-aws-s3-techniques-and-benefits",
+          "top-5-use-cases-for-s3-cross-region-replication",
+          "s3-access-logs-vs-cloudtrail-logs-when-to-use-each",
+          "aws-s3-cloudtrail-integration-guide-2024"
+        ]
+      },
+      {
+        "title": "Move and protect stored data",
+        "intro": "Use the file-system comparison to explore a workload choice, the DataSync article to troubleshoot transfers, and the backup guide to examine a protection task. Migration guides provide additional context when the source data or application still lives outside AWS.",
+        "slugs": [
+          "amazon-fsx-windows-file-server-vs-lustre",
+          "aws-datasync-troubleshooting-common-issues-and-solutions",
+          "aws-backup-cost-optimization-guide-2024"
+        ]
+      }
+    ]
+  },
+  {
+    "slug": "networking",
+    "title": "AWS networking",
+    "description": "VPC, Transit Gateway, Direct Connect, VPN, load balancing, and network troubleshooting guides for software engineers.",
+    "intro": "Begin with a VPC layout, then explore how applications connect inside AWS and to other networks. Configuration, connectivity diagnosis, and performance measurement are separate tasks in the sections below. For protection and access-control questions, use the security topic alongside these networking references.",
+    "startWith": "aws-vpc-tutorial-for-beginners-setup-and-configuration",
+    "sections": [
+      {
+        "title": "Design and connect a network",
+        "intro": "Start with the VPC introduction when you are planning an application network. The configuration and Direct Connect comparison guides help you identify the next subject; the load-balancing article connects networking to application traffic.",
+        "slugs": [
+          "aws-vpc-tutorial-for-beginners-setup-and-configuration",
+          "aws-vpc-guide-configuration-essentials",
+          "aws-direct-connect-vs-vpn-key-differences",
+          "aws-elastic-load-balancing-setup-guide"
+        ]
+      },
+      {
+        "title": "Manage Transit Gateway",
+        "intro": "Read the route-table guide for routing concepts, the limits guide for a scaling question, and the Network Manager article for a visualization task. Each addresses a different part of managing a network that spans multiple connections.",
+        "slugs": [
+          "aws-transit-gateway-route-tables-explained",
+          "aws-transit-gateway-scalability-and-limits-explained",
+          "visualize-aws-transit-gateways-with-network-manager"
+        ]
+      },
+      {
+        "title": "Troubleshoot and measure connectivity",
+        "intro": "Choose a troubleshooting guide for the connection that fails, then use mirroring or benchmarking when you need more evidence about traffic and performance. Dashboard troubleshooting covers the visibility tools as well as the network itself.",
+        "slugs": [
+          "troubleshoot-vpc-endpoint-connectivity",
+          "troubleshooting-aws-direct-connect-step-by-step",
+          "aws-network-dashboard-issues-troubleshooting-tips",
+          "aws-vpc-traffic-mirroring-packet-capture-basics",
+          "ultimate-guide-to-aws-network-performance-benchmarking"
+        ]
+      }
+    ]
+  },
+  {
+    "slug": "monitoring-and-reliability",
+    "title": "Monitoring and reliability",
+    "description": "CloudWatch metrics, alarms, dashboards, AWS Config, resilience patterns, and disaster recovery guides for operating AWS applications.",
+    "intro": "Build an observation path from metrics and logs to alarms and investigation. Then use the reliability section when your question involves recovery, fault testing, or behavior across services and regions. Workload-specific guides are grouped separately so you can choose an EC2, Lambda, container, database, or DynamoDB entry without reading an unrelated setup guide.",
+    "startWith": "cloudwatch-standard-vs-detailed-monitoring-key-differences",
+    "sections": [
+      {
+        "title": "Set up monitoring and alarms",
+        "intro": "Use the comparison to orient your monitoring question, then move to custom metrics, alarm conditions, or a dashboard integration. The Config guide concerns resource inventory and change tracking, which complements workload signals but serves a different task.",
+        "slugs": [
+          "cloudwatch-standard-vs-detailed-monitoring-key-differences",
+          "custom-cloudwatch-metrics-setup-guide-2024",
+          "cloudwatch-alarms-best-practices-for-thresholds-and-conditions",
+          "aws-cloudwatch-grafana-setup-guide",
+          "aws-logicmonitor-integration-7-best-practices",
+          "aws-devops-monitoring-metrics-tools-best-practices",
+          "aws-health-dashboards-monitoring-and-debugging-guide",
+          "aws-config-resource-inventory-change-tracking-guide"
+        ]
+      },
+      {
+        "title": "Investigate a workload",
+        "intro": "Pick the guide for the service and symptom you are investigating. Metric definitions, recovery alarms, and error-monitoring practices have different scopes; use them together when you need to connect an observed signal to an operational response.",
+        "slugs": [
+          "how-to-monitor-ec2-with-cloudwatch",
+          "cloudwatch-alarms-automate-ec2-recovery",
+          "aws-fargate-metrics-with-cloudwatch",
+          "aws-lambda-metrics-explained",
+          "aws-lambda-insights-serverless-monitoring-guide",
+          "monitor-lambda-errors-with-cloudwatch",
+          "key-cloudwatch-metrics-for-dynamodb-performance",
+          "aws-performance-insights-monitoring-rds-databases"
+        ]
+      },
+      {
+        "title": "Plan and test resilience",
+        "intro": "Begin with the recovery-pattern comparison or cross-service resilience guide, then explore fault injection and automated recovery testing. Multi-region active-active design has its own application and data decisions, so keep that architectural question distinct from a single alarm or retry policy.",
+        "slugs": [
+          "aws-dr-pilot-light-vs-warm-standby",
+          "aws-cross-service-resilience-patterns",
+          "automated-disaster-recovery-testing-with-aws",
+          "aws-fault-injection-service-simulate-outages-test-resilience",
+          "multi-region-active-active-architecture-on-aws-guide"
+        ]
+      }
+    ]
+  },
+  {
+    "slug": "data-and-ai",
+    "title": "Databases, data pipelines, and AI",
+    "description": "AWS guides for RDS, DynamoDB, Redshift, Glue, Comprehend, and SageMaker, covering databases, data pipelines, and machine learning workflows.",
+    "intro": "Choose a database or data workflow before selecting its setup and troubleshooting guides. RDS, DynamoDB, analytics pipelines, and language or machine-learning tasks are grouped by the reader outcome they address. For the storage around these workflows, use the S3 topic; for operational signals, use monitoring and reliability.",
+    "startWith": "aws-redshift-tutorial-for-beginners-first-steps",
+    "sections": [
+      {
+        "title": "Work with relational and key-value databases",
+        "intro": "Start with a migration or database-specific performance problem, then choose the relevant monitoring or export guide. DynamoDB capacity, throttling, and data exports address different tasks from managing a relational database instance.",
+        "slugs": [
+          "mysql-to-amazon-rds-migration-guide",
+          "aws-rds-blog-insights-performance-tuning",
+          "rightsizing-rds-instances-step-by-step-guide",
+          "aws-performance-insights-monitoring-rds-databases",
+          "dynamodb-burst-capacity-how-it-works",
+          "how-to-reduce-dynamodb-throttling-issues",
+          "key-cloudwatch-metrics-for-dynamodb-performance",
+          "dynamodb-export-to-s3-step-by-step-guide",
+          "schedule-dynamodb-exports-to-s3-with-lambda"
+        ]
+      },
+      {
+        "title": "Build analytics and ETL workflows",
+        "intro": "Read a service introduction before moving to data sharing, quality checks, or a combined Glue and Redshift workflow. The transformation-tools guide gives a broader entry point when you are still deciding which processing task you need to solve.",
+        "slugs": [
+          "aws-redshift-tutorial-for-beginners-first-steps",
+          "aws-glue-tutorial-for-beginners-core-concepts",
+          "automate-redshift-etl-with-aws-glue",
+          "amazon-redshift-data-sharing-setup-guide-2024",
+          "aws-glue-data-quality-best-practices-2024",
+          "aws-tools-for-batch-and-stream-data-transformation"
+        ]
+      },
+      {
+        "title": "Explore language and machine-learning tasks",
+        "intro": "Choose the article for the input and output of your task: language detection, key phrases, custom entities, labeled images, or experiment tracking. These focused paths help you explore a workflow without treating every AI service as interchangeable.",
+        "slugs": [
+          "language-detection-with-amazon-comprehend",
+          "aws-comprehend-api-key-phrase-extraction",
+          "custom-entity-recognition-in-aws-comprehend",
+          "image-dataset-labeling-with-sagemaker-ground-truth",
+          "sagemaker-experiments-setup-guide"
+        ]
+      }
+    ]
+  },
+  {
+    "slug": "security",
+    "title": "Security and governance",
+    "description": "AWS security guides for access management, WAF and Shield, runtime threats, Inspector, Security Hub, and migration governance.",
+    "intro": "Use these guides to explore access, application protection, security findings, and governance around AWS workloads. Choose the section that matches the boundary or operational task you are working on. Network configuration and workload setup remain in their own topic guides, so you can connect them to a specific security question instead of starting from a general service list.",
+    "startWith": "aws-hybrid-cloud-security-compliance-best-practices",
+    "sections": [
+      {
+        "title": "Manage access and workload boundaries",
+        "intro": "Start with access-management or event-security questions, then explore serverless network boundaries and hybrid-cloud governance. These references cover different application and infrastructure contexts; choose the one that matches the workload you need to understand.",
+        "slugs": [
+          "aws-s3-guide-understanding-access-management",
+          "eventbridge-security-best-practices",
+          "9-serverless-network-security-best-practices",
+          "aws-hybrid-cloud-security-compliance-best-practices"
+        ]
+      },
+      {
+        "title": "Protect and investigate applications",
+        "intro": "Use the WAF integration or CloudFront protection guide for a particular application context. The threat-detection and cross-account scanning guides focus on finding and coordinating security signals, while the pricing reference addresses a separate cost decision.",
+        "slugs": [
+          "integrating-aws-waf-with-app-runner",
+          "cloudfront-ddos-protection-aws-shield-best-practices",
+          "aws-waf-and-shield-pricing-explained",
+          "detect-runtime-threats-in-fargate-workloads",
+          "automate-cross-account-security-scans-amazon-inspector-aws-security-hub",
+          "how-automation-rules-work-in-aws-security-hub"
+        ]
+      },
+      {
+        "title": "Plan migration governance",
+        "intro": "Read the migration checklist and compliance guide alongside a migration plan. Resource inventory and change tracking can provide another view of the environment, without replacing the specific access and workload requirements of a migration.",
+        "slugs": [
+          "aws-migration-security-10-point-checklist",
+          "how-to-ensure-compliance-in-aws-migrations",
+          "aws-config-resource-inventory-change-tracking-guide"
+        ]
+      }
+    ]
+  },
+  {
+    "slug": "migration-and-costs",
+    "title": "Migration and cost optimization",
+    "description": "AWS migration and cost guides covering application assessment, modernization, resource right sizing, tagging, storage, and API pricing.",
+    "intro": "Move from assessing an existing application to choosing a migration path and evaluating the result. Cost guides are grouped separately from migration execution because resource usage, pricing, and organizational allocation are different decisions. Use the compute, storage, and data topics to continue into the services used by your chosen workload.",
+    "startWith": "aws-migration-readiness-application-portfolio-analysis",
+    "sections": [
+      {
+        "title": "Assess and plan a migration",
+        "intro": "Start with the application portfolio and legacy-code assessment guides. Cost comparison, security, compliance, and workforce preparation add different perspectives to that plan; use them to identify questions before choosing implementation steps.",
+        "slugs": [
+          "aws-migration-readiness-application-portfolio-analysis",
+          "analyze-legacy-code-for-aws-migration-5-strategies",
+          "aws-vs-on-premises-cost-analysis-for-modernization",
+          "aws-workforce-upskilling-for-legacy-system-modernization",
+          "aws-migration-security-10-point-checklist",
+          "how-to-ensure-compliance-in-aws-migrations"
+        ]
+      },
+      {
+        "title": "Modernize and verify a workload",
+        "intro": "Choose a container, serverless, content, or database migration guide that matches the source system. The post-migration benchmarking article then provides a separate path for investigating how the resulting workload performs.",
+        "slugs": [
+          "migrate-legacy-apps-to-aws-containers-7-strategies",
+          "aws-serverless-migration-legacy-app-modernization-guide",
+          "aws-content-migration-best-practices",
+          "mysql-to-amazon-rds-migration-guide",
+          "how-to-benchmark-aws-performance-after-migration"
+        ]
+      },
+      {
+        "title": "Allocate and optimize cost",
+        "intro": "Begin with cost allocation when you need to explain where spending belongs, or use right sizing and lifecycle guides for a specific resource decision. Pricing references address the named service; they should be read in the context of the workload and account you are evaluating.",
+        "slugs": [
+          "10-aws-cost-optimization-strategies-2024",
+          "checklist-for-aws-cost-allocation-tagging",
+          "aws-serverless-cost-allocation-tagging-best-practices",
+          "aws-ec2-right-sizing-cost-performance-optimization",
+          "rightsizing-rds-instances-step-by-step-guide",
+          "s3-lifecycle-rules-automate-storage-and-cut-costs",
+          "aws-backup-cost-optimization-guide-2024",
+          "aws-api-gateway-pricing-explained",
+          "aws-waf-and-shield-pricing-explained"
+        ]
+      }
+    ]
+  }
+]

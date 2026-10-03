@@ -10,29 +10,29 @@ heroImage: "/assets/media/81e2e531581aae3e21fb.jpg"
 permalink: "/blog/schedule-dynamodb-exports-to-s3-with-lambda/"
 sourceUrl: "https://awsforengineers.com/blog/schedule-dynamodb-exports-to-s3-with-lambda/"
 dateModified: "2026-10-03"
-updateNote: "Added author attribution and profile information."
+updateNote: "Added author attribution and profile information; corrected the article heading hierarchy and added article navigation."
 ---
 <p><strong>Want to automate DynamoDB backups to S3?</strong> Here’s how you can set up an <a href="https://docs.aws.amazon.com/lambda/" rel="nofollow noopener noreferrer" target="_blank">AWS Lambda</a> function to schedule DynamoDB exports, ensuring consistent backups and easier data recovery.</p>
-<h3 id="key-steps">Key Steps:</h3>
+<h2 id="key-steps">Key Steps:</h2>
 <ol>
 <li><strong>Enable Point-in-Time Recovery (PITR)</strong> on your DynamoDB table to allow exporting data from any point within the last 35 days.</li>
 <li><strong>Set up an <a href="/blog/learn-aws-s3-fundamentals/">S3 bucket</a></strong> with proper permissions to store the exported data.</li>
 <li><strong>Create a Lambda function</strong> (Python or Node.js) to automate the export process, using environment variables for flexibility.</li>
 <li><strong>Schedule the Lambda function</strong> using <a href="https://docs.aws.amazon.com/eventbridge/" rel="nofollow noopener noreferrer" target="_blank">Amazon EventBridge</a> to run at regular intervals (e.g., daily, weekly).</li>
 </ol>
-<h3 id="tools-and-permissions">Tools and Permissions:</h3>
+<h2 id="tools-and-permissions">Tools and Permissions:</h2>
 <ul>
 <li><strong><a href="https://docs.aws.amazon.com/cli/" rel="nofollow noopener noreferrer" target="_blank">AWS CLI</a></strong>: For testing and deploying configurations.</li>
 <li><strong>IAM Role</strong>: Grant permissions for <code>dynamodb:ExportTableToPointInTime</code> and <code>s3:PutObject</code>.</li>
 <li><strong>CloudWatch</strong>: Monitor logs and export performance.</li>
 </ul>
-<h3 id="costs-to-consider">Costs to Consider:</h3>
+<h2 id="costs-to-consider">Costs to Consider:</h2>
 <ul>
 <li><strong>DynamoDB Exports</strong>: $0.10 per GB.</li>
 <li><strong><a href="/blog/getting-started-with-aws-s3-essential-concepts/">S3 Storage</a></strong>: $0.023 per GB/month (Standard).</li>
 <li><strong>Lambda</strong>: $0.20 per million requests.</li>
 </ul>
-<h3 id="benefits">Benefits:</h3>
+<h2 id="benefits">Benefits:</h2>
 <ul>
 <li><strong>Consistency</strong>: Automate regular backups.</li>
 <li><strong>Scalability</strong>: Handle large tables without affecting performance.</li>

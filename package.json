@@ -7,7 +7,7 @@
     "prebuild": "node scripts/clean-output.mjs",
     "build": "eleventy",
     "dev": "eleventy --serve",
-    "check": "node scripts/check-site.mjs"
+    "check": "node --test scripts/article-outline.test.mjs && node scripts/check-site.mjs"
   },
   "devDependencies": {
     "@11ty/eleventy": "^3.1.6",

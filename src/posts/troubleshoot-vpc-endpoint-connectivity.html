@@ -10,10 +10,10 @@ heroImage: "/assets/media/8d3022fbcf7bec13c482.jpg"
 permalink: "/blog/troubleshoot-vpc-endpoint-connectivity/"
 sourceUrl: "https://awsforengineers.com/blog/troubleshoot-vpc-endpoint-connectivity/"
 dateModified: "2026-10-03"
-updateNote: "Added author attribution and profile information."
+updateNote: "Added author attribution and profile information; corrected the article heading hierarchy and added article navigation."
 ---
 <p>VPC endpoints connect your <a href="https://aws.amazon.com/" rel="nofollow noopener noreferrer" target="_blank">AWS</a> Virtual Private Cloud (VPC) to <a href="https://aws.amazon.com/" rel="nofollow noopener noreferrer" target="_blank">AWS</a> services securely without using the public internet. Problems with these connections often arise from misconfigurations in DNS settings, security groups, NACLs, routing, or resource limits. Here's what you need to know to quickly identify and fix these issues:</p>
-<h3 id="key-steps-to-troubleshoot">Key Steps to Troubleshoot:</h3>
+<h2 id="key-steps-to-troubleshoot">Key Steps to Troubleshoot:</h2>
 <ul>
 <li><strong>Check Endpoint Status</strong>: Use the AWS Console or CLI to confirm the endpoint is "Available."</li>
 <li><strong>Verify Routing</strong>: Ensure route tables direct traffic to the endpoint.</li>
@@ -21,14 +21,14 @@ updateNote: "Added author attribution and profile information."
 <li><strong>Test DNS Settings</strong>: Confirm private DNS resolves to the endpoint's IP.</li>
 <li><strong>Inspect ENI Quotas</strong>: Ensure you haven’t exceeded Elastic Network Interface limits.</li>
 </ul>
-<h3 id="common-problems">Common Problems:</h3>
+<h2 id="common-problems">Common Problems:</h2>
 <ol>
 <li><strong>Security Issues</strong>: Blocked traffic due to restrictive rules in security groups or NACLs.</li>
 <li><strong>Routing Errors</strong>: Missing or incorrect routes in subnet route tables.</li>
 <li><strong>DNS Misconfigurations</strong>: Traffic bypassing the endpoint due to improper DNS setup.</li>
 <li><strong>ENI Limits</strong>: Endpoint creation fails if Elastic Network Interface quotas are exceeded.</li>
 </ol>
-<h3 id="tools-to-use">Tools to Use:</h3>
+<h2 id="tools-to-use">Tools to Use:</h2>
 <ul>
 <li><strong><a href="https://docs.aws.amazon.com/cli/" rel="nofollow noopener noreferrer" target="_blank">AWS CLI</a></strong>: Check endpoint status and troubleshoot failures.</li>
 <li><strong><a href="https://docs.aws.amazon.com/vpc/latest/userguide/flow-logs.html" rel="nofollow noopener noreferrer" target="_blank">VPC Flow Logs</a></strong>: Track traffic and pinpoint where it’s blocked.</li>

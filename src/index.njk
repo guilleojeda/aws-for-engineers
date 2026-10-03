@@ -33,6 +33,25 @@ permalink: /
 <section class="section section-soft">
   <div class="wrap">
     <div class="section-heading centered">
+      <h2>Explore AWS by topic</h2>
+      <p>Choose a subject, follow a starting guide, or find help for the task you are working on.</p>
+    </div>
+    <div class="topic-grid">
+      {% for topic in topics %}
+      <a class="topic-card" href="/topics/{{ topic.slug }}/">
+        <h3>{{ topic.title }}</h3>
+        <p>{{ topic.description }}</p>
+        <span>{{ topic | topicArticleCount }} guides →</span>
+      </a>
+      {% endfor %}
+    </div>
+    <p class="centered"><a href="/topics/">View all topic guides</a></p>
+  </div>
+</section>
+
+<section class="section section-soft">
+  <div class="wrap">
+    <div class="section-heading centered">
       <h2>Why Should Software Engineers Learn AWS?</h2>
       <p>Developer-focused AWS guides that skip the fluff</p>
     </div>

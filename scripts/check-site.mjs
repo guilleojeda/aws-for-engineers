@@ -6,6 +6,7 @@ const root = resolve("_site");
 const posts = resolve("src/posts");
 const failures = [];
 const identity = JSON.parse(readFileSync(resolve("src/_data/identity.json"), "utf8"));
+const topics = JSON.parse(readFileSync(resolve("src/_data/topics.json"), "utf8"));
 const profileUrl = `https://awsforengineers.com${identity.authorPath}`;
 const stylesheetVersion = createHash("sha256").update(readFileSync(resolve("src/assets/site.css"))).digest("hex").slice(0, 12);
 
@@ -60,10 +61,43 @@ const files = visit(root);
 const pages = files.filter((file) => file.endsWith(".html"));
 const articleFiles = readdirSync(posts).filter((file) => file.endsWith(".md") || file.endsWith(".html"));
 const articleSlugs = new Set(articleFiles.map((file) => file.replace(/\.(md|html)$/, "")));
+const archiveCount = Math.ceil(articleFiles.length / 15);
+const archivePaths = Array.from({ length: archiveCount }, (_, index) => index ? `/blog/page/${index + 1}/` : "/blog/");
+const archiveMetadata = [];
 if (articleFiles.length < 141) failures.push(`Expected at least 141 migrated articles; found ${articleFiles.length}`);
 
 const sitemap = readFileSync(join(root, "sitemap.xml"), "utf8");
 const sitemapDates = new Map([...sitemap.matchAll(/<url>\s*<loc>([^<]+)<\/loc>(?:\s*<lastmod>([^<]+)<\/lastmod>)?\s*<\/url>/g)].map(([, url, modified]) => [url, modified]));
+const topicSlugs = new Set();
+const articleTopics = new Map([...articleSlugs].map((slug) => [slug, []]));
+if (!topics.length || !existsSync(targetFor("/topics/")) || !sitemapDates.has("https://awsforengineers.com/topics/")) failures.push("Topic index is missing");
+for (const topic of topics) {
+  if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(topic.slug) || topicSlugs.has(topic.slug)) failures.push(`Invalid or duplicate topic slug: ${topic.slug}`);
+  topicSlugs.add(topic.slug);
+  const topicPath = `/topics/${topic.slug}/`;
+  const members = topic.sections.flatMap((section) => section.slugs);
+  if (!topic.title || !topic.description || !topic.intro || !topic.sections.length || topic.sections.some((section) => !section.title || !section.intro || !section.slugs.length)) failures.push(`Topic guide lacks curated content: ${topic.slug}`);
+  if (members.length !== new Set(members).size || !members.includes(topic.startWith)) failures.push(`Invalid topic reading path: ${topic.slug}`);
+  if (!existsSync(targetFor(topicPath)) || !sitemapDates.has(`https://awsforengineers.com${topicPath}`)) {
+    failures.push(`Topic guide is absent from output or sitemap: ${topicPath}`);
+  } else {
+    const topicHtml = readFileSync(targetFor(topicPath), "utf8");
+    const renderedMembers = [...topicHtml.matchAll(/<ul class="topic-articles">([\s\S]*?)<\/ul>/g)]
+      .flatMap(([, list]) => [...list.matchAll(/href="\/blog\/([^/]+)\/"/g)].map(([, slug]) => slug));
+    if (JSON.stringify(renderedMembers) !== JSON.stringify(members)) failures.push(`Topic reading path differs from its curated data: ${topic.slug}`);
+  }
+  for (const slug of members) {
+    if (!articleTopics.has(slug)) failures.push(`Topic references an unknown article: ${slug}`);
+    else articleTopics.get(slug).push(topicPath);
+  }
+}
+for (const [slug, memberships] of articleTopics) {
+  if (!memberships.length) failures.push(`Article is absent from topic guides: ${slug}`);
+}
+for (const path of ["/", "/topics/"]) {
+  const html = readFileSync(targetFor(path), "utf8");
+  for (const slug of topicSlugs) if (!html.includes(`href="/topics/${slug}/"`)) failures.push(`Topic is not linked from ${path}: ${slug}`);
+}
 if (identity.author.url !== profileUrl || identity.author["@id"] !== `${profileUrl}#person`) failures.push("Author identity and profile URL differ");
 if (!existsSync(targetFor(identity.authorPath)) || !sitemapDates.has(profileUrl)) failures.push("Author profile is missing from output or sitemap");
 for (const file of articleFiles) {
@@ -78,6 +112,7 @@ for (const file of pages) {
   const articleMatch = name.match(/^blog\/([^/]+)\/index\.html$/);
   if (articleMatch && !articleSlugs.has(articleMatch[1])) failures.push(`Stale article output: ${name}`);
   const html = readFileSync(file, "utf8");
+  if ([...html.matchAll(/<h1\b/g)].length !== 1) failures.push(`Expected one page H1: ${name}`);
   const schemas = schemasIn(html, name);
   if (!/<title>[^<]+<\/title>/.test(html)) failures.push(`Missing title: ${name}`);
   if (!/<link rel="canonical" href="https:\/\/awsforengineers\.com\//.test(html)) failures.push(`Missing canonical: ${name}`);
@@ -126,9 +161,40 @@ for (const file of pages) {
     const target = targetFor(url.replaceAll("&amp;", "&"));
     if (target && !existsSync(target)) failures.push(`Broken internal reference in ${name}: ${url}`);
   }
+  const archiveMatch = name === "blog/index.html" ? 1 : Number(name.match(/^blog\/page\/(\d+)\/index\.html$/)?.[1]);
+  if (archiveMatch) {
+    const title = html.match(/<title>([^<]+)<\/title>/)?.[1];
+    const description = html.match(/<meta name="description" content="([^"]+)"/)?.[1];
+    archiveMetadata.push({ title, description });
+    if (title !== `AWS Tutorials and Guides${archiveMatch > 1 ? ` Page ${archiveMatch}` : ""} | AWS for Engineers` || !description?.includes(`page ${archiveMatch} of ${archiveCount}`)) failures.push(`Archive metadata does not identify its page: ${name}`);
+    const canonical = html.match(/<link rel="canonical" href="([^"]+)"/)?.[1];
+    if (canonical !== `https://awsforengineers.com${archivePaths[archiveMatch - 1]}`) failures.push(`Archive canonical differs from its route: ${name}`);
+    const numbered = html.match(/<ol class="page-numbers">([\s\S]*?)<\/ol>/)?.[1] || "";
+    const numberedLinks = [...numbered.matchAll(/<a\b([^>]*)>(\d+)<\/a>/g)];
+    if (numberedLinks.length !== archiveCount || numberedLinks.some(([, attrs, label], index) => attribute(attrs, "href") !== archivePaths[index] || label !== String(index + 1))) failures.push(`Archive does not link every numbered page: ${name}`);
+    const current = numberedLinks.filter(([, attrs]) => attribute(attrs, "aria-current") === "page");
+    if (current.length !== 1 || attribute(current[0]?.[1] || "", "href") !== archivePaths[archiveMatch - 1]) failures.push(`Archive current-page state is incorrect: ${name}`);
+  }
   if (name.startsWith("blog/") && !name.includes("/page/") && name !== "blog/index.html") {
     if (!/<article class="article wrap">/.test(html)) failures.push(`Missing article container: ${name}`);
     if (!/<meta property="og:image"/.test(html)) failures.push(`Missing social image: ${name}`);
+    const body = (html.match(/<div class="article-body">([\s\S]*?)<div class="article-tail">/)?.[1] || "")
+      .replace(/<(script|style|textarea)\b[^>]*>[\s\S]*?<\/\1\s*>|<!--[\s\S]*?-->/gi, "");
+    const headings = [...body.matchAll(/<h([2-6])\b([^>]*)>([\s\S]*?)<\/h\1>/g)];
+    let previousRank = 1;
+    for (const [, rank] of headings) {
+      if (Number(rank) > previousRank + 1) failures.push(`Article heading skips a rank: ${name}`);
+      previousRank = Number(rank);
+    }
+    const sections = headings.filter(([, rank]) => rank === "2");
+    const sectionIds = sections.map(([, , attrs]) => attribute(attrs, "id"));
+    if (sectionIds.some((id) => !id) || new Set(sectionIds).size !== sectionIds.length) failures.push(`Article section anchors are missing or duplicated: ${name}`);
+    const contents = html.match(/<details class="article-contents">([\s\S]*?)<\/details>/)?.[1] || "";
+    const contentsIds = [...contents.matchAll(/href="#([^"]+)"/g)].map(([, id]) => decodeURIComponent(id));
+    if (sections.length >= 3 && JSON.stringify(contentsIds) !== JSON.stringify(sectionIds)) failures.push(`Article contents links do not match its sections: ${name}`);
+    const memberships = html.match(/<nav class="article-topics"[^>]*>([\s\S]*?)<\/nav>/)?.[1] || "";
+    const renderedTopics = [...memberships.matchAll(/href="([^"]+)"/g)].map(([, url]) => url);
+    if (JSON.stringify(renderedTopics) !== JSON.stringify(articleTopics.get(articleMatch?.[1]))) failures.push(`Article topic links do not match its membership: ${name}`);
     const articleSchemas = schemas.filter((schema) => schema["@type"] === "BlogPosting");
     if (articleSchemas.length !== 1) failures.push(`Expected one BlogPosting: ${name}`);
     const article = articleSchemas[0];
@@ -180,6 +246,8 @@ for (const file of pages) {
     if (!validDate(profile?.dateCreated) || !validDate(profile?.dateModified) || profileDate !== profile?.dateModified || sitemapDates.get(profileUrl) !== profile?.dateModified) failures.push("Profile dates are invalid or inconsistent");
   }
 }
+
+if (archiveMetadata.length !== archiveCount || new Set(archiveMetadata.map((item) => item.title)).size !== archiveCount || new Set(archiveMetadata.map((item) => item.description)).size !== archiveCount) failures.push("Archive metadata is missing or duplicated");
 
 if (!existsSync(join(root, "robots.txt"))) failures.push("Missing robots.txt");
 if (!existsSync(join(root, "404.html"))) failures.push("Missing 404.html");

@@ -1,0 +1,23 @@
+---
+layout: base.njk
+title: AWS Topic Guides for Software Engineers | AWS for Engineers
+description: Browse AWS guides by topic, from Lambda and S3 to networking, monitoring, databases, security, migration, and architecture.
+permalink: /topics/
+---
+<section class="topic-index wrap">
+  <header class="section-heading">
+    <p class="eyebrow">Learn and troubleshoot AWS</p>
+    <h1>AWS topic guides</h1>
+    <p>Find a starting point or a focused guide for the task you are working on. Each topic groups the existing articles into a reading path, with introductions, practical workflows, and troubleshooting references.</p>
+    <p>Prefer to browse by publication date? <a href="/blog/">View all {{ collections.posts | length }} articles</a>.</p>
+  </header>
+  <div class="topic-grid">
+    {% for topic in topics %}
+    <a class="topic-card" href="/topics/{{ topic.slug }}/">
+      <h2>{{ topic.title }}</h2>
+      <p>{{ topic.description }}</p>
+      <span>{{ topic | topicArticleCount }} guides →</span>
+    </a>
+    {% endfor %}
+  </div>
+</section>

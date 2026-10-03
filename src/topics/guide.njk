@@ -1,0 +1,33 @@
+---
+layout: base.njk
+pagination:
+  data: topics
+  size: 1
+  alias: topic
+  addAllPagesToCollections: true
+permalink: "/topics/{{ topic.slug }}/"
+eleventyComputed:
+  title: "{{ topic.title }} | AWS for Engineers"
+  description: "{{ topic.description }}"
+---
+<article class="topic-guide wrap">
+  <header class="section-heading">
+    <p class="eyebrow"><a href="/topics/">All topic guides</a></p>
+    <h1>{{ topic.title }}</h1>
+    <p>{{ topic.intro }}</p>
+    {% set startingPost = topic.startWith | postBySlug(collections.posts) %}
+    <p class="topic-start"><strong>Start here:</strong> <a href="{{ startingPost.url }}">{{ startingPost.data.title }}</a></p>
+  </header>
+  {% for section in topic.sections %}
+  <section class="topic-section">
+    <h2>{{ section.title }}</h2>
+    <p>{{ section.intro }}</p>
+    <ul class="topic-articles">
+      {% for slug in section.slugs %}{% set post = slug | postBySlug(collections.posts) %}
+      <li><a href="{{ post.url }}">{{ post.data.title }}</a></li>
+      {% endfor %}
+    </ul>
+  </section>
+  {% endfor %}
+  <p><a href="/topics/">Explore another topic</a> · <a href="/blog/">Browse all articles by date</a></p>
+</article>

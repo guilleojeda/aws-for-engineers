@@ -1,6 +1,7 @@
 import { eleventyImageTransformPlugin } from "@11ty/eleventy-img";
 import { createHash } from "node:crypto";
 import { readFileSync } from "node:fs";
+import { articleOutline } from "./scripts/article-outline.mjs";
 
 export default function (eleventyConfig) {
   eleventyConfig.addPlugin(eleventyImageTransformPlugin, {
@@ -40,6 +41,21 @@ export default function (eleventyConfig) {
     JSON.stringify(value).replace(/</g, "\\u003c").replace(/>/g, "\\u003e"),
   );
   eleventyConfig.addFilter("archivePageCount", (posts) => Math.ceil(posts.length / 15));
+  eleventyConfig.addFilter("articleOutline", articleOutline);
+  eleventyConfig.addFilter("sectionHref", (id) => `#${encodeURIComponent(id).replace(/'/g, "%27")}`);
+  eleventyConfig.addFilter("postBySlug", (slug, posts) => {
+    const post = posts.find((item) => item.url === `/blog/${slug}/`);
+    if (!post) throw new Error(`Topic guide references an unknown article: ${slug}`);
+    return post;
+  });
+  eleventyConfig.addFilter("topicArticleCount", (topic) =>
+    topic.sections.reduce((count, section) => count + section.slugs.length, 0),
+  );
+  eleventyConfig.addFilter("topicsForArticle", (topics, url) =>
+    topics.filter((topic) => topic.sections.some((section) =>
+      section.slugs.some((slug) => url === `/blog/${slug}/`),
+    )),
+  );
 
   return {
     dir: {

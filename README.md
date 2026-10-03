@@ -51,6 +51,10 @@ Use the actual update date and describe that article's change; the example recor
 
 The build automatically generates responsive images and intrinsic dimensions for ordinary HTML and Markdown images. Images are lazy-loaded by default; for a large image visible immediately at the start of a post, use an HTML image with `loading="eager"` and `fetchpriority="high"`. The listing templates already prioritize their first image. Give a custom image's `sizes` attribute the width it occupies if it differs from the standard article column. Source originals stay available for existing links and social previews.
 
+Add each new article's filename slug to the appropriate section in `src/_data/topics.json`. This curated record drives the topic guides, homepage topic cards, and article topic links; the build check rejects missing or unknown articles and duplicate membership within one guide. An article may belong to more than one relevant topic. Keep each topic's introduction, section explanations, and starting article useful to readers when extending a guide.
+
+Use H2 (`##`) for top-level article sections and H3 (`###`) for subsections; the layout supplies the page H1. Articles with at least three top-level sections get a generated “On this page” disclosure with links to those sections. Existing HTML heading IDs remain stable; the build supplies unique IDs when a heading has none. Archive navigation links every page directly and generates distinct metadata for each page.
+
 Pushing to `main` runs the [publishing workflow](.github/workflows/publish.yml). It builds and checks the entire site, uploads it to private S3, waits for CloudFront invalidation, and checks the AWS preview URL. The public domain uses the same CloudFront distribution, so the push also publishes the post there; there is no separate deployment command.
 
 The 141 historical articles are stored as HTML source files in `src/posts/`. They were imported from the live website because the Unicorn Platform ZIP did not include article content. They remain editable, but new posts should be Markdown. Keeping the imported bodies as HTML preserves code examples and tables exactly.

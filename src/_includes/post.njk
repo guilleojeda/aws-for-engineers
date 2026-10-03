@@ -6,10 +6,19 @@ isPost: true
   <header class="article-header">
     <h1>{{ title }}</h1>
     <p class="article-byline">By <a href="{{ identity.authorPath }}" rel="author">{{ identity.author.name }}</a></p>
+    {% set articleTopics = topics | topicsForArticle(page.url) %}
+    {% if articleTopics | length %}<nav class="article-topics" aria-label="Article topics">
+      {% for topic in articleTopics %}<a href="/topics/{{ topic.slug }}/">{{ topic.title }}</a>{% endfor %}
+    </nav>{% endif %}
     <p class="article-date">Published on <time datetime="{{ datePublished or date }}">{{ date | humanDate }}</time>{% if dateModified %} · Updated on <time datetime="{{ dateModified }}">{{ dateModified | humanDate }}</time>{% endif %}</p>
     {% if updateNote %}<p class="article-update-note">{{ updateNote }}</p>{% endif %}
   </header>
-  <div class="article-body">{{ content | safe }}</div>
+  {% set outline = content | articleOutline %}
+  {% if outline.sections | length >= 3 %}<details class="article-contents">
+    <summary>On this page</summary>
+    <ol>{% for section in outline.sections %}<li><a href="{{ section.id | sectionHref }}">{{ section.label | safe }}</a></li>{% endfor %}</ol>
+  </details>{% endif %}
+  <div class="article-body">{{ outline.content | safe }}</div>
   <div class="article-tail">
     <section class="article-author" aria-label="About the author">
       <h2><a href="{{ identity.authorPath }}" rel="author">{{ identity.author.name }}</a></h2>

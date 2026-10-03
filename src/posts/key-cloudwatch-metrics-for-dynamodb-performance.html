@@ -10,7 +10,7 @@ heroImage: "/assets/media/6590cedeb344b13f897e.jpg"
 permalink: "/blog/key-cloudwatch-metrics-for-dynamodb-performance/"
 sourceUrl: "https://awsforengineers.com/blog/key-cloudwatch-metrics-for-dynamodb-performance/"
 dateModified: "2026-10-03"
-updateNote: "Added author attribution and profile information."
+updateNote: "Added author attribution and profile information; corrected the article heading hierarchy and added article navigation."
 ---
 <ul>
 <li><strong>Throughput Metrics</strong>: Monitor <code>ConsumedReadCapacityUnits</code> and <code>ConsumedWriteCapacityUnits</code> to track usage and avoid throttling. Compare with <code>ProvisionedReadCapacityUnits</code> and <code>ProvisionedWriteCapacityUnits</code> to identify over- or under-provisioning.</li>
@@ -19,7 +19,7 @@ updateNote: "Added author attribution and profile information."
 <li><strong>Storage Metrics</strong>: Use <code>TableSizeBytes</code> and <code>ItemCount</code> to track data growth and plan capacity. Monitor <code>TimeToLiveDeletedItemCount</code> to ensure TTL deletions work as expected.</li>
 <li><strong>Throttling and Conflicts</strong>: Track <code>ThrottledRequests</code> to prevent capacity limits and <code>TransactionConflict</code> to resolve contention in concurrent transactions.</li>
 </ul>
-<h3 id="why-it-matters">Why it matters:</h3>
+<h2 id="why-it-matters">Why it matters:</h2>
 <p>CloudWatch provides real-time and historical insights into DynamoDB’s performance. Use these metrics to set alarms, auto-scale, and control costs. For example, configure alerts at 80% of capacity to avoid throttling, or switch to on-demand mode if utilization is consistently low. Monitoring these metrics ensures smooth operations and better cost efficiency.</p>
 <p>Want to dive deeper? Read on for actionable tips on fine-tuning DynamoDB with CloudWatch.</p>
 <h2 id="throughput-metrics">Throughput Metrics</h2>
