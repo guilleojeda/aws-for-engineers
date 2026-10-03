@@ -3,646 +3,73 @@ layout: post.njk
 templateEngineOverride: html
 tags: posts
 title: "10 Amazon S3 Performance Optimization Tips"
-description: "Learn 10 Amazon S3 performance optimization tips to make your storage faster, cheaper, and more efficient. Implement Intelligent Tiering, use S3 Transfer Acceleration, optimize key naming, and more."
+description: "Improve Amazon S3 performance with current guidance on request rates, prefixes, multipart transfers, byte-range reads, caching, and monitoring."
 date: "2024-07-07"
 datePublished: "2024-07-07T00:26:03.530000+00:00"
 heroImage: "/assets/media/8f45d96f322928a2ccab.jpg"
 permalink: "/blog/10-amazon-s3-performance-optimization-tips/"
 sourceUrl: "https://awsforengineers.com/blog/10-amazon-s3-performance-optimization-tips/"
 dateModified: "2026-10-03"
-updateNote: "Added author attribution and profile information."
+updateNote: "Corrected outdated prefix and S3 Select advice; refreshed transfer limits, storage-class guidance, caching, and monitoring."
 ---
-<p>Here's a quick guide to make your <a href="https://aws.amazon.com/s3/" target="_blank">Amazon S3</a> storage faster, cheaper, and more efficient:</p>
-<ol>
-<li>Implement Intelligent Tiering</li>
-<li>Use S3 Transfer Acceleration</li>
-<li>Optimize key naming conventions</li>
-<li>Use S3 Select for data retrieval</li>
-<li>Implement parallel processing</li>
-<li>Choose appropriate storage classes</li>
-<li>Enable Cross-Region Replication</li>
-<li>Optimize for prefix listings</li>
-<li>Implement caching mechanisms</li>
-<li>Monitor and analyze S3 performance</li>
-</ol>
-<figure><table>
-<thead>
-<tr>
-<th>Tip</th>
-<th>Improves Speed</th>
-<th>Reduces Cost</th>
-<th>Ease of Setup</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Intelligent Tiering</td>
-<td>✓</td>
-<td>✓</td>
-<td>Easy</td>
-</tr>
-<tr>
-<td>Transfer Acceleration</td>
-<td>✓</td>
-<td>-</td>
-<td>Easy</td>
-</tr>
-<tr>
-<td>Key Naming</td>
-<td>✓</td>
-<td>-</td>
-<td>Moderate</td>
-</tr>
-<tr>
-<td>S3 Select</td>
-<td>✓</td>
-<td>✓</td>
-<td>Easy</td>
-</tr>
-<tr>
-<td>Parallel Processing</td>
-<td>✓</td>
-<td>-</td>
-<td>Moderate</td>
-</tr>
-<tr>
-<td>Storage Classes</td>
-<td>✓</td>
-<td>✓</td>
-<td>Easy</td>
-</tr>
-<tr>
-<td>Cross-Region Replication</td>
-<td>✓</td>
-<td>-</td>
-<td>Easy</td>
-</tr>
-<tr>
-<td>Prefix Listings</td>
-<td>✓</td>
-<td>-</td>
-<td>Easy</td>
-</tr>
-<tr>
-<td>Caching</td>
-<td>✓</td>
-<td>✓</td>
-<td>Moderate</td>
-</tr>
-<tr>
-<td>Performance Monitoring</td>
-<td>✓</td>
-<td>✓</td>
-<td>Moderate</td>
-</tr>
-</tbody>
-</table></figure>
-<p>These tips help you move data faster, cut waiting times, and use cloud storage better. By applying them, you'll make your <a href="/blog/getting-started-with-aws-s3-essential-concepts/">S3 storage</a> faster, more reliable, and less costly.</p>
-<h2 id="related-video-from-youtube">Related video from YouTube</h2>
-<iframe allowfullscreen="" frameborder="0" loading="lazy" src="https://www.youtube.com/embed/_aXiRzKNk8E"></iframe><h2 id="1.-implement-intelligent-tiering">1. Implement Intelligent Tiering</h2>
-<h3 id="performance-impact">Performance Impact</h3>
-<p>Intelligent Tiering helps S3 storage work better. It moves data to the best storage tier based on how often you use it. This makes getting data faster, which is good for things like:</p>
-<ul>
-<li>Real-time data work</li>
-<li>Machine learning tasks</li>
-</ul>
-<h3 id="cost-efficiency">Cost Efficiency</h3>
-<p>Intelligent Tiering can help you save money. It moves data you don't use much to cheaper storage. This can cut costs a lot, especially if you have:</p>
-<ul>
-<li>Lots of data</li>
-<li>Data you use differently at different times</li>
-</ul>
-<h3 id="how-to-set-it-up">How to Set It Up</h3>
-<p>Setting up Intelligent Tiering is easy. You can do it through:</p>
-<ul>
-<li><a href="https://aws.amazon.com/console/" target="_blank">AWS Management Console</a></li>
-<li><a href="https://docs.aws.amazon.com/cli/" target="_blank">AWS CLI</a> commands</li>
-</ul>
-<p>Just turn it on for your S3 bucket and pick your storage tiers.</p>
-<h3 id="when-to-use-it">When to Use It</h3>
-<p>Intelligent Tiering works well for many uses:</p>
-<figure><table>
-<thead>
-<tr>
-<th>Use Case</th>
-<th>Example</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Data lakes</td>
-<td>Big data storage</td>
-</tr>
-<tr>
-<td>Machine learning</td>
-<td>AI apps</td>
-</tr>
-<tr>
-<td>Real-time processing</td>
-<td>Live data streams</td>
-</tr>
-<tr>
-<td>Backups</td>
-<td>Storing old data</td>
-</tr>
-</tbody>
-</table></figure>
-<h2 id="2.-utilize-s3-transfer-acceleration">2. Utilize S3 Transfer Acceleration</h2>
-<h3 id="performance-impact-1">Performance Impact</h3>
-<p>S3 Transfer Acceleration helps move files faster over long distances between you and S3 buckets. It uses <a href="https://aws.amazon.com/cloudfront/" target="_blank">CloudFront</a>'s network to send data through the best routes. This means:</p>
-<ul>
-<li>Faster transfers across continents</li>
-<li>Better for moving large amounts of data</li>
-<li>Improved speed for uploads from around the world</li>
-</ul>
-<h3 id="cost-and-setup">Cost and Setup</h3>
-<p>Using this feature costs extra, but it can save money over time. Here's what you need to know:</p>
-<figure><table>
-<thead>
-<tr>
-<th>Aspect</th>
-<th>Details</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Cost</td>
-<td>$0.04 to $0.08 per GB</td>
-</tr>
-<tr>
-<td>Billing</td>
-<td>Only charged if speed improves</td>
-</tr>
-<tr>
-<td>Setup</td>
-<td>Easy to turn on via S3 console, API, or CLI</td>
-</tr>
-<tr>
-<td>Compatibility</td>
-<td>Works with multi-part uploads</td>
-</tr>
-</tbody>
-</table></figure>
-<h3 id="when-to-use-it-1">When to Use It</h3>
-<p>S3 Transfer Acceleration works well for:</p>
-<ul>
-<li>Companies with offices worldwide uploading to one place</li>
-<li>Moving big files between continents often</li>
-<li>Using all available internet speed for S3 uploads</li>
-</ul>
-<h3 id="how-it-works">How It Works</h3>
-<p>1. Enable it for your S3 bucket 2. Use a special web address for transfers 3. Data travels mostly on AWS's fast network 4. Less time on the public internet means faster transfers</p>
-<h2 id="3.-optimize-key-naming-conventions">3. Optimize Key Naming Conventions</h2>
-<p>Using good key naming in Amazon S3 helps you find and manage your data better. It can make your S3 work faster and smoother.</p>
-<h3 id="how-it-affects-speed">How It Affects Speed</h3>
-<p>Bad key names can make S3 slow. Good key names can:</p>
-<ul>
-<li>Make data searches faster</li>
-<li>Cut down waiting times</li>
-<li>Help S3 work better overall</li>
-</ul>
-<h3 id="how-hard-is-it-to-do%3F">How Hard Is It to Do?</h3>
-<p>It's not hard to make good key names. You can use:</p>
-<ul>
-<li>Prefixes (like words at the start)</li>
-<li>Separators (like slashes or dashes)</li>
-<li>Folders (to group things)</li>
-</ul>
-<h3 id="when-to-use-it-2">When to Use It</h3>
-<p>Good key naming helps with:</p>
-<figure><table>
-<thead>
-<tr>
-<th>Use</th>
-<th>Example</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Data work</td>
-<td>Finding info for reports</td>
-</tr>
-<tr>
-<td>Cloud apps</td>
-<td>Storing and getting files</td>
-</tr>
-<tr>
-<td>Big data</td>
-<td>Keeping lots of files organized</td>
-</tr>
-</tbody>
-</table></figure>
-<h3 id="tips-for-good-key-names">Tips for Good Key Names</h3>
-<ol>
-<li>Use clear, short names</li>
-<li>Group similar things together</li>
-<li>Use numbers or dates if needed</li>
-<li>Keep a consistent style</li>
-</ol>
-<h2 id="4.-use-s3-select-for-better-data-retrieval">4. Use S3 Select for Better Data Retrieval</h2>
-<h3 id="how-it-helps-performance">How It Helps Performance</h3>
-<p>S3 Select makes your apps work faster by getting only the data you need. Instead of downloading whole files, it picks out just the parts you want. This can make things up to 4 times faster in some cases.</p>
-<h3 id="saving-money">Saving Money</h3>
-<p>S3 Select can cut costs too. By moving less data, you pay less for data transfer.</p>
-<h3 id="easy-to-set-up">Easy to Set Up</h3>
-<p>Using S3 Select isn't hard. You can use simple SQL to get your data. It works with different file types like CSV, JSON, and Parquet.</p>
-<h3 id="when-to-use-it-3">When to Use It</h3>
-<p>S3 Select is great for:</p>
-<figure><table>
-<thead>
-<tr>
-<th>Use Case</th>
-<th>Example</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Big data files</td>
-<td>Getting one column from a huge CSV</td>
-</tr>
-<tr>
-<td>Specific info needs</td>
-<td>Finding certain rows in a big table</td>
-</tr>
-<tr>
-<td>Working with <a href="https://aws.amazon.com/lambda/" target="_blank">AWS Lambda</a></td>
-<td>Making data jobs faster and cheaper</td>
-</tr>
-</tbody>
-</table></figure>
-<h3 id="how-it-works-1">How It Works</h3>
-<ol>
-<li>You tell S3 Select what data you want</li>
-<li>It looks inside your files without downloading them</li>
-<li>You get back just the data you asked for</li>
-<li>Your app works faster with less data to handle</li>
-</ol>
-<h2 id="5.-implement-parallel-processing">5. Implement Parallel Processing</h2>
-<h3 id="performance-impact-2">Performance Impact</h3>
-<p>Parallel processing can make Amazon S3 uploads much faster. It splits big files into small parts and sends them at the same time. This can cut upload times a lot, especially for large files.</p>
-<h3 id="cost-efficiency-1">Cost Efficiency</h3>
-<p>Using parallel processing can help save money on S3 uploads. It can:</p>
-<ul>
-<li>Reduce the number of S3 requests</li>
-<li>Lower the amount of data sent</li>
-</ul>
-<p>Both of these can lead to lower costs.</p>
-<h3 id="how-to-set-it-up-1">How to Set It Up</h3>
-<p>Setting up parallel processing in S3 is not hard. You can use:</p>
-<ul>
-<li><a href="https://docs.aws.amazon.com/sdk-for-java/" target="_blank">AWS SDK for Java</a></li>
-<li>AWS CLI</li>
-</ul>
-<p>Both let you set up multipart uploads easily.</p>
-<h3 id="when-to-use-it-4">When to Use It</h3>
-<p>Parallel processing works well for:</p>
-<figure><table>
-<thead>
-<tr>
-<th>Use Case</th>
-<th>Example</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Big data uploads</td>
-<td>Sending large datasets for analysis</td>
-</tr>
-<tr>
-<td>Moving large files</td>
-<td>Transferring between S3 buckets</td>
-</tr>
-<tr>
-<td>Cloud app file uploads</td>
-<td>Sending big files to S3-based apps</td>
-</tr>
-</tbody>
-</table></figure>
-<h3 id="how-it-works-2">How It Works</h3>
-<ol>
-<li>Break large files into small parts</li>
-<li>Upload parts at the same time</li>
-<li>S3 puts the parts back together</li>
-<li>Result: Faster uploads, less waiting</li>
-</ol>
-<h2 id="6.-use-appropriate-s3-storage-classes">6. Use Appropriate S3 Storage Classes</h2>
-<h3 id="how-it-affects-speed-1">How It Affects Speed</h3>
-<p>Picking the right <a href="/blog/aws-s3-getting-started-understanding-storage-classes/">S3 storage class</a> can make your data work faster. Each class is made for different ways of using data. If you choose the wrong one, getting your data might be slower.</p>
-<h3 id="saving-money-1">Saving Money</h3>
-<p>Using the best S3 storage class can help you spend less. For example, if you don't use some data often, putting it in Standard-IA or One Zone-IA can cost less than using Standard storage.</p>
-<h3 id="how-hard-is-it-to-do%3F-1">How Hard Is It to Do?</h3>
-<p>Setting up the right S3 storage class isn't too hard. You can use AWS tools to set it up. You can also use <a href="/blog/s3-lifecycle-rules-automate-storage-and-cut-costs/">S3 Lifecycle rules</a> to move data to cheaper storage over time.</p>
-<h3 id="when-to-use-each-class">When to Use Each Class</h3>
-<p>Here's a simple guide for when to use different S3 storage classes:</p>
-<figure><table>
-<thead>
-<tr>
-<th>Storage Class</th>
-<th>When to Use It</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Standard</td>
-<td>For data you use a lot and need fast</td>
-</tr>
-<tr>
-<td>Standard-IA</td>
-<td>For data you don't use much but need fast sometimes</td>
-</tr>
-<tr>
-<td>One Zone-IA</td>
-<td>For data you can make again, don't use much, but need fast sometimes</td>
-</tr>
-<tr>
-<td>Glacier</td>
-<td>For old data you rarely need</td>
-</tr>
-<tr>
-<td>Glacier Deep Archive</td>
-<td>For very old data you almost never need</td>
-</tr>
-</tbody>
-</table></figure>
-<h2 id="7.-enable-s3-cross-region-replication">7. Enable S3 Cross-Region Replication</h2>
-<h3 id="how-it-helps-performance-1">How It Helps Performance</h3>
-<p>S3 Cross-Region Replication (CRR) makes your data work faster and more reliably. It copies your data to different places, so users can get it quickly no matter where they are. This is good for apps used by people all over the world.</p>
-<h3 id="money-matters">Money Matters</h3>
-<p>CRR can cost more because you're storing data twice. But it can save money too:</p>
-<figure><table>
-<thead>
-<tr>
-<th>Cost Aspect</th>
-<th>Effect</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Storage</td>
-<td>Costs more (data stored twice)</td>
-</tr>
-<tr>
-<td>Data Transfer</td>
-<td>Costs less (less moving data between regions)</td>
-</tr>
-<tr>
-<td>Overall</td>
-<td>Can save money in the long run</td>
-</tr>
-</tbody>
-</table></figure>
-<h3 id="how-to-set-it-up-2">How to Set It Up</h3>
-<p>Setting up CRR is not hard. You can do it using:</p>
-<ul>
-<li>AWS Management Console</li>
-<li>AWS CLI</li>
-</ul>
-<p>You just need to:</p>
-<ol>
-<li>Make a rule for copying</li>
-<li>Pick where to copy from and to</li>
-<li>Set any extra options you want</li>
-</ol>
-<h3 id="when-to-use-it-5">When to Use It</h3>
-<p>CRR works well for:</p>
-<figure><table>
-<thead>
-<tr>
-<th>Use Case</th>
-<th>Example</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Backup plans</td>
-<td>Keeping data safe in case of problems</td>
-</tr>
-<tr>
-<td>Following data rules</td>
-<td>Storing data in specific countries</td>
-</tr>
-<tr>
-<td>Making apps faster</td>
-<td>Helping global users get data quickly</td>
-</tr>
-<tr>
-<td>Cutting data move costs</td>
-<td>Less need to move data between far-away places</td>
-</tr>
-</tbody>
-</table></figure>
-<h2 id="8.-optimize-for-prefix-listings">8. Optimize for Prefix Listings</h2>
-<h3 id="performance-impact-3">Performance Impact</h3>
-<p>Using good prefixes in S3 can make your data work faster. It helps you:</p>
-<ul>
-<li>Find data quicker</li>
-<li>Get data faster</li>
-<li>Make fewer calls to S3</li>
-</ul>
-<p>This is very helpful when you have lots of data.</p>
-<h3 id="how-to-do-it">How to Do It</h3>
-<p>Setting up prefix listings is not hard. You can:</p>
-<ul>
-<li>Use prefixes like dates (e.g., <code>2024-07-07</code>)</li>
-<li>Use separators (like <code>/</code> or <code>-</code>)</li>
-<li>Split work into parts to do more at once</li>
-</ul>
-<p>These steps help you sort and find data easily.</p>
-<h3 id="when-to-use-it-6">When to Use It</h3>
-<p>Prefix listings work well for:</p>
-<figure><table>
-<thead>
-<tr>
-<th>Use Case</th>
-<th>Example</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Log files</td>
-<td>Finding logs from a specific day</td>
-</tr>
-<tr>
-<td>Time-based data</td>
-<td>Getting sales data for a month</td>
-</tr>
-<tr>
-<td>Big data jobs</td>
-<td>Running reports on large datasets</td>
-</tr>
-</tbody>
-</table></figure>
-<h3 id="tips-for-good-prefixes">Tips for Good Prefixes</h3>
-<ol>
-<li>Use clear, short names</li>
-<li>Group similar things</li>
-<li>Use dates if it helps</li>
-<li>Keep the same style for all prefixes</li>
-</ol>
-<h2 id="9.-implement-caching-mechanisms">9. Implement Caching Mechanisms</h2>
-<h3 id="performance-impact-4">Performance Impact</h3>
-<p>Caching helps S3 work faster. It keeps often-used files close, so you can get them quickly. This is good for:</p>
-<ul>
-<li>Apps with many users</li>
-<li>Apps that need fast data access</li>
-</ul>
-<h3 id="cost-savings">Cost Savings</h3>
-<p>Caching can cut S3 costs by:</p>
-<ul>
-<li>Lowering the number of S3 requests</li>
-<li>Reducing data transfer costs</li>
-</ul>
-<h3 id="how-to-set-it-up-3">How to Set It Up</h3>
-<p>Setting up caching is easy with Amazon CloudFront. It works well with S3 and is simple to use.</p>
-<h3 id="when-to-use-it-7">When to Use It</h3>
-<p>Caching works well for:</p>
-<figure><table>
-<thead>
-<tr>
-<th>Use</th>
-<th>Example</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Websites</td>
-<td>Showing static content</td>
-</tr>
-<tr>
-<td>Video/Audio</td>
-<td>Playing media files</td>
-</tr>
-<tr>
-<td>Online Stores</td>
-<td>Showing product pictures</td>
-</tr>
-</tbody>
-</table></figure>
-<h3 id="how-it-works-3">How It Works</h3>
-<ol>
-<li>Store often-used files in cache</li>
-<li>Serve files from nearby locations</li>
-<li>Get data faster, use less bandwidth</li>
-<li>Save money on S3 requests and data transfer</li>
-</ol>
-<h2 id="10.-monitor-and-analyze-s3-performance">10. Monitor and Analyze S3 Performance</h2>
-<p>Keeping an eye on how S3 works helps make sure your storage runs well. This means watching things like how fast data moves, how much the computer works, and how much memory it uses. By doing this, you can find and fix problems.</p>
-<h3 id="how-it-helps-speed">How It Helps Speed</h3>
-<p>When S3 doesn't work well, it can:</p>
-<ul>
-<li>Make getting data slower</li>
-<li>Move less data at once</li>
-<li>Cost more money</li>
-</ul>
-<p>By watching how S3 works, you can make it faster and work better.</p>
-<h3 id="saving-money-2">Saving Money</h3>
-<p>Looking at how S3 works can help you spend less. You can:</p>
-<ul>
-<li>Cut down on moving data costs</li>
-<li>Lower the number of times you ask S3 for things</li>
-</ul>
-<h3 id="how-hard-is-it-to-do%3F-2">How Hard Is It to Do?</h3>
-<p>Watching S3 can be tricky because there's a lot to look at. But tools like AWS CloudWatch and <a href="https://docs.aws.amazon.com/AmazonS3/latest/userguide/analytics-storage-class.html" target="_blank">Amazon S3 Analytics</a> make it easier. These tools help you see what's going on with your S3.</p>
-<h3 id="when-to-use-it-8">When to Use It</h3>
-<p>Watching S3 is good for:</p>
-<figure><table>
-<thead>
-<tr>
-<th>Use</th>
-<th>Example</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Making storage better</td>
-<td>Finding slow parts and fixing them</td>
-</tr>
-<tr>
-<td>Spending less</td>
-<td>Seeing where you can cut costs</td>
-</tr>
-<tr>
-<td>Fixing problems</td>
-<td>Finding out why things aren't working right</td>
-</tr>
-</tbody>
-</table></figure>
-<h3 id="how-to-do-it-1">How to Do It</h3>
-<ol>
-<li>Use AWS tools to watch S3</li>
-<li>Look at how fast data moves and how much the computer works</li>
-<li>Find parts that are slow or cost too much</li>
-<li>Make changes to fix problems</li>
-<li>Keep watching to see if things get better</li>
-</ol>
-<h2 id="wrap-up">Wrap-up</h2>
-<p>We've looked at 10 ways to make Amazon S3 work better and cost less. Here's a quick recap of what we covered:</p>
-<figure><table>
-<thead>
-<tr>
-<th>Tip</th>
-<th>What it does</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Intelligent Tiering</td>
-<td>Moves data to save money</td>
-</tr>
-<tr>
-<td>S3 Transfer Acceleration</td>
-<td>Speeds up file transfers</td>
-</tr>
-<tr>
-<td>Good key naming</td>
-<td>Helps find data faster</td>
-</tr>
-<tr>
-<td>S3 Select</td>
-<td>Gets only the data you need</td>
-</tr>
-<tr>
-<td>Parallel processing</td>
-<td>Uploads big files faster</td>
-</tr>
-<tr>
-<td>Right storage classes</td>
-<td>Balances speed and cost</td>
-</tr>
-<tr>
-<td>Cross-Region Replication</td>
-<td>Copies data for faster access</td>
-</tr>
-<tr>
-<td>Prefix listings</td>
-<td>Sorts data for quicker finds</td>
-</tr>
-<tr>
-<td>Caching</td>
-<td>Keeps often-used files close</td>
-</tr>
-<tr>
-<td>Watching S3 performance</td>
-<td>Finds and fixes problems</td>
-</tr>
-</tbody>
-</table></figure>
-<p>By using these tips, you can:</p>
-<ul>
-<li>Make data move faster</li>
-<li>Pay less for storage</li>
-<li>Make S3 work better overall</li>
-<li>Give users a better experience</li>
-</ul>
-<p>Keep in mind that making S3 work well is something you need to do all the time. By keeping an eye on how S3 is doing and making changes when needed, you can make sure your storage:</p>
-<ul>
-<li>Works well</li>
-<li>Doesn't cost too much</li>
-<li>Can grow as you need it to</li>
-</ul>
-<p>
-<h2>Related posts</h2>
-<ul>
-<li><a href="/blog/learn-aws-s3-fundamentals/">Learn AWS S3 Fundamentals</a></li><li><a href="/blog/top-10-ebs-performance-bottlenecks-and-solutions/">Top 10 EBS Performance Bottlenecks &amp; Solutions</a></li><li><a href="/blog/aws-s3-getting-started-understanding-storage-classes/">AWS S3 Getting Started: Understanding Storage Classes</a></li><li><a href="/blog/getting-started-with-aws-s3-essential-concepts/">Getting Started with AWS S3: Essential Concepts</a></li>
-</ul>
-</p>
+<p>Amazon S3 performance depends on the bottleneck: request rate, bytes transferred, network distance, repeated reads, or the application doing the work. Start by measuring that path, then choose the matching change. S3 scales automatically, but high throughput still depends on sensible request concurrency, workload placement, and retry behavior. AWS’s <a href="https://docs.aws.amazon.com/AmazonS3/latest/userguide/optimizing-performance.html" target="_blank" rel="noopener noreferrer">S3 performance guidance</a> is a useful reference as limits and features evolve.</p>
+
+<h2 id="1.-place-compute-near-your-bucket">1. Place compute near the bucket</h2>
+<h3 id="performance-impact">Reduce network distance inside AWS</h3>
+<p>When an application runs on AWS, place its compute in the same Region as its S3 bucket where possible. This reduces network distance and can lower data-transfer costs. Measure end-to-end latency from the application: client-side DNS, connection setup, network throughput, and application processing can all affect the result. For users far from the bucket, evaluate Transfer Acceleration for uploads or CloudFront for repeated reads instead of moving the bucket without checking data residency and access patterns. See AWS’s <a href="https://docs.aws.amazon.com/AmazonS3/latest/userguide/optimizing-performance-guidelines.html" target="_blank" rel="noopener noreferrer">performance guidance on placing compute and storage</a>.</p>
+
+<h2 id="2.-utilize-s3-transfer-acceleration">2. Test Transfer Acceleration for distant client transfers</h2>
+<h3 id="performance-impact-1">When distance is the bottleneck</h3>
+<p><a href="https://docs.aws.amazon.com/AmazonS3/latest/userguide/transfer-acceleration.html" target="_blank" rel="noopener noreferrer">S3 Transfer Acceleration</a> routes data between a client and a general purpose bucket through a nearby AWS edge location and an optimized network path. It can help when clients far from the bucket upload large objects or transfer data across continents. It does not cache objects for later readers; that is a CloudFront use case.</p>
+<p>Enable the feature on the bucket, send requests to its S3 Accelerate endpoint, and compare it with the regular endpoint using the <a href="https://s3-accelerate-speedtest.s3-accelerate.amazonaws.com/en/accelerate-speed-comparsion.html" target="_blank" rel="noopener noreferrer">Transfer Acceleration speed comparison tool</a> from representative client locations. Keep it only if measured transfer time justifies its additional charges. The bucket name must be DNS-compatible and cannot contain periods.</p>
+
+<h2 id="3.-optimize-key-naming-conventions">3. Keep logical keys; add prefixes only for a measured need</h2>
+<h3 id="how-it-affects-speed">What key names affect</h3>
+<p>S3 keys are object identifiers, and prefixes are useful for organizing data and narrowing list operations. Use names that fit the application’s retrieval and query patterns—for example, a tenant, dataset, or date prefix when the application commonly reads or lists by that field. Do not add random characters to keys just to make S3 faster. AWS removed that older recommendation in 2018; modern S3 automatically scales and supports logical or sequential key names.</p>
+<p>AWS documents request rates of at least 3,500 PUT/COPY/POST/DELETE requests or 5,500 GET/HEAD requests per second per partitioned prefix as a scaling example. These figures are not a promise for every workload, and S3 may take time to scale to a new sustained request rate. If measurements show one prefix is the bottleneck, distribute that workload across multiple meaningful prefixes and issue requests concurrently. Avoid sharding every key in advance; it complicates listing and application logic without helping a workload that does not need the extra request rate.</p>
+<h3 id="tips-for-good-key-names">Use logical names and rely on strong consistency</h3>
+<p>S3 provides strong read-after-write consistency for object PUTs, overwrites, and deletes, including subsequent GET, HEAD, and LIST operations. After a successful write, applications do not need a sleep or a second read to wait for the new value to appear. Concurrent reads during an overwrite can return either the complete old object or the complete new object, not a partial object.</p>
+<p>See AWS documentation on <a href="https://aws.amazon.com/about-aws/whats-new/2018/07/amazon-s3-announces-increased-request-rate-performance/" target="_blank" rel="noopener noreferrer">the removal of random-prefix guidance</a> and the current <a href="https://docs.aws.amazon.com/AmazonS3/latest/userguide/Welcome.html" target="_blank" rel="noopener noreferrer">S3 consistency model</a>.</p>
+
+<h2 id="4.-use-s3-select-for-better-data-retrieval">4. Reduce bytes read for selective queries</h2>
+<h3>Filter only when the workload supports it</h3>
+<p>Reading only the records or columns an application needs can reduce transferred bytes and the work done by the client. Existing S3 Select customers can use it to filter supported objects; AWS no longer makes the feature available to new customers. For new analytics workloads, evaluate a query engine such as <a href="https://docs.aws.amazon.com/athena/latest/ug/what-is.html" target="_blank" rel="noopener noreferrer">Amazon Athena</a> or filter in the application when that fits the format and workload.</p>
+<p>Do not assume that server-side filtering always makes a request faster. Compare bytes read, request and query cost, latency, and compute time for the actual data and query. Check the <a href="https://docs.aws.amazon.com/AmazonS3/latest/userguide/s3-select-sql-reference-select.html" target="_blank" rel="noopener noreferrer">S3 Select documentation</a> for supported formats and its current availability.</p>
+
+<h2 id="5.-implement-parallel-processing">5. Use multipart uploads and parallel reads for large objects</h2>
+<h3 id="performance-impact-2">Choose an upload method by object size</h3>
+<p>For large uploads, multipart upload lets an application send independent parts, retry only failed parts, and upload several parts concurrently. AWS recommends considering multipart upload at about 100 MB. A single PUT supports up to 5 GB. AWS’s upload guide describes objects up to 50 TB, while its detailed multipart limits table specifies 48.8 TiB; those pages express the ceiling differently, so check the current service documentation before designing close to the maximum. Multipart uploads allow up to 10,000 parts, each from 5 MiB to 5 GiB; the last part can be smaller.</p>
+<h3 id="how-to-set-it-up-1">Set part size and concurrency</h3>
+<p>Set part size and concurrency for the client’s bandwidth, memory, CPU, and retry needs. More simultaneous parts can raise throughput until the client, network, or destination becomes the limit, and they also increase in-flight work and request count. Use a current AWS SDK transfer manager where possible, validate object checksums, and configure lifecycle cleanup for abandoned multipart uploads because uploaded parts remain billable until the upload is completed or aborted.</p>
+<h3>Parallelize downloads when a single stream is not enough</h3>
+<p>For a large object, issue concurrent <code>GetObject</code> requests with separate byte ranges, then assemble the returned ranges in order. Range GETs can improve aggregate throughput and limit the amount that must be retried after a failed transfer. Keep the range plan within the client’s network and memory budget. If an object can be overwritten during a multi-request download, pin all requests to the same version or use a conditional request so the assembled file cannot silently mix object versions.</p>
+<p>A single <code>GetObject</code> response is limited to 5 TB even when the object is larger. Objects above that size require concurrent range or part-number GET requests. See AWS’s current <a href="https://docs.aws.amazon.com/AmazonS3/latest/userguide/upload-objects.html" target="_blank" rel="noopener noreferrer">upload guidance</a>, <a href="https://docs.aws.amazon.com/AmazonS3/latest/userguide/qfacts.html" target="_blank" rel="noopener noreferrer">multipart limits</a>, and <a href="https://docs.aws.amazon.com/AmazonS3/latest/userguide/download-objects.html" target="_blank" rel="noopener noreferrer">download guidance</a>.</p>
+
+<h2 id="6.-use-appropriate-s3-storage-classes">6. Match the storage class to latency and resilience needs</h2>
+<h3 id="how-it-affects-speed-1">Storage classes control latency, cost, and resilience</h3>
+<p>Choose a class from the workload’s retrieval-time, availability, resilience, and cost requirements. S3 Standard, Standard-IA, and One Zone-IA provide millisecond retrieval; the Infrequent Access classes also have retrieval charges and minimum-storage considerations. S3 Glacier Instant Retrieval also provides millisecond access, with retrieval charges and a minimum storage duration. <a href="https://docs.aws.amazon.com/AmazonS3/latest/userguide/archived-objects.html" target="_blank" rel="noopener noreferrer">Glacier Flexible Retrieval and Deep Archive require a restore before download</a>, with retrieval times depending on the class and option.</p>
+<p>S3 Intelligent-Tiering automates cost choices as access patterns change; it is not a request-throughput accelerator. Its Frequent Access, Infrequent Access, and Archive Instant Access tiers retain low-latency reads. The optional Archive Access and Deep Archive Access tiers require an asynchronous restore before an object can be read. Review the monitoring and tiering charges and restore behavior before enabling them. See AWS’s <a href="https://docs.aws.amazon.com/AmazonS3/latest/userguide/intelligent-tiering-overview.html" target="_blank" rel="noopener noreferrer">S3 Intelligent-Tiering tier descriptions</a> and <a href="https://docs.aws.amazon.com/AmazonS3/latest/userguide/storage-class-intro.html" target="_blank" rel="noopener noreferrer">storage-class comparison</a>.</p>
+<p>For an application that needs consistently low single-digit-millisecond object access, evaluate <a href="https://docs.aws.amazon.com/AmazonS3/latest/userguide/s3-express-performance.html" target="_blank" rel="noopener noreferrer">S3 Express One Zone</a>. It uses directory buckets and stores data in one Availability Zone, so it has different bucket, endpoint, and resilience characteristics from general purpose buckets. It is a fit only when the workload benefits from that latency and single-AZ placement is acceptable. Benchmark the application with its actual request sizes and access pattern before migrating.</p>
+
+<h2 id="7.-enable-s3-cross-region-replication">7. Use replication only when readers will use the replica</h2>
+<h3 id="how-it-helps-performance-1">Replication does not route reads by itself</h3>
+<p><a href="https://docs.aws.amazon.com/AmazonS3/latest/userguide/replication.html" target="_blank" rel="noopener noreferrer">Cross-Region Replication</a> can support a design that serves users from regional copies, but replication alone does not make a read from the source bucket faster or direct users to a destination bucket. Replication is asynchronous, so an application that reads a replica must account for replication delay, consistency needs, and regional routing or failover. For a global workload, compare this design with a CloudFront cache for repeatable content; use replication when regional copies serve a clear latency, recovery, or data-location requirement.</p>
+
+<h2 id="8.-optimize-for-prefix-listings">8. Make listings narrow and predictable</h2>
+<h3 id="performance-impact-3">List only what the caller needs</h3>
+<p>When the object key is known, request that object directly instead of listing a broad prefix and searching the response. When a listing is required, pass the narrowest useful <code>Prefix</code>, paginate through results, and use a delimiter only when the application needs grouped, folder-like results. A prefix is part of an object key, not a physical directory; adding slashes or changing key names does not by itself make a listing faster. The <a href="https://docs.aws.amazon.com/AmazonS3/latest/API/API_ListObjectsV2.html" target="_blank" rel="noopener noreferrer"><code>ListObjectsV2</code> API</a> describes how prefix filters, delimiters, and continuation tokens work.</p>
+<p>For recurring inventory or analysis over a large bucket, consider <a href="https://docs.aws.amazon.com/AmazonS3/latest/userguide/storage-inventory.html" target="_blank" rel="noopener noreferrer">S3 Inventory</a> or a catalog/query workflow rather than making every application request scan the same broad keyspace. Prefix filters are valuable when they reduce the objects a caller needs to enumerate, not as a substitute for measured request scaling.</p>
+
+<h2 id="9.-implement-caching-mechanisms">9. Cache repeated reads with CloudFront</h2>
+<h3 id="performance-impact-4">Use caching for reusable content</h3>
+<p>When many viewers request the same static or slowly changing objects, <a href="https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/HowCloudFrontWorks.html" target="_blank" rel="noopener noreferrer">CloudFront</a> can serve cache hits from edge locations closer to users, reduce origin requests to S3, and lower viewer latency. Set cache lifetimes and cache keys to match how the application updates content; use versioned object URLs or invalidations when readers must see a change immediately. CloudFront does not remove the need to handle cache misses, unique objects, or dynamic responses.</p>
+<p>In a broader web design, S3 can hold static assets while CloudFront handles delivery; see the <a href="/blog/3-tier-architecture-on-aws-key-components/#presentation-layer-user-interface-components">three-tier AWS architecture guide</a> for that placement in context.</p>
+<p>CloudFront is a content cache for repeat reads. Transfer Acceleration uses CloudFront edge locations to transport client data to or from S3 over an optimized path; it does not populate a CloudFront content cache. Choose between them by measuring the actual upload or viewer path.</p>
+
+<h2 id="10.-monitor-and-analyze-s3-performance">10. Measure the whole request path and handle 503s</h2>
+<h3 id="how-it-helps-speed">Track the signals that point to a bottleneck</h3>
+<p>Enable <a href="https://docs.aws.amazon.com/AmazonS3/latest/userguide/metrics-dimensions.html" target="_blank" rel="noopener noreferrer">S3 CloudWatch request metrics</a> for the bucket or a useful prefix filter, then compare request counts, 4xx/5xx errors, first-byte latency, and total request latency with application-level transfer time. S3 request metrics are opt-in, billed CloudWatch metrics, available at one-minute intervals after processing delay, and delivered on a best-effort basis; use them to find trends, not as a complete request ledger. Also check client CPU, memory, DNS time, network throughput, and compute-to-bucket Region distance.</p>
+<p>A 503 <code>Slow Down</code> can occur while S3 scales to a new sustained request rate. Use a current AWS SDK, which includes retries for S3 503s. If you implement custom retries, use bounded backoff and avoid retry storms that add more load. Monitor 5xx counts and retry rates; if they persist, inspect the request distribution across prefixes and check dependencies such as <a href="https://docs.aws.amazon.com/kms/latest/developerguide/limits.html" target="_blank" rel="noopener noreferrer">AWS KMS request quotas</a> for SSE-KMS workloads. AWS describes the behavior in its <a href="https://docs.aws.amazon.com/AmazonS3/latest/userguide/optimizing-performance.html" target="_blank" rel="noopener noreferrer">request-rate guidance</a> and <a href="https://docs.aws.amazon.com/AmazonS3/latest/userguide/optimizing-performance-guidelines.html" target="_blank" rel="noopener noreferrer">performance measurement and retry guidance</a>.</p>
+
+<h2 id="wrap-up">Apply the smallest change that matches the bottleneck</h2>
+<p>Measure first, change one part of the path, and measure again. Use prefixes to organize data and distribute genuinely high request rates; multipart transfers and byte ranges to use available bandwidth on large objects; Transfer Acceleration for long-distance client transfers; and CloudFront for repeated viewer reads. Storage classes, replication, and S3 Select each have distinct constraints, so choose them for their supported use case rather than assuming they are general-purpose speed switches.</p>

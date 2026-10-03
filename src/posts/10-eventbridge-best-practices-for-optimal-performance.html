@@ -3,603 +3,86 @@ layout: post.njk
 templateEngineOverride: html
 tags: posts
 title: "10 EventBridge Best Practices for Optimal Performance"
-description: "Learn the top 10 EventBridge best practices for optimal performance, including efficient event patterns, optimized rule evaluation, effective error handling, event batching, and more."
+description: "Learn how to choose EventBridge buses, Pipes, and Scheduler; design precise patterns; handle retries and duplicates; and plan around current quotas and replay behavior."
 date: "2024-07-31"
 datePublished: "2024-07-31T00:53:17.639000+00:00"
 heroImage: "/assets/media/ed26be81df2f1004f377.jpg"
 permalink: "/blog/10-eventbridge-best-practices-for-optimal-performance/"
 sourceUrl: "https://awsforengineers.com/blog/10-eventbridge-best-practices-for-optimal-performance/"
 dateModified: "2026-10-03"
-updateNote: "Added author attribution and profile information."
+updateNote: "Rewrote the guide to correct EventBridge delivery, batching, retry, and monitoring guidance; added current service distinctions, limits, replay considerations, and AWS documentation."
 ---
-<p>Here's a quick guide to using <a href="https://aws.amazon.com/eventbridge/" target="_blank">Amazon EventBridge</a> effectively:</p>
-<ol>
-<li>Design efficient event patterns</li>
-<li>Optimize rule evaluation</li>
-<li>Implement effective error handling</li>
-<li>Use event batching</li>
-<li>Set up proper retry mechanisms</li>
-<li>Monitor and alert on key metrics</li>
-<li>Choose the right targets</li>
-<li>Filter events at the source</li>
-<li>Use custom event buses wisely</li>
-<li>Set up good access controls</li>
-</ol>
-<figure><table>
-<thead>
-<tr>
-<th>Best Practice</th>
-<th>Benefits</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Efficient patterns</td>
-<td>Faster processing, lower costs</td>
-</tr>
-<tr>
-<td>Optimized rules</td>
-<td>Better performance, scalability</td>
-</tr>
-<tr>
-<td>Error handling</td>
-<td>Improved reliability, fewer issues</td>
-</tr>
-<tr>
-<td>Event batching</td>
-<td>Reduced API calls, faster processing</td>
-</tr>
-<tr>
-<td>Retry mechanisms</td>
-<td>Prevents data loss, ensures delivery</td>
-</tr>
-<tr>
-<td>Monitoring</td>
-<td>Quick problem detection, better decisions</td>
-</tr>
-<tr>
-<td>Right targets</td>
-<td>Faster handling, fewer mistakes</td>
-</tr>
-<tr>
-<td>Source filtering</td>
-<td>Reduced load, improved response time</td>
-</tr>
-<tr>
-<td>Custom buses</td>
-<td>Better organization, enhanced security</td>
-</tr>
-<tr>
-<td>Access controls</td>
-<td>Improved security, system reliability</td>
-</tr>
-</tbody>
-</table></figure>
-<p>These practices will help you get the most out of EventBridge, making your system faster, more reliable, and able to handle more work.</p>
-<h2 id="related-video-from-youtube">Related video from YouTube</h2>
-<iframe allowfullscreen="" frameborder="0" loading="lazy" src="https://www.youtube.com/embed/6X4lSPkn4ps"></iframe><h2 id="1.-efficient-event-pattern-design">1. Efficient Event Pattern Design</h2>
-<h3 id="performance-impact">Performance Impact</h3>
-<p>Good event pattern design is key for EventBridge to work well. Poor designs can cause:</p>
+<p>Amazon EventBridge can route events, connect a supported source directly to a target, or invoke an API on a schedule. Those jobs use different EventBridge features, and their delivery limits and recovery behavior differ. Use the practices below to choose the right feature, avoid lost or repeated work, and measure delivery rather than assuming a successful publish means the target completed its work.</p>
+<p><strong>Quick guide:</strong> use an event bus for event routing, Pipes for a point-to-point source-to-target connection, and EventBridge Scheduler for one-time or recurring time-based invocations. For each path, test filters, handle per-entry publish results, make side effects safe to repeat, and monitor the target.</p>
+<h2 id="1.-efficient-event-pattern-design">1. Define a Stable Event Contract</h2>
+<p>For Custom Event Bus - Classic, give each business event a stable <code>source</code> and <code>detail-type</code>, and document the fields and types in <code>detail</code>. A small, explicit contract makes producer and consumer changes easier to coordinate. Add a version field or use a new event type when a change would break existing consumers. The example below shows the Classic event envelope; the newer Custom Event Bus can also accept raw payloads with a different structure.</p>
+<pre><code>{
+  "source": "com.example.orders",
+  "detail-type": "OrderPlaced",
+  "detail": {
+    "schemaVersion": 1,
+    "orderId": "order-123",
+    "status": "PAID",
+    "total": 135
+  }
+}</code></pre>
+<p>EventBridge Schema Registry can infer schemas from observed events, manage schemas, and generate code bindings. Discovery helps you understand event shapes; it does not reject nonconforming events at publish time. If publishers must enforce a contract, validate their payloads in application code. AWS recommends JSON Schema for this client-side validation. See the <a href="https://docs.aws.amazon.com/eventbridge/latest/userguide/eb-schema.html" rel="noopener noreferrer" target="_blank">Schema Registry overview</a>, <a href="https://docs.aws.amazon.com/eventbridge/latest/userguide/eb-schemas-infer.html" rel="noopener noreferrer" target="_blank">schema discovery</a>, and <a href="https://docs.aws.amazon.com/eventbridge/latest/userguide/eb-schema-create.html" rel="noopener noreferrer" target="_blank">schema creation guidance</a>.</p>
+
+<h2 id="2.-optimize-rule-evaluation">2. Write and Test Precise Event Patterns</h2>
+<p>For Custom Event Bus - Classic, an event pattern selects which events a rule receives. Start with the event source and type, then add only the fields that express the consumer's real interest. Fields omitted from a pattern do not constrain a match, and string matching is case-sensitive unless you select an operator that changes that behavior. The example below is a Classic event-envelope pattern.</p>
+<pre><code>{
+  "source": ["com.example.orders"],
+  "detail-type": ["OrderPlaced"],
+  "detail": {
+    "status": ["PAID"],
+    "total": [{ "numeric": [">", 100] }]
+  }
+}</code></pre>
+<p>Test patterns against representative matching and nonmatching events in the EventBridge Sandbox or with <code>TestEventPattern</code> before deploying them. Include boundary values, missing fields, and casing differences in those examples. Avoid duplicate JSON keys in a pattern: only the last repeated key is used. AWS documents the supported <a href="https://docs.aws.amazon.com/eventbridge/latest/userguide/eb-event-patterns.html" rel="noopener noreferrer" target="_blank">event pattern structure</a>, <a href="https://docs.aws.amazon.com/eventbridge/latest/userguide/eb-create-pattern-operators.html" rel="noopener noreferrer" target="_blank">comparison operators</a>, and <a href="https://docs.aws.amazon.com/eventbridge/latest/userguide/eb-patterns-best-practices.html" rel="noopener noreferrer" target="_blank">pattern best practices</a>. For a broader approach to testing AWS service integrations, see <a href="/blog/10-best-practices-for-end-to-end-testing-aws-apps/">our guide to end-to-end testing AWS applications</a>.</p>
+<p>For Custom Event Bus - Classic, the default event-pattern size quota is 2,048 characters and can be increased. Check the separate quota page for the newer Custom Event Bus and for your account's Region before designing around a limit.</p>
+<p>The newer Custom Event Bus applies patterns through subscriber filters with <code>DATA</code>, <code>METADATA</code>, and <code>SYSTEM_METADATA</code> scopes. A <code>DATA</code> filter matches the payload's shape, not the Classic event envelope shown above. See the <a href="https://docs.aws.amazon.com/eventbridge/latest/userguide/eb-custom-bus-subscribers.html" rel="noopener noreferrer" target="_blank">subscriber filter documentation</a> before translating a Classic rule.</p>
+
+<h2 id="3.-implement-effective-error-handling">3. Make Consumers Safe to Retry</h2>
+<p>For the rules-based EventBridge bus (now called <em>Custom Event Bus - Classic</em> when you create a custom bus), design target processing to tolerate duplicate deliveries. AWS describes at-least-once delivery and notes that, in rare cases, a rule or target can run more than once for the same event. Classic event buses do not guarantee event ordering. Do not use EventBridge's event ID as a substitute for a business idempotency key.</p>
+<p>Use a stable business key to recognize repeated work. For a database mutation, a conditional write or transaction can record that key with the business result. For an external operation such as charging a payment, reuse an idempotency key supported by the receiving API and account for an uncertain response. A local “processed” record alone cannot make an external call atomic. AWS's Builders' Library explains <a href="https://aws.amazon.com/builders-library/making-retries-safe-with-idempotent-APIs/" rel="noopener noreferrer" target="_blank">how idempotent APIs make retries safe</a>.</p>
+<p>If event order matters, choose a service and configuration that provides the ordering you need. The newer <em>Custom Event Bus</em> supports optional publish-time deduplication and FIFO delivery within an event group for a FIFO subscriber; those features have defined scope and do not remove the need to make downstream effects safe. See AWS guidance on <a href="https://docs.aws.amazon.com/eventbridge/latest/userguide/eb-troubleshooting.html" rel="noopener noreferrer" target="_blank">duplicate target invocations</a>, its <a href="https://docs.aws.amazon.com/decision-guides/latest/decision-guides/sns-or-sqs-or-eventbridge.html" rel="noopener noreferrer" target="_blank">event delivery and ordering comparison</a>, and the new bus's <a href="https://docs.aws.amazon.com/eventbridge/latest/userguide/eb-custom-bus-ordering.html" rel="noopener noreferrer" target="_blank">ordering and deduplication behavior</a>.</p>
+
+<h2 id="4.-utilize-event-batching">4. Batch Publishes and Inspect Every Result</h2>
+<p>Batching can reduce publish API calls, but a batch is not an all-or-nothing transaction and it does not create per-rule batch settings. On a Classic bus, <code>PutEvents</code> accepts at most 10 entries per request, and the total entry size must be under 1 MB. Each entry can succeed or fail independently. Check <code>FailedEntryCount</code> and the result for every entry, then retry only entries that failed.</p>
+<p>The newer Custom Event Bus has separate publish APIs and limits: its <code>PutEvents</code> and <code>PutRawEvents</code> requests accept up to 100 entries. Read the per-entry result there as well. A successful HTTP response alone does not prove every event was accepted, and an accepted event does not prove a subscriber delivered it. Keep Classic and newer-bus limits separate when sizing a producer. See <a href="https://docs.aws.amazon.com/eventbridge/latest/userguide/eb-putevents.html" rel="noopener noreferrer" target="_blank">Classic PutEvents batching and partial failures</a>, the <a href="https://docs.aws.amazon.com/eventbridge/latest/APIReference/API_PutEvents.html" rel="noopener noreferrer" target="_blank">Classic API limits</a>, and the <a href="https://docs.aws.amazon.com/eventbridge/latest/userguide/eb-custom-bus-publish.html" rel="noopener noreferrer" target="_blank">new Custom Event Bus publish APIs</a>.</p>
+
+<h2 id="5.-implement-proper-retry-mechanisms">5. Configure Retries and Dead-Letter Queues per Target</h2>
+<p>EventBridge target retries handle delivery failures, such as a throttled or temporarily unavailable target. On a Classic bus, the default retry policy allows up to 185 retry attempts over a maximum event age of 24 hours, with exponential backoff and jitter; you can change the maximum age and retry count per target. A newer Custom Event Bus subscriber defaults to up to five <em>retry attempts</em> (in addition to the initial delivery attempt) within a maximum event age of 300 seconds. See the newer bus <a href="https://docs.aws.amazon.com/eventbridgev2/latest/APIReference/API_RetryPolicy.html" rel="noopener noreferrer" target="_blank"><code>MaxRetryAttempts</code> definition</a>. Set the policy for the bus type and the target's recovery behavior rather than copying one default everywhere.</p>
+<p>Configure a standard Amazon SQS dead-letter queue (DLQ) when an undelivered target event needs investigation or redrive. The DLQ captures EventBridge delivery failures after its retry behavior; it does not capture failed producer <code>PutEvents</code> entries, events that match no rule, or work that a target accepted and then failed internally. Some permanent target errors, such as missing permissions or a deleted resource, can go directly to the DLQ without retrying. Fix the cause before redriving, and monitor the consumer's own failures separately. See AWS guidance for <a href="https://docs.aws.amazon.com/eventbridge/latest/userguide/eb-rule-retry-policy.html" rel="noopener noreferrer" target="_blank">Classic target retries</a>, <a href="https://docs.aws.amazon.com/eventbridge/latest/userguide/eb-rule-dlq.html" rel="noopener noreferrer" target="_blank">Classic target DLQs</a>, and <a href="https://docs.aws.amazon.com/eventbridge/latest/userguide/eb-custom-bus-subscribers.html" rel="noopener noreferrer" target="_blank">new Custom Event Bus subscriber retries</a>.</p>
+
+<h2 id="6.-monitor-and-alert-on-key-metrics">6. Monitor Delivery, Failures, and Backlog</h2>
+<p>Measure the full path from event acceptance to target delivery. For Classic event buses, use CloudWatch metrics such as <code>InvocationAttempts</code>, <code>SuccessfulInvocationAttempts</code>, <code>FailedInvocations</code>, <code>InvocationsSentToDlq</code>, and <code>IngestionToInvocationSuccessLatency</code>. Alert on sustained failures, DLQ growth, throttling, and latency that exceeds your application's needs.</p>
+<p>The newer Custom Event Bus reports separate metrics in the <code>AWS/EventsV2</code> namespace, including <code>EventsDelivered</code>, <code>EventsDropped</code>, <code>RetryInvocationAttempts</code>, and <code>ApproximateBacklogAge</code>. Check the namespace and dimensions for the bus type in use. EventBridge metrics show delivery to the target; they do not prove that the target completed the business operation. Pair them with the target's own success, error, and queue-backlog signals. See AWS's <a href="https://docs.aws.amazon.com/eventbridge/latest/userguide/eb-monitoring-events-best-practices.html" rel="noopener noreferrer" target="_blank">Classic delivery monitoring recommendations</a> and <a href="https://docs.aws.amazon.com/eventbridge/latest/userguide/eb-custom-bus-observability.html" rel="noopener noreferrer" target="_blank">new Custom Event Bus observability guide</a>.</p>
+
+<h2 id="7.-choose-the-right-targets">7. Choose the Right EventBridge Feature and Target</h2>
+<p>Choose based on how work starts and how many consumers need the event:</p>
 <ul>
-<li>Slower event processing</li>
-<li>Higher costs</li>
-<li>Less reliable system</li>
+<li><strong>Event bus:</strong> use a bus for events that may be routed to multiple consumers. Where it is available and suitable, AWS's current guide recommends starting new applications with the newer Custom Event Bus, which uses subscribers, built-in retention, and optional ordered delivery. Custom Event Bus - Classic remains available for its rules-and-targets model.</li>
+<li><strong>EventBridge Pipes:</strong> use a pipe for a point-to-point connection from a supported source to one target, with optional filtering, enrichment, and transformation.</li>
+<li><strong>EventBridge Scheduler:</strong> use Scheduler for one-time or recurring invocations at specified times. It is separate from event-pattern matching; AWS recommends Scheduler over legacy scheduled rules.</li>
 </ul>
-<p>When patterns aren't well-designed, EventBridge may struggle to handle events quickly.</p>
-<h3 id="implementation-complexity">Implementation Complexity</h3>
-<p>Creating good event patterns needs careful planning. Consider:</p>
-<ul>
-<li>Event structure</li>
-<li>Filtering</li>
-<li>Routing</li>
-</ul>
-<p>EventBridge offers tools to help, like event filtering and transformation. Use these wisely to avoid making things too complex.</p>
-<h3 id="scalability">Scalability</h3>
-<p>As more events come in, your system needs to keep up. Good event patterns help EventBridge handle large amounts of events without slowing down.</p>
-<h3 id="reliability">Reliability</h3>
-<p>Events must be processed consistently, even when errors happen. EventBridge has features like retries and dead-letter queues to help. Use these with good event patterns for reliable processing.</p>
-<figure><table>
-<thead>
-<tr>
-<th>Best Practices for Event Patterns</th>
-<th>Why It Matters</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Use specific event filters</td>
-<td>Reduces events to process</td>
-</tr>
-<tr>
-<td>Transform event data</td>
-<td>Cuts down processing work</td>
-</tr>
-<tr>
-<td>Route events correctly</td>
-<td>Lowers processing time</td>
-</tr>
-<tr>
-<td>Monitor processing metrics</td>
-<td>Helps find and fix issues</td>
-</tr>
-<tr>
-<td>Test patterns thoroughly</td>
-<td>Ensures reliability and scalability</td>
-</tr>
-</tbody>
-</table></figure>
-<h2 id="2.-optimize-rule-evaluation">2. Optimize Rule Evaluation</h2>
-<h3 id="performance-impact-1">Performance Impact</h3>
-<p>Better rule evaluation helps EventBridge work faster and cheaper. Poor rules can make events slow down and cost more. When rules aren't set up well, EventBridge might struggle to handle events quickly.</p>
-<h3 id="how-to-set-it-up">How to Set It Up</h3>
-<p>To make good rules, think about:</p>
-<ul>
-<li><strong>Matching events</strong>: Make sure event patterns are clear and specific.</li>
-<li><strong>Simple rules</strong>: Avoid complex rules with too many parts.</li>
-<li><strong>Filtering events</strong>: Use filters to process only the events you need.</li>
-</ul>
-<h3 id="handling-more-events">Handling More Events</h3>
-<p>Good rules help EventBridge manage lots of events without slowing down. This is key when your system grows and sends more events.</p>
-<h3 id="keeping-things-running-smoothly">Keeping Things Running Smoothly</h3>
-<p>Well-made rules also help prevent errors. By checking events quickly, EventBridge can process them correctly, even if problems come up.</p>
-<figure><table>
-<thead>
-<tr>
-<th>Rule Tip</th>
-<th>Why It Helps</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Use clear event patterns</td>
-<td>Makes checking events faster</td>
-</tr>
-<tr>
-<td>Keep rules simple</td>
-<td>Saves time and money</td>
-</tr>
-<tr>
-<td>Filter events</td>
-<td>Fewer events to check</td>
-</tr>
-<tr>
-<td>Watch how rules perform</td>
-<td>Helps fix slow rules</td>
-</tr>
-<tr>
-<td>Test rules well</td>
-<td>Makes sure everything works right</td>
-</tr>
-</tbody>
-</table></figure>
-<h2 id="3.-implement-effective-error-handling">3. Implement Effective Error Handling</h2>
-<h3 id="performance-impact-2">Performance Impact</h3>
-<p>Good error handling helps EventBridge work better. Without it, errors can make EventBridge slow and expensive. Proper error handling stops problems from spreading and keeps events from getting lost.</p>
-<h3 id="setting-it-up">Setting It Up</h3>
-<p>Setting up good error handling in EventBridge takes careful planning. You need to think about:</p>
-<ul>
-<li>What kinds of errors might happen</li>
-<li>How serious each error is</li>
-<li>What to do when errors occur</li>
-</ul>
-<p>This can be tricky, but it's important for making sure EventBridge works well.</p>
-<h3 id="keeping-things-running-smoothly-1">Keeping Things Running Smoothly</h3>
-<p>Good error handling helps keep EventBridge working right. By catching and fixing errors, you can:</p>
-<ul>
-<li>Stop problems from causing more issues</li>
-<li>Make sure events are handled correctly</li>
-</ul>
-<p>This is very important in real-world systems where errors can cause big problems.</p>
-<p>Here are some tips for good error handling in EventBridge:</p>
-<figure><table>
-<thead>
-<tr>
-<th>Tip</th>
-<th>What It Does</th>
-<th>Why It's Helpful</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Use dead-letter queues</td>
-<td>Stores events that can't be processed</td>
-<td>Lets you keep events and fix errors later</td>
-</tr>
-<tr>
-<td>Set up error handling rules</td>
-<td>Tells EventBridge what to do when errors happen</td>
-<td>Helps handle errors automatically</td>
-</tr>
-<tr>
-<td>Watch error numbers</td>
-<td>Keep track of how many errors happen and what kind</td>
-<td>Helps you find and fix problems</td>
-</tr>
-</tbody>
-</table></figure>
-<h2 id="4.-utilize-event-batching">4. Utilize Event Batching</h2>
-<h3 id="performance-impact-3">Performance Impact</h3>
-<p>Event batching in Amazon EventBridge can make your system work better. It does this by:</p>
-<ul>
-<li>Reducing the number of API calls</li>
-<li>Processing events more quickly</li>
-</ul>
-<p>When you batch events together, your system can handle them faster and more reliably.</p>
-<h3 id="how-to-set-it-up-1">How to Set It Up</h3>
-<p>Setting up event batching in EventBridge is easy. You can:</p>
-<ul>
-<li>Choose batch settings for each rule</li>
-<li>Pick the batch size and time window that works best for you</li>
-</ul>
-<p>This lets you adjust batching to fit your needs.</p>
-<h3 id="handling-more-events-1">Handling More Events</h3>
-<p>Event batching helps when you have lots of events to process. It lets EventBridge handle more events without slowing down or making more API calls.</p>
-<h3 id="keeping-things-running-smoothly-2">Keeping Things Running Smoothly</h3>
-<p>Batching events also helps prevent problems. If one event in a batch fails, the others can still be processed. This keeps your system working even if small issues come up.</p>
-<figure><table>
-<thead>
-<tr>
-<th>What Event Batching Does</th>
-<th>How It Helps</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Reduces API calls</td>
-<td>Makes processing faster</td>
-</tr>
-<tr>
-<td>Lets you set batch size</td>
-<td>You can adjust to fit your needs</td>
-</tr>
-<tr>
-<td>Handles more events at once</td>
-<td>Good for busy systems</td>
-</tr>
-<tr>
-<td>Keeps working if one event fails</td>
-<td>Helps prevent big problems</td>
-</tr>
-</tbody>
-</table></figure>
-<h2 id="5.-implement-proper-retry-mechanisms">5. Implement Proper Retry Mechanisms</h2>
-<h3 id="performance-impact-4">Performance Impact</h3>
-<p>Good retry mechanisms in EventBridge help your system work better. They make sure important events don't get lost and are handled correctly, even when small problems happen.</p>
-<h3 id="how-to-set-it-up-2">How to Set It Up</h3>
-<p>Setting up retries in EventBridge is easy. You can choose:</p>
-<ul>
-<li>How many times to retry</li>
-<li>How long to wait between retries</li>
-<li>How old events can be before they're not retried</li>
-</ul>
-<p>This lets you make retries work best for your needs.</p>
-<h3 id="keeping-things-running-smoothly-3">Keeping Things Running Smoothly</h3>
-<p>Retries help keep your system working well. They stop data from being lost and make sure important events are handled. This matters a lot for things like money transfers or real-time data analysis.</p>
-<h3 id="tips-for-good-retries">Tips for Good Retries</h3>
-<p>Here are some ways to use retries well in EventBridge:</p>
-<figure><table>
-<thead>
-<tr>
-<th>Tip</th>
-<th>What It Does</th>
-<th>Why It Helps</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Set retry rules carefully</td>
-<td>Choose the right number of retries and wait times</td>
-<td>Fits your system's needs</td>
-</tr>
-<tr>
-<td>Watch retry numbers</td>
-<td>Keep track of how many retries happen and if they work</td>
-<td>Helps you find and fix problems</td>
-</tr>
-<tr>
-<td>Use increasing wait times</td>
-<td>Wait longer between each retry</td>
-<td>Stops too many retries from happening at once</td>
-</tr>
-<tr>
-<td>Use dead-letter queues</td>
-<td>Store events that can't be processed after many tries</td>
-<td>Keeps important events from being lost</td>
-</tr>
-</tbody>
-</table></figure>
-<h2 id="6.-monitor-and-alert-on-key-metrics">6. Monitor and Alert on Key Metrics</h2>
-<h3 id="performance-impact-5">Performance Impact</h3>
-<p>Watching key metrics in EventBridge helps your system work better. It lets you:</p>
-<ul>
-<li>Find problems quickly</li>
-<li>Fix issues</li>
-<li>Make smart choices about your system</li>
-</ul>
-<p>By keeping an eye on these metrics, you can make sure events are handled well and your system runs smoothly.</p>
-<h3 id="how-to-set-it-up-3">How to Set It Up</h3>
-<p>Setting up monitoring in EventBridge is easy. You can use <a href="https://aws.amazon.com/cloudwatch/" target="_blank">Amazon CloudWatch</a> to:</p>
-<ul>
-<li>Collect metrics</li>
-<li>Track metrics</li>
-<li>Set up alerts</li>
-</ul>
-<p>This way, you can focus on other tasks while still knowing how your system is doing.</p>
-<h3 id="keeping-things-running-smoothly-4">Keeping Things Running Smoothly</h3>
-<p>Watching metrics helps keep your system working well. By finding issues early, you can stop errors and downtime before they happen. This is very important in systems that use events, where one small problem can cause bigger issues.</p>
-<p>Here are some tips for watching metrics in EventBridge:</p>
-<figure><table>
-<thead>
-<tr>
-<th>Tip</th>
-<th>What It Does</th>
-<th>Why It Helps</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Watch important metrics</td>
-<td>Look at things like how fast events are handled, how many errors happen, and how many events are processed</td>
-<td>Helps you understand how well your system is working</td>
-</tr>
-<tr>
-<td>Set up alerts</td>
-<td>Make alerts that tell you when something is wrong</td>
-<td>Lets you fix problems before they get big</td>
-</tr>
-<tr>
-<td>Use CloudWatch dashboards</td>
-<td>Make special screens to see your metrics</td>
-<td>Gives you a quick look at how your system is doing</td>
-</tr>
-<tr>
-<td>Use other AWS tools</td>
-<td>Connect EventBridge with things like <a href="https://aws.amazon.com/lambda/" target="_blank">AWS Lambda</a> or <a href="https://aws.amazon.com/sns/" target="_blank">Amazon SNS</a></td>
-<td>Helps you watch your whole system better</td>
-</tr>
-</tbody>
-</table></figure>
-<h2 id="7.-choose-the-right-targets">7. Choose the Right Targets</h2>
-<h3 id="how-it-affects-performance">How It Affects Performance</h3>
-<p>Picking the best targets in EventBridge helps your system work better. When you send events to the right places, they get handled quickly and correctly. This means:</p>
-<ul>
-<li>Less waiting time</li>
-<li>More events processed</li>
-<li>Fewer mistakes</li>
-</ul>
-<h3 id="setting-it-up-1">Setting It Up</h3>
-<p>Choosing targets can be tricky, especially in big systems. You need to know:</p>
-<ul>
-<li>How events move through your system</li>
-<li>What each target does</li>
-<li>How well your system works</li>
-</ul>
-<p>But with the right tools, you can make it easier.</p>
-<h3 id="handling-more-events-2">Handling More Events</h3>
-<p>Good target choices help your system grow. When you pick the right targets, you can handle lots of events without slowing down. This is important when your system suddenly gets busy.</p>
-<h3 id="keeping-things-working">Keeping Things Working</h3>
-<p>Choosing good targets also helps prevent problems. When events go to the right places, they're handled correctly, even if something goes wrong. This makes your system more trustworthy.</p>
-<p>Here's how to pick good targets in EventBridge:</p>
-<figure><table>
-<thead>
-<tr>
-<th>What to Do</th>
-<th>How It Helps</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Use event filters</td>
-<td>Only send events where they need to go</td>
-</tr>
-<tr>
-<td>Make specific event patterns</td>
-<td>Send events to the right targets</td>
-</tr>
-<tr>
-<td>Watch how targets work</td>
-<td>Find and fix slow spots</td>
-</tr>
-<tr>
-<td>Use tools to help choose</td>
-<td>Make picking targets easier</td>
-</tr>
-</tbody>
-</table></figure>
-<h2 id="8.-implement-event-filtering-at-source">8. Implement Event Filtering at Source</h2>
-<h3 id="performance-impact-6">Performance Impact</h3>
-<p>Filtering events at the source helps EventBridge work better. It:</p>
-<ul>
-<li>Cuts down the number of events to handle</li>
-<li>Makes event processing faster</li>
-<li>Reduces system load</li>
-<li>Improves how quickly the system responds</li>
-</ul>
-<h3 id="how-to-set-it-up-4">How to Set It Up</h3>
-<p>Setting up event filtering at the source is easy. You can:</p>
-<ul>
-<li>Use event patterns to choose which events to keep</li>
-<li>Set up filters to decide which events move forward</li>
-<li>Use simple rules to make this work</li>
-</ul>
-<h3 id="handling-more-events-3">Handling More Events</h3>
-<p>Filtering at the source helps your system grow. It can handle lots of events without slowing down. This is good for big systems that deal with many events.</p>
-<h3 id="keeping-things-running-smoothly-5">Keeping Things Running Smoothly</h3>
-<p>Filtering at the source helps prevent problems. It:</p>
-<ul>
-<li>Reduces errors caused by unneeded events</li>
-<li>Makes the system more stable</li>
-<li>Leads to fewer issues to fix</li>
-</ul>
-<p>Here's how to filter events at the source:</p>
-<figure><table>
-<thead>
-<tr>
-<th>Method</th>
-<th>What It Does</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Event patterns</td>
-<td>Pick specific events to process</td>
-</tr>
-<tr>
-<td>Event filters</td>
-<td>Choose which events to send forward</td>
-</tr>
-<tr>
-<td>Event changes</td>
-<td>Adjust events to make filtering easier</td>
-</tr>
-</tbody>
-</table></figure>
-<h2 id="9.-use-custom-event-buses-wisely">9. Use Custom Event Buses Wisely</h2>
-<h3 id="performance-impact-7">Performance Impact</h3>
-<p>Custom event buses in EventBridge can help your system work better. They let you:</p>
-<ul>
-<li>Split different types of events</li>
-<li>Process events faster</li>
-<li>Keep sensitive events safe</li>
-</ul>
-<h3 id="how-to-set-it-up-5">How to Set It Up</h3>
-<p>To use custom event buses, you need to:</p>
-<ul>
-<li>Make a new event bus in EventBridge</li>
-<li>Tell event sources to use the new bus</li>
-<li>Update targets to get events from the new bus</li>
-<li>Check that the new bus is working well</li>
-</ul>
-<h3 id="handling-more-events-4">Handling More Events</h3>
-<p>Custom event buses help your system grow by:</p>
-<ul>
-<li>Handling lots of events without slowing down</li>
-<li>Making it easy to add new event sources or targets</li>
-<li>Letting you process events separately from other parts of EventBridge</li>
-</ul>
-<h3 id="keeping-things-running-smoothly-6">Keeping Things Running Smoothly</h3>
-<p>Custom event buses also help prevent problems by:</p>
-<ul>
-<li>Lowering the risk of losing events or getting them twice</li>
-<li>Keeping track of events clearly</li>
-<li>Giving you more control over how events are handled</li>
-</ul>
-<p>Here are some tips for using custom event buses:</p>
-<figure><table>
-<thead>
-<tr>
-<th>Tip</th>
-<th>Why It Helps</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Use different buses for different event types</td>
-<td>Keeps events organized and easy to manage</td>
-</tr>
-<tr>
-<td>Watch how custom buses are working</td>
-<td>Helps you fix issues and make sure they're working well</td>
-</tr>
-<tr>
-<td>Control who can use custom buses</td>
-<td>Keeps sensitive events safe</td>
-</tr>
-</tbody>
-</table></figure>
-<h2 id="10.-set-up-good-access-controls">10. Set Up Good Access Controls</h2>
-<h3 id="how-it-affects-performance-1">How It Affects Performance</h3>
-<p>Good access controls help keep your EventBridge setup safe and working well. Without them, people who shouldn't use your resources might be able to, which can:</p>
-<ul>
-<li>Slow things down</li>
-<li>Cause security problems</li>
-<li>Make your system less reliable</li>
-</ul>
-<h3 id="how-to-set-it-up-6">How to Set It Up</h3>
-<p>Setting up access controls in EventBridge is not hard. You can:</p>
-<ul>
-<li>Use rules for Lambda, Amazon SNS, <a href="https://aws.amazon.com/sqs/" target="_blank">Amazon SQS</a>, and Amazon CloudWatch Logs</li>
-<li>Use identity rules for Kinesis streams</li>
-</ul>
-<p>This makes sure only the right people and services can use your resources.</p>
-<h3 id="handling-more-events-5">Handling More Events</h3>
-<p>Good access controls help your EventBridge setup grow. They:</p>
-<ul>
-<li>Stop people from making changes that could cause problems</li>
-<li>Let you add more resources safely</li>
-</ul>
-<h3 id="keeping-things-running-smoothly-7">Keeping Things Running Smoothly</h3>
-<p>Access controls also help keep your EventBridge setup working well. They:</p>
-<ul>
-<li>Lower the chance of errors</li>
-<li>Help prevent data leaks</li>
-<li>Make sure your setup works as it should</li>
-</ul>
-<p>Here's how to set up good access controls:</p>
-<figure><table>
-<thead>
-<tr>
-<th>What to Do</th>
-<th>Why It Helps</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Use resource rules for Lambda, SNS, SQS, and CloudWatch Logs</td>
-<td>Keeps these services safe</td>
-</tr>
-<tr>
-<td>Use identity rules for Kinesis streams</td>
-<td>Controls who can use Kinesis</td>
-</tr>
-<tr>
-<td>Only let approved people and services use your resources</td>
-<td>Stops unwanted access</td>
-</tr>
-<tr>
-<td>Check and update your access controls often</td>
-<td>Makes sure they still work well</td>
-</tr>
-</tbody>
-</table></figure>
+<p>For every target, confirm that the target can absorb expected traffic and that its permissions allow EventBridge to invoke it. A target may impose a lower request or payload limit than EventBridge. Pipes supports payloads up to 6 MB, but the effective limit is whichever is lower: the Pipes limit or the target's limit. For example, a pipe targeting an EventBridge bus is limited to 1 MB, and one targeting Step Functions is limited to 256 KB. Review the <a href="https://docs.aws.amazon.com/eventbridge/latest/userguide/eb-what-is-how-it-works-concepts.html" rel="noopener noreferrer" target="_blank">event bus concepts</a>, <a href="https://docs.aws.amazon.com/eventbridge/latest/userguide/eb-pipes.html" rel="noopener noreferrer" target="_blank">Pipes</a>, <a href="https://docs.aws.amazon.com/scheduler/latest/UserGuide/what-is-scheduler.html" rel="noopener noreferrer" target="_blank">Scheduler</a>, and <a href="https://docs.aws.amazon.com/eventbridge/latest/userguide/eb-pipes-event-target.html" rel="noopener noreferrer" target="_blank">Pipes payload limits</a> documentation.</p>
+<p>Quotas are not one EventBridge-wide events-per-second number. Classic <code>PutEvents</code> request rates vary by Region (400 requests per second in many Regions and up to 10,000 in some), and its rule invocation quota is separate. The newer Custom Event Bus has a default ingestion quota of 500,000 events per second per bus. Pipes and Scheduler have separate quotas, and a target can throttle delivery below the bus quota. Check the current <a href="https://docs.aws.amazon.com/eventbridge/latest/userguide/eb-quota.html" rel="noopener noreferrer" target="_blank">Classic EventBridge quotas</a>, <a href="https://docs.aws.amazon.com/general/latest/gr/ev.html" rel="noopener noreferrer" target="_blank">Custom Event Bus quotas</a>, and Service Quotas for your account and Region; requests per second and events per second are different units.</p>
+
+<h2 id="8.-implement-event-filtering-at-source">8. Filter at the Layer That Owns the Decision</h2>
+<p>EventBridge rule patterns filter events after the event reaches a bus. Pipes filters select records from supported sources for a point-to-point flow. Source-side filtering is a separate choice: use it only when the producer or source service can actually avoid emitting or forwarding events you do not need. This distinction matters for both traffic and cost; a rule that filters an event after ingestion has not reduced the producer's publish calls.</p>
+<p>Keep filters close to the consumer's subscription when consumers have different needs. Keep source-side filters when an upstream service has a supported native filter and no downstream consumer needs the excluded data. Test each filter against real examples, and account for events that match no rule or subscriber because those events will not reach a target.</p>
+
+<h2 id="9.-use-custom-event-buses-wisely">9. Plan Retention, Replay, and Regional Recovery</h2>
+<p>Custom Event Bus - Classic does not retain events by default. Use an archive when you need to keep selected bus events and replay them later; an archive can select events with a pattern and has a configurable retention period. Replays return events to their original bus, can invoke targets again, and are not guaranteed to follow the order in which events entered the archive. Allow for archive delivery delay before starting a replay, and make replayed work safe to repeat.</p>
+<p>Archive delivery can lag bus ingestion; AWS recommends waiting 10 minutes before replaying so the archive has time to receive events.</p>
+<p>The newer Custom Event Bus has configurable built-in retention and lets subscribers start from retained events. Confirm which bus type your recovery plan uses: the resource model and replay mechanism differ. Archives incur charges, and replay can cause downstream processing and costs again, so estimate both storage and reprocessing using the current <a href="https://aws.amazon.com/eventbridge/pricing/" rel="noopener noreferrer" target="_blank">EventBridge pricing</a>.</p>
+<p>For regional recovery of custom events sent with <code>PutEvents</code>, Global endpoints route through a primary and secondary Region using a Route 53 health check. Failover takes time, and events may remain in the primary Region during an outage. Optional event replication can help validate configuration and return traffic to the primary automatically, but it adds cost. Confirm supported Regions, recovery objectives, and replication charges in the <a href="https://docs.aws.amazon.com/eventbridge/latest/userguide/eb-global-endpoints.html" rel="noopener noreferrer" target="_blank">Global endpoints guide</a> and pricing page before relying on this path.</p>
+
+<h2 id="10.-set-up-good-access-controls">10. Limit Who Can Publish, Configure, and Deliver</h2>
+<p>Separate permission to publish from permission to administer rules or subscribers. Give producers permission to publish only to the required bus. Give EventBridge's target role only the action and resource needed by that target, and limit who can pass that role when configuring delivery. For cross-account use, apply the resource policy for a Classic bus or share the newer Custom Event Bus using its supported AWS Resource Access Manager controls.</p>
+<p>Check both sides of a delivery path: a valid EventBridge rule or subscriber is not enough if the target policy or role cannot accept the event. Use least-privilege IAM policies and test them with the same account and Region structure used in production. The <a href="https://docs.aws.amazon.com/eventbridge/latest/userguide/eb-event-bus-perms.html" rel="noopener noreferrer" target="_blank">event bus permissions guide</a> and the <a href="https://docs.aws.amazon.com/eventbridge/latest/userguide/eb-custom-bus.html" rel="noopener noreferrer" target="_blank">Custom Event Bus guide</a> describe the distinct access models.</p>
+
 <h2 id="conclusion">Conclusion</h2>
-<p>Using these 10 EventBridge tips can help your system work better. By following these ideas, you can make EventBridge faster, more reliable, and able to handle more work.</p>
-<h3 id="main-points">Main Points</h3>
-<figure><table>
-<thead>
-<tr>
-<th>Tip</th>
-<th>How It Helps</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Design event patterns well</td>
-<td>Makes events process faster</td>
-</tr>
-<tr>
-<td>Set up rules carefully</td>
-<td>Helps EventBridge work better</td>
-</tr>
-<tr>
-<td>Handle errors properly</td>
-<td>Keeps your system running smoothly</td>
-</tr>
-<tr>
-<td>Use access controls</td>
-<td>Keeps your system safe</td>
-</tr>
-</tbody>
-</table></figure>
-<h3 id="what-to-do-next">What to Do Next</h3>
-<ol>
-<li>Look at how you use EventBridge now</li>
-<li>Start using these tips, beginning with the most important ones</li>
-<li>Keep checking how well your system works and make changes as needed</li>
-</ol>
-<p>
-<h2>Related posts</h2>
-<ul>
-<li><a href="/blog/aws-rds-blog-insights-performance-tuning/">AWS RDS Blog Insights: Performance Tuning</a></li><li><a href="/blog/top-10-ebs-performance-bottlenecks-and-solutions/">Top 10 EBS Performance Bottlenecks &amp; Solutions</a></li><li><a href="/blog/aws-engineering-blog-autoscaling-for-high-availability/">AWS Engineering Blog: Autoscaling for High Availability</a></li><li><a href="/blog/aws-devops-monitoring-metrics-tools-best-practices/">AWS DevOps Monitoring: Metrics, Tools, Best Practices</a></li>
-</ul>
-</p>
+<p>Reliable EventBridge designs start with the right feature and a clear event contract. Test patterns, process partial publish failures, expect retries and duplicates where the bus type allows them, and use target-level metrics to confirm delivery. Before scaling or designing recovery, check the quotas and pricing for the specific bus, pipe, scheduler, and target in your Regions.</p>
+<p>For another view of testing across AWS service boundaries, continue with <a href="/blog/10-best-practices-for-end-to-end-testing-aws-apps/">10 Best Practices for End-to-End Testing AWS Apps</a>.</p>
