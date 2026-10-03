@@ -10,7 +10,7 @@ heroImage: "/assets/media/a18444e18ce69f37b97e.jpg"
 permalink: "/blog/aws-lambda-metrics-explained/"
 sourceUrl: "https://awsforengineers.com/blog/aws-lambda-metrics-explained/"
 dateModified: "2026-10-03"
-updateNote: "Added author attribution and profile information."
+updateNote: "Added author attribution and profile information. Replaced the unavailable Helios reference with AWS OpenTelemetry guidance."
 ---
 <p><strong>Want to optimize your <a href="https://docs.aws.amazon.com/lambda/" rel="nofollow noopener noreferrer" target="_blank">AWS Lambda</a> functions? Start by understanding the key metrics that impact performance, cost, and scalability.</strong></p>
 <p>AWS Lambda is a serverless compute service that automatically manages infrastructure, allowing you to focus on your code. Monitoring Lambda metrics is essential to ensure smooth operations, reduce costs, and fix issues before they disrupt users. Here's what you need to know:</p>
@@ -165,7 +165,7 @@ updateNote: "Added author attribution and profile information."
 </tr>
 </tbody>
 </table></figure>
-<p>For example, <a href="https://helioshq.app/" rel="nofollow noopener noreferrer" target="_blank">Helios</a> integrates with OpenTelemetry and Webpack to deliver comprehensive monitoring across your application.</p>
+<p>For OpenTelemetry-based instrumentation, see <a href="https://aws-otel.github.io/docs/getting-started/lambda/" rel="nofollow noopener noreferrer" target="_blank">AWS Distro for OpenTelemetry's Lambda guidance</a> for supported layers and configuration.</p>
 <p>When choosing a tool, balance your feature needs with budget considerations. CloudWatch’s pay-as-you-go pricing is straightforward but can become costly for large-scale operations. Open-source options like OpenTelemetry, on the other hand, offer robust monitoring at a lower cost.</p>
 
 <h2 id="monitoring-guidelines">Monitoring Guidelines</h2>

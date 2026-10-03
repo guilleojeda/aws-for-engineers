@@ -177,6 +177,9 @@ for (const file of pages) {
   }
   if (name.startsWith("blog/") && !name.includes("/page/") && name !== "blog/index.html") {
     if (!/<article class="article wrap">/.test(html)) failures.push(`Missing article container: ${name}`);
+    const advertisement = html.match(/<aside\b[^>]*aria-label="Advertisement"[^>]*>([\s\S]*?)<\/aside>/)?.[1];
+    if (!advertisement || !/<div\b[^>]*class="tinyadz"[^>]*><\/div>/.test(advertisement)) failures.push(`Missing accessible advertisement container or TinyAds target: ${name}`);
+    if (/<div\b[^>]*class="tinyadz"[^>]*aria-label=|<div\b[^>]*aria-label=[^>]*class="tinyadz"/.test(html)) failures.push(`TinyAds target has a prohibited accessible name: ${name}`);
     if (!/<meta property="og:image"/.test(html)) failures.push(`Missing social image: ${name}`);
     const body = (html.match(/<div class="article-body">([\s\S]*?)<div class="article-tail">/)?.[1] || "")
       .replace(/<(script|style|textarea)\b[^>]*>[\s\S]*?<\/\1\s*>|<!--[\s\S]*?-->/gi, "");

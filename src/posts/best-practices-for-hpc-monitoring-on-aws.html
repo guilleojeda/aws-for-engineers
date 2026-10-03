@@ -10,7 +10,7 @@ heroImage: "/assets/media/1724a78e0db55df18bc7.jpg"
 permalink: "/blog/best-practices-for-hpc-monitoring-on-aws/"
 sourceUrl: "https://awsforengineers.com/blog/best-practices-for-hpc-monitoring-on-aws/"
 dateModified: "2026-10-03"
-updateNote: "Added author attribution and profile information."
+updateNote: "Added author attribution and profile information. Replaced the unavailable EnginFrame documentation with its AWS retirement notice and removed the obsolete dashboard recommendation."
 ---
 <p>Running <a href="/blog/hpc-workload-profiling-on-aws-best-practices/">HPC workloads</a> on AWS requires precise monitoring to handle unique challenges like <a href="/blog/aws-engineering-blog-autoscaling-for-high-availability/">large-scale auto-scaling</a>, strict security standards, and specialized hardware metrics. Here's what you need to know:</p>
 <ul>
@@ -246,15 +246,9 @@ updateNote: "Added author attribution and profile information."
 </tbody>
 </table></figure>
 <p>Tracking these thresholds ensures smooth performance for visualization-heavy tasks.</p>
-<h3 id="enginframe-dashboard-configuration"><a href="https://docs.aws.amazon.com/enginframe/" rel="nofollow noopener noreferrer" target="_blank">Enginframe</a> Dashboard Configuration</h3>
-<p><figure><img alt="Enginframe" loading="lazy" src="/assets/media/c0c8d0fbdd9f27ed8f26.jpg"/></figure></p>
-<p>Enginframe simplifies HPC job monitoring by integrating Lustre FS and scheduler metrics. Key features include:</p>
-<ul>
-<li><strong>Job queue status</strong> with color-coded priorities for quick assessment.</li>
-<li><strong>User resource analytics</strong> powered by CloudWatch for better insights.</li>
-<li><strong>Direct scheduler metrics</strong> from systems like Slurm or PBS for detailed tracking.</li>
-</ul>
-<p>These features make it easier to manage and optimize HPC workloads effectively.</p>
+<h3 id="enginframe-dashboard-configuration">EnginFrame Retirement</h3>
+<p>AWS NICE EnginFrame reached full shutdown on September 25, 2025, according to the <a href="https://docs.aws.amazon.com/general/latest/gr/full_shutdown_services.html" rel="nofollow noopener noreferrer" target="_blank">AWS service lifecycle registry</a>. The former dashboard setup is no longer a supported option for new HPC deployments.</p>
+<p>For current workloads, use your scheduler's supported tools to inspect job queues and resource use, and collect the metrics you need in the CloudWatch monitoring workflow described above. Choose dashboard integrations that support the scheduler and cluster versions you operate.</p>
 <h2 id="summary">Summary</h2>
 <p>Monitoring HPC environments on AWS effectively involves combining AWS-native services with specialized tools, focusing on three main goals: <strong>visibility across accounts</strong>, <strong>automated compliance checks</strong>, and <strong>metrics tailored to workloads</strong>.</p>
 <figure><table>
@@ -273,7 +267,7 @@ updateNote: "Added author attribution and profile information."
 </tr>
 <tr>
 <td>Application</td>
-<td>ParallelCluster, Enginframe</td>
+<td>ParallelCluster, supported scheduler tools</td>
 <td>Job queue times, cluster utilization</td>
 </tr>
 <tr>
