@@ -4,6 +4,8 @@ Static source for [awsforengineers.com](https://awsforengineers.com/). Eleventy 
 
 ## Work locally
 
+Use Node.js 22 or newer; the publishing workflow uses Node.js 24.
+
 ```sh
 npm ci
 npm run dev
@@ -35,6 +37,8 @@ Your article starts here.
 ```
 
 Place new images under `src/assets/media/` and reference them with `/assets/media/...` URLs. The filename and permalink must match. Use a publication date in `YYYY-MM-DD` format. `datePublished` can be set to a full ISO timestamp if needed; otherwise the date is used for structured data.
+
+The build automatically generates responsive images and intrinsic dimensions for ordinary HTML and Markdown images. Images are lazy-loaded by default; for a large image visible immediately at the start of a post, use an HTML image with `loading="eager"` and `fetchpriority="high"`. The listing templates already prioritize their first image. Give a custom image's `sizes` attribute the width it occupies if it differs from the standard article column. Source originals stay available for existing links and social previews.
 
 Pushing to `main` runs the [publishing workflow](.github/workflows/publish.yml). It builds and checks the entire site, uploads it to private S3, waits for CloudFront invalidation, and checks the AWS preview URL. The public domain uses the same CloudFront distribution, so the push also publishes the post there; there is no separate deployment command.
 

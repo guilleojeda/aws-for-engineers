@@ -22,7 +22,7 @@ permalink: /
   <div class="home-post-grid">
     {% for post in collections.posts | latest(12) %}
     <a class="home-post-card" data-search-card href="{{ post.url }}">
-      {% if post.data.heroImage %}<img src="{{ post.data.heroImage }}" alt="" loading="lazy" width="480" height="280">{% endif %}
+      {% if post.data.heroImage %}<img src="{{ post.data.heroImage }}" alt="" eleventy:widths="320,480,768,1200,1536" sizes="(max-width: 600px) calc(100vw - 32px), (max-width: 800px) calc((100vw - 76px) / 2), (max-width: 1218px) calc((100vw - 104px) / 3), 372px" loading="{{ 'eager' if loop.first else 'lazy' }}"{% if loop.first %} fetchpriority="high"{% endif %}>{% endif %}
       <h3>{{ post.data.title }}</h3>
     </a>
     {% endfor %}
@@ -115,14 +115,14 @@ permalink: /
       <p>Share your AWS knowledge with our community</p>
       <a class="button button-dark" href="mailto:info@awsforengineers.com">Submit Article</a>
     </div>
-    {% if imported.homeImages['Image of people contributing an article'] %}<img class="section-image" src="{{ imported.homeImages['Image of people contributing an article'] }}" alt="People contributing an article" loading="lazy">{% endif %}
+    {% if imported.homeImages['Image of people contributing an article'] %}<img class="section-image" src="{{ imported.homeImages['Image of people contributing an article'] }}" alt="People contributing an article" sizes="(max-width: 600px) calc(100vw - 32px), (max-width: 800px) calc((100vw - 80px) / 2), (max-width: 1218px) calc((100vw - 118px) / 2), 550px" loading="lazy">{% endif %}
   </div>
 </section>
 
 <section class="section wrap team">
   <div class="section-heading centered"><h2>Meet Our Team</h2><p>We're a team of AWS experts dedicated to helping you learn AWS.</p></div>
   <div class="team-card">
-    {% if imported.homeImages['Linkedin profile pic (4)'] %}<img src="{{ imported.homeImages['Linkedin profile pic (4)'] }}" alt="Guille Ojeda" loading="lazy">{% endif %}
+    {% if imported.homeImages['Linkedin profile pic (4)'] %}<img src="{{ imported.homeImages['Linkedin profile pic (4)'] }}" alt="Guille Ojeda" eleventy:widths="170,340" sizes="170px" loading="lazy">{% endif %}
     <div><h3>Guille Ojeda</h3><p class="eyebrow">Software Architect</p><p>Guille is a software architect and AWS expert. He published 2 books and a video course, publishes a weekly newsletter for over 40k subscribers, and has spoken at dozens of events.</p><a href="https://www.linkedin.com/in/guilleojeda/">LinkedIn →</a></div>
   </div>
 </section>

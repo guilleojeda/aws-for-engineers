@@ -21,6 +21,10 @@ function targetFor(url) {
   return join(root, clean, "index.html");
 }
 
+function attribute(tag, name) {
+  return tag.match(new RegExp(`\\b${name}="([^"]*)"`))?.[1];
+}
+
 const files = visit(root);
 const pages = files.filter((file) => file.endsWith(".html"));
 const articleFiles = readdirSync(posts).filter((file) => file.endsWith(".md") || file.endsWith(".html"));
@@ -46,6 +50,42 @@ for (const file of pages) {
   if (/(?:app|assets)\.seobotai\.com|unicornplatform\.com|mars-images\.imgix\.net/.test(html)) {
     failures.push(`Old platform dependency in generated HTML: ${name}`);
   }
+  if (/fonts\.(?:googleapis|gstatic)\.com/.test(html)) failures.push(`External font dependency: ${name}`);
+  const fontPreload = [...html.matchAll(/<link\b[^>]*>/g)].map(([tag]) => tag).find((tag) =>
+    attribute(tag, "rel") === "preload" && attribute(tag, "href") === "/assets/fonts/sora-latin.woff2" &&
+    attribute(tag, "as") === "font" && attribute(tag, "type") === "font/woff2" && attribute(tag, "crossorigin") !== undefined,
+  );
+  if (!fontPreload) {
+    failures.push(`Missing local Sora preload: ${name}`);
+  }
+  const images = [...html.matchAll(/<img\b[^>]*>/g)].map(([tag]) => tag);
+  for (const image of images) {
+    if (!(Number(attribute(image, "width")) > 0 && Number(attribute(image, "height")) > 0)) {
+      failures.push(`Image has no intrinsic dimensions in ${name}: ${attribute(image, "src")}`);
+    }
+    if (attribute(image, "alt") === undefined) failures.push(`Image has no alt attribute in ${name}`);
+    if (!/^(?:lazy|eager)$/.test(attribute(image, "loading") || "")) failures.push(`Image has no loading policy in ${name}`);
+    // SVG stays scalable without raster variants or a srcset.
+    if (!attribute(image, "src")?.endsWith(".svg") && (!attribute(image, "sizes") || !attribute(image, "srcset"))) {
+      failures.push(`Image is not responsive in ${name}`);
+    }
+  }
+  // All candidates, not just the fallback src, must be present before publishing.
+  for (const [, srcset] of html.matchAll(/\bsrcset="([^"]+)"/g)) {
+    for (const candidate of srcset.split(",")) {
+      const url = candidate.trim().split(/\s+/)[0];
+      const target = targetFor(url.replaceAll("&amp;", "&"));
+      if (target && !existsSync(target)) failures.push(`Broken image candidate in ${name}: ${url}`);
+    }
+  }
+  if (name === "index.html" || name === "blog/index.html" || /^blog\/page\/\d+\/index\.html$/.test(name)) {
+    if (!images.length || attribute(images[0], "loading") !== "eager" || attribute(images[0], "fetchpriority") !== "high") {
+      failures.push(`First listing image is not prioritized: ${name}`);
+    }
+    if (images.slice(1).some((image) => attribute(image, "loading") !== "lazy")) {
+      failures.push(`Later listing images are not lazy-loaded: ${name}`);
+    }
+  }
   for (const [, url] of html.matchAll(/(?:href|src)="(\/[^"<>]+)"/g)) {
     const target = targetFor(url.replaceAll("&amp;", "&"));
     if (target && !existsSync(target)) failures.push(`Broken internal reference in ${name}: ${url}`);
@@ -58,6 +98,12 @@ for (const file of pages) {
 
 if (!existsSync(join(root, "robots.txt"))) failures.push("Missing robots.txt");
 if (!existsSync(join(root, "404.html"))) failures.push("Missing 404.html");
+const stylesheet = readFileSync(join(root, "assets/site.css"), "utf8");
+if (/fonts\.(?:googleapis|gstatic)\.com/.test(stylesheet)) failures.push("External font dependency in stylesheet");
+for (const subset of ["latin", "latin-ext"]) {
+  const url = `/assets/fonts/sora-${subset}.woff2`;
+  if (!existsSync(targetFor(url)) || !stylesheet.includes(url)) failures.push(`Missing local Sora font: ${subset}`);
+}
 const adsFile = join(root, "ads.txt");
 if (!existsSync(adsFile) || readFileSync(adsFile, "utf8").trim() !== "google.com, pub-9639896081226655, DIRECT, f08c47fec0942fa0") {
   failures.push("AdSense ads.txt publisher declaration is missing or incorrect");

@@ -18,7 +18,7 @@ permalink: "{% if pagination.pageNumber == 0 %}/blog/{% else %}/blog/page/{{ pag
   <div class="post-grid">
     {% for post in posts %}
     <a class="post-card" href="{{ post.url }}">
-      {% if post.data.heroImage %}<img src="{{ post.data.heroImage }}" alt="" loading="lazy" width="720" height="420">{% endif %}
+      {% if post.data.heroImage %}<img src="{{ post.data.heroImage }}" alt="" eleventy:widths="320,480,768,1200,1536" sizes="{% if loop.first %}(max-width: 600px) calc(100vw - 32px), (max-width: 800px) calc(100vw - 48px), (max-width: 1218px) calc((200vw - 116px) / 3), 774px{% else %}(max-width: 600px) calc(100vw - 32px), (max-width: 800px) calc((100vw - 68px) / 2), (max-width: 1218px) calc((100vw - 88px) / 3), 377px{% endif %}" loading="{{ 'eager' if loop.first else 'lazy' }}"{% if loop.first %} fetchpriority="high"{% endif %}>{% endif %}
       <h2>{{ post.data.title }}</h2>
     </a>
     {% endfor %}
