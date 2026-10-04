@@ -3,303 +3,98 @@ layout: post.njk
 templateEngineOverride: html
 tags: posts
 title: "AWS Transit Gateway: Scalability & Limits Explained"
-description: "Explore the scalability features and limits of AWS Transit Gateway, including connection and route limits, VPC attachments, and how to optimize for growth."
+description: "Plan AWS Transit Gateway capacity with current route and attachment quotas, per-AZ bandwidth, MTU behavior, monitoring, and pricing guidance."
 date: "2024-05-13"
 datePublished: "2024-05-13T06:20:36.178000+00:00"
 heroImage: "/assets/media/98b521e141d6f4da2684.jpg"
 permalink: "/blog/aws-transit-gateway-scalability-and-limits-explained/"
 sourceUrl: "https://awsforengineers.com/blog/aws-transit-gateway-scalability-and-limits-explained/"
-dateModified: "2026-10-03"
-updateNote: "Added author attribution and profile information."
+dateModified: "2026-10-04"
+updateNote: "Corrected route and attachment quota scope, added per-AZ bandwidth and packet rates, updated PMTUD behavior, and replaced generic monitoring and pricing claims."
 ---
-<p><a href="https://aws.amazon.com/transit-gateway/" target="_blank">AWS Transit Gateway</a> is a scalable network architecture solution that allows you to connect multiple VPCs, on-premises networks, and AWS services. Here's what you need to know about its scalability and limits:</p>
-<p><strong>Scalability Features</strong></p>
+<p>AWS Transit Gateway scales across attachments, route tables, and Availability Zones. Its published maximums have different scopes and increase paths, and a quota or throughput figure is not a promise of end-to-end application performance. This article summarizes current AWS quota guidance and shows what to measure as a network grows. For route selection and segmentation, see <a href="/blog/aws-transit-gateway-route-tables-explained/">AWS Transit Gateway route tables explained</a>.</p>
+<p>Unless a quota is marked otherwise, AWS lists Transit Gateway quotas by Region. Confirm the default and adjustment path for the account and Region you plan to use in the <a href="https://docs.aws.amazon.com/vpc/latest/tgw/transit-gateway-quotas.html" target="_blank" rel="noopener noreferrer">current Transit Gateway quotas</a> page and Service Quotas before designing around a ceiling.</p>
+
+<h2 id="how-aws-transit-gateway-can-grow">How Transit Gateway Scales</h2>
+<p>A transit gateway is a regional routing hub. You can add VPC, VPN, Direct Connect gateway, peering, and Connect attachments, and use multiple TGW route tables to apply different routing policies. Growth depends on the count and types of attachments, the number of routes installed across the gateway, and the traffic handled in each Availability Zone.</p>
+<p>For a VPC attachment, select one subnet in each Availability Zone where workloads need to reach the TGW. Adding attachments or AZs can expand the available paths, but does not by itself guarantee a particular application throughput or latency.</p>
+
+<h2 id="limits-of-aws-transit-gateway">Current Quotas to Plan Around</h2>
+<p>The table gives selected defaults from AWS's quota page. “Yes” means AWS lists the quota as adjustable through Service Quotas. Rows that say to contact a Solutions Architect or Technical Account Manager require assistance; that wording is not a promise that AWS will approve a higher value. “No” is a fixed quota in the published table.</p>
+<figure><table>
+<thead><tr><th>Quota</th><th>Default and scope</th><th>AWS increase path</th></tr></thead>
+<tbody>
+<tr><td>Transit gateways per account</td><td>5 per Region</td><td>Yes, Service Quotas</td></tr>
+<tr><td>TGW route tables</td><td>20 per transit gateway</td><td>Yes, Service Quotas</td></tr>
+<tr><td>Static and dynamic routes</td><td>10,000 combined across all route tables on one transit gateway</td><td>Contact your Solutions Architect or Technical Account Manager</td></tr>
+<tr><td>Attachments</td><td>5,000 total per transit gateway across supported attachment types</td><td>Yes, Service Quotas</td></tr>
+<tr><td>Transit gateways per VPC</td><td>5 per VPC</td><td>No</td></tr>
+<tr><td>Peering attachments</td><td>50 per transit gateway; one between two transit gateways or between a transit gateway and a Cloud WAN core network edge</td><td>50 is adjustable; one per pair is fixed</td></tr>
+<tr><td>Pending peering attachments</td><td>10 per transit gateway</td><td>Yes, Service Quotas</td></tr>
+<tr><td>Connect peers (GRE tunnels)</td><td>4 per Connect attachment</td><td>No</td></tr>
+<tr><td>Routes advertised from a virtual router appliance to a Connect peer</td><td>1,000 per Connect peer</td><td>Contact your Solutions Architect or Technical Account Manager</td></tr>
+<tr><td>Routes advertised from a Connect peer to a virtual router appliance</td><td>5,000 per Connect peer</td><td>No</td></tr>
+<tr><td>Static routes for one prefix to one attachment</td><td>1 per prefix and attachment</td><td>No</td></tr>
+</tbody>
+</table></figure>
+<p>The 5,000 figure is a total attachment quota on each transit gateway, not a separate allowance for 5,000 VPCs. Every attachment on that TGW counts toward the same total, regardless of which AWS account owns it. AWS also permits no more than one VPC attachment from a particular VPC to the same TGW; a VPC can be attached to up to five transit gateways. Check the exact row scope before adding VPN, Direct Connect, Connect, or peering capacity to a VPC count.</p>
+<p>The route ceiling is also easy to misread: 10,000 static and dynamic routes is the combined total across every route table on one transit gateway, not 10,000 routes in each table. Review route counts alongside the segmentation model before approaching that threshold.</p>
+
+<h3 id="route-limits-explained">Route Scale and Propagation</h3>
+<p>Route propagation can reduce manual updates for supported dynamic sources, but it does not change the total route quota. A VPC attachment contributes its VPC CIDR blocks; it does not import arbitrary VPC subnet-route entries. Transit Gateway peering uses static routes for remote prefixes. See the detailed <a href="/blog/aws-transit-gateway-route-tables-explained/">guide to associations, propagation, and route selection</a> before changing route tables to reduce route count.</p>
+<p>For Connect, check both directions of the advertised-route limits. The 1,000-route figure is routes advertised from the virtual router appliance to the Connect peer; the 5,000-route figure is routes advertised from the Connect peer to the appliance. They are separate quotas, with different adjustment paths.</p>
+
+<h3 id="vpc-attachment-restrictions">Attachment Types, Connect, and Peering</h3>
+<p>A Connect attachment and a peering attachment solve different problems. Transit Gateway Connect uses GRE tunnels and BGP between the TGW and a virtual appliance, such as an SD-WAN router, carried over an underlying VPC or Direct Connect gateway attachment. It allows up to four Connect peers per Connect attachment. Each peer is limited to up to 5 Gbps and 300,000 packets per second; AWS lists those peer limits as fixed. See AWS's <a href="https://docs.aws.amazon.com/vpc/latest/tgw/tgw-connect.html" target="_blank" rel="noopener noreferrer">Connect attachment documentation</a>.</p>
+<p>Peering connects two transit gateways, including across Regions. It is not a Connect tunnel, and it does not propagate routes between the two TGW route tables. Create static routes to the peering attachment on each side for the remote prefixes and their return paths. The quota page lists up to 100 Gbps in each direction and 7.5 million packets per second per available AZ for a peered transit gateway connection; those figures are scoped per AZ, not an end-to-end guarantee. AWS's <a href="https://docs.aws.amazon.com/vpc/latest/tgw/how-transit-gateways-work.html" target="_blank" rel="noopener noreferrer">TGW routing guide</a> covers peering routes.</p>
+<p>For a comparison of Direct Connect and Site-to-Site VPN attachment choices, see <a href="/blog/aws-direct-connect-vs-vpn-key-differences/">AWS Direct Connect vs. Site-to-Site VPN</a>.</p>
+
+<h2 id="optimizing-aws-transit-gateway-scalability">Bandwidth, Packets, and MTU</h2>
+<p>AWS publishes these throughput ceilings by attachment type and Availability Zone in the <a href="https://docs.aws.amazon.com/vpc/latest/tgw/transit-gateway-quotas.html" target="_blank" rel="noopener noreferrer">Transit Gateway quotas</a>. Use them as planning limits, then measure the real path with representative traffic and both directions.</p>
+<figure><table>
+<thead><tr><th>Traffic scope</th><th>Published default</th><th>Increase path</th></tr></thead>
+<tbody>
+<tr><td>VPC attachment, per AZ</td><td>Up to 100 Gbps ingress and 100 Gbps egress; up to 7,500,000 packets per second</td><td>Contact your Solutions Architect or Technical Account Manager</td></tr>
+<tr><td>Direct Connect gateway or peered TGW connection, per available AZ</td><td>Up to 100 Gbps each direction; up to 7,500,000 packets per second per attachment</td><td>Contact your Solutions Architect or Technical Account Manager</td></tr>
+<tr><td>Connect peer (GRE tunnel)</td><td>Up to 5 Gbps and 300,000 packets per second per peer</td><td>No; four peers are allowed per Connect attachment</td></tr>
+</tbody>
+</table></figure>
+<p>AWS may provide bandwidth above the published default for VPC, Direct Connect gateway, and peered TGW connections. That does not make the listed figure an application throughput guarantee. Packet size, traffic mix, routes, underlying transport, destination capacity, and AZ placement affect realized performance. Site-to-Site VPN tunnel throughput has its own constraints and varies with factors such as packet size, protocol, customer gateway, and network path; consult the <a href="https://docs.aws.amazon.com/vpn/latest/s2svpn/vpn-limits.html" target="_blank" rel="noopener noreferrer">VPN bandwidth and throughput guidance</a>.</p>
+
+<h3 id="multicast-capabilities-and-bounds">MTU and Path MTU Discovery</h3>
+<p>The Transit Gateway quota page lists an MTU of up to 8,500 bytes for traffic between VPCs, Direct Connect, Transit Gateway Connect, and peering attachments. It says traffic over VPN connections can have an MTU of 1,500 bytes. The separate Site-to-Site VPN tunnel quota is a maximum MTU of 1,446 bytes with a corresponding maximum TCP MSS of 1,406 bytes. AWS notes that tunnel settings can lower those values; account for IPsec encapsulation overhead and verify the configured tunnel MTU and MSS. These are limits documented at different service layers. When a path includes an AWS Site-to-Site VPN tunnel, use the actual tunnel limit as the more restrictive packet-size constraint. AWS also enforces TCP MSS clamping at the transit gateway.</p>
+<p>PMTUD support depends on the ingress attachment. AWS documents PMTUD for traffic entering on VPC and Connect attachments, where the TGW can generate ICMPv4 “fragmentation needed” and ICMPv6 “Packet Too Big” messages. It does not support PMTUD for traffic entering on Site-to-Site VPN, Direct Connect, or peering attachments; the Site-to-Site VPN service also documents that its connection does not support PMTUD. If a path includes one of those attachment types, do not assume the TGW or VPN will signal the usable MTU; set and test packet sizes for the complete path. See the <a href="https://docs.aws.amazon.com/vpc/latest/tgw/transit-gateway-quotas.html" target="_blank" rel="noopener noreferrer">Transit Gateway quota documentation</a> and <a href="https://docs.aws.amazon.com/vpn/latest/s2svpn/vpn-limits.html" target="_blank" rel="noopener noreferrer">Site-to-Site VPN quotas</a>.</p>
+
+<h2 id="monitoring-network-traffic">What CloudWatch Shows—and What It Does Not</h2>
+<p>Amazon VPC publishes Transit Gateway metrics to CloudWatch every 60 seconds in the <code>AWS/TransitGateway</code> namespace. Gateway and attachment metrics include bytes and packets in or out, plus drop counts for blackhole routes and destinations with no route. These signals help identify traffic changes and routing drops.</p>
+<p>Only VPC attachments support per-AZ metrics. The published Transit Gateway metrics do not report route-table inventory or application latency. Track route and attachment counts from the VPC/EC2 APIs, configuration inventory, or your Infrastructure as Code state; use Service Quotas for quota details and increase requests. Measure latency from the workload path with application or host telemetry. AWS documents the <a href="https://docs.aws.amazon.com/vpc/latest/tgw/transit-gateway-cloudwatch-metrics.html" target="_blank" rel="noopener noreferrer">available Transit Gateway CloudWatch metrics and dimensions</a>.</p>
+<p>For a diagnostic workflow that distinguishes CloudWatch metrics, Network Manager, Flow Logs, and route analysis, see <a href="/blog/aws-network-dashboard-issues-troubleshooting-tips/">AWS network dashboard troubleshooting</a>.</p>
+
+<h2 id="planning-for-growth">Plan Capacity Before the Limit</h2>
 <ul>
-<li>Connect up to 5,000 VPCs to a single Transit Gateway</li>
-<li><a href="/blog/aws-transit-gateway-route-tables-explained/">Transit Gateway route tables</a> support up to 10,000 routes</li>
-<li>Each VPC attachment supports up to 50 Gbps of bandwidth</li>
+<li><strong>Count the right resources.</strong> Maintain separate counts for route tables, total TGW attachments by type, per-AZ traffic, and routes across all tables on each TGW.</li>
+<li><strong>Leave operational headroom.</strong> Plan for new accounts, networks, routes, and failover paths instead of targeting a published maximum.</li>
+<li><strong>Review increase paths early.</strong> Request adjustable quotas through Service Quotas; contact AWS account support for rows that require a Solutions Architect or Technical Account Manager. Fixed quotas have no increase path in the published table.</li>
+<li><strong>Test realistic traffic.</strong> Measure both directions, expected packet sizes, and failover behavior. A per-AZ ceiling does not establish throughput across an entire application path.</li>
+<li><strong>Keep cost and route design together.</strong> Route changes can alter attachment usage, traffic processing, and inter-Region transfer.</li>
 </ul>
-<p><strong>Key Limits</strong></p>
-<figure><table>
-<thead>
-<tr>
-<th><strong>Limit</strong></th>
-<th><strong>Value</strong></th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Static/propagated routes per route table</td>
-<td>10,000 routes</td>
-</tr>
-<tr>
-<td>Dynamic routes advertised to Transit Gateway Connect peer</td>
-<td>1,000 routes</td>
-</tr>
-<tr>
-<td>Dynamic routes advertised from Transit Gateway Connect peer</td>
-<td>5,000 routes</td>
-</tr>
-<tr>
-<td>VPC attachments per Transit Gateway</td>
-<td>5,000 VPCs</td>
-</tr>
-<tr>
-<td>Transit Gateway attachments per VPC</td>
-<td>5 Transit Gateways</td>
-</tr>
-<tr>
-<td>Transit Gateway Connect peers per Connect attachment</td>
-<td>4 peers</td>
-</tr>
-<tr>
-<td>Bandwidth per Connect peer</td>
-<td>5 Gbps</td>
-</tr>
-</tbody>
-</table></figure>
-<p><strong>Multicast Limitations</strong></p>
+
+<h2 id="balancing-scalability-and-limits">Transit Gateway Pricing</h2>
+<p>AWS charges attachment-hours and, for applicable attachment types, data processing; standard AWS data-transfer charges can also apply. Transit Gateway Connect data processing is charged through its underlying VPC or Direct Connect attachment rather than as an additional Connect processing charge. Site-to-Site VPN and inter-Region peering can involve separate charges, and the payer varies with attachment type and account ownership. Because rates depend on Region, traffic volume, attachment mix, and path, use the current <a href="https://aws.amazon.com/transit-gateway/pricing/" target="_blank" rel="noopener noreferrer">AWS Transit Gateway pricing page</a> and <a href="https://calculator.aws/" target="_blank" rel="noopener noreferrer">AWS Pricing Calculator</a> for an estimate instead of relying on an old example amount.</p>
+
+<h2 id="faqs">Frequently Asked Questions</h2>
+<h3 id="is-the-100-gbps-value-per-transit-gateway">Is 100 Gbps the throughput for the whole transit gateway?</h3>
+<p>No. AWS lists up to 100 Gbps in each direction per VPC attachment per AZ and separately scopes Direct Connect gateway and peering values per available AZ. It is a published service quota, not guaranteed workload throughput.</p>
+<h3 id="does-a-connect-attachment-provide-20-gbps">Does a Connect attachment provide 20 Gbps?</h3>
+<p>It can have up to four peers, each with a published limit of up to 5 Gbps, so AWS states a total of up to 20 Gbps per Connect attachment when the underlying VPC or Direct Connect transport supports that bandwidth. This is an aggregate ceiling, not a throughput promise.</p>
+<h3 id="does-transit-gateway-support-pmtud">Does Transit Gateway support Path MTU Discovery?</h3>
+<p>For traffic entering through VPC and Connect attachments, yes. For Site-to-Site VPN, Direct Connect, and peering ingress, AWS does not support TGW PMTUD. Check the full path's MTU and test the packet sizes your applications send.</p>
+
+<h2 id="aws-references">AWS References</h2>
 <ul>
-<li><a href="https://en.wikipedia.org/wiki/Path_MTU_Discovery" target="_blank">Path MTU Discovery</a> (PMTUD) is not supported</li>
-<li><a href="https://en.wikipedia.org/wiki/Maximum_segment_size" target="_blank">Maximum Segment Size</a> (MSS) clamping is enforced for all packets</li>
+<li><a href="https://docs.aws.amazon.com/vpc/latest/tgw/transit-gateway-quotas.html" target="_blank" rel="noopener noreferrer">AWS Transit Gateway quotas</a></li>
+<li><a href="https://docs.aws.amazon.com/vpc/latest/tgw/transit-gateway-cloudwatch-metrics.html" target="_blank" rel="noopener noreferrer">Transit Gateway CloudWatch metrics</a></li>
+<li><a href="https://docs.aws.amazon.com/vpc/latest/tgw/tgw-connect.html" target="_blank" rel="noopener noreferrer">Transit Gateway Connect attachments and peers</a></li>
+<li><a href="https://docs.aws.amazon.com/vpc/latest/tgw/how-transit-gateways-work.html" target="_blank" rel="noopener noreferrer">How AWS Transit Gateway works, including peering routes</a></li>
+<li><a href="https://docs.aws.amazon.com/vpn/latest/s2svpn/vpn-limits.html" target="_blank" rel="noopener noreferrer">AWS Site-to-Site VPN quotas, tunnel MTU, and throughput</a></li>
 </ul>
-<p>To optimize scalability, plan for growth, monitor network traffic, and balance scalability with limits. Monitor key metrics like network throughput, latency, route table size, and VPC/VPN usage.</p>
-<p><strong>Quick Comparison</strong></p>
-<figure><table>
-<thead>
-<tr>
-<th><strong>Connection Type</strong></th>
-<th><strong>MTU</strong></th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Traffic between VPCs, <a href="https://aws.amazon.com/directconnect/" target="_blank">AWS Direct Connect</a>, Transit Gateway Connect, and peering attachments</td>
-<td>8500 bytes</td>
-</tr>
-<tr>
-<td>Traffic over VPN connections</td>
-<td>1500 bytes</td>
-</tr>
-</tbody>
-</table></figure>
-<h2 id="related-video-from-youtube">Related video from YouTube</h2>
-<iframe allowfullscreen="" frameborder="0" loading="lazy" src="https://www.youtube.com/embed/a55Iud-66q0"></iframe><h2 id="how-aws-transit-gateway-can-grow">How <a href="https://aws.amazon.com/transit-gateway/" target="_blank">AWS Transit Gateway</a> Can Grow</h2>
-<p><figure><img alt="AWS Transit Gateway" loading="lazy" src="/assets/media/0e40fda8fb1c461be70f.jpg"/></figure></p>
-<p>AWS Transit Gateway is designed to scale with your organization's growth, allowing you to easily add more resources, connections, and network routes as needed.</p>
-<h3 id="connecting-more-resources">Connecting More Resources</h3>
-<p>You can attach up to <strong>5,000 VPCs</strong> to a single Transit Gateway, providing a highly scalable and flexible network architecture. Additionally, you can create multiple Transit Gateways in different Regions, allowing you to scale your network globally.</p>
-<h3 id="managing-network-routes">Managing Network Routes</h3>
-<p>Transit Gateway uses route tables to manage network routes. By default, a Transit Gateway route table can hold up to <strong>10,000 routes</strong>. You can also use route propagation to automatically update your route tables, making it easier to manage your network routes as your infrastructure grows.</p>
-<h3 id="bandwidth-for-vpc-connections">Bandwidth for VPC Connections</h3>
-<p>Each VPC attachment to a Transit Gateway can support up to <strong>50 Gbps</strong> of bandwidth, providing a high-speed connection for your network resources. You can increase the collective bandwidth across a Transit Gateway by adding more VPC attachments.</p>
-<p>Here is a summary of the scalability features of AWS Transit Gateway:</p>
-<figure><table>
-<thead>
-<tr>
-<th><strong>Feature</strong></th>
-<th><strong>Scalability</strong></th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>VPC Attachments</td>
-<td>Up to 5,000 VPCs</td>
-</tr>
-<tr>
-<td>Route Tables</td>
-<td>Up to 10,000 routes</td>
-</tr>
-<tr>
-<td>Bandwidth per VPC Attachment</td>
-<td>Up to 50 Gbps</td>
-</tr>
-</tbody>
-</table></figure>
-<p>By understanding these scalability features, you can design a robust and efficient network infrastructure that supports your business growth and digital transformation initiatives.</p>
-<h2 id="limits-of-aws-transit-gateway">Limits of AWS Transit Gateway</h2>
-<p>AWS Transit Gateway is a powerful tool for managing network infrastructure, but it's essential to understand its limitations to design an efficient and scalable network architecture.</p>
-<h3 id="route-limits-explained">Route Limits Explained</h3>
-<p>AWS Transit Gateway has specific route limits that network architects should be aware of. The following table summarizes these limits:</p>
-<figure><table>
-<thead>
-<tr>
-<th><strong>Route Type</strong></th>
-<th><strong>Limit</strong></th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Static or propagated routes per Transit Gateway route table</td>
-<td>10,000 routes</td>
-</tr>
-<tr>
-<td>Dynamic routes advertised from a virtual router appliance to a Transit Gateway Connect peer</td>
-<td>1,000 routes</td>
-</tr>
-<tr>
-<td>Dynamic routes advertised from a Transit Gateway Connect peer to a virtual router appliance</td>
-<td>5,000 routes</td>
-</tr>
-</tbody>
-</table></figure>
-<h3 id="vpc-attachment-restrictions">VPC Attachment Restrictions</h3>
-<p>There are restrictions on the number of VPC attachments per Transit Gateway and per VPC. The following table summarizes these limits:</p>
-<figure><table>
-<thead>
-<tr>
-<th><strong>Attachment Type</strong></th>
-<th><strong>Limit</strong></th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>VPC attachments per Transit Gateway</td>
-<td>5,000 VPCs</td>
-</tr>
-<tr>
-<td>Transit Gateway attachments per VPC</td>
-<td>5 Transit Gateways</td>
-</tr>
-</tbody>
-</table></figure>
-<h3 id="peering-connection-limits">Peering Connection Limits</h3>
-<p>AWS Transit Gateway also has limits on peering connections. The following table summarizes these limits:</p>
-<figure><table>
-<thead>
-<tr>
-<th><strong>Peering Connection Type</strong></th>
-<th><strong>Limit</strong></th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Transit Gateway connect peers (GRE tunnels) per Connect attachment</td>
-<td>4 peers</td>
-</tr>
-<tr>
-<td>Bandwidth per Connect peer</td>
-<td>5 Gbps</td>
-</tr>
-</tbody>
-</table></figure>
-<h3 id="multicast-capabilities-and-bounds">Multicast Capabilities and Bounds</h3>
-<p>AWS Transit Gateway has specific multicast capabilities and bounds. <strong>Note the following:</strong></p>
-<ul>
-<li>The transit gateway does not generate FRAG_NEEDED for ICMPv4 packets or Packet Too Big (PTB) for ICMPv6 packets, which means Path MTU Discovery (PMTUD) is not supported.</li>
-<li>The transit gateway enforces Maximum Segment Size (MSS) clamping for all packets.</li>
-</ul>
-<p>By understanding these limits, network architects can design a robust and efficient network infrastructure that supports business growth and digital transformation initiatives.</p>
-<h2 id="optimizing-aws-transit-gateway-scalability">Optimizing AWS Transit Gateway Scalability</h2>
-<p>Optimizing AWS Transit Gateway scalability is crucial to ensure your network infrastructure can grow with your business. By understanding the limits of AWS Transit Gateway and implementing strategic design and proactive monitoring, you can maximize its potential.</p>
-<h3 id="planning-for-growth">Planning for Growth</h3>
-<p>When designing your Transit Gateway setup, plan for growth by considering factors such as the number of VPCs, VPN connections, and network routes. This helps avoid costly reconfigurations and ensures your network can handle increased traffic and demand.</p>
-<p>Some best practices for planning for growth include:</p>
-<ul>
-<li>Using a hub-and-spoke architecture to simplify network design and reduce complexity</li>
-<li>Implementing route optimization techniques to reduce the number of routes and improve network performance</li>
-<li>Using AWS Transit Gateway's built-in features, such as route propagation and route tables, to simplify network management</li>
-</ul>
-<h3 id="monitoring-network-traffic">Monitoring Network Traffic</h3>
-<p>Monitoring network traffic is critical to optimizing AWS Transit Gateway scalability. By closely monitoring traffic patterns, performance metrics, and network usage, you can identify areas for improvement and optimize your Transit Gateway setup.</p>
-<p><strong>Key Metrics to Monitor</strong></p>
-<figure><table>
-<thead>
-<tr>
-<th><strong>Metric</strong></th>
-<th><strong>Description</strong></th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Network Throughput</td>
-<td>Measure the amount of data transmitted over the network</td>
-</tr>
-<tr>
-<td>Latency</td>
-<td>Measure the delay between sending and receiving data</td>
-</tr>
-<tr>
-<td>Route Table Size</td>
-<td>Monitor the number of routes in your route table</td>
-</tr>
-<tr>
-<td>VPC Attachment and VPN Connection Usage</td>
-<td>Track the number of VPC attachments and VPN connections</td>
-</tr>
-<tr>
-<td>Network Traffic Patterns and Trends</td>
-<td>Analyze traffic patterns to identify areas for optimization</td>
-</tr>
-</tbody>
-</table></figure>
-<p>By leveraging these insights, you can optimize your Transit Gateway setup, reduce costs, and improve network performance.</p>
-<h2 id="balancing-scalability-and-limits">Balancing Scalability and Limits</h2>
-<p>When using AWS Transit Gateway, it's crucial to strike a balance between scalability and limits. Scalability allows your network to grow with your business, while limits ensure that your network remains stable and secure.</p>
-<h3 id="understanding-the-interplay-between-scalability-and-limits">Understanding the Interplay Between Scalability and Limits</h3>
-<p>Scalability and limits are interconnected aspects of AWS Transit Gateway. As your network grows, you need to ensure that your Transit Gateway setup can handle increased traffic and demand. However, this growth must be balanced against the limits of your Transit Gateway, including route limits, VPC attachment restrictions, and peering connection limits.</p>
-<h3 id="strategic-planning-for-growth">Strategic Planning for Growth</h3>
-<p>To balance scalability and limits, you need to plan strategically for growth. This involves considering factors such as the number of VPCs, VPN connections, and network routes. By understanding your network requirements and limitations, you can design a Transit Gateway setup that scales with your business while staying within the limits of the service.</p>
-<h3 id="monitoring-and-analysis">Monitoring and Analysis</h3>
-<p>Monitoring and analysis are critical components of balancing scalability and limits. By closely monitoring network traffic patterns, performance metrics, and network usage, you can identify areas for improvement and optimize your Transit Gateway setup.</p>
-<p><strong>Key Metrics to Monitor</strong></p>
-<figure><table>
-<thead>
-<tr>
-<th><strong>Metric</strong></th>
-<th><strong>Description</strong></th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Network Throughput</td>
-<td>Measure the amount of data transmitted over the network</td>
-</tr>
-<tr>
-<td>Latency</td>
-<td>Measure the delay between sending and receiving data</td>
-</tr>
-<tr>
-<td>Route Table Size</td>
-<td>Monitor the number of routes in your route table</td>
-</tr>
-<tr>
-<td>VPC Attachment and VPN Connection Usage</td>
-<td>Track the number of VPC attachments and VPN connections</td>
-</tr>
-<tr>
-<td>Network Traffic Patterns and Trends</td>
-<td>Analyze traffic patterns to identify areas for optimization</td>
-</tr>
-</tbody>
-</table></figure>
-<p>By following these best practices, you can strike the perfect balance between scalability and limits, ensuring that your AWS Transit Gateway setup is optimized for growth and performance.</p>
-<h2 id="faqs">FAQs</h2>
-<h3 id="what-is-the-connection-limit-for-aws-transit-gateway%3F">What is the connection limit for AWS transit gateway?</h3>
-<p>The connection limit for AWS Transit Gateway is as follows:</p>
-<figure><table>
-<thead>
-<tr>
-<th><strong>Connection Type</strong></th>
-<th><strong>MTU</strong></th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Traffic between VPCs, AWS Direct Connect, Transit Gateway Connect, and peering attachments</td>
-<td>8500 bytes</td>
-</tr>
-<tr>
-<td>Traffic over VPN connections</td>
-<td>1500 bytes</td>
-</tr>
-</tbody>
-</table></figure>
-<h3 id="what-is-the-maximum-throughput-of-a-transit-gateway%3F">What is the maximum throughput of a transit gateway?</h3>
-<p>The maximum throughput of a Transit Gateway Connect peer (GRE tunnel) is up to <strong>5 Gbps</strong>. You can create up to <strong>4 Connect peers</strong> per Connect attachment, which allows for a total bandwidth of up to <strong>20 Gbps</strong> per Connect attachment, as long as the underlying transport (VPC) attachment supports the required bandwidth.</p>
-<p>
-<h2>Related posts</h2>
-<ul>
-<li><a href="/blog/aws-vpc-guide-configuration-essentials/">AWS VPC Guide: Configuration Essentials</a></li><li><a href="/blog/aws-engineering-blog-autoscaling-for-high-availability/">AWS Engineering Blog: Autoscaling for High Availability</a></li><li><a href="/blog/aws-transit-gateway-route-tables-explained/">AWS Transit Gateway Route Tables Explained</a></li><li><a href="/blog/aws-services-overview-core-components/">AWS Services Overview: Core Components</a></li>
-</ul>
-</p>

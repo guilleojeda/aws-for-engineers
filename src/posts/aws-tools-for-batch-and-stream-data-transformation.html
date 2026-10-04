@@ -3,233 +3,174 @@ layout: post.njk
 templateEngineOverride: html
 tags: posts
 title: "AWS Tools for Batch and Stream Data Transformation"
-description: "Explore AWS tools for batch and stream data transformation, comparing their capabilities and best use cases to optimize your data workflows."
+description: "Compare AWS Batch, Glue, EMR, Lambda, Amazon Data Firehose, Kinesis Data Streams, MSK, and Flink by processing model and trade-offs."
 date: "2025-09-22"
 datePublished: "2025-09-22T04:09:09.053000+00:00"
 heroImage: "/assets/media/74135c3b48da90cd05d3.jpg"
 permalink: "/blog/aws-tools-for-batch-and-stream-data-transformation/"
 sourceUrl: "https://awsforengineers.com/blog/aws-tools-for-batch-and-stream-data-transformation/"
-dateModified: "2026-10-03"
-updateNote: "Added author attribution and profile information."
+dateModified: "2026-10-04"
+updateNote: "Rebuilt the service comparison for batch ETL, buffered delivery, and stateful streams; corrected current names, runtime constraints, retries, and recovery guidance."
 ---
-<p>Transforming data on <a href="https://aws.amazon.com/" rel="nofollow noopener noreferrer" target="_blank">AWS</a> comes down to two main approaches: <strong>batch processing</strong> for scheduled, large-scale tasks and <strong>stream processing</strong> for real-time data handling. AWS provides several tools tailored to these needs:</p>
-<ul>
-<li><strong><a href="https://docs.aws.amazon.com/batch/" rel="nofollow noopener noreferrer" target="_blank">AWS Batch</a></strong>: Best for large, scheduled data jobs. Scales resources efficiently but isn't suitable for real-time tasks.</li>
-<li><strong><a href="https://aws.amazon.com/lambda/" rel="nofollow noopener noreferrer" target="_blank">AWS Lambda</a></strong>: Ideal for lightweight, event-driven tasks with fast execution. Limited by a 15-minute runtime cap.</li>
-<li><strong><a href="https://docs.aws.amazon.com/streams/latest/dev/introduction.html" rel="nofollow noopener noreferrer" target="_blank">Amazon Kinesis Data Streams</a></strong>: Handles real-time data streams with low latency and high throughput. Requires shard management.</li>
-<li><strong><a href="https://docs.aws.amazon.com/firehose/" rel="nofollow noopener noreferrer" target="_blank">Amazon Kinesis Data Firehose</a></strong>: Simplifies streaming data delivery and basic transformations. Automates scaling but offers less control.</li>
-<li><strong><a href="https://docs.aws.amazon.com/msk/" rel="nofollow noopener noreferrer" target="_blank">Amazon MSK</a></strong>: A managed Kafka service for high-throughput, complex event handling. Supports message replay and multiple consumer groups.</li>
-</ul>
-<p>Each tool serves specific use cases, from scheduled ETL processes to real-time analytics. The choice depends on your workload's latency, volume, and processing needs. AWS services can also integrate to build end-to-end data pipelines.</p>
-<figure><table>
-<thead>
-<tr>
-<th><strong>Tool</strong></th>
-<th><strong>Best Use Cases</strong></th>
-<th><strong>Latency</strong></th>
-<th><strong>Scalability</strong></th>
-<th><strong>AWS Integration</strong></th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><strong>AWS Batch</strong></td>
-<td>Scheduled, compute-heavy jobs</td>
-<td>Minutes to hours</td>
-<td>Scales with job queues</td>
-<td>Works with S3, RDS, CloudWatch</td>
-</tr>
-<tr>
-<td><strong>AWS Lambda</strong></td>
-<td>Event-driven tasks</td>
-<td>Milliseconds</td>
-<td>Automatic scaling</td>
-<td>Integrates with 200+ AWS services</td>
-</tr>
-<tr>
-<td><strong>Kinesis Data Streams</strong></td>
-<td>Real-time analytics</td>
-<td>Sub-second</td>
-<td>Manual shard scaling</td>
-<td>SDK and Kinesis Client Library</td>
-</tr>
-<tr>
-<td><strong>Kinesis Data Firehose</strong></td>
-<td>Streamlined data delivery</td>
-<td>~60 seconds</td>
-<td>Automatic scaling</td>
-<td>Direct delivery to S3, Redshift</td>
-</tr>
-<tr>
-<td><strong>Amazon MSK</strong></td>
-<td>High-throughput streaming</td>
-<td>Milliseconds</td>
-<td>Horizontal and vertical scaling</td>
-<td>MSK Connect for S3, RDS, OpenSearch</td>
-</tr>
-</tbody>
-</table></figure>
-<p><strong>Key takeaway</strong>: Use AWS Batch for large-scale, scheduled tasks. Opt for Lambda for quick, event-driven jobs. Choose Kinesis Data Streams for custom real-time workflows, Firehose for straightforward delivery, or MSK for Kafka-based streaming.</p>
-<h2 id="1-aws-batch">1. <a href="https://docs.aws.amazon.com/batch/" rel="nofollow noopener noreferrer" target="_blank">AWS Batch</a></h2>
-<p><figure><img alt="AWS Batch" loading="lazy" src="/assets/media/857ec3e5d1f03345f65c.jpg"/></figure></p>
-<p>AWS Batch is designed to handle large-scale computational workloads without requiring you to manage complex infrastructure. It automatically scales compute resources based on job requirements, making it a go-to solution for scheduled, resource-intensive data transformations.</p>
-<blockquote>
-<p>"AWS Batch is a service that enables scientists and engineers to run computational workloads at virtually any scale without requiring them to manage a complex architecture." – <a href="/blog/hpc-workload-profiling-on-aws-best-practices/">AWS HPC Blog</a> </p>
-</blockquote>
-<h3 id="core-capabilities-and-architecture"><strong>Core Capabilities and Architecture</strong></h3>
-<p>AWS Batch operates by organizing work into job queues, which feed into compute environments. When a job is submitted, AWS Batch takes care of scheduling, resource allocation, and execution. It supports both containerized applications and traditional batch scripts, offering flexibility for various data transformation needs. By leveraging a mix of EC2 Spot and On-Demand instances, AWS Batch optimizes resource usage, ensuring cost-effective performance. These features make it well-suited for handling diverse workloads.</p>
-<h3 id="latency-and-performance-characteristics"><strong>Latency and Performance Characteristics</strong></h3>
-<p>AWS Batch focuses on maximizing throughput rather than minimizing latency, which means it’s not the best choice for real-time processing. For shorter tasks, scheduling overhead might outweigh the actual runtime. To improve efficiency, group tasks into jobs that run for 3–5 minutes or longer.</p>
-<h3 id="scaling-and-resource-management"><strong>Scaling and Resource Management</strong></h3>
-<p>Scaling is one of AWS Batch's strengths, offering two main compute options:</p>
-<ul>
-<li><strong><a href="https://aws.amazon.com/fargate/" rel="nofollow noopener noreferrer" target="_blank">AWS Fargate</a></strong>: Ideal for jobs that need to start quickly (under 30 seconds) and require up to 4 vCPUs and 30 GiB of memory.</li>
-<li><strong><a href="https://docs.aws.amazon.com/ec2/" rel="nofollow noopener noreferrer" target="_blank">Amazon EC2</a></strong>: Offers more control and supports higher resource demands, including GPUs and custom AMIs. This is perfect for high-throughput workloads or jobs requiring specialized Linux configurations.</li>
-</ul>
-<p>This flexibility allows you to fine-tune your batch processing pipelines for both speed and resource optimization.</p>
-<h3 id="integration-patterns-with-aws-services"><strong>Integration Patterns with <a href="https://aws.amazon.com/" rel="nofollow noopener noreferrer" target="_blank">AWS</a> Services</strong></h3>
-<p><figure><img alt="AWS" loading="lazy" src="/assets/media/a5e8d42655247276a341.jpg"/></figure></p>
-<p>AWS Batch integrates seamlessly with other AWS services, enabling robust data transformation workflows:</p>
-<ul>
-<li><strong><a href="https://docs.aws.amazon.com/s3/" rel="nofollow noopener noreferrer" target="_blank">Amazon S3</a></strong>: Acts as the primary storage layer, scaling automatically to meet demand.</li>
-<li><strong><a href="https://docs.aws.amazon.com/dynamodb/" rel="nofollow noopener noreferrer" target="_blank">Amazon DynamoDB</a></strong>: Can be used to manage job inputs or stage task arguments.</li>
-<li><strong><a href="https://docs.aws.amazon.com/eventbridge/" rel="nofollow noopener noreferrer" target="_blank">Amazon EventBridge</a></strong>: Triggers Lambda functions in response to Batch events, such as Spot Instance interruptions, ensuring interrupted jobs are resubmitted to On-Demand queues.</li>
-</ul>
-<p>These integrations simplify data ingestion, storage, and task coordination, making AWS Batch a powerful tool for building efficient workflows.</p>
-<h3 id="monitoring-and-operational-considerations"><strong>Monitoring and Operational Considerations</strong></h3>
-<p>Effective monitoring is key to maintaining reliable operations. Here’s how you can stay on top of your jobs:</p>
-<ul>
-<li><strong>CloudWatch Logs</strong>: Use the CloudWatch Agent to push system and ECS logs for diagnosing runtime issues.</li>
-<li><strong>Structured Metrics</strong>: CloudWatch Embedded Metrics Format helps track performance in a structured way.</li>
-<li><strong>Automated Retries</strong>: AWS Batch supports custom retry strategies, such as up to five retries for host failures, while immediately aborting for application errors.</li>
-</ul>
-<p>When using a mix of Spot and On-Demand instances, diversify instance types, sizes, or Availability Zones in On-Demand environments to avoid resource contention.</p>
-<h3 id="cost-optimization-strategies"><strong>Cost Optimization Strategies</strong></h3>
-<p>AWS Batch keeps costs down by efficiently managing resources and incorporating Spot Instances. For cost-sensitive jobs, enable 1–3 automated retries to maintain queue priority when Spot Instances are interrupted. For longer-running or highly reliable jobs, On-Demand instances provide greater consistency, though at a higher cost. Balancing these options is key to achieving both reliability and cost-efficiency.</p>
-<h2 id="2-aws-lambda">2. <a href="https://aws.amazon.com/lambda/" rel="nofollow noopener noreferrer" target="_blank">AWS Lambda</a></h2>
-<p><figure><img alt="AWS Lambda" loading="lazy" src="/assets/media/c8c0cdf93c85298d6323.jpg"/></figure></p>
-<p>AWS Lambda offers a serverless computing solution designed to handle data transformation tasks without the need to manage infrastructure. This allows developers to concentrate solely on their code. It’s particularly well-suited for event-driven workflows, whether in batch or streaming scenarios.</p>
-<h3 id="event-driven-processing-architecture">Event-Driven Processing Architecture</h3>
-<p>Lambda relies on event source mappings to process records from services like Kinesis, DynamoDB, MSK, and SQS. These mappings actively poll for new messages and trigger functions using batches of records. Records are processed in batches, with the function being invoked once thresholds for batch size, batching window, or payload size (up to 6 MB) are met.</p>
-<h3 id="latency-and-performance-characteristics-1">Latency and Performance Characteristics</h3>
-<p>When dealing with stream processing, Lambda dynamically scales its event pollers based on the incoming message volume. For example, it assigns a dedicated event poller to each Kafka partition, capable of handling up to 5 MB per second and supporting concurrent function invocations. However, cold starts - occurring after periods of inactivity - can add a few seconds of latency. To minimize this, you can enable provisioned concurrency, which keeps instances pre-warmed. Additionally, setting <code>MaximumBatchingWindowInSeconds</code> to 0 in Kafka event source mappings ensures Lambda starts processing the next batch immediately after the current one, reducing delays.</p>
-<h3 id="error-handling-and-reliability">Error Handling and Reliability</h3>
-<p>Lambda’s error-handling mechanism ensures reliability. If a function encounters an error while processing a batch, the event source mapping retries the entire batch until it either succeeds or expires. This approach pauses processing for the affected shard, maintaining in-order processing. Such robust error handling is complemented by Lambda's smooth integration with AWS data services.</p>
-<h3 id="integration-patterns-with-aws-services-1">Integration Patterns with AWS Services</h3>
-<p>Lambda seamlessly integrates with key AWS services through event source mappings. For instance, when paired with Kinesis Data Streams using enhanced fan-out, Lambda can process streaming data with latencies as low as 70 milliseconds or better. This enables efficient, near real-time data transformations. Additionally, services like DynamoDB, MSK, and SQS also work effectively as event sources, making Lambda a versatile choice for various data processing needs.</p>
-<h2 id="3-amazon-kinesis-data-streams">3. <a href="https://docs.aws.amazon.com/streams/latest/dev/introduction.html" rel="nofollow noopener noreferrer" target="_blank">Amazon Kinesis Data Streams</a></h2>
-<p><figure><img alt="Amazon Kinesis Data Streams" loading="lazy" src="/assets/media/552ebdc0a4550cccd610.jpg"/></figure></p>
-<p>Amazon Kinesis Data Streams is a fully managed service designed for capturing, storing, and processing streaming data in real time. Unlike AWS Lambda’s event-driven model, Kinesis Data Streams acts as a persistent data pipeline, continuously managing data from multiple producers and delivering it to various consumers. This makes it an essential tool for real-time data workflows.</p>
-<h3 id="stream-architecture-and-sharding">Stream Architecture and Sharding</h3>
-<p>At the core of Kinesis Data Streams is its shard-based architecture. Shards are the building blocks of capacity and throughput. Each shard can handle up to <strong>1,000 records or 1 MB per second</strong> for data ingestion and supports <strong>2 MB per second</strong> for data retrieval per consumer (or per consumer with enhanced fan-out).</p>
-<p>Incoming data is distributed across shards using a <em>partition key</em>, which ensures that records with the same key are processed in order. If your data volume grows beyond the capacity of your current shards, you can scale dynamically by splitting overloaded shards or merging underutilized ones. This flexibility ensures that the stream adapts to your workload.</p>
-<h3 id="real-time-processing-capabilities">Real-Time Processing Capabilities</h3>
-<p>Kinesis Data Streams is built for high-speed data handling with sub-second latency. It stores data for a configurable retention period, ranging from <strong>24 hours to 7 days</strong>, giving you the flexibility to process data at your own pace or replay it as needed. This retention capability is crucial for applications where data durability and reliability are non-negotiable.</p>
-<p>The platform supports multiple consumption patterns at the same time. For instance, batch jobs and real-time analytics applications can read from the same stream independently. Each consumer maintains its position in the stream using checkpointing, ensuring smooth and uninterrupted processing. To further enhance performance, the <strong>enhanced fan-out</strong> feature provides additional scalability and reduces latency.</p>
-<h3 id="enhanced-fan-out-for-low-latency">Enhanced Fan-Out for Low Latency</h3>
-<p>Enhanced fan-out assigns each consumer its own dedicated throughput, eliminating the need for polling. This feature significantly reduces latency, bringing it down from around <strong>200 milliseconds</strong> with standard consumers to approximately <strong>70 milliseconds</strong>. This is especially useful when multiple downstream applications need to process the same data stream independently. These low-latency capabilities make Kinesis Data Streams a natural fit for complex, real-time workflows within AWS.</p>
-<h3 id="integration-with-the-aws-ecosystem">Integration with the AWS Ecosystem</h3>
-<p>Kinesis Data Streams works seamlessly with other AWS services, enabling comprehensive data processing pipelines. For instance:</p>
-<ul>
-<li><strong><a href="https://docs.aws.amazon.com/kinesisanalytics/latest/sqlref/analytics-sql-reference-dg.html" rel="nofollow noopener noreferrer" target="_blank">Amazon Kinesis Analytics</a></strong> allows you to run SQL-based transformations on streaming data.</li>
-<li><strong><a href="https://docs.aws.amazon.com/glue/" rel="nofollow noopener noreferrer" target="_blank">AWS Glue</a></strong> can catalog and transform the data for analytics.</li>
-<li><strong><a href="https://docs.aws.amazon.com/emr/" rel="nofollow noopener noreferrer" target="_blank">Amazon EMR</a></strong> supports batch processing of accumulated stream data.</li>
-</ul>
-<p>For operational visibility, Kinesis Data Streams integrates with <strong><a href="https://docs.aws.amazon.com/cloudwatch/" rel="nofollow noopener noreferrer" target="_blank">Amazon CloudWatch</a></strong>, providing metrics like incoming and outgoing record counts, iterator age, and throughput usage. These insights help with proactive scaling and identifying performance issues.</p>
-<p>Security is another cornerstone of the service. With <strong><a href="https://aws.amazon.com/iam/" rel="nofollow noopener noreferrer" target="_blank">AWS Identity and Access Management</a> (IAM)</strong>, you can define granular access controls, specifying which applications can produce or consume data. This is particularly useful for multi-tenant setups, where different teams share the same Kinesis infrastructure but need strict data isolation.</p>
-<h2 id="4-amazon-kinesis-data-firehose">4. <a href="https://docs.aws.amazon.com/firehose/" rel="nofollow noopener noreferrer" target="_blank">Amazon Kinesis Data Firehose</a></h2>
-<p><figure><img alt="Amazon Kinesis Data Firehose" loading="lazy" src="/assets/media/2e06cabf84aebd79c005.jpg"/></figure></p>
-<p>Amazon Kinesis Data Firehose serves as a streamlined solution for delivering and transforming streaming data directly to various data stores and analytics tools. Unlike Kinesis Data Streams, Firehose simplifies the process by automating both data ingestion and transformation, making it a fully managed service.</p>
-<p>One of its standout features is the built-in data transformation capability, which leverages AWS Lambda for real-time custom processing. This means you can perform tasks like format conversion or adding extra details to records while the data is in transit - no manual steps required. By handling these transformations seamlessly, Kinesis Data Firehose becomes an excellent choice for scenarios where real-time processing and minimal data staging are priorities. It’s a practical and efficient tool within the AWS ecosystem for ensuring your data is ready for analysis as soon as it arrives.</p>
+<p>AWS data transformation is not one service choice. A pipeline may need a durable stream, a compute engine, and a delivery target, each with a different job. For batch work, AWS Glue and Amazon EMR run data-processing frameworks, while AWS Batch queues and schedules containerized jobs. For streaming, Amazon Kinesis Data Streams and Amazon MSK retain and distribute events; Lambda handles bounded event-driven code, AWS Glue Streaming and Amazon Managed Service for Apache Flink run stream-processing jobs, and Amazon Data Firehose buffers and delivers data.</p>
+<p>Choose by the work you need to perform: file-oriented ETL, custom distributed compute, simple per-event changes, buffered delivery, or continuous stateful logic such as event-time windows. Latency, ordering, replay, failure handling, and cost follow from that choice.</p>
 
-<h2 id="5-amazon-managed-streaming-for-apache-kafka-msk">5. Amazon Managed Streaming for <a href="https://kafka.apache.org/" rel="nofollow noopener noreferrer" target="_blank">Apache Kafka</a> (MSK)</h2>
-<p><figure><img alt="Apache Kafka" loading="lazy" src="/assets/media/fce26c198182875ae14f.jpg"/></figure></p>
-<p>Amazon Managed Streaming for Apache Kafka (MSK) is a fully managed service that takes care of Apache Kafka clusters, making it easier for organizations to leverage Kafka's high-throughput data streaming capabilities without the hassle of manual cluster management.</p>
-<p><strong>Use Cases and Applications</strong></p>
-<p>MSK is a great fit for scenarios that require durable message storage, message replay, or complex event processing. This makes it particularly useful for event sourcing architectures, audit logging, and situations where multiple downstream systems need to consume the same data stream. Additionally, it supports workflows that involve multiple stages of data processing, ensuring smooth data flow throughout.</p>
-<p><strong>Latency Performance</strong></p>
-<p>MSK is designed to deliver low latency for both publishing and consuming messages. By using provisioned clusters with larger instance types and carefully distributing partitions across consumer groups, MSK ensures consistent performance. It also manages broker operations to distribute partitions evenly across availability zones, providing a solid foundation for scalability and seamless integration.</p>
-<p><strong>Scaling Capabilities</strong></p>
-<p>Scalability is another strength of MSK. It supports both vertical scaling (upgrading instance types) and horizontal scaling (adding more brokers). For serverless clusters, MSK can automatically adjust capacity based on workload demands. Message retention periods can also be customized, with MSK handling the storage infrastructure to match your needs.</p>
-<p><strong>AWS Service Integration</strong></p>
-<p>MSK integrates with a wide range of AWS services through MSK Connect, which offers managed connectors for services like Amazon S3, <a href="https://docs.aws.amazon.com/rds/" rel="nofollow noopener noreferrer" target="_blank">Amazon RDS</a>, and <a href="https://docs.aws.amazon.com/opensearch-service/" rel="nofollow noopener noreferrer" target="_blank">Amazon OpenSearch</a>. These connectors simplify the creation of data pipelines, eliminating the need for custom integration code and speeding up development.</p>
-<p><strong>Security and Monitoring</strong></p>
-<p>When it comes to security and monitoring, MSK has you covered. It works seamlessly with CloudWatch for metrics, CloudTrail for API logging, and IAM for access control. Additionally, it supports Apache Kafka's native ACLs, allowing for detailed management of topics and consumer group permissions.</p>
-<h2 id="comparison-summary">Comparison Summary</h2>
-<p>AWS offers a range of tools tailored for different data transformation needs, each with its own strengths and limitations. Choosing the right one depends on factors like latency, data volume, processing complexity, and operational preferences. Here's a closer look at how these services stack up.</p>
-<p><strong>AWS Batch</strong> stands out when handling compute-heavy batch processing tasks. It's ideal for large datasets that need processing on a schedule or via triggers. However, its reliance on scheduling means it's not suitable for real-time workflows.</p>
-<p><strong>AWS Lambda</strong> is perfect for lightweight, event-driven tasks. Its serverless design allows for quick deployment and cost-effective operation, especially for intermittent workloads. That said, its 15-minute execution cap and memory constraints make it less effective for large-scale or complex batch processing.</p>
-<p><strong>Amazon Kinesis Data Streams</strong> provides unmatched flexibility for real-time stream processing. Its low latency and ability to handle custom logic through user-defined applications make it a top choice for complex use cases. However, managing shard scaling and consumer applications can add operational overhead.</p>
-<p><strong>Amazon Kinesis Data Firehose</strong> simplifies data streaming by automating delivery to destinations like S3, Redshift, or OpenSearch. It scales automatically and requires minimal management. Yet, its transformation capabilities are limited compared to fully custom solutions, and it offers less control over processing logic.</p>
-<p><strong>Amazon MSK</strong> (Managed Streaming for Apache Kafka) shines in scenarios requiring high throughput and advanced stream processing. It supports complex event handling, message replay, and multiple consumer groups. The trade-off is the added complexity and cost of managing Kafka clusters.</p>
+<h2 id="comparison-summary">Quick comparison: what each service does</h2>
 <figure><table>
 <thead>
 <tr>
-<th><strong>Tool</strong></th>
-<th><strong>Best Use Cases</strong></th>
-<th><strong>Latency</strong></th>
-<th><strong>Scalability</strong></th>
-<th><strong>AWS Integration</strong></th>
+<th>Service</th>
+<th>Primary role</th>
+<th>Choose it when</th>
+<th>Main trade-off</th>
 </tr>
 </thead>
 <tbody>
 <tr>
 <td><strong>AWS Batch</strong></td>
-<td>Large-scale ETL, scheduled jobs, compute-heavy tasks</td>
-<td>Higher (minutes to hours)</td>
-<td>Horizontal scaling with job queues</td>
-<td>Works with S3, RDS, CloudWatch</td>
+<td>Queues and schedules containerized jobs on managed compute</td>
+<td>You have independent, resource-heavy jobs or existing containerized tools</td>
+<td>You package and operate the job; queueing and capacity startup are not a real-time response path</td>
+</tr>
+<tr>
+<td><strong>AWS Glue</strong></td>
+<td>Managed data integration and ETL, including batch and Spark streaming jobs</td>
+<td>You need repeatable transformations across supported data stores or streams</td>
+<td>Streaming mode determines supported sources and operations; running jobs incur ongoing compute charges</td>
+</tr>
+<tr>
+<td><strong>Amazon EMR</strong></td>
+<td>Managed environments for frameworks such as Apache Spark and Hadoop</td>
+<td>You need framework compatibility, runtime control, or broader cluster options</td>
+<td>More control brings more configuration and operational responsibility</td>
 </tr>
 <tr>
 <td><strong>AWS Lambda</strong></td>
-<td>Event-driven processing, API responses, lightweight tasks</td>
-<td>Low (milliseconds)</td>
-<td>Automatic scaling up to 1,000 concurrent executions</td>
-<td>Integrates with 200+ AWS services</td>
+<td>Runs event-driven code and bounded stream batches; Kinesis mappings also support tumbling windows</td>
+<td>A small transformation can finish within the function and source limits</td>
+<td>Retry, concurrency, ordering, and execution-time limits shape the design</td>
 </tr>
 <tr>
-<td><strong>Kinesis Data Streams</strong></td>
-<td>Real-time analytics, custom stream processing</td>
-<td>Very low (sub-second)</td>
-<td>Manual shard scaling, up to 1,000 records/second per shard</td>
-<td>AWS SDK and Kinesis Client Library support</td>
+<td><strong>Amazon Kinesis Data Streams</strong></td>
+<td>Retains an ordered stream for independent consumers and replay</td>
+<td>You need a reusable stream with consumer-controlled processing</td>
+<td>You design partition keys, capacity, consumers, and retention for the workload</td>
 </tr>
 <tr>
-<td><strong>Kinesis Data Firehose</strong></td>
-<td>Data lake ingestion, simple transformations, delivery</td>
-<td>Medium (~60 seconds)</td>
-<td>Automatic scaling based on throughput</td>
-<td>Direct delivery to S3, Redshift, OpenSearch, Splunk</td>
+<td><strong>Amazon Data Firehose</strong></td>
+<td>Buffers, optionally transforms, and delivers streaming data to destinations</td>
+<td>You want managed ingestion and delivery without running a consumer application</td>
+<td>Buffering and destination retries affect freshness; processing control is limited</td>
+</tr>
+<tr>
+<td><strong>Amazon Managed Service for Apache Flink</strong></td>
+<td>Runs continuous, stateful stream-processing applications</td>
+<td>You need the Flink programming model and direct control over stateful event-time processing</td>
+<td>You design the Flink application, state, checkpoints, watermarks, and sink behavior</td>
 </tr>
 <tr>
 <td><strong>Amazon MSK</strong></td>
-<td>High-throughput streaming, complex event handling</td>
-<td>Low (milliseconds)</td>
-<td>Horizontal and vertical scaling with managed brokers</td>
-<td>MSK Connect for S3, RDS, OpenSearch integration</td>
+<td>Managed Apache Kafka clusters for Kafka producers and consumers</td>
+<td>Kafka protocol, clients, topics, or existing Kafka architecture are requirements</td>
+<td>Provisioned clusters require capacity and Kafka operations planning; serverless has its own constraints and pricing</td>
 </tr>
 </tbody>
 </table></figure>
-<p>Your decision will also hinge on costs. <strong>AWS Lambda's</strong> pay-per-execution model is cost-efficient for workloads that aren't constant. On the other hand, <strong>Kinesis Data Streams</strong> and <strong>MSK</strong> offer more predictable costs for steady streaming needs. For large-scale batch jobs, <strong>AWS Batch</strong> pricing depends on how well you optimize EC2 instances and scheduling.</p>
+<p>These roles can be combined. A stream is not a transformation engine, and a delivery service is not a general-purpose stream processor. For example, a Kinesis stream can retain events while a Flink application calculates rolling aggregates and a Firehose stream delivers a copy to Amazon S3.</p>
+
+<h2 id="1-aws-batch">1. <a href="https://docs.aws.amazon.com/batch/latest/userguide/batch_components.html" rel="noopener noreferrer" target="_blank">AWS Batch</a>: schedule containerized batch jobs</h2>
+<figure><img alt="AWS Batch job processing" loading="lazy" src="/assets/media/857ec3e5d1f03345f65c.jpg"/></figure>
+<p>AWS Batch is a job scheduler and managed compute service, not an ETL engine. You submit a job definition that describes a container, its command, resource needs, and permissions. Jobs wait in a queue until the scheduler can place them in an associated compute environment. That makes Batch useful for independent transformations that already run as containers, including custom binaries, scientific software, and long-running or parallel work.</p>
+<h3 id="core-capabilities-and-architecture"><span id="integration-patterns-with-aws-services"></span>How to use it for transformation</h3>
+<p>Store inputs and outputs in a system such as Amazon S3, then let the container read, transform, and write them. AWS Batch can manage compute capacity with Amazon EC2, AWS Fargate, or Amazon ECS Managed Instances, depending on the environment and job requirements. It can also use Spot capacity where interruption is acceptable. The job image and transformation logic remain yours to build and maintain.</p>
+<p>Choose Batch when you need queueing, dependencies, resource-aware placement, or a familiar container runtime. For a conventional Spark ETL job where you want AWS to provide the data-processing runtime, start by comparing AWS Glue or Amazon EMR instead.</p>
+<h3 id="latency-and-performance-characteristics">Queueing, retries, and performance</h3>
+<p>Batch is designed to make queued work run when suitable compute is available. Queue time and capacity startup make it a poor fit for a response that must happen as each event arrives. Bundle work when setup overhead is material, but measure the job and input pattern instead of assuming a universal minimum job duration.</p>
+<p>Retry behavior can be configured for a job. A retry repeats the work, so write transformations to tolerate a job running again: use deterministic output paths, conditional writes, a run identifier, or a deliberate overwrite or upsert strategy. Spot interruptions and application failures need different handling; a retry policy cannot make a non-idempotent write safe.</p>
+<h3 id="scaling-and-resource-management"><span id="monitoring-and-operational-considerations"></span>Compute and operating trade-offs</h3>
+<p>Managed compute environments reduce the work of provisioning capacity, but you still choose resource limits, instance families or Fargate sizing, queue priorities, and any interruption tolerance. Watch queue wait time as well as job duration, failure reason, vCPU and memory use, and the cost of idle or overprovisioned capacity. See AWS's documentation on <a href="https://docs.aws.amazon.com/batch/latest/userguide/batch_components.html" rel="noopener noreferrer" target="_blank">AWS Batch components</a> and <a href="https://docs.aws.amazon.com/batch/latest/userguide/job_retries.html" rel="noopener noreferrer" target="_blank">automated job retries</a>.</p>
+
+<h2 id="2-aws-lambda">2. <a href="https://docs.aws.amazon.com/lambda/latest/dg/welcome.html" rel="noopener noreferrer" target="_blank">AWS Lambda</a>: transform bounded event batches</h2>
+<figure><img alt="AWS Lambda event-driven processing" loading="lazy" src="/assets/media/c8c0cdf93c85298d6323.jpg"/></figure>
+<p>Lambda is useful when a transformation is short, event-driven, and can run within the function's configured limits. It can validate a message, normalize a record, add a small enrichment, or route a batch. Lambda is compute: it does not retain a stream for consumers to replay.</p>
+<h3 id="event-driven-processing-architecture"><span id="integration-patterns-with-aws-services-1"></span>Event source mappings and batches</h3>
+<p>For Kinesis Data Streams, DynamoDB Streams, and Kafka sources such as Amazon MSK, a Lambda event source mapping polls the source and invokes the function with batches. Batch size and batching-window settings affect both efficiency and how long records wait before invocation. The source mapping, not the function alone, governs polling and delivery behavior; see AWS's guides for <a href="https://docs.aws.amazon.com/lambda/latest/dg/with-kinesis.html" rel="noopener noreferrer" target="_blank">Kinesis</a> and <a href="https://docs.aws.amazon.com/lambda/latest/dg/with-msk.html" rel="noopener noreferrer" target="_blank">MSK event sources</a>.</p>
+<p>Use this pattern for simple transformations that do not require substantial shared state across events. Lambda invocations are stateless by default, though Kinesis event source mappings support <a href="https://docs.aws.amazon.com/lambda/latest/dg/services-kinesis-windows.html" rel="noopener noreferrer" target="_blank">bounded tumbling-window aggregation</a> with state passed between invocations. These windows use Kinesis arrival timestamps and do not provide general event-time processing. For broader stateful processing, compare Glue Streaming's Spark micro-batch mode with Managed Service for Apache Flink; the right fit depends on sources, latency, programming model, and recovery behavior.</p>
+<h3 id="latency-and-performance-characteristics-1">Execution limits and scaling</h3>
+<p>Lambda scales with incoming work, but source pollers, function concurrency, downstream capacity, and account quotas still matter. The standard Lambda execution mode supports timeouts up to 15 minutes. Lambda Managed Instances supports timeouts up to 90 minutes for supported asynchronous and event-source mapping invocations, but a source can impose a lower ceiling. Check the current <a href="https://docs.aws.amazon.com/lambda/latest/dg/configuration-timeout.html" rel="noopener noreferrer" target="_blank">timeout guidance</a> for the execution mode and source you plan to use before choosing Lambda for a long transformation. Increasing concurrency can also overload a database or API that the function calls.</p>
+<p>Batching can reduce invocation overhead, but it is not a fixed latency guarantee. If a zero or short batching window is important, verify the exact source mapping settings and observe the end-to-end delay. Cold starts, polling, queueing, downstream calls, and retries all contribute to what a consumer experiences.</p>
+<h3 id="error-handling-and-reliability">Retries, ordering, and duplicate effects</h3>
+<p>For stream event sources, a failed batch can be retried, and the default retry behavior can hold up later records on the affected shard or partition. Configure retry count and record age for the recovery time you can accept, enable partial batch responses where supported, and send discarded records to an on-failure destination when you need to investigate or replay them. AWS documents these <a href="https://docs.aws.amazon.com/lambda/latest/dg/kinesis-on-failure-destination.html" rel="noopener noreferrer" target="_blank">failure and destination controls for Kinesis mappings</a> and <a href="https://docs.aws.amazon.com/lambda/latest/dg/kafka-retry-configurations.html" rel="noopener noreferrer" target="_blank">Kafka retry controls</a>.</p>
+<p>Assume a record may be processed again after a timeout or retry. Make side effects idempotent, for example by recording a stable event ID with the result, and monitor iterator age or consumer lag. Lambda's timeout limit is documented in the <a href="https://docs.aws.amazon.com/lambda/latest/dg/configuration-timeout.html" rel="noopener noreferrer" target="_blank">Lambda function timeout guide</a>.</p>
+
+<h2 id="3-amazon-kinesis-data-streams"><a href="https://docs.aws.amazon.com/streams/latest/dev/introduction.html" rel="noopener noreferrer" target="_blank">Amazon Kinesis Data Streams</a>: retain and fan out events</h2>
+<figure><img alt="Amazon Kinesis Data Streams" loading="lazy" src="/assets/media/552ebdc0a4550cccd610.jpg"/></figure>
+<p>Kinesis Data Streams is a durable, ordered stream that separates event producers from consumers. It is useful when several applications need to read the same event flow independently, when consumers may fall behind temporarily, or when you need to replay retained records. Kinesis stores data for a configured retention period; it does not transform the records by itself.</p>
+<h3 id="stream-architecture-and-sharding">Partition keys, ordering, and capacity</h3>
+<p>A partition key maps related records to the same shard, where consumers read records in the sequence assigned by the service. That sequence does not necessarily match the order in which producers created events: <code>PutRecords</code> can partially fail and allow later records to be accepted first. If strict write order for one key matters, serialize writes and use <code>PutRecord</code> with <code>SequenceNumberForOrdering</code>; see AWS's <a href="https://docs.aws.amazon.com/kinesis/latest/APIReference/API_PutRecords.html" rel="noopener noreferrer" target="_blank">PutRecords ordering notes</a> and <a href="https://docs.aws.amazon.com/kinesis/latest/APIReference/API_PutRecord.html" rel="noopener noreferrer" target="_blank">PutRecord ordering parameter</a>. Choose keys that match the ordering requirement while spreading load; a hot key can concentrate traffic and constrain throughput. Capacity can be provisioned or on-demand, and the correct choice depends on the traffic pattern and consumer design.</p>
+<p>Each consumer has its own progress and may read at a different pace. You can attach Lambda for straightforward event processing, Glue for streaming ETL, or Managed Service for Apache Flink for custom stateful logic. Consumer lag, throttling, shard distribution, and retention headroom are useful operational signals. Do not use a single published latency or per-shard figure as a workload guarantee; limits depend on capacity mode, read method, record size, and consumer count.</p>
+<h3 id="enhanced-fan-out-for-low-latency">Give consumers dedicated throughput</h3>
+<p>Standard Kinesis consumers share a shard's read throughput. Enhanced fan-out gives each registered consumer a dedicated read path and pushes records instead of requiring that consumer to poll. It can help when multiple applications read the same stream and shared throughput is a bottleneck, but it does not guarantee end-to-end latency. Include its additional consumer and data retrieval charges in the comparison; see AWS's <a href="https://docs.aws.amazon.com/streams/latest/dev/enhanced-consumers.html" rel="noopener noreferrer" target="_blank">enhanced fan-out guide</a>.</p>
+<h3 id="real-time-processing-capabilities">Replay and recovery</h3>
+<p>Kinesis Data Streams retains records for 24 hours by default; you can extend the period to as long as 365 days, with additional charges above the default period. Retention lets a consumer resume from an earlier position while records remain available, but it is a recovery window rather than a permanent archive. See the current <a href="https://docs.aws.amazon.com/streams/latest/dev/kinesis-extended-retention.html" rel="noopener noreferrer" target="_blank">retention limits and behavior</a>. If records must be kept longer, write them to durable storage such as S3 as a separate pipeline. A consumer checkpoint tracks progress, but it does not make writes to an external database exactly once; the sink still needs idempotent or transactional behavior.</p>
+<h3 id="integration-with-the-aws-ecosystem">When to choose a stream</h3>
+<p>Use Kinesis Data Streams when you need an AWS-native retained stream with multiple consumer applications and control over their processing. If your producers or consumers depend on Kafka APIs, topics, and ecosystem tooling, compare Amazon MSK. If you only need to ingest and deliver records to supported destinations, Amazon Data Firehose may need less application code.</p>
+
+<h2 id="4-amazon-kinesis-data-firehose"><a href="https://docs.aws.amazon.com/firehose/latest/dev/what-is-this-service.html" rel="noopener noreferrer" target="_blank">Amazon Data Firehose</a>: buffer and deliver streaming data</h2>
+<figure><img alt="Amazon Data Firehose delivery pipeline" loading="lazy" src="/assets/media/2e06cabf84aebd79c005.jpg"/></figure>
+<p>Amazon Data Firehose, formerly Amazon Kinesis Data Firehose (the <a href="https://aws.amazon.com/about-aws/whats-new/2024/02/amazon-data-firehose-formerly-kinesis-data-firehose/" rel="noopener noreferrer" target="_blank">service rename</a>), is a managed delivery service. Producers can write directly to it, or it can read from sources such as Kinesis Data Streams and Amazon MSK. Firehose buffers records and delivers them to configured destinations, including S3, Redshift, OpenSearch, and supported third-party endpoints. Depending on the destination and configuration, it can also convert formats, partition S3 output, and invoke Lambda to transform buffered batches.</p>
+<p>This buffering is useful for landing data efficiently, especially in object storage, but it means Firehose is not a per-event processing engine. Buffer size and interval are delivery hints, and actual freshness also depends on throughput and destination behavior. Choose it when managed ingestion and delivery matter more than custom consumer control or stateful event-time logic. The <a href="https://docs.aws.amazon.com/firehose/latest/dev/what-is-this-service.html" rel="noopener noreferrer" target="_blank">Firehose guide</a> describes its sources, destinations, and buffering.</p>
+<h3 id="transform-and-handle-delivery-failures">Transform and handle delivery failures</h3>
+<p>A Lambda transformation attached to Firehose receives a batch and returns transformed records; use it for bounded record cleanup or format changes. If the transformation invocation fails, Firehose retries it according to its configured policy. Records that cannot be transformed or delivered need an explicit recovery path: enable the appropriate S3 backup or error output, monitor delivery and transformation errors, and test what happens when the destination is unavailable. See AWS's guidance for <a href="https://docs.aws.amazon.com/firehose/latest/dev/data-transformation.html" rel="noopener noreferrer" target="_blank">transforming source data</a> and <a href="https://docs.aws.amazon.com/firehose/latest/dev/data-transformation-failure-handling.html" rel="noopener noreferrer" target="_blank">handling transformation failures</a>.</p>
+<p>Firehose does not replace a retained stream when consumers need to manage offsets, replay records independently, or maintain application state. Keep the original in a stream or archive it to S3 if those recovery options are requirements.</p>
+
+<h2 id="5-amazon-managed-streaming-for-apache-kafka-msk"><a href="https://docs.aws.amazon.com/msk/latest/developerguide/what-is-msk.html" rel="noopener noreferrer" target="_blank">Amazon Managed Streaming for Apache Kafka (MSK)</a>: keep Kafka compatibility</h2>
+<figure><img alt="Amazon MSK managed Kafka" loading="lazy" src="/assets/media/fce26c198182875ae14f.jpg"/></figure>
+<p>Amazon MSK runs Apache Kafka for applications that use Kafka's producer, consumer, topic, and client interfaces. It is a fit when compatibility with Kafka applications or the Kafka ecosystem is a real requirement. Kafka topics retain records according to their configuration, and consumers track their own positions; retention and replay still depend on the topic policy and available storage.</p>
+<p>MSK offers provisioned and serverless cluster types. Serverless reduces broker-capacity management, while provisioned clusters give you more direct control over the cluster shape. Both still require decisions about partitions, networking, access, schemas, retention, monitoring, and consumer behavior. MSK is not automatically the best choice for every high-volume stream; use Kinesis Data Streams when its AWS-native model fits better and you do not need Kafka compatibility.</p>
+<p>MSK can feed Lambda, Firehose, Glue streaming jobs, or Managed Service for Apache Flink. MSK Connect provides managed Kafka Connect connectors, but connector availability and behavior depend on the specific connector. See the <a href="https://docs.aws.amazon.com/msk/latest/developerguide/what-is-msk.html" rel="noopener noreferrer" target="_blank">MSK developer guide</a> and <a href="https://docs.aws.amazon.com/msk/latest/developerguide/serverless.html" rel="noopener noreferrer" target="_blank">MSK Serverless documentation</a>.</p>
+
+<h2 id="6-aws-glue">6. <a href="https://docs.aws.amazon.com/glue/latest/dg/what-is-glue.html" rel="noopener noreferrer" target="_blank">AWS Glue</a>: managed data integration and ETL</h2>
+<p>AWS Glue is a strong starting point for managed transformations across data stores. Glue ETL jobs commonly use Apache Spark or Python shell runtimes, and Glue Studio provides visual authoring for supported jobs. AWS Glue for Ray is closed to new customers as of April 30, 2026; existing customers can continue to use it, as described in AWS's <a href="https://docs.aws.amazon.com/glue/latest/dg/awsglue-ray-jobs-availability-change.html" rel="noopener noreferrer" target="_blank">Glue for Ray lifecycle notice</a>. The Data Catalog stores metadata about tables and schemas. A crawler can discover metadata, but it does not process the underlying rows and is optional when a job already knows its schema and source path.</p>
+<p>Use Glue for repeatable cleansing, joins, format conversion, and loading curated data into destinations such as S3 or Redshift. Glue Streaming is built on Spark Structured Streaming and can read from Kinesis Data Streams and Kafka sources, including MSK. Its default micro-batch mode supports stateful operations such as aggregations and event-time windows and uses checkpoints to track stream progress. AWS Glue 6.0 also offers an opt-in real-time mode, but that mode is limited to stateless Kafka transformations written in Scala with a fixed worker count; it does not support Kinesis, stateful windows, or auto-scaling. Provide enough workers to cover the source partitions because AWS warns that unassigned partitions are not processed. Check the current <a href="https://docs.aws.amazon.com/glue/latest/dg/streaming-chapter.html" rel="noopener noreferrer" target="_blank">Glue streaming execution modes</a> for the exact requirements. A continuously running job has ongoing compute cost even when traffic is light.</p>
+<p>If you are new to its catalog, crawlers, and jobs, see our <a href="/blog/aws-glue-tutorial-for-beginners-core-concepts/">AWS Glue tutorial for beginners</a>. For a concrete Redshift pipeline, see <a href="/blog/automate-redshift-etl-with-aws-glue/">how to automate Redshift ETL with Glue</a>. AWS's <a href="https://docs.aws.amazon.com/glue/latest/dg/add-job-streaming.html" rel="noopener noreferrer" target="_blank">streaming ETL guide</a> explains supported sources, checkpoints, and job behavior.</p>
+
+<h2 id="7-amazon-emr">7. <a href="https://docs.aws.amazon.com/emr/latest/ManagementGuide/emr-overview.html" rel="noopener noreferrer" target="_blank">Amazon EMR</a>: run distributed data frameworks</h2>
+<p>Amazon EMR provides managed environments for open-source data frameworks such as Apache Spark and Hadoop. Choose EMR when you need a particular framework version, custom libraries or configuration, an existing Spark or Hadoop application, or deployment options such as EMR on EC2, EMR on EKS, or EMR Serverless. It can read and write data in S3 and other supported stores.</p>
+<p>Glue and EMR can both run Spark workloads. Glue is usually simpler when the task is a managed ETL job and its supported runtime meets your needs. EMR gives you more choice over the framework environment and job deployment, with additional decisions about runtime, capacity, and operations. The EMR service guide covers its <a href="https://docs.aws.amazon.com/emr/latest/ManagementGuide/emr-overview-arch.html" rel="noopener noreferrer" target="_blank">frameworks and architecture</a>.</p>
+
+<h2 id="8-amazon-managed-service-for-apache-flink"><a href="https://docs.aws.amazon.com/managed-flink/latest/java/what-is.html" rel="noopener noreferrer" target="_blank">Amazon Managed Service for Apache Flink</a>: stateful stream processing</h2>
+<p>Amazon Managed Service for Apache Flink, formerly Amazon Kinesis Data Analytics for Apache Flink (renamed by <a href="https://aws.amazon.com/blogs/aws/announcing-amazon-managed-service-for-apache-flink-renamed-from-amazon-kinesis-data-analytics/" rel="noopener noreferrer" target="_blank">AWS</a>), runs continuously on streaming sources such as Kinesis Data Streams and Amazon MSK. Use it when the transformation depends on state across events: keyed counts, rolling aggregates, joins, sessions, or event-time windows. Glue Streaming can also run stateful Spark transformations in micro-batches. Flink is a better fit when the application needs the Flink programming model and fine-grained control over continuously maintained state, event-time windows, and recovery; compare source and sink support, latency needs, and team familiarity before choosing.</p>
+<h3 id="event-time-windows-and-watermarks">Event time, windows, and late records</h3>
+<p>Processing time is when the application sees a record. Event time is when the event occurred according to its timestamp. If events can arrive late or out of order, a watermark strategy tells Flink how far event time has advanced and when a window can be emitted. The allowed lateness and handling for very late records are application choices; they affect both result completeness and how quickly results become final. A timestamp from the source alone does not define a correct watermark strategy.</p>
+<h3 id="checkpointing-and-idempotency">Checkpoints, recovery, and sink semantics</h3>
+<p>Flink checkpoints capture application state so the job can recover after a failure. Snapshots can also preserve state for planned changes. These mechanisms protect the processing state; they do not by themselves make every external side effect exactly once. End-to-end guarantees depend on the source replay behavior, checkpoint and restore configuration, and whether the sink supports transactions or idempotent writes. Treat retries and recovery as possible duplicate attempts unless the complete source-to-sink path provides the semantics you require.</p>
+<p>Check checkpoint duration and failures, source lag, backpressure, watermark progress, and sink errors. AWS describes <a href="https://docs.aws.amazon.com/managed-flink/latest/java/how-fault.html" rel="noopener noreferrer" target="_blank">Flink fault tolerance and checkpoints</a> and <a href="https://docs.aws.amazon.com/managed-flink/latest/java/best-practices.html" rel="noopener noreferrer" target="_blank">watermarks and time-window behavior</a>.</p>
+
+<h2 id="choosing-the-right-aws-tool">Choose by pipeline shape</h2>
+<ul>
+<li><strong>Files or tables on a schedule:</strong> use Glue for managed ETL, EMR for more framework control, or Batch when the transformation is an arbitrary containerized program.</li>
+<li><strong>A short reaction to each event:</strong> use Lambda when a bounded function and its source mapping meet the required throughput and retry behavior.</li>
+<li><strong>Several independent consumers or replay:</strong> put events in Kinesis Data Streams or MSK, selected by whether the AWS-native stream model or Kafka compatibility fits the producers and consumers.</li>
+<li><strong>Managed delivery into a data lake or analytics destination:</strong> use Data Firehose when buffering is acceptable and its destinations or transformation hooks cover the pipeline.</li>
+<li><strong>State across events and event-time results:</strong> use Glue Streaming when its Spark mode, supported sources, and recovery model fit the workload; choose Managed Service for Apache Flink when its application model and APIs fit better.</li>
+</ul>
+<h3 id="cost-optimization-strategies">Compare whole-pipeline cost</h3>
+<p>Compare the actual billing units for the selected services and Region: job runtime and compute, continuously running streaming capacity, stream throughput and retention, function duration and requests, destination writes, storage, and data transfer. A low price for one service does not account for the consumers, retries, staging, or monitoring around it. Check each service's current pricing page with a representative traffic pattern before estimating total cost: <a href="https://aws.amazon.com/batch/pricing/" rel="noopener noreferrer" target="_blank">AWS Batch</a>, <a href="https://aws.amazon.com/glue/pricing/" rel="noopener noreferrer" target="_blank">Glue</a>, <a href="https://aws.amazon.com/emr/pricing/" rel="noopener noreferrer" target="_blank">EMR</a>, <a href="https://aws.amazon.com/lambda/pricing/" rel="noopener noreferrer" target="_blank">Lambda</a>, <a href="https://aws.amazon.com/kinesis/data-streams/pricing/" rel="noopener noreferrer" target="_blank">Kinesis Data Streams</a>, <a href="https://aws.amazon.com/firehose/pricing/" rel="noopener noreferrer" target="_blank">Data Firehose</a>, <a href="https://aws.amazon.com/msk/pricing/" rel="noopener noreferrer" target="_blank">MSK</a>, and <a href="https://aws.amazon.com/managed-service-apache-flink/pricing/" rel="noopener noreferrer" target="_blank">Managed Service for Apache Flink</a>.</p>
+
+<h2 id="reliability-and-delivery-semantics">Design for retries and replay</h2>
+<p>Most data pipelines retry work somewhere: a job scheduler can rerun a container, a Lambda event source can retry a failed batch, and a stream processor can restore from a checkpoint and read again. Retrying protects against transient failure, but it can repeat writes. Choose a stable event or job key, make sink operations idempotent where possible, and preserve failed or rejected records in a place you can inspect and replay.</p>
+<p>Also distinguish delivery buffering from stream retention. Firehose buffers records before sending them to a destination; Kinesis Data Streams and Kafka topics retain records for consumers to read according to their retention settings. A system that only delivers to a destination may not provide the independent consumer offsets or replay window your recovery plan needs.</p>
+
 <h2 id="conclusion">Conclusion</h2>
-<p>Choosing the right AWS tool for data transformation depends on understanding your specific needs and aligning them with the strengths of each service. Here's a quick recap of what each tool brings to the table:</p>
-<p><strong>AWS Batch</strong> is best suited for handling large datasets and compute-intensive tasks that might run for hours or even days. It shines in large-scale ETL operations where immediate results aren't essential, thanks to its automatic scaling and cost-efficient resource management.</p>
-<p><strong>AWS Lambda</strong> excels in event-driven tasks that require fast responses. Its pay-per-execution model and ability to scale to thousands of concurrent executions make it a go-to for lightweight processing jobs.</p>
-<p>When it comes to real-time streaming, <strong>Amazon Kinesis Data Streams</strong> offers high throughput and the ability to retain data for replays. It works well for high-volume, custom stream processing applications that involve complex logic.</p>
-<p><strong>Amazon Kinesis Data Firehose</strong> simplifies data streaming by automatically delivering data to destinations like S3, Redshift, or OpenSearch Service. With built-in Lambda integration for basic transformations, it’s a great choice for straightforward data ingestion workflows.</p>
-<p>For scenarios requiring Apache Kafka compatibility, <strong>Amazon MSK</strong> is the tool of choice. MSK Serverless automatically scales resources and supports low-latency, high-throughput applications with features like message replay and multiple consumer groups.</p>
-<p>To make the best choice, focus on three main factors: <strong>latency needs</strong> (batch processing vs. real-time), <strong>complexity of transformations</strong> (basic vs. advanced logic), and <strong>operational preferences</strong> (fully managed vs. customizable). For cost-conscious decisions, consider Lambda for sporadic workloads, Batch for resource-heavy jobs, or Kinesis On-Demand for flexible streaming pricing.</p>
-<p>AWS tools can also work together to build end-to-end data pipelines. For instance, you could use MSK for initial data ingestion, Lambda for real-time transformations, Firehose for delivering data to your lake or warehouse, and Batch for periodic heavy processing. Together, these services can create a seamless and efficient data transformation workflow tailored to your needs.</p>
+<p>Start by deciding whether the work is a scheduled data set transformation or a continuous event flow. For batch ETL, compare Glue, EMR, and Batch by runtime and control needs. For streams, choose a source such as Kinesis Data Streams or MSK only when you need its retention, replay, or consumer model; use Lambda for simple bounded handlers, Data Firehose for buffered delivery, Glue Streaming for Spark-based stream ETL, and Managed Service for Apache Flink when its stateful application model fits the workload.</p>
+<p>Then test the pipeline's real failure paths: late and duplicated events, throttled destinations, retries, checkpoint recovery, and replay after an outage. Make the output safe to write more than once, and size retention and buffering for the recovery time your team actually needs.</p>
+
 <h2 id="faqs">FAQs</h2>
 <h3 id="how-do-i-choose-between-aws-batch-and-aws-lambda-for-data-transformation">How do I choose between AWS Batch and AWS Lambda for data transformation?</h3>
-<p>When deciding between <strong>AWS Batch</strong> and <strong>AWS Lambda</strong>, the best choice hinges on the specific requirements of your data transformation tasks.</p>
-<p><strong>AWS Lambda</strong> shines in real-time, event-driven scenarios. It’s a great fit for short-duration tasks like processing data streams as they arrive or reacting to specific triggers. Its automatic scaling and pay-per-use pricing make it an efficient option for handling these types of workloads.</p>
-<p><strong>AWS Batch</strong>, in contrast, is built for large-scale, resource-heavy batch processing. It’s the go-to option for tasks like processing massive datasets, executing scheduled ETL workflows, or managing complex, long-running computations.</p>
-<p>The key factors to weigh include the duration and complexity of your workload, as well as whether your needs lean toward real-time processing or batch execution.</p>
-<h3 id="what-are-the-main-differences-in-scalability-and-latency-between-amazon-kinesis-data-streams-and-amazon-kinesis-data-firehose">What are the main differences in scalability and latency between Amazon Kinesis Data Streams and Amazon Kinesis Data Firehose?</h3>
-<p>Amazon Kinesis Data Streams (KDS) stands out for its <strong>high scalability</strong> and <strong>low latency</strong>, making it a strong choice for handling massive data flows. With KDS, you can manage shards directly, where each shard supports up to 5 read transactions per second and a data read rate of 2 MB per second. This setup allows KDS to process gigabytes of data per second, with latency typically ranging between 70 and 200 milliseconds.</p>
-<p>In contrast, Kinesis Data Firehose focuses on <strong>simplicity</strong> and <strong>near real-time data processing</strong>. It automatically adjusts to incoming data throughput, eliminating the need for manual scaling. However, its latency is slightly higher, usually measured in seconds. This makes Firehose a great option for scenarios where a small trade-off in latency is acceptable for the benefit of ease of use and automatic scaling.</p>
-<h3 id="what-makes-amazon-msk-suitable-for-high-throughput-streaming-and-how-does-it-compare-to-other-aws-streaming-tools">What makes Amazon MSK suitable for high-throughput streaming, and how does it compare to other AWS streaming tools?</h3>
-<p>Amazon MSK is built to handle high-throughput streaming, thanks to features like <strong>express brokers</strong>. These brokers can deliver up to three times the throughput per broker, scale operations 20 times faster, and cut recovery times significantly. On top of that, the integration with <strong>AWS Graviton3</strong> processors boosts throughput by up to 29% while lowering costs, making it a powerful option for managing large-scale workloads.</p>
-<p>When compared to other AWS streaming tools like Kinesis, Amazon MSK stands out with its scalability for handling massive data volumes. It also offers more control through Kafka-compatible data streams and is well-suited for complex, enterprise-level streaming applications. These capabilities make it a strong contender for businesses that need reliable and adaptable streaming solutions.</p>
-<h2>Related Blog Posts</h2><ul><li><a href="/blog/aws-services-overview-core-components/">AWS Services Overview: Core Components</a></li><li><a href="/blog/aws-content-migration-best-practices/">AWS Content Migration Best Practices</a></li><li><a href="/blog/enterprise-integration-patterns-with-aws-services/">Enterprise Integration Patterns with AWS Services</a></li><li><a href="/blog/data-compression-in-aws-s3-techniques-and-benefits/">Data Compression in AWS S3: Techniques and Benefits</a></li></ul><script type="application/ld+json">{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"How do I choose between AWS Batch and AWS Lambda for data transformation?","acceptedAnswer":{"@type":"Answer","text":"<p>When deciding between <strong>AWS Batch</strong> and <strong>AWS Lambda</strong>, the best choice hinges on the specific requirements of your data transformation tasks.</p> <p><strong>AWS Lambda</strong> shines in real-time, event-driven scenarios. It’s a great fit for short-duration tasks like processing data streams as they arrive or reacting to specific triggers. Its automatic scaling and pay-per-use pricing make it an efficient option for handling these types of workloads.</p> <p><strong>AWS Batch</strong>, in contrast, is built for large-scale, resource-heavy batch processing. It’s the go-to option for tasks like processing massive datasets, executing scheduled ETL workflows, or managing complex, long-running computations.</p> <p>The key factors to weigh include the duration and complexity of your workload, as well as whether your needs lean toward real-time processing or batch execution.</p>"}},{"@type":"Question","name":"What are the main differences in scalability and latency between Amazon Kinesis Data Streams and Amazon Kinesis Data Firehose?","acceptedAnswer":{"@type":"Answer","text":"<p>Amazon Kinesis Data Streams (KDS) stands out for its <strong>high scalability</strong> and <strong>low latency</strong>, making it a strong choice for handling massive data flows. With KDS, you can manage shards directly, where each shard supports up to 5 read transactions per second and a data read rate of 2 MB per second. This setup allows KDS to process gigabytes of data per second, with latency typically ranging between 70 and 200 milliseconds.</p> <p>In contrast, Kinesis Data Firehose focuses on <strong>simplicity</strong> and <strong>near real-time data processing</strong>. It automatically adjusts to incoming data throughput, eliminating the need for manual scaling. However, its latency is slightly higher, usually measured in seconds. This makes Firehose a great option for scenarios where a small trade-off in latency is acceptable for the benefit of ease of use and automatic scaling.</p>"}},{"@type":"Question","name":"What makes Amazon MSK suitable for high-throughput streaming, and how does it compare to other AWS streaming tools?","acceptedAnswer":{"@type":"Answer","text":"<p>Amazon MSK is built to handle high-throughput streaming, thanks to features like <strong>express brokers</strong>. These brokers can deliver up to three times the throughput per broker, scale operations 20 times faster, and cut recovery times significantly. On top of that, the integration with <strong>AWS Graviton3</strong> processors boosts throughput by up to 29% while lowering costs, making it a powerful option for managing large-scale workloads.</p> <p>When compared to other AWS streaming tools like Kinesis, Amazon MSK stands out with its scalability for handling massive data volumes. It also offers more control through Kafka-compatible data streams and is well-suited for complex, enterprise-level streaming applications. These capabilities make it a strong contender for businesses that need reliable and adaptable streaming solutions.</p>"}}]}</script>
+<p>Use Lambda for bounded event-driven code that fits its execution and source limits. Use AWS Batch when you need queueing and managed compute for containerized jobs that may run longer, need more resources, or should run when capacity is available. Both can retry work, so make output writes safe to repeat.</p>
+<h3 id="what-are-the-main-differences-in-scalability-and-latency-between-amazon-kinesis-data-streams-and-amazon-kinesis-data-firehose">How do Kinesis Data Streams and Amazon Data Firehose differ?</h3>
+<p>Kinesis Data Streams retains events for consumer applications to read independently and replay within the retention period. Amazon Data Firehose buffers records and delivers them to configured destinations, with optional transformations. Choose Streams for consumer control and replay; choose Firehose when managed delivery and buffering meet the need.</p>
+<h3 id="what-makes-amazon-msk-suitable-for-high-throughput-streaming-and-how-does-it-compare-to-other-aws-streaming-tools">When should I use Amazon MSK or Managed Service for Apache Flink?</h3>
+<p>Use MSK when your producers or consumers require Apache Kafka compatibility and topic-based Kafka behavior. Use Managed Service for Apache Flink when its continuous application model and APIs suit your stateful processing needs; Glue Streaming also supports stateful Spark micro-batch work. They can be used together: MSK can supply events and Flink can transform them.</p>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"How do I choose between AWS Batch and AWS Lambda for data transformation?","acceptedAnswer":{"@type":"Answer","text":"Use Lambda for bounded event-driven code that fits its execution and source limits. Use AWS Batch when you need queueing and managed compute for containerized jobs that may run longer, need more resources, or should run when capacity is available. Both can retry work, so make output writes safe to repeat."}},{"@type":"Question","name":"How do Kinesis Data Streams and Amazon Data Firehose differ?","acceptedAnswer":{"@type":"Answer","text":"Kinesis Data Streams retains events for consumer applications to read independently and replay within the retention period. Amazon Data Firehose buffers records and delivers them to configured destinations, with optional transformations. Choose Streams for consumer control and replay; choose Firehose when managed delivery and buffering meet the need."}},{"@type":"Question","name":"When should I use Amazon MSK or Managed Service for Apache Flink?","acceptedAnswer":{"@type":"Answer","text":"Use MSK when your producers or consumers require Apache Kafka compatibility and topic-based Kafka behavior. Use Managed Service for Apache Flink when its continuous application model and APIs suit your stateful processing needs; Glue Streaming also supports stateful Spark micro-batch work. They can be used together: MSK can supply events and Flink can transform them."}}]}</script>

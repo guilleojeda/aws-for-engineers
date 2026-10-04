@@ -3,343 +3,404 @@ layout: post.njk
 templateEngineOverride: html
 tags: posts
 title: "AWS Step Functions: Saga Pattern Implementation"
-description: "Explore how to implement the Saga pattern with AWS Step Functions for reliable, scalable microservice transactions with error handling and rollback mechanisms."
+description: "Implement an AWS Step Functions saga with idempotent tasks, retries, timeout reconciliation, compensating actions, and durable recovery."
 date: "2024-05-12"
 datePublished: "2024-05-12T04:45:19.692000+00:00"
 heroImage: "/assets/media/cec258783173ca68aa7b.jpg"
 permalink: "/blog/aws-step-functions-saga-pattern-implementation/"
 sourceUrl: "https://awsforengineers.com/blog/aws-step-functions-saga-pattern-implementation/"
-dateModified: "2026-10-03"
-updateNote: "Added author attribution and profile information."
+dateModified: "2026-10-04"
+updateNote: "Replaced generic rollback advice with an illustrative ASL saga, idempotent retries, uncertain-outcome reconciliation, and operator recovery guidance."
 ---
-<p>The <a href="https://microservices.io/patterns/data/saga.html" target="_blank">Saga pattern</a> is an effective approach for managing distributed transactions across multiple microservices, ensuring data consistency and fault tolerance. <a href="https://aws.amazon.com/step-functions/" target="_blank">AWS Step Functions</a>, a serverless orchestration service, enables implementing the Saga pattern by defining a series of steps representing individual transactions that can be completed or compensated independently.</p>
-<p><strong>Key Benefits:</strong></p>
+<p>A saga coordinates a business operation made of local transactions in separate services. With <a href="https://docs.aws.amazon.com/step-functions/latest/dg/welcome.html" target="_blank" rel="noopener noreferrer">AWS Step Functions</a>, a state machine can orchestrate those operations and choose what to do when one fails. Each participant still commits its own data; Step Functions does not create one ACID transaction across the services.</p>
+<p>That distinction changes what “rollback” means. A <a href="https://docs.aws.amazon.com/prescriptive-guidance/latest/cloud-design-patterns/saga-patterns.html" target="_blank" rel="noopener noreferrer">compensating transaction</a> is a new business action, such as releasing a stock reservation or voiding a payment authorization. It may take time, fail, or need a person to resolve it. A reliable saga therefore needs forward retries for temporary failures, compensation for business failures, and reconciliation when a timeout leaves the result unknown.</p>
+<p>This guide builds a focused payment-authorization saga: reserve inventory, authorize payment, and release the reservation if payment is declined. The example also routes uncertain outcomes and failed compensation into a durable recovery case. The participant functions and recovery store are application code you must implement; the ASL definition shows how to coordinate them.</p>
+
+<h2 id="prerequisites-for-saga-implementation-with-aws">When to use Step Functions for a saga</h2>
+<p>Use orchestration when a central workflow should make the sequence and recovery path visible. Step Functions tracks the orchestration state and invokes participants; each service remains responsible for its local transaction and source-of-truth data. Choreography, where services advance the process by publishing and reacting to events, can reduce central coordination for a small number of loosely coupled participants. It becomes harder to see the full path as participants and dependencies grow. AWS compares these variants in its <a href="https://docs.aws.amazon.com/prescriptive-guidance/latest/cloud-design-patterns/saga-patterns.html" target="_blank" rel="noopener noreferrer">saga pattern guidance</a>.</p>
+<p>A saga fits when a business operation crosses independently owned services and can tolerate a period in which their views differ. It is a poor fit when the work must be one indivisible database transaction, or when the business cannot define a safe action after partial completion. First decide whether to retry forward, compensate, or escalate each meaningful failure; do not assume every step has a true inverse.</p>
+
+<h3 id="understanding-aws-services">Participant and workflow responsibilities</h3>
 <ul>
-<li><strong>Improved Reliability:</strong> Ensures system consistency even in case of failures or errors by providing a structured approach to error handling and compensating transactions.</li>
-<li><strong>Enhanced Scalability:</strong> Enables easier scaling and maintenance of individual services in a distributed system.</li>
-<li><strong>Simplified Error Handling:</strong> Provides a structured approach to error handling, making it easier to identify and resolve issues.</li>
+<li><strong>Step Functions:</strong> coordinates transitions and applies retry and catch rules. Standard workflows persist execution state and history; Express workflows have different semantics and need configured CloudWatch Logs for execution history.</li>
+<li><strong>Participant service:</strong> atomically records its local change and the idempotency key for that operation, where its datastore supports that transaction. It returns the same result for a duplicate key.</li>
+<li><strong>Reconciliation handler:</strong> checks the participant or provider by the stable operation identifier when a caller cannot tell whether an earlier request committed.</li>
+<li><strong>Recovery handler:</strong> durably records unresolved work so a separate monitor or case queue can alert an operator. An execution that merely ends in a <code>Fail</code> state is not a recovery process.</li>
 </ul>
-<p><strong>Implementation Steps:</strong></p>
-<ol>
-<li><strong>Define State Machines:</strong> Create a state machine in AWS Step Functions representing the workflow of your distributed transaction, with states for each action and compensating transaction.</li>
-<li><strong>Implement Compensating Transactions:</strong> Use <a href="https://aws.amazon.com/lambda/" target="_blank">AWS Lambda</a> functions to implement compensating transactions that undo the effects of previous actions in case of failure.</li>
-<li><strong>Handle Failure Scenarios:</strong> Implement error handling mechanisms in your state machine to trigger compensating transactions when failures occur.</li>
-<li><strong>Test and Validate:</strong> Test each state and transition in your state machine to ensure proper handling of failures and compensating transactions.</li>
-</ol>
-<p><strong>Key Considerations:</strong></p>
+<p>Step Functions does not lock an inventory item or serialize separate executions that target the same order. The inventory service must enforce availability and concurrency rules in its own write path—for example, by conditionally reserving only stock that remains available. Parallel states can run branches concurrently; they are not a lock.</p>
+
+<h2 id="step-by-step-guide-for-saga-implementation">Design the steps and their compensations</h2>
+<p>Write down each forward operation, what durable evidence proves it completed, and what to do if the next operation fails. For the example, the order service creates a pending order before starting the workflow. The reservation service records a reservation, and the payment service authorizes—but does not capture—the payment. A definite payment decline leads to a release of the reservation. Capturing funds, shipping, and refunds are outside this small example; a production order workflow must define their own forward and compensation paths.</p>
+<figure><table>
+<thead><tr><th>Step</th><th>Participant result to retain</th><th>Failure action</th></tr></thead>
+<tbody>
+<tr><td>Reserve inventory</td><td>Reservation ID and reservation status</td><td>Query by the same operation ID if the result is uncertain; do not assume a timeout means no reservation.</td></tr>
+<tr><td>Authorize payment</td><td>Provider authorization ID and status</td><td>On a confirmed decline, release the reservation. On an unknown result, query the provider before deciding.</td></tr>
+<tr><td>Release inventory</td><td>Confirmed release result</td><td>Retry safely; if it remains unresolved, write a recovery case for an operator.</td></tr>
+</tbody>
+</table></figure>
+<p>Use an immutable <code>sagaId</code> for this business attempt and derive a stable key for each action, such as <code>sagaId:reserve-inventory</code> or <code>sagaId:authorize-payment</code>. A participant should atomically persist its local result with the key and return that result on a duplicate request. If an external provider supports idempotency keys, send the same key to it. A Step Functions execution name helps identify an execution, but it does not replace idempotency at the service that owns the side effect.</p>
+<p>A local database write cannot atomically commit a remote provider request. If a payment provider does not support idempotency keys, persist an outbound intent and a unique merchant reference if the provider can look it up. After a timeout, reconcile that reference before deciding whether another request is safe. If the provider cannot confirm the result, keep the outcome unknown and escalate it; do not treat a missing response as a decline or create a new authorization.</p>
+<p>Keep the IDs and participant results needed by later steps in workflow state. Do not put payment card data, credentials, or other secrets in execution input, where they can appear in execution history or logs. Pass a safe order reference and let the payment service retrieve its tokenized payment method from an appropriately protected store.</p>
+
+<h2 id="real-world-example%3A-e-commerce-application-with-sagas">Example: reserve inventory and authorize payment</h2>
+<p>The state machine below uses the optimized synchronous Lambda integration. Replace the example function ARNs with your functions and grant the state machine role permission to invoke them. The reserve and authorize tasks time out after 40 seconds; configure their Lambda functions with a shorter limit, such as 30 seconds, so the workflow can observe the function result or timeout. Reconciliation tasks have 20-second state limits and recovery-case recording has a 30-second state limit; set each Lambda timeout below its task limit too. The input contains a previously persisted <code>orderId</code>, stable <code>sagaId</code>, and item list:</p>
+<pre><code>{
+  "sagaId": "checkout-123-attempt-1",
+  "orderId": "order-123",
+  "items": [{ "sku": "SKU-9", "quantity": 1 }]
+}</code></pre>
+<p>The Lambda contracts are part of the example: <code>ReserveInventory</code> returns a reservation ID; <code>ReconcileReservation</code> returns a <code>status</code> and includes a reservation ID when status is <code>RESERVED</code>. <code>NOT_RESERVED</code> means the participant can prove the original request did not and will not create a reservation; a request that is still processing or cannot yet be found is <code>UNKNOWN</code>. <code>AuthorizePayment</code> returns an authorization ID or raises the exact application error <code>PaymentDeclined</code> only when no authorization was created. <code>ReconcilePayment</code> returns a <code>status</code> and includes an authorization ID when status is <code>AUTHORIZED</code>. <code>DECLINED</code> and <code>NOT_AUTHORIZED</code> are definitive outcomes for the original attempt; a pending, delayed, or unqueryable result is <code>UNKNOWN</code>. Reconciliation checks durable participant/provider state by <code>sagaId</code>, not by starting a new payment attempt. <code>ReleaseInventory</code> is idempotent and returns <code>{"released": true}</code> only after confirming the reservation is released. <code>RecordManualRecovery</code> classifies the state input, writes the identifiers and failure context to a durable case keyed by <code>sagaId</code>, returns its <code>caseId</code>, and is safe to invoke more than once.</p>
+<pre><code>{
+  "Comment": "Reserve stock and authorize payment as local saga transactions.",
+  "StartAt": "ReserveInventory",
+  "States": {
+    "ReserveInventory": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::lambda:invoke",
+      "Parameters": {
+        "FunctionName": "arn:aws:lambda:us-east-1:123456789012:function:ReserveInventory",
+        "Payload": {
+          "sagaId.$": "$.sagaId",
+          "orderId.$": "$.orderId",
+          "items.$": "$.items"
+        }
+      },
+      "ResultSelector": {
+        "reservationId.$": "$.Payload.reservationId"
+      },
+      "ResultPath": "$.reservation",
+      "TimeoutSeconds": 40,
+      "Retry": [{
+        "ErrorEquals": [
+          "Lambda.ClientExecutionTimeoutException",
+          "Lambda.ServiceException",
+          "Lambda.AWSLambdaException",
+          "Lambda.SdkClientException",
+          "Lambda.TooManyRequestsException"
+        ],
+        "IntervalSeconds": 2,
+        "MaxAttempts": 3,
+        "BackoffRate": 2,
+        "JitterStrategy": "FULL"
+      }],
+      "Catch": [{
+        "ErrorEquals": ["States.ALL"],
+        "ResultPath": "$.failure",
+        "Next": "ReconcileReservation"
+      }],
+      "Next": "AuthorizePayment"
+    },
+    "ReconcileReservation": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::lambda:invoke",
+      "Parameters": {
+        "FunctionName": "arn:aws:lambda:us-east-1:123456789012:function:ReconcileReservation",
+        "Payload": {
+          "sagaId.$": "$.sagaId",
+          "orderId.$": "$.orderId"
+        }
+      },
+      "ResultSelector": {
+        "outcome.$": "$.Payload"
+      },
+      "ResultPath": "$.reservationCheck",
+      "TimeoutSeconds": 20,
+      "Catch": [{
+        "ErrorEquals": ["States.ALL"],
+        "ResultPath": "$.reconciliationFailure",
+        "Next": "RecordManualRecovery"
+      }],
+      "Next": "CheckReservation"
+    },
+    "CheckReservation": {
+      "Type": "Choice",
+      "Choices": [
+        {
+          "Variable": "$.reservationCheck.outcome.status",
+          "StringEquals": "RESERVED",
+          "Next": "UseReconciledReservation"
+        },
+        {
+          "Variable": "$.reservationCheck.outcome.status",
+          "StringEquals": "NOT_RESERVED",
+          "Next": "ReservationUnavailable"
+        }
+      ],
+      "Default": "RecordManualRecovery"
+    },
+    "UseReconciledReservation": {
+      "Type": "Pass",
+      "Parameters": {
+        "reservationId.$": "$.reservationCheck.outcome.reservationId"
+      },
+      "ResultPath": "$.reservation",
+      "Next": "AuthorizePayment"
+    },
+    "AuthorizePayment": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::lambda:invoke",
+      "Parameters": {
+        "FunctionName": "arn:aws:lambda:us-east-1:123456789012:function:AuthorizePayment",
+        "Payload": {
+          "sagaId.$": "$.sagaId",
+          "orderId.$": "$.orderId",
+          "reservationId.$": "$.reservation.reservationId"
+        }
+      },
+      "ResultSelector": {
+        "authorizationId.$": "$.Payload.authorizationId"
+      },
+      "ResultPath": "$.authorization",
+      "TimeoutSeconds": 40,
+      "Retry": [{
+        "ErrorEquals": [
+          "Lambda.ClientExecutionTimeoutException",
+          "Lambda.ServiceException",
+          "Lambda.AWSLambdaException",
+          "Lambda.SdkClientException",
+          "Lambda.TooManyRequestsException"
+        ],
+        "IntervalSeconds": 2,
+        "MaxAttempts": 3,
+        "BackoffRate": 2,
+        "JitterStrategy": "FULL"
+      }],
+      "Catch": [
+        {
+          "ErrorEquals": ["PaymentDeclined"],
+          "ResultPath": "$.failure",
+          "Next": "MarkPaymentDeclined"
+        },
+        {
+          "ErrorEquals": ["States.ALL"],
+          "ResultPath": "$.failure",
+          "Next": "ReconcilePayment"
+        }
+      ],
+      "Next": "PaymentAuthorized"
+    },
+    "ReconcilePayment": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::lambda:invoke",
+      "Parameters": {
+        "FunctionName": "arn:aws:lambda:us-east-1:123456789012:function:ReconcilePayment",
+        "Payload": {
+          "sagaId.$": "$.sagaId",
+          "orderId.$": "$.orderId"
+        }
+      },
+      "ResultSelector": {
+        "outcome.$": "$.Payload"
+      },
+      "ResultPath": "$.paymentCheck",
+      "TimeoutSeconds": 20,
+      "Catch": [{
+        "ErrorEquals": ["States.ALL"],
+        "ResultPath": "$.reconciliationFailure",
+        "Next": "RecordManualRecovery"
+      }],
+      "Next": "CheckPayment"
+    },
+    "CheckPayment": {
+      "Type": "Choice",
+      "Choices": [
+        {
+          "Variable": "$.paymentCheck.outcome.status",
+          "StringEquals": "AUTHORIZED",
+          "Next": "UseReconciledAuthorization"
+        },
+        {
+          "Variable": "$.paymentCheck.outcome.status",
+          "StringEquals": "DECLINED",
+          "Next": "MarkReconciledPaymentRejection"
+        },
+        {
+          "Variable": "$.paymentCheck.outcome.status",
+          "StringEquals": "NOT_AUTHORIZED",
+          "Next": "MarkReconciledPaymentRejection"
+        }
+      ],
+      "Default": "RecordManualRecovery"
+    },
+    "MarkPaymentDeclined": {
+      "Type": "Pass",
+      "Result": {
+        "status": "DECLINED"
+      },
+      "ResultPath": "$.paymentOutcome",
+      "Next": "ReleaseInventory"
+    },
+    "MarkReconciledPaymentRejection": {
+      "Type": "Pass",
+      "Parameters": {
+        "status.$": "$.paymentCheck.outcome.status"
+      },
+      "ResultPath": "$.paymentOutcome",
+      "Next": "ReleaseInventory"
+    },
+    "UseReconciledAuthorization": {
+      "Type": "Pass",
+      "Parameters": {
+        "authorizationId.$": "$.paymentCheck.outcome.authorizationId"
+      },
+      "ResultPath": "$.authorization",
+      "Next": "PaymentAuthorized"
+    },
+    "PaymentAuthorized": {
+      "Type": "Pass",
+      "Parameters": {
+        "status": "PAYMENT_AUTHORIZED",
+        "sagaId.$": "$.sagaId",
+        "orderId.$": "$.orderId",
+        "reservationId.$": "$.reservation.reservationId",
+        "authorizationId.$": "$.authorization.authorizationId"
+      },
+      "ResultPath": "$.result",
+      "Next": "SagaCompleted"
+    },
+    "ReleaseInventory": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::lambda:invoke",
+      "Parameters": {
+        "FunctionName": "arn:aws:lambda:us-east-1:123456789012:function:ReleaseInventory",
+        "Payload": {
+          "sagaId.$": "$.sagaId",
+          "orderId.$": "$.orderId",
+          "reservationId.$": "$.reservation.reservationId"
+        }
+      },
+      "ResultSelector": {
+        "released.$": "$.Payload.released"
+      },
+      "ResultPath": "$.compensation",
+      "Retry": [{
+        "ErrorEquals": [
+          "Lambda.ClientExecutionTimeoutException",
+          "Lambda.ServiceException",
+          "Lambda.AWSLambdaException",
+          "Lambda.SdkClientException",
+          "Lambda.TooManyRequestsException"
+        ],
+        "IntervalSeconds": 2,
+        "MaxAttempts": 3,
+        "BackoffRate": 2,
+        "JitterStrategy": "FULL"
+      }],
+      "Catch": [{
+        "ErrorEquals": ["States.ALL"],
+        "ResultPath": "$.compensationFailure",
+        "Next": "RecordManualRecovery"
+      }],
+      "Next": "PaymentAuthorizationRejected"
+    },
+    "PaymentAuthorizationRejected": {
+      "Type": "Pass",
+      "Parameters": {
+        "status": "PAYMENT_NOT_AUTHORIZED",
+        "sagaId.$": "$.sagaId",
+        "orderId.$": "$.orderId",
+        "paymentStatus.$": "$.paymentOutcome.status",
+        "reservationId.$": "$.reservation.reservationId",
+        "reservationReleased.$": "$.compensation.released"
+      },
+      "ResultPath": "$.result",
+      "Next": "SagaCompleted"
+    },
+    "ReservationUnavailable": {
+      "Type": "Pass",
+      "Parameters": {
+        "status": "RESERVATION_NOT_CREATED",
+        "sagaId.$": "$.sagaId",
+        "orderId.$": "$.orderId"
+      },
+      "ResultPath": "$.result",
+      "Next": "SagaCompleted"
+    },
+    "RecordManualRecovery": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::lambda:invoke",
+      "Parameters": {
+        "FunctionName": "arn:aws:lambda:us-east-1:123456789012:function:RecordManualRecovery",
+        "Payload.$": "$"
+      },
+      "ResultSelector": {
+        "caseId.$": "$.Payload.caseId"
+      },
+      "ResultPath": "$.recovery",
+      "TimeoutSeconds": 30,
+      "Retry": [{
+        "ErrorEquals": [
+          "Lambda.ClientExecutionTimeoutException",
+          "Lambda.ServiceException",
+          "Lambda.AWSLambdaException",
+          "Lambda.SdkClientException",
+          "Lambda.TooManyRequestsException"
+        ],
+        "IntervalSeconds": 2,
+        "MaxAttempts": 5,
+        "BackoffRate": 2,
+        "JitterStrategy": "FULL"
+      }],
+      "Next": "ManualRecoveryPending"
+    },
+    "ManualRecoveryPending": {
+      "Type": "Pass",
+      "Parameters": {
+        "status": "MANUAL_RECOVERY_REQUIRED",
+        "sagaId.$": "$.sagaId",
+        "orderId.$": "$.orderId",
+        "caseId.$": "$.recovery.caseId"
+      },
+      "ResultPath": "$.result",
+      "Next": "SagaCompleted"
+    },
+    "SagaCompleted": {
+      "Type": "Succeed"
+    }
+  }
+}</code></pre>
+<p>In JSONPath workflows, <code>ResultSelector</code> trims a service response, and <code>ResultPath</code> places it beside the existing input. The explicit <code>$.failure</code> catcher paths retain <code>sagaId</code>, <code>orderId</code>, and the reservation ID for reconciliation or compensation. Without a <code>ResultPath</code>, a catcher replaces the input with the error object, which can discard the identifiers needed to recover. AWS documents these data-flow rules for <a href="https://docs.aws.amazon.com/step-functions/latest/dg/input-output-resultpath.html" target="_blank" rel="noopener noreferrer">ResultPath</a>.</p>
+<p>A Step Functions execution with status <code>SUCCEEDED</code> means the state machine reached its Succeed state; it does not mean the customer’s payment or order succeeded. Inspect <code>result.status</code>: <code>PAYMENT_AUTHORIZED</code> means the authorization step completed, <code>PAYMENT_NOT_AUTHORIZED</code> means stock was released after a definitive no-authorization outcome, <code>RESERVATION_NOT_CREATED</code> means inventory confirmed it created no reservation, and <code>MANUAL_RECOVERY_REQUIRED</code> means a durable case was recorded while business work remains unresolved. A payment decline that was compensated is a completed saga outcome, not an orchestration error. The caller still needs to map these results to the pending order record and expose a useful status to the customer. A production flow that captures payment or fulfills the order must add those participant transactions, their stable operation keys, and the appropriate void, refund, or cancellation paths.</p>
+
+<h2 id="handling-failure-scenarios">Retries, timeouts, and compensation</h2>
+<p>The <code>Retry</code> blocks target transient Lambda service errors and use bounded exponential backoff with jitter. They do not retry a confirmed <code>PaymentDeclined</code> business outcome. The same policy is safe only because every participant and compensation uses the same stable action key on every attempt. AWS lists the Lambda service exception names and retry fields in its <a href="https://docs.aws.amazon.com/step-functions/latest/dg/sfn-best-practices.html" target="_blank" rel="noopener noreferrer">Step Functions best practices</a>; tune the retry count and total time against your service deadline and provider limits.</p>
+<p>A timeout is an observation about the caller, not proof that the remote action failed. The payment provider might have authorized the request before the response was lost. The example routes all caught authorization errors other than a definite decline to <code>ReconcilePayment</code>; it releases stock only after the provider reports a definitive decline or no authorization. If reconciliation also fails or returns <code>UNKNOWN</code>, the workflow writes a durable recovery case rather than guessing. The same rule applies to inventory: inspect the reservation service before deciding whether anything needs compensation.</p>
+<p>Compensate completed steps in reverse order, using the identifiers returned by those steps. A release operation is not a database rollback; it is another local transaction and can itself fail. If a workflow has multiple successful steps before failure, each compensation should be idempotent, and the recovery record should preserve the saga ID, failed step, known results, participant identifiers, and errors needed to resume safely.</p>
+<p>There is no cross-execution lock in this state machine. If two checkouts compete for the last unit, inventory must serialize the reservations in its own data store. Keep each local commit and its idempotency record atomic where possible, and decide how a conflict is reported to the saga.</p>
+
+<h2 id="important-considerations-for-saga-implementation">Choose a workflow type and recovery process</h2>
+<h3 id="ensuring-idempotence-in-each-step">Standard and Express execution semantics</h3>
+<p><a href="https://docs.aws.amazon.com/step-functions/latest/dg/choosing-workflow-type.html" target="_blank" rel="noopener noreferrer">Standard workflows</a> use an exactly-once workflow model by default and support long-running executions with execution history. A configured <code>Retry</code> or a redrive can run an unsuccessful Task again. Asynchronous Express workflows use at-least-once execution, so a step can run more than once; synchronous Express workflows use at-most-once execution and return the result when the workflow completes. Express workflows are limited to five minutes and rely on CloudWatch Logs for execution history. These are orchestration semantics, not a distributed ACID guarantee: the participant still needs idempotency and reconciliation for repeated or uncertain external effects.</p>
+<p>For a business saga that can remain open, needs detailed history, or may need operator recovery, Standard is often the practical fit. Use Express when the workflow fits its duration and integration limits and the application is designed for its execution semantics. Check the current workflow-type table and service quotas before choosing.</p>
+
+<h3 id="managing-concurrency-and-parallelism">Preserve identifiers and control concurrent writes</h3>
+<p>Keep workflow payloads small and stable. Store only the IDs and results later tasks need; put larger documents in durable storage and pass a reference. If a participant uses optimistic concurrency or conditional writes, retry a conflict only after re-reading current state and applying a domain rule. A blind retry can turn a genuine inventory conflict into overselling or overwrite another operation.</p>
+
+<h3 id="monitoring-and-logging-techniques">Make unresolved work visible</h3>
+<p>Monitor failed, timed-out, and long-running executions alongside business-level signals such as orders still pending beyond their expected duration, compensation failures, and recovery cases that remain unassigned. Alert an owner when a case is created or remains unresolved past its response target. Include <code>sagaId</code> and <code>orderId</code> in structured participant logs, while keeping sensitive payment data out of workflow input and logs. For Express, configure CloudWatch Logs; for Standard, use execution history and metrics, and add logs or traces where they help diagnose participant behavior.</p>
+<p>A recovery task must durably save a case before the workflow returns <code>MANUAL_RECOVERY_REQUIRED</code>. Alert when that task itself fails or the execution fails outside a catcher. Step Functions catchers apply to Task, Parallel, and Map states; they cannot catch every top-level execution failure, and <code>States.ALL</code> does not match every terminal error. See AWS’s <a href="https://docs.aws.amazon.com/step-functions/latest/dg/concepts-error-handling.html" target="_blank" rel="noopener noreferrer">error-handling rules</a>, then configure an execution-failure signal and document who owns replay, reconciliation, and closure.</p>
+<p>Standard workflow executions that failed, were aborted, or timed out may be eligible for <a href="https://docs.aws.amazon.com/step-functions/latest/dg/redrive-executions.html" target="_blank" rel="noopener noreferrer">redrive</a> for 14 days. Redrive resumes at the unsuccessful step with the original input and preserves successful step results; it can run that failed Task again. An execution that ended in a <code>Fail</code> state re-enters that state and fails again, so redrive does not rerun earlier recovery tasks. Redrive is useful for eligible task failures, but it does not repair participant state or remove the need for idempotency.</p>
+
+<h2 id="testing-and-validating-the-implementation">Test the failure paths</h2>
+<p>Test more than the successful path. At minimum, exercise a definite inventory rejection, payment decline after reservation, a timeout after the participant may have committed, duplicate invocation with the same key, reconciliation returning <code>UNKNOWN</code>, compensation retry and failure, recovery-case write failure, and a concurrent request for the last unit. Verify both the state-machine transition and the participant's durable records. A caught error is not proof that the compensation occurred.</p>
+<p>The Step Functions <a href="https://docs.aws.amazon.com/step-functions/latest/dg/test-state-isolation.html" target="_blank" rel="noopener noreferrer">TestState API</a> can test individual states, including which Retry or Catch applies and how <code>ResultPath</code> shapes the data. Use mocked outcomes for state logic, then run integration tests against isolated participant services to prove idempotency, reconciliation, and compensation behavior. The site’s guide to <a href="/blog/5-patterns-for-resilient-serverless-state-management/">resilient serverless state management</a> covers idempotent operations and sagas in a broader state-management context. Its guide to <a href="/blog/aws-cross-service-resilience-patterns/">cross-service resilience</a> explains why timeouts, retries, queues, and payment reconciliation need explicit failure policies.</p>
+
+<h2 id="conclusion">Operational checklist</h2>
 <ul>
-<li><strong>Managing Concurrency and Parallelism:</strong> Utilize AWS Step Functions' features like parallel states and concurrency control to handle concurrent transactions.</li>
-<li><strong>Ensuring Idempotence:</strong> Design each step as self-contained and independent to ensure idempotence and maintain data consistency.</li>
-<li><strong>Monitoring and Logging:</strong> Use <a href="https://aws.amazon.com/cloudwatch/" target="_blank">AWS CloudWatch</a> and <a href="https://aws.amazon.com/xray/" target="_blank">AWS X-Ray</a> for monitoring and logging transactions to identify potential issues.</li>
+<li>Give each saga and each participant action a stable, persisted idempotency key.</li>
+<li>Retry only plausibly transient failures, with a bounded policy and backoff.</li>
+<li>Reconcile by the original operation ID when a timeout makes the remote result uncertain.</li>
+<li>Compensate confirmed completed work in reverse order; treat each compensation as a new fallible transaction.</li>
+<li>Write unresolved cases durably, alert an owner, and retain the identifiers needed to investigate or resume.</li>
+<li>Use the owning service’s data store to enforce concurrency; Step Functions coordinates execution but does not lock business resources.</li>
 </ul>
-<p>By combining the Saga pattern with AWS Step Functions, developers can build reliable, scalable, and maintainable distributed systems that can handle complex transactions across multiple microservices.</p>
-<figure><table>
-<thead>
-<tr>
-<th>Comparison Criteria</th>
-<th>Traditional Approach</th>
-<th>Saga Pattern with AWS Step Functions</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Transaction Management</td>
-<td>Complex two-phase commit protocols</td>
-<td>Distributed transactions broken into independent saga steps</td>
-</tr>
-<tr>
-<td>Fault Tolerance</td>
-<td>Potential deadlocks and increased latency</td>
-<td>Improved reliability and error handling through compensating transactions</td>
-</tr>
-<tr>
-<td>Scalability</td>
-<td>Monolithic architecture, difficult to scale</td>
-<td>Easier scaling and maintenance of individual microservices</td>
-</tr>
-<tr>
-<td>Monitoring and Logging</td>
-<td>Limited visibility into distributed transactions</td>
-<td>Built-in monitoring and logging with AWS CloudWatch and AWS X-Ray</td>
-</tr>
-</tbody>
-</table></figure>
-<h2 id="related-video-from-youtube">Related video from YouTube</h2>
-<iframe allowfullscreen="" frameborder="0" loading="lazy" src="https://www.youtube.com/embed/ucR0dM5m2xU"></iframe><h2 id="prerequisites-for-saga-implementation-with-aws">Prerequisites for Saga Implementation with AWS</h2>
-<p>To successfully implement the Saga pattern with AWS Step Functions, you need to have a solid foundation in both AWS services and the Saga pattern itself.</p>
-<h3 id="understanding-aws-services">Understanding AWS Services</h3>
-<p>Before diving into Saga implementation, you should have a basic understanding of the following AWS core services:</p>
-<figure><table>
-<thead>
-<tr>
-<th>Service</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>AWS Lambda</td>
-<td>A serverless compute service that runs code without provisioning or managing servers.</td>
-</tr>
-<tr>
-<td><a href="https://aws.amazon.com/dynamodb/" target="_blank">Amazon DynamoDB</a></td>
-<td>A fast, fully managed NoSQL database service that can handle large amounts of data.</td>
-</tr>
-<tr>
-<td>AWS Step Functions</td>
-<td>A serverless orchestration service that enables the creation of complex, state-driven workflows.</td>
-</tr>
-</tbody>
-</table></figure>
-<p>Familiarity with these services will help you design and implement a Saga workflow that effectively leverages their capabilities.</p>
-<h3 id="grasping-the-saga-pattern">Grasping the <a href="https://microservices.io/patterns/data/saga.html" target="_blank">Saga Pattern</a></h3>
-<p><figure><img alt="Saga Pattern" loading="lazy" src="/assets/media/64023afbb7d496f9b1c9.jpg"/></figure></p>
-<p>It's crucial to have a solid grasp of the Saga pattern's concepts and components before implementation. This includes understanding:</p>
+<p>A Step Functions saga makes the sequence and failure paths explicit. The business guarantee comes from the participant contracts around it: durable local commits, idempotent operations, safe compensation, and an operator path for outcomes the system cannot determine automatically.</p>
+
+<h2 id="additional-resources">Additional resources</h2>
 <ul>
-<li><strong>Saga steps</strong>: individual transactions that make up a Saga workflow.</li>
-<li><strong>Compensating transactions</strong>: actions that undo the effects of previous Saga steps in case of failure.</li>
-<li><strong>Saga orchestration</strong>: the process of coordinating and managing Saga steps to ensure data consistency.</li>
+<li><a href="https://docs.aws.amazon.com/prescriptive-guidance/latest/cloud-design-patterns/saga-patterns.html" target="_blank" rel="noopener noreferrer">AWS Prescriptive Guidance: Saga patterns</a></li>
+<li><a href="https://docs.aws.amazon.com/step-functions/latest/dg/concepts-error-handling.html" target="_blank" rel="noopener noreferrer">AWS Step Functions: Error handling</a></li>
+<li><a href="https://docs.aws.amazon.com/step-functions/latest/dg/choosing-workflow-type.html" target="_blank" rel="noopener noreferrer">AWS Step Functions: Choosing a workflow type</a></li>
+<li><a href="https://docs.aws.amazon.com/step-functions/latest/dg/redrive-executions.html" target="_blank" rel="noopener noreferrer">AWS Step Functions: Redriving executions</a></li>
 </ul>
-<p>By understanding these concepts, you'll be better equipped to design and implement a Saga workflow that meets your application's specific needs.</p>
-<h2 id="step-by-step-guide-for-saga-implementation">Step-by-Step Guide for Saga Implementation</h2>
-<h3 id="defining-state-machines-for-the-saga">Defining State Machines for the Saga</h3>
-<p>To implement the Saga pattern using AWS Step Functions, you need to define a state machine that represents the workflow of your distributed transaction. A state machine is a visual representation of the different states and transitions involved in the transaction.</p>
-<p>Create a new state machine in AWS Step Functions by specifying the states, transitions, and actions involved in your Saga workflow. For example, you can define a state machine with the following states:</p>
-<figure><table>
-<thead>
-<tr>
-<th>State</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>Start</code></td>
-<td>Initial state of the transaction</td>
-</tr>
-<tr>
-<td><code>BookHotel</code></td>
-<td>Book a hotel room for the customer</td>
-</tr>
-<tr>
-<td><code>BookFlight</code></td>
-<td>Book a flight for the customer</td>
-</tr>
-<tr>
-<td><code>BookCarRental</code></td>
-<td>Book a car rental for the customer</td>
-</tr>
-<tr>
-<td><code>End</code></td>
-<td>Final state of the transaction</td>
-</tr>
-</tbody>
-</table></figure>
-<p>Define the transitions between these states based on the success or failure of each action. For example, if the <code>BookHotel</code> state fails, transition to a <code>CompensateHotel</code> state to undo the booking.</p>
-<h3 id="implementing-compensating-transactions">Implementing Compensating Transactions</h3>
-<p>Compensating transactions are essential in the Saga pattern to undo the effects of previous actions in case of failure. Implement compensating transactions using AWS Lambda functions that can be triggered by the state machine.</p>
-<p>For example, create a Lambda function <code>CompensateHotel</code> that undoes the booking of a hotel room. This function can be triggered by the state machine when the <code>BookHotel</code> state fails.</p>
-<p>Similarly, create compensating transactions for each action in your Saga workflow to ensure that the system remains consistent in case of failures.</p>
-<h3 id="handling-failure-scenarios">Handling Failure Scenarios</h3>
-<p>Handling failures is critical in the Saga pattern to ensure that the system remains consistent and reliable. Implement error handling mechanisms in your state machine to handle failures and trigger compensating transactions accordingly.</p>
-<p>For example, if the <code>BookFlight</code> state fails, trigger the <code>CompensateHotel</code> function to undo the booking of the hotel room. This ensures that the system remains consistent and reliable even in case of failures.</p>
-<h3 id="testing-and-validating-the-implementation">Testing and Validating the Implementation</h3>
-<p>Testing and validating the Saga implementation is crucial to ensure that it works as expected. Test each state and transition in your state machine to ensure that it handles failures and compensating transactions correctly.</p>
-<p>Use AWS Step Functions' built-in testing features to validate your implementation. You can also use third-party testing frameworks to test your Saga implementation.</p>
-<p>By following these steps, you can implement the Saga pattern using AWS Step Functions and ensure that your distributed transactions are reliable, consistent, and fault-tolerant.</p>
-<h2 id="important-considerations-for-saga-implementation">Important Considerations for Saga Implementation</h2>
-<p>When implementing the Saga pattern with AWS Step Functions, there are several key considerations to keep in mind to ensure the reliability, consistency, and fault-tolerance of your distributed transactions.</p>
-<h3 id="managing-concurrency-and-parallelism">Managing Concurrency and Parallelism</h3>
-<p>In a Saga implementation, multiple transactions may be executing concurrently, which can lead to conflicts and inconsistencies if not managed properly. To handle concurrency and parallelism, you can use AWS Step Functions' built-in features such as parallel states and concurrency control.</p>
-<figure><table>
-<thead>
-<tr>
-<th>Feature</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Parallel States</td>
-<td>Allows multiple transactions to execute simultaneously</td>
-</tr>
-<tr>
-<td>Concurrency Control</td>
-<td>Ensures that only one transaction can access a particular resource at a time</td>
-</tr>
-</tbody>
-</table></figure>
-<p>Additionally, you can implement idempotent functions to handle retries and rollbacks in case of failures. Idempotent functions ensure that even if a transaction is retried multiple times, the outcome will be the same, thereby maintaining data consistency.</p>
-<h3 id="ensuring-idempotence-in-each-step">Ensuring Idempotence in Each Step</h3>
-<p>Idempotence is critical in the Saga pattern, as it ensures that each step in the transaction can be retried multiple times without causing inconsistencies. To achieve idempotence, design each step to be self-contained and independent of the previous steps.</p>
-<p><strong>Key Characteristics of Idempotent Functions:</strong></p>
-<ul>
-<li><strong>Self-contained</strong>: Each step has a clear and well-defined outcome</li>
-<li><strong>Independent</strong>: Each step does not rely on the outcome of previous steps</li>
-</ul>
-<p>By ensuring idempotence in each step, you can guarantee that the transaction will always be in a consistent state, even in case of failures.</p>
-<h3 id="monitoring-and-logging-techniques">Monitoring and Logging Techniques</h3>
-<p>Monitoring and logging are essential in a Saga implementation to track the execution of transactions and identify potential issues. AWS Step Functions provides built-in logging and monitoring features, such as AWS CloudWatch and AWS X-Ray.</p>
-<p><strong>Monitoring and Logging Techniques:</strong></p>
-<ul>
-<li><strong>AWS CloudWatch</strong>: Tracks transaction events and metrics</li>
-<li><strong>AWS X-Ray</strong>: Analyzes and visualizes transaction data</li>
-</ul>
-<p>By monitoring and logging transactions, you can identify potential issues and take corrective action to ensure the reliability and consistency of your distributed transactions.</p>
-<h2 id="real-world-example%3A-e-commerce-application-with-sagas">Real-World Example: E-Commerce Application with Sagas</h2>
-<p>In this section, we'll explore a practical example of implementing the Saga pattern with AWS Step Functions in an e-commerce application. This example will demonstrate how to manage distributed transactions across multiple microservices, ensuring data consistency and reliability.</p>
-<h3 id="e-commerce-transaction-workflow">E-Commerce Transaction Workflow</h3>
-<p>Let's consider a simple e-commerce transaction workflow involving the following microservices:</p>
-<figure><table>
-<thead>
-<tr>
-<th>Microservice</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Order Service</td>
-<td>Responsible for creating and managing orders</td>
-</tr>
-<tr>
-<td>Inventory Service</td>
-<td>Responsible for managing product inventory</td>
-</tr>
-<tr>
-<td>Payment Service</td>
-<td>Responsible for processing payments</td>
-</tr>
-</tbody>
-</table></figure>
-<p>The transaction workflow involves the following steps:</p>
-<ol>
-<li>The customer places an order through the Order Service.</li>
-<li>The Order Service creates a new order and sends a request to the Inventory Service to reserve the product.</li>
-<li>The Inventory Service checks the product availability and reserves the product if available.</li>
-<li>The Order Service sends a request to the Payment Service to process the payment.</li>
-<li>The Payment Service processes the payment and sends a confirmation back to the Order Service.</li>
-<li>The Order Service updates the order status to "paid" and sends a confirmation to the customer.</li>
-</ol>
-<h3 id="designing-the-saga-workflow">Designing the Saga Workflow</h3>
-<p>To implement the Saga pattern, we need to design a workflow that can manage the distributed transaction across the three microservices. We'll use AWS Step Functions to orchestrate the workflow.</p>
-<p>Here's a high-level design of the Saga workflow:</p>
-<figure><table>
-<thead>
-<tr>
-<th>State</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Create Order</td>
-<td>The Order Service creates a new order and sends a request to the Inventory Service to reserve the product.</td>
-</tr>
-<tr>
-<td>Reserve Product</td>
-<td>The Inventory Service checks the product availability and reserves the product if available.</td>
-</tr>
-<tr>
-<td>Process Payment</td>
-<td>The Order Service sends a request to the Payment Service to process the payment.</td>
-</tr>
-<tr>
-<td>Confirm Payment</td>
-<td>The Payment Service processes the payment and sends a confirmation back to the Order Service.</td>
-</tr>
-<tr>
-<td>Update Order Status</td>
-<td>The Order Service updates the order status to "paid" and sends a confirmation to the customer.</td>
-</tr>
-</tbody>
-</table></figure>
-<h3 id="implementing-the-saga-workflow">Implementing the Saga Workflow</h3>
-<p>To implement the Saga workflow, we'll create a Step Function state machine with the above states. We'll use AWS Lambda functions to implement each state, and AWS Step Functions will orchestrate the workflow. In case of any failure, the Saga pattern will ensure that the transaction is rolled back, and the system remains in a consistent state.</p>
-<p>In the next section, we'll discuss the benefits of using the Saga pattern with AWS Step Functions and explore future directions for Saga implementations.</p>
-<h2 id="conclusion">Conclusion</h2>
-<h3 id="benefits-of-saga-pattern-and-step-functions">Benefits of Saga Pattern and Step Functions</h3>
-<p>The Saga pattern, when implemented with AWS Step Functions, provides a reliable way to manage distributed transactions in microservices-based applications. This approach offers several advantages:</p>
-<figure><table>
-<thead>
-<tr>
-<th><strong>Benefits</strong></th>
-<th><strong>Description</strong></th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><strong>Improved Reliability</strong></td>
-<td>Ensures the system remains consistent, even in case of failures or errors.</td>
-</tr>
-<tr>
-<td><strong>Enhanced Scalability</strong></td>
-<td>Enables easier scaling and maintenance of individual services.</td>
-</tr>
-<tr>
-<td><strong>Simplified Error Handling</strong></td>
-<td>Provides a structured approach to error handling, making it easier to identify and resolve issues.</td>
-</tr>
-</tbody>
-</table></figure>
-<h3 id="future-directions-for-saga-implementations">Future Directions for Saga Implementations</h3>
-<p>As cloud services like AWS continue to evolve, we can expect to see further advancements in the implementation of the Saga pattern. Some potential future directions include:</p>
-<figure><table>
-<thead>
-<tr>
-<th><strong>Future Directions</strong></th>
-<th><strong>Description</strong></th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><strong>Increased Automation</strong></td>
-<td>Using AI and machine learning to optimize transaction workflows and improve error handling.</td>
-</tr>
-<tr>
-<td><strong>Enhanced Visibility and Monitoring</strong></td>
-<td>Developing real-time visibility and monitoring tools to track transaction workflows and identify potential issues.</td>
-</tr>
-<tr>
-<td><strong>Improved Support for Event-Driven Architectures</strong></td>
-<td>Adapting the Saga pattern to better support event-driven architectures, enabling more flexible and responsive transaction management.</td>
-</tr>
-</tbody>
-</table></figure>
-<p>By using the Saga pattern with AWS Step Functions, developers can build more reliable, scalable, and maintainable distributed systems. As the technology continues to evolve, we can expect to see even more innovative applications of the Saga pattern in the future.</p>
-<h2 id="additional-resources">Additional Resources</h2>
-<p>For readers who want to learn more about the saga pattern and AWS Step Functions, here are some additional resources:</p>
-<h3 id="aws-step-functions-documentation"><a href="https://aws.amazon.com/step-functions/" target="_blank">AWS Step Functions</a> Documentation</h3>
-<p><figure><img alt="AWS Step Functions" loading="lazy" src="/assets/media/69a8fe547f7ee994e7c7.jpg"/></figure></p>
-<p><a href="https://docs.aws.amazon.com/step-functions/" target="_blank">AWS Step Functions Documentation</a></p>
-<h3 id="community-guides-and-tutorials">Community Guides and Tutorials</h3>
-<p>Here are some curated blogs, guides, and tutorials from the AWS developer community that provide further insights into saga pattern implementation:</p>
-<figure><table>
-<thead>
-<tr>
-<th>Resource</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><a href="https://medium.com/aws-lambda-serverless/implementing-saga-pattern-using-aws-step-functions-9a7f9f6f9f6f" target="_blank">Implementing Saga Pattern using AWS Step Functions</a></td>
-<td>A step-by-step guide to implementing the saga pattern with AWS Step Functions</td>
-</tr>
-<tr>
-<td><a href="https://medium.com/aws-lambda-serverless/saga-pattern-for-orchestrate-distributed-transactions-using-aws-step-functions-146" target="_blank">Saga Pattern for Orchestrate Distributed Transactions using AWS Step Functions</a></td>
-<td>A tutorial on using the saga pattern to manage distributed transactions with AWS Step Functions</td>
-</tr>
-<tr>
-<td><a href="https://medium.com/ssense-tech/implementing-saga-using-aws-step-functions-194" target="_blank">Relating Unrelated Processes: Saga Pattern with AWS Step Functions</a></td>
-<td>A blog post exploring the benefits of using the saga pattern with AWS Step Functions</td>
-</tr>
-</tbody>
-</table></figure>
-<p>These resources provide a wealth of information on implementing the saga pattern with AWS Step Functions, including tutorials, guides, and real-world examples.</p>
-<p>
-<h2>Related posts</h2>
-<ul>
-<li><a href="/blog/aws-content-migration-best-practices/">AWS Content Migration Best Practices</a></li><li><a href="/blog/aws-services-overview-core-components/">AWS Services Overview: Core Components</a></li><li><a href="/blog/aws-cross-service-resilience-patterns/">AWS Cross-Service Resilience Patterns</a></li><li><a href="/blog/aws-engineering-blog-autoscaling-for-high-availability/">AWS Engineering Blog: Autoscaling for High Availability</a></li>
-</ul>
-</p>
