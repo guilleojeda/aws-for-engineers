@@ -2,206 +2,118 @@
 layout: post.njk
 templateEngineOverride: html
 tags: posts
-title: "AWS VPC Traffic Mirroring: Packet Capture Basics"
-description: "Learn how AWS VPC Traffic Mirroring enables packet capture for security monitoring, troubleshooting, and performance optimization without system disruption."
+title: "AWS VPC Traffic Mirroring: Packet Capture, Filters, and VXLAN"
+description: "Configure AWS VPC Traffic Mirroring with accurate source, target, filter, VXLAN, MTU, security, and cost guidance."
 date: "2025-04-17"
 datePublished: "2025-04-17T01:07:13.940000+00:00"
 heroImage: "/assets/media/abf12b9ddb122edd316e.jpg"
 permalink: "/blog/aws-vpc-traffic-mirroring-packet-capture-basics/"
 sourceUrl: "https://awsforengineers.com/blog/aws-vpc-traffic-mirroring-packet-capture-basics/"
-dateModified: "2026-10-03"
-updateNote: "Added author attribution and profile information; corrected the article heading hierarchy and added article navigation."
+dateModified: "2026-10-04"
+updateNote: "Corrected source and target support, filter direction and priority, VXLAN encapsulation, MTU and bandwidth limits, encryption caveats, pricing, verification, and cleanup guidance using current AWS documentation."
 ---
-<p><strong>Monitor your AWS network traffic without disrupting your systems.</strong> <a href="https://docs.aws.amazon.com/vpc/latest/mirroring/what-is-traffic-mirroring.html" rel="nofollow noopener noreferrer" target="_blank">AWS VPC Traffic Mirroring</a> enables you to duplicate and analyze network packets directly from Elastic Network Interfaces (ENIs) or EC2 instances. This helps with tasks like security monitoring, troubleshooting, and traffic analysis.</p>
-<p>Here’s a quick summary of how it works:</p>
+<p><strong>AWS VPC Traffic Mirroring copies selected packets from an elastic network interface (ENI) to a monitoring appliance.</strong> It is useful for threat detection, packet-level troubleshooting, and traffic analysis when flow records do not provide enough detail. The copy is sent out of band, so it does not replace the original packet path, but it still consumes source capacity and can be dropped during congestion.</p>
+<p>The useful mental model is a four-part relationship:</p>
 <ul>
-<li><strong>Source</strong>: The network interface where traffic is copied.</li>
-<li><strong>Target</strong>: The destination (e.g., EC2 instance or Network Load Balancer) where mirrored traffic is sent.</li>
-<li><strong>Filter</strong>: Rules to specify which packets to mirror.</li>
-<li><strong>Session</strong>: Configuration linking the source, target, and filter.</li>
+<li><strong>Source:</strong> the ENI whose inbound and outbound traffic can be inspected.</li>
+<li><strong>Filter:</strong> separate inbound and outbound rules that decide which packets are accepted or rejected for mirroring.</li>
+<li><strong>Target:</strong> the ENI, Network Load Balancer, or Gateway Load Balancer endpoint that receives the copy.</li>
+<li><strong>Session:</strong> the resource that connects one source, filter, and target and gives the session a priority number.</li>
 </ul>
-<h2 id="key-benefits">Key Benefits</h2>
-<ul>
-<li>Identify security threats by analyzing packet-level data.</li>
-<li>Troubleshoot connectivity issues in real time.</li>
-<li>Optimize network performance without impacting production systems.</li>
-</ul>
-<p><strong>Setup Requirements</strong>:</p>
-<ul>
-<li><a href="https://aws.amazon.com/ec2/nitro/" rel="nofollow noopener noreferrer" target="_blank">Nitro</a>-based EC2 instances as sources.</li>
-<li>Proper IAM permissions and security group configurations.</li>
-<li>Targets within the same VPC or connected VPCs.</li>
-</ul>
-<p><strong>Quick Setup Steps</strong>:</p>
-<ol>
-<li>Create a Traffic Mirror Target.</li>
-<li>Define a Traffic Mirror Filter with rules for specific traffic.</li>
-<li>Establish a Traffic Mirror Session linking the source, target, and filter.</li>
-</ol>
-<p><strong>Pro Tips</strong>:</p>
-<ul>
-<li>Use filters to capture only necessary traffic.</li>
-<li>Place targets in the same Availability Zone as sources to reduce latency.</li>
-<li>Monitor <a href="/blog/custom-cloudwatch-metrics-setup-guide-2024/">CloudWatch metrics</a> for performance and packet drops.</li>
-</ul>
-<p>AWS VPC Traffic Mirroring gives you deep visibility into your network, helping you enhance security and troubleshoot efficiently. Follow these steps to get started!</p>
-<h2 id="aws-vpc-traffic-mirroring-basics"><a href="https://docs.aws.amazon.com/vpc/latest/mirroring/what-is-traffic-mirroring.html" rel="nofollow noopener noreferrer" target="_blank">AWS VPC Traffic Mirroring</a> Basics</h2>
-<p><figure><img alt="AWS VPC Traffic Mirroring" loading="lazy" src="/assets/media/837aa5c97105a3badfe2.jpg"/></figure></p>
-<h3 id="what-is-vpc-traffic-mirroring">What is VPC Traffic Mirroring</h3>
-<p>AWS VPC Traffic Mirroring allows you to duplicate network traffic from EC2 instances for tasks like network monitoring, security checks, and packet-level analysis. It works by copying network packets from a source and sending those copies to a monitoring destination, while the original packets continue on their way.</p>
-<p>Here’s how it works when an EC2 instance processes a client request:</p>
-<ol>
-<li>Captures the packet at the specified network interface.</li>
-<li>Makes a duplicate copy of the packet.</li>
-<li>Forwards the original packet as usual.</li>
-<li>Sends the duplicate packet to the monitoring destination.</li>
-</ol>
-<p>Let’s break down the key components that make this process possible.</p>
-<h3 id="main-traffic-mirroring-components">Main Traffic Mirroring Components</h3>
-<p>There are four main components involved in VPC Traffic Mirroring:</p>
-<figure><table>
-<thead>
-<tr>
-<th>Component</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><strong>Source</strong></td>
-<td>The network interface where traffic is captured.</td>
-</tr>
-<tr>
-<td><strong>Target</strong></td>
-<td>The destination that receives the mirrored traffic.</td>
-</tr>
-<tr>
-<td><strong>Filter</strong></td>
-<td>The set of rules that decide which packets should be mirrored.</td>
-</tr>
-<tr>
-<td><strong>Session</strong></td>
-<td>The configuration that connects the source, target, and filter.</td>
-</tr>
-</tbody>
-</table></figure>
-<p>These components work together to let you capture and analyze network traffic without disrupting your applications' normal behavior.</p>
-<h2 id="how-to-set-up-traffic-mirroring">How to Set Up Traffic Mirroring</h2>
-<p>This section explains how to configure traffic mirroring, building on the key components mentioned earlier.</p>
-<h3 id="setup-requirements">Setup Requirements</h3>
-<p>Before you start, make sure the following are in place:</p>
-<figure><table>
-<thead>
-<tr>
-<th>Requirement</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Network Interface</td>
-<td>An Elastic Network Interface (ENI) capable of supporting traffic mirroring</td>
-</tr>
-<tr>
-<td>VPC Connectivity</td>
-<td>The source and target must be within the same VPC or connected VPCs</td>
-</tr>
-<tr>
-<td>IAM Permissions</td>
-<td>Permissions to create and manage traffic mirror resources</td>
-</tr>
-<tr>
-<td>Security Groups</td>
-<td>Allow mirrored traffic between the source and target</td>
-</tr>
-<tr>
-<td>Target Type</td>
-<td>Either a Network Load Balancer or an EC2 instance to receive mirrored traffic</td>
-</tr>
-</tbody>
-</table></figure>
-<h3 id="configuration-steps">Configuration Steps</h3>
-<p>Follow these steps to set up VPC Traffic Mirroring by configuring the target, filter, and session.</p>
-<p>1. <strong>Create a Traffic Mirror Target</strong></p>
-<p>Go to the VPC Console and navigate to "Traffic Mirror Targets":</p>
-<ul>
-<li>Choose the target type (Network Load Balancer or ENI).</li>
-<li>Provide the network interface ID for the target.</li>
-</ul>
-<p>2. <strong>Set Up Traffic Mirror Filter</strong></p>
-<ul>
-<li>Define inbound and outbound rules.</li>
-<li>Specify protocols such as TCP, UDP, or ICMP.</li>
-<li>Set source and destination port ranges.</li>
-<li>Add IP address ranges to monitor.</li>
-</ul>
-<p>3. <strong>Establish Traffic Mirror Session</strong></p>
-<ul>
-<li>Pick the source network interface.</li>
-<li>Select the target you created earlier.</li>
-<li>Apply the filter rules and assign a session number (1-32766).</li>
-<li>Adjust packet size limits if required.</li>
-<li>Enable the session.</li>
-</ul>
-<p>Once configured, the session becomes active immediately. Use <a href="https://aws.amazon.com/cloudwatch/" rel="nofollow noopener noreferrer" target="_blank">AWS CloudWatch</a> metrics to confirm that mirrored traffic is being captured.</p>
+<p>Use a narrow filter and a private, least-exposed target. Start with a short capture window, confirm the expected traffic, and remove the session when the investigation ends.</p>
 
-<h2 id="common-traffic-mirroring-uses">Common Traffic Mirroring Uses</h2>
-<p>Traffic Mirroring expands on packet capture basics, providing practical applications for both operational needs and security measures.</p>
-<h3 id="security-monitoring">Security Monitoring</h3>
-<p>Keep an eye on network traffic to detect threats, investigate packet-level intrusions, and maintain detailed logs for compliance purposes.</p>
-<h3 id="network-troubleshooting">Network Troubleshooting</h3>
-<p>Identify connectivity and latency problems quickly with the insights provided by Traffic Mirroring.</p>
-<h3 id="traffic-analysis">Traffic Analysis</h3>
-<p>Examine traffic patterns between VPCs to pinpoint operational challenges. These tasks rely on the session and filter settings mentioned earlier.</p>
-<h2 id="technical-limits-and-tips">Technical Limits and Tips</h2>
-<h3 id="service-limits">Service Limits</h3>
-<p>AWS VPC Traffic Mirroring comes with some restrictions and quotas you should be aware of:</p>
-<p><strong>Instance Support Restrictions</strong></p>
+<h2 id="key-benefits">What Traffic Mirroring is good for</h2>
 <ul>
-<li>Only Nitro-based EC2 instances can act as mirror sources.</li>
-<li>Network Load Balancers cannot function as mirror sources.</li>
-<li>The maximum packet size is 8,000 bytes; packets larger than this may get truncated.</li>
+<li><strong>Security monitoring:</strong> send selected traffic to an intrusion detection, network detection, or packet inspection appliance.</li>
+<li><strong>Network troubleshooting:</strong> inspect packets when routing, security rules, or application logs do not explain a failure.</li>
+<li><strong>Traffic analysis:</strong> study protocols, ports, retransmissions, and connection behavior with a packet decoder.</li>
 </ul>
-<p><strong>Service Quotas</strong></p>
+<p>Traffic Mirroring is a packet copy mechanism. It does not decrypt TLS, application-layer encryption, or IPsec for the collector. If the application payload is encrypted, the target receives the encrypted bytes unless the inspection design separately provides the keys and an appropriate decryption point. Treat captures as sensitive data and limit access to the appliance and its storage.</p>
+
+<h2 id="aws-vpc-traffic-mirroring-basics"><a href="https://docs.aws.amazon.com/vpc/latest/mirroring/what-is-traffic-mirroring.html" rel="noopener noreferrer" target="_blank">AWS VPC Traffic Mirroring</a> basics</h2>
+
+<h3 id="what-is-vpc-traffic-mirroring">How the copy is made</h3>
+<p>Traffic Mirroring copies inbound and outbound traffic from an ENI of type <code>interface</code>. AWS applies the mirror filter, encapsulates accepted packets in VXLAN, and routes the copy to the target. The workload continues using its normal network path; the mirror is not an inline proxy or a replacement route.</p>
+<p>The target must be able to parse the encapsulation. The outer destination port is UDP <code>4789</code>, the well-known VXLAN port. The inner packet contains the traffic selected by the filter. Read AWS's <a href="https://docs.aws.amazon.com/vpc/latest/mirroring/traffic-mirroring-packet-formats.html" rel="noopener noreferrer" target="_blank">Traffic Mirror packet format</a> documentation before choosing or configuring a collector.</p>
+
+<h3 id="main-traffic-mirroring-components">The four resources</h3>
+<figure><table>
+<thead>
+<tr><th>Resource</th><th>What it controls</th></tr>
+</thead>
+<tbody>
+<tr><td><strong>Mirror source</strong></td><td>An eligible ENI, commonly an EC2 network interface. The same ENI cannot be both a source and an existing mirror target.</td></tr>
+<tr><td><strong>Mirror filter</strong></td><td>Inbound and outbound rules with protocol, CIDR, port ranges, and an <code>accept</code> or <code>reject</code> action.</td></tr>
+<tr><td><strong>Mirror target</strong></td><td>The monitoring destination: an ENI, a Network Load Balancer, or a Gateway Load Balancer endpoint.</td></tr>
+<tr><td><strong>Mirror session</strong></td><td>The source/filter/target association. Lower session numbers are evaluated first when multiple sessions use one source.</td></tr>
+</tbody>
+</table></figure>
+
+<h3 id="supported-sources-and-targets">Supported sources and targets</h3>
+<p>A mirror source is an ENI of type <code>interface</code>, such as the interface attached to an EC2 or RDS resource. Traffic Mirroring is <strong>not available on every EC2 instance type</strong>. AWS maintains the current allowlist of virtualized instance families and bare-metal families in its <a href="https://docs.aws.amazon.com/vpc/latest/mirroring/traffic-mirroring-sessions.html" rel="noopener noreferrer" target="_blank">mirror source documentation</a>. Do not infer eligibility from the word “Nitro”: the current list includes supported families across generations, and bare-metal support has its own Nitro v2 restriction. Check the exact family before designing a capture.</p>
+<p>Requester-managed ENIs are restricted: AWS documents Amazon RDS and Amazon ElastiCache requester-managed interfaces as the supported requester-managed sources. A Network Load Balancer and a Gateway Load Balancer endpoint are mirror <em>targets</em>, not mirror sources.</p>
+<p>Targets can be:</p>
 <ul>
-<li>Up to 500 mirror targets per region.</li>
-<li>A maximum of 1,000 mirror sessions per region.</li>
-<li>Support for 10,000 mirror filters per region.</li>
-<li>Each filter can have up to 3 rules.</li>
+<li>An <strong>ENI of type <code>interface</code></strong> on a collector instance. This is simple for a focused investigation and gives the decoder direct access to the VXLAN packets.</li>
+<li>A <strong>Network Load Balancer</strong> in front of a fleet of monitoring instances. It needs a UDP listener on port <code>4789</code>; AWS warns that removing that listener stops mirroring without an error indication.</li>
+<li>A <strong>Gateway Load Balancer endpoint</strong> for a monitoring service in another VPC. The appliance must handle the additional outer GENEVE encapsulation from the Gateway Load Balancer as well as the inner VXLAN packet.</li>
 </ul>
-<p><strong>Bandwidth Considerations</strong></p>
+<p>AWS recommends a Network Load Balancer or Gateway Load Balancer endpoint for high availability, but those load balancers can deliver packets out of order. Use a direct ENI target when the collector cannot reassemble flows after out-of-order delivery. See the current <a href="https://docs.aws.amazon.com/vpc/latest/mirroring/traffic-mirroring-targets.html" rel="noopener noreferrer" target="_blank">target considerations</a> before selecting a topology.</p>
+
+<h2 id="how-to-set-up-traffic-mirroring">How to set up a short packet capture</h2>
+<p>The console and AWS CLI expose the same resources. The sequence below is intentionally small: create a target, create a least-broad filter, create one session, verify the capture, then clean up.</p>
+
+<h3 id="setup-requirements">Requirements and safe defaults</h3>
 <ul>
-<li>Mirror sessions use network bandwidth from the source instances.</li>
-<li>Mirrored traffic counts toward the network bandwidth limits of the source instance.</li>
-<li>Target instances must handle the combined traffic from multiple sources effectively.</li>
+<li>Choose an eligible source ENI and record its VPC, subnet, Availability Zone, and instance family.</li>
+<li>Put the target in the same VPC, or connect the VPCs with an intra-Region VPC peering connection, a transit gateway, or a Gateway Load Balancer endpoint. Traffic Mirroring does not turn an unrelated VPC into a reachable target.</li>
+<li>Ensure the source subnet route table can reach the target. AWS sends the encapsulated copy using the source VPC route table.</li>
+<li>Allow UDP <code>4789</code> on the target's security group from the source's expected address range. Keep management access in a separate rule or security group, and do not open the collector to the public internet just to receive mirrored traffic.</li>
+<li>Check network ACLs and the target appliance's host firewall. They must allow the mirror packets, while management and software-update access can remain separately restricted.</li>
+<li>Use an IAM identity with only the permissions needed to describe the source and create, modify, view, and delete the mirror resources. Creating a session requires ownership of the source network interface or its subnet.</li>
 </ul>
-<h3 id="implementation-tips">Implementation Tips</h3>
-<p>To work within these limits, consider the following strategies:</p>
-<p><strong>Fine-Tune Filters</strong></p>
+<p>For cross-VPC or cross-account designs, confirm ownership and sharing rules first. The AWS <a href="https://docs.aws.amazon.com/vpc/latest/mirroring/traffic-mirroring-connection.html" rel="noopener noreferrer" target="_blank">source and target connectivity guide</a> lists the supported combinations.</p>
+
+<h3 id="configuration-steps">Configuration steps</h3>
+<ol>
+<li><strong>Create the mirror target.</strong> In the VPC console, open <em>Traffic Mirroring &gt; Mirror targets</em>. Select the collector ENI, a Network Load Balancer with a UDP <code>4789</code> listener, or a Gateway Load Balancer endpoint. Keep the target private and tag it with the investigation owner and expiry time.</li>
+<li><strong>Create the mirror filter.</strong> Open <em>Traffic Mirroring &gt; Mirror filters</em>, then add inbound and outbound rules independently. Match the protocol, source and destination CIDRs, and source or destination port ranges needed for the question. Rules are processed from the lowest number to the highest; the first match controls whether that direction is mirrored. A reject rule stops the copy, but it does not block the original workload traffic. If you add no rules, no traffic is mirrored, and if you add no outbound rules, outbound traffic is not mirrored. The AWS <a href="https://docs.aws.amazon.com/vpc/latest/mirroring/traffic-mirroring-filters.html" rel="noopener noreferrer" target="_blank">filter concepts</a> page includes concrete rule examples.</li>
+<li><strong>Create one session.</strong> Open <em>Traffic Mirroring &gt; Mirror sessions</em>, select the source ENI, target, and filter, and choose a session number. Lower session numbers have higher priority when multiple sessions share a source. Leave packet length unset when the decoder needs full packets; set an explicit length when you intentionally want to reduce capture volume. A VNI is optional; use a known value only when the collector needs it.</li>
+<li><strong>Verify the path and decoder.</strong> Generate only the test traffic needed for the question. On a direct ENI target, a diagnostic capture can start with <code>sudo tcpdump -ni &lt;collector-interface&gt; udp port 4789 -w mirror.pcap</code>. This records the outer VXLAN packets; configure Wireshark, <code>tshark</code>, or the monitoring appliance to decode VXLAN and inspect the inner packet. With a Gateway Load Balancer endpoint, the appliance must also understand the outer GENEVE layer. Confirm the source CloudWatch metrics and target or appliance counters before interpreting an empty capture as an application problem.</li>
+</ol>
+
+<h3 id="verify-with-cloudwatch">Verify with CloudWatch</h3>
+<p>Traffic Mirroring metrics are published in the <code>AWS/EC2</code> namespace. At the source, compare <code>NetworkMirrorIn</code> and <code>NetworkMirrorOut</code> with <code>NetworkSkipMirrorIn</code> and <code>NetworkSkipMirrorOut</code>. The skip metrics show bytes that matched the filter but were not mirrored because production traffic had priority. The current <a href="https://docs.aws.amazon.com/vpc/latest/mirroring/traffic-mirror-cloudwatch.html" rel="noopener noreferrer" target="_blank">CloudWatch guide</a> lists the metrics and their monitoring intervals. VPC Flow Logs do not capture mirrored packets, so use the target capture and Traffic Mirroring metrics to verify this data path.</p>
+
+<h2 id="common-traffic-mirroring-uses">Practical use cases</h2>
+<h3 id="security-monitoring">Security monitoring</h3>
+<p>Mirror only the addresses, protocols, and ports that the detection question requires. A focused rule set reduces sensitive-data exposure and gives the appliance more capacity. Store captures with the same access controls, retention policy, and incident handling used for other security evidence.</p>
+
+<h3 id="network-troubleshooting">Network troubleshooting</h3>
+<p>Use a capture to distinguish DNS, TCP handshake, retransmission, MTU, and application-response problems. Correlate packet timestamps with application logs and CloudWatch metrics. A mirror capture shows what reached the eligible ENI and matched the filter; it does not prove that every packet was delivered to the target or that a remote service processed the request.</p>
+
+<h3 id="traffic-analysis">Traffic analysis and performance testing</h3>
+<p>Traffic Mirroring is useful for observing a workload while a separate test measures throughput or latency. It is not itself a benchmark, and mirrored traffic adds load. For a broader test plan, see the site's <a href="/blog/ultimate-guide-to-aws-network-performance-benchmarking/">AWS network performance benchmarking guide</a>.</p>
+
+<h2 id="technical-limits-and-tips">Limits, encapsulation, and operational tradeoffs</h2>
+<h3 id="service-limits">What can be missed or truncated</h3>
 <ul>
-<li>Design filters to capture only the traffic you need. This helps reduce unnecessary data and optimizes performance.</li>
+<li><strong>Bandwidth and packet rate:</strong> mirrored traffic counts toward source instance bandwidth. AWS gives production traffic priority when the source reaches bandwidth or packets-per-second limits, so mirror packets can be dropped. Under sustained saturation, production traffic can also be affected. Size the collector for the aggregate rate from all sources.</li>
+<li><strong>MTU:</strong> Traffic Mirroring adds 54 bytes of headers for IPv4 and 74 bytes for IPv6. With a standalone instance target, packets larger than the target MTU can be truncated; AWS documents 8,947 bytes as the maximum MTU that can be supported without truncation in the general case. For a Gateway Load Balancer path, AWS documents an 8,500-byte maximum MTU, which leaves 8,446 bytes for IPv4 or 8,426 bytes for IPv6 before truncation. A configured packet length can intentionally capture only the first part of a packet.</li>
+<li><strong>Traffic types:</strong> AWS documents that Traffic Mirroring does not mirror ARP, DHCP, instance metadata service, NTP, or Windows activation traffic, and it is not supported for IPv6-only subnets. Do not use an empty capture for those traffic types as proof that the session is broken.</li>
+<li><strong>Filtering:</strong> Inbound traffic already dropped by the source's inbound security group or network ACL is not mirrored. Mirrored outbound traffic is not subject to the source's outbound security group rules, but the target's route, security group, network ACL, and appliance firewall still matter.</li>
+<li><strong>Topology:</strong> Network Load Balancers and Gateway Load Balancer endpoints improve availability but can reorder packets. A single target can also receive traffic from multiple sources; calculate the aggregate load and watch for drops.</li>
 </ul>
-<p><strong>Choose the Right Target Instance</strong></p>
+<p>Quotas and supported families change. Use the live <a href="https://docs.aws.amazon.com/vpc/latest/mirroring/traffic-mirroring-quotas.html" rel="noopener noreferrer" target="_blank">Traffic Mirroring quotas</a> page instead of copying fixed account totals into a design document. The current quotas include limits per source, target, filter, and session, with some values depending on the target instance type.</p>
+
+<h3 id="implementation-tips">Security, cost, and cleanup tips</h3>
 <ul>
-<li>Select target instances based on the expected traffic volume.</li>
-<li>Regularly monitor CPU and network usage on target instances. Use <a href="/blog/aws-engineering-blog-autoscaling-for-high-availability/">auto-scaling groups</a> to manage fluctuating loads.</li>
+<li><strong>Minimize exposure:</strong> use private subnets where possible, restrict UDP <code>4789</code> to the source path, isolate management access, encrypt capture storage, and give the capture role the smallest practical read and administration permissions.</li>
+<li><strong>Control performance:</strong> start with one source and a narrow rule set, choose a target that can handle the expected packet rate, and use the skip metrics and target counters to detect loss. Keep full-packet capture only when it is needed for the investigation.</li>
+<li><strong>Plan for encryption:</strong> document whether the evidence will contain plaintext, TLS ciphertext, or another encrypted protocol. Traffic Mirroring does not provide a decryption key or an application-aware interpretation.</li>
+<li><strong>Stop the bill:</strong> delete the mirror session as soon as the capture ends, then remove the filter and target when they are no longer needed. AWS charges for each active session by the hour, even if the source is stopped, terminated, detached, or changed to an unsupported instance type. Data transfer and load-balancer data-processing charges can also apply. Review the current <a href="https://aws.amazon.com/vpc/pricing/" rel="noopener noreferrer" target="_blank">Amazon VPC pricing</a> page for the Region and target design.</li>
 </ul>
-<p><strong>Enhance Security</strong></p>
-<ul>
-<li>Use security groups to restrict access to mirror targets.</li>
-<li>Apply strict IAM policies to control who can manage Traffic Mirroring.</li>
-</ul>
-<p><strong>Boost Performance</strong></p>
-<ul>
-<li>Place mirror targets in the same Availability Zone as the source instances to minimize latency.</li>
-<li>Dedicate specific targets for high-traffic sources to avoid overload.</li>
-<li>Keep an eye on CloudWatch metrics to detect issues like packet drops or increased latency.</li>
-</ul>
-<h2 id="conclusion">Conclusion</h2>
-<p>AWS VPC Traffic Mirroring offers a way to monitor, detect threats, and troubleshoot your network without disrupting production workloads. With its filtering options and seamless integration within AWS, it helps teams analyze network traffic efficiently.</p>
-<p>To get the most out of VPC Traffic Mirroring, keep these tips in mind:</p>
-<ul>
-<li>Allocate resources wisely based on service limits, place mirror targets close to sources for better performance, and implement strong security measures.</li>
-</ul>
-<p>This tool equips engineers with the packet-level insights they need for effective network monitoring and security, all while staying within AWS service constraints.</p>
-<h2>Related posts</h2><ul><li><a href="/blog/aws-vpc-guide-configuration-essentials/">AWS VPC Guide: Configuration Essentials</a></li><li><a href="/blog/ultimate-guide-to-aws-network-performance-benchmarking/">Ultimate Guide to AWS Network Performance Benchmarking</a></li><li><a href="/blog/best-practices-for-hpc-monitoring-on-aws/">Best Practices for HPC Monitoring on AWS</a></li><li><a href="/blog/aws-app-mesh-for-service-mesh-integration/">AWS App Mesh for Service Mesh Integration</a></li></ul>
+
+<h2 id="conclusion">A repeatable packet-capture checklist</h2>
+<p>Before enabling a session, confirm the source family, target type, VPC route, UDP <code>4789</code> access, filter direction and priority, and the collector's VXLAN decoder. During the capture, compare the target output with the source's mirror and skip metrics. Afterward, delete the session and its unused resources, then handle the capture according to its sensitivity.</p>
+<p>For the surrounding network design, see the site's <a href="/blog/aws-vpc-guide-configuration-essentials/">AWS VPC configuration guide</a>. For dashboard and telemetry troubleshooting, see <a href="/blog/aws-network-dashboard-issues-troubleshooting-tips/">AWS network dashboard troubleshooting</a>.</p>

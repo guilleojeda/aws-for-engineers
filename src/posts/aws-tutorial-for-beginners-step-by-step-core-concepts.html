@@ -2,395 +2,204 @@
 layout: post.njk
 templateEngineOverride: html
 tags: posts
-title: "AWS Tutorial for Beginners Step by Step: Core Concepts"
-description: "Learn AWS from scratch with this step-by-step tutorial covering core concepts, practical tutorials, and next steps for continued learning."
+title: "AWS Tutorial for Beginners: Step-by-Step Core Concepts and First Lab"
+description: "Learn AWS from scratch with a safe, step-by-step path through Regions, IAM, EC2, S3, VPC, Lambda, pricing, and a bounded hands-on lab."
 date: "2023-12-31"
 datePublished: "2023-12-31T00:39:43.087000+00:00"
 heroImage: "/assets/media/3e492a56e581f4c81f8b.jpg"
 permalink: "/blog/aws-tutorial-for-beginners-step-by-step-core-concepts/"
 sourceUrl: "https://awsforengineers.com/blog/aws-tutorial-for-beginners-step-by-step-core-concepts/"
-dateModified: "2026-10-03"
-updateNote: "Added author attribution and profile information."
+dateModified: "2026-10-04"
+updateNote: "Rewrote the beginner learning path with current AWS Free Tier plans, account security, core service boundaries, bounded hands-on labs, cost checks, and cleanup guidance."
 ---
-<p>Most readers would likely agree that getting started with AWS can be overwhelming for beginners.</p>
-<p>This step-by-step AWS tutorial breaks down the fundamentals into clear, actionable steps - from setting up an account to hands-on walkthroughs of core services like EC2 and S3.</p>
-<p>You'll gain a solid grounding in cloud computing concepts, understand the business value of AWS, set up security credentials, tour the management console, and follow practical tutorials to launch your first AWS resources.</p>
+<p>AWS can feel broad when every service appears to be a possible starting point. A better first step is to learn the small set of ideas that connect the services, then use one short lab to make those ideas concrete.</p>
+<p>This AWS tutorial for beginners follows that path. You will learn how Regions and Availability Zones work, how IAM controls access, what EC2, S3, VPC, databases, and Lambda are for, and how to experiment without leaving temporary resources running.</p>
+<p>Before creating anything, read the current <a href="https://aws.amazon.com/free/" target="_blank" rel="noopener noreferrer">AWS Free Tier offers</a> and your account plan. AWS offers a Free plan and a Paid plan, and service limits, credits, and pricing change over time.</p>
+
 <h2 id="introduction-to-aws-cloud-computing-concepts">Introduction to AWS Cloud Computing Concepts</h2>
-<p>AWS (Amazon Web Services) is a secure cloud services platform that offers compute power, database storage, content delivery and other functionality to help businesses scale and grow. This beginner's tutorial provides a step-by-step introduction to get started with AWS.</p>
-<h3 id="understanding-aws-fundamentals">Understanding AWS Fundamentals</h3>
-<p>AWS provides over 200 cloud-based services including computing, storage, networking, database, analytics, application services, deployment, management, mobile, developer tools and tools for the internet of things. These services operate from data centers managed by AWS located around the world.</p>
-<p>Some of the most popular AWS services are:</p>
+<p>AWS (Amazon Web Services) is a collection of on-demand cloud services. Instead of buying and operating all the physical servers, storage, and networking for an application, you select managed services and pay according to the resources and features you use. AWS operates part of the infrastructure; you remain responsible for the configuration, data, identities, and applications you put there.</p>
+
+<h3 id="understanding-aws-fundamentals">Understanding AWS fundamentals</h3>
+<p>Start with these relationships:</p>
 <ul>
-<li><strong>Amazon EC2 (Elastic Compute Cloud)</strong> - Provides secure, resizable compute capacity in the cloud. It allows you to launch virtual server instances that can scale up or down based on your requirements.</li>
-<li><strong>Amazon S3 (Simple Storage Service)</strong> - Provides scalable object storage for data backup, archival and analytics. S3 provides ease of use, scalability, high durability (99.999999999% durability) and security.</li>
-<li><strong>Amazon RDS (Relational Database Service)</strong> - Managed database service for popular databases like MySQL, PostgreSQL, SQL Server, Oracle and MariaDB. Takes care of time-consuming database tasks like backups, software patching, scaling etc.</li>
-<li><strong>AWS Lambda</strong> - Runs your code in response to triggers and automatically manages the compute resources for you. This is the backbone for serverless architectures.</li>
-<li><strong>Amazon VPC (Virtual Private Cloud)</strong> - Lets you provision a private, isolated section on the AWS cloud. Define a virtual network topology similar to a traditional on-premises environment.</li>
+<li><strong>Region:</strong> a separate geographic area where AWS services run. Choose a Region based on required services, latency, data location, and cost.</li>
+<li><strong>Availability Zone (AZ):</strong> an isolated location within a Region. A subnet belongs to one AZ. Workloads that must tolerate an AZ failure need capacity and dependencies designed across more than one AZ.</li>
+<li><strong>Service:</strong> a product with a particular responsibility. EC2 provides virtual servers, S3 provides object storage, and Lambda runs event-driven code without you managing servers.</li>
+<li><strong>Resource:</strong> an individual thing you create, such as an S3 bucket, EC2 instance, VPC, or Lambda function.</li>
+<li><strong>Identity and policy:</strong> the principal making a request and the rules that allow or deny it. IAM permissions do not automatically make a network path reachable, and a reachable resource still needs authorization.</li>
 </ul>
-<p>These and other services can be combined to create robust cloud solutions that scale automatically based on demand.</p>
-<h3 id="why-learn-aws%3F">Why Learn AWS?</h3>
-<p>Here are some of the benefits of learning AWS:</p>
+<p>AWS’s <a href="https://docs.aws.amazon.com/global-infrastructure/latest/regions/aws-regions-availability-zones.html" target="_blank" rel="noopener noreferrer">Regions and Availability Zones documentation</a> explains the isolation and placement model. Avoid memorizing a fixed count of Regions or AZs because AWS adds locations and changes availability by account and Region.</p>
+
+<h3 id="why-learn-aws%3F">Why learn AWS?</h3>
+<p>AWS is useful to learn because the same ideas recur across many workloads: identity, network reachability, data durability, observability, automation, and cost control. Cloud skills can support application development, operations, security, data work, and architecture. Learning a service is most useful when you can explain the problem it solves and the responsibility it leaves with you.</p>
+
+<h3 id="goals-of-this-aws-tutorial">Goals of this AWS tutorial</h3>
+<p>By the end, you should be able to:</p>
 <ul>
-<li>AWS skills are in high demand with many open job positions asking for AWS knowledge. Learning AWS can give your career a boost.</li>
-<li>Businesses are rapidly moving to the cloud for efficiency, cost savings and innovation. AWS knowledge will allow you to support this transition.</li>
-<li>AWS handles undifferentiated heavy lifting involved in infrastructure management. This allows companies to focus on their core business strengths.</li>
-<li>Provides almost unlimited on-demand compute, storage and other resources with a pay-as-you-go pricing model. This is extremely beneficial for startups and small companies.</li>
+<li>Choose a Region and identify the resources that an example workload creates.</li>
+<li>Secure the account root user and use scoped identities or roles for everyday access.</li>
+<li>Describe the boundary between EC2, S3, VPC, IAM, databases, Lambda, CloudWatch, and CloudFormation.</li>
+<li>Complete a small console lab, check its cost and logs, and remove its resources.</li>
+<li>Choose an official AWS learning path for the next level of detail.</li>
 </ul>
-<h3 id="goals-of-this-aws-tutorial">Goals of this AWS Tutorial</h3>
-<p>This AWS beginners tutorial aims to provide:</p>
-<ul>
-<li>Step-by-step guidance to get started with AWS from scratch</li>
-<li>Coverage of basic concepts like AWS Regions, Availability Zones, VPCs, EC2 etc.</li>
-<li>Hands-on practice with core AWS services using real examples</li>
-<li>Recommendations for learning resources and next steps</li>
-</ul>
-<p>Follow this tutorial to gain functional knowledge for using AWS effectively.</p>
-<h3 id="intended-audience">Intended Audience</h3>
-<p>This AWS tutorial is intended for:</p>
-<ul>
-<li>Beginners who want structured guidance to learn AWS basics</li>
-<li>Developers, operators and solutions architects new to AWS</li>
-<li>Students looking to build AWS knowledge for career/academic goals</li>
-</ul>
-<p>No prior AWS experience is necessary.</p>
-<h3 id="navigating-aws-documentation">Navigating AWS Documentation</h3>
-<p>As you learn AWS, refer to the official AWS documentation frequently:</p>
-<ul>
-<li>Provides the most accurate, up-to-date information</li>
-<li>Very well organized and searchable</li>
-<li>Covers basics to advanced concepts</li>
-<li>Includes tutorials, videos and example code</li>
-</ul>
-<p>Make documentation your go-to resource as you explore AWS services.</p>
+
+<h3 id="intended-audience">Intended audience</h3>
+<p>This guide is for people who are new to AWS, including developers, operators, students, and technical leaders who need a working vocabulary. No previous AWS account is required. Basic networking and programming knowledge will make the examples easier, but the concepts are introduced from first principles.</p>
+
+<h3 id="navigating-aws-documentation">Navigating AWS documentation</h3>
+<p>Use the official documentation when a detail affects an account, cost, permission, or production decision. Service documentation describes current console labels, regional availability, quotas, lifecycle dates, and pricing links. The <a href="https://docs.aws.amazon.com/" target="_blank" rel="noopener noreferrer">AWS documentation home</a> and each service’s “What is” page are better starting points than an old screenshot or a copied command.</p>
+
 <h2 id="what-are-the-steps-to-learn-aws-for-beginners%3F">What are the steps to learn AWS for beginners?</h2>
-<p>Learning AWS can seem daunting for beginners given the breadth and depth of services available. Here is a step-by-step guide to learning AWS fundamentals:</p>
-<h3 id="set-up-an-aws-account">Set Up an AWS Account</h3>
-<p>The first step is to set up a free AWS account to access AWS services. You can sign up for an individual account using just an email and credit card. AWS offers a free usage tier for popular services like EC2 and S3 for the first 12 months.</p>
-<h3 id="understand-aws-core-concepts">Understand AWS Core Concepts</h3>
-<p>Next, get familiar with essential AWS concepts like:</p>
+<p>Use this order so that every hands-on task has an account, identity, Region, service, and cleanup plan behind it:</p>
+<ol>
+<li><strong>Prepare the account:</strong> choose a current Free or Paid plan, secure the root user, set a budget, and record one Region. The detailed setup appears below under <a href="#setting-up-your-aws-journey">Setting up your AWS journey</a>.</li>
+<li><strong>Learn the boundaries:</strong> understand how compute, storage, networking, identity, and operations fit together before choosing a service.</li>
+<li><strong>Build one small lab:</strong> start with the S3 exercise, inspect what it created, and delete it. Add EC2 or RDS only when you have a reason to practice them.</li>
+<li><strong>Expand deliberately:</strong> use the official learning path and the service documentation that match your next role or project.</li>
+</ol>
+
+<h3 id="understand-aws-core-concepts">Understand AWS core concepts</h3>
+<p>Learn the difference between:</p>
 <ul>
-<li>AWS Regions and Availability Zones for infrastructure redundancy</li>
-<li>Elastic Compute Cloud (EC2) for scalable compute capacity</li>
-<li>Simple Storage Service (S3) for cloud object storage</li>
-<li>Virtual Private Cloud (VPC) for isolated networks</li>
-<li>Identity and Access Management (IAM) for access controls</li>
+<li><strong>Compute:</strong> EC2 gives you a virtual server; Lambda runs a function in response to events; containers and other services offer different control and operations trade-offs.</li>
+<li><strong>Storage:</strong> S3 stores objects addressed by keys in buckets; EBS provides block volumes for EC2; databases organize and query structured data.</li>
+<li><strong>Networking:</strong> a VPC provides logical network boundaries, subnets provide IP ranges in one AZ, route tables direct traffic, and security groups control traffic at supported network interfaces.</li>
+<li><strong>Identity:</strong> IAM users, roles, policies, and IAM Identity Center determine who or what may call an AWS API.</li>
+<li><strong>Operations:</strong> CloudWatch collects metrics and logs, while budgets and billing views help you see cost and usage.</li>
 </ul>
-<p>Spend time learning the basics of these key services and how they work together in AWS.</p>
-<h3 id="explore-the-aws-management-console">Explore the AWS Management Console</h3>
-<p>The console allows you to access and try different AWS services through a graphical web interface. Poke around the various sections like Compute, Storage, Databases etc. to see what's available.</p>
-<h3 id="follow-hands-on-tutorials">Follow Hands-on Tutorials</h3>
-<p>AWS provides many step-by-step tutorials to help you get practical experience using services. For example, set up a WordPress site on EC2 or analyze data with S3 and Athena. Applying concepts cements understanding.</p>
-<h3 id="take-advantage-of-free-training">Take Advantage of Free Training</h3>
-<p>Utilize free training resources like self-paced digital courses on AWS fundamentals to supplement hands-on learning. Consider getting certified in an entry-level exam like Cloud Practitioner.</p>
-<p>The key is to blend conceptual knowledge with practical experience using AWS services. Start small, be curious, and have fun exploring!</p>
+
+<span id="set-up-an-aws-account"></span><span id="explore-the-aws-management-console"></span><span id="follow-hands-on-tutorials"></span><span id="take-advantage-of-free-training"></span>
+
 <h2 id="can-i-learn-aws-on-my-own%3F">Can I learn AWS on my own?</h2>
-<p>Yes, it is possible to learn AWS and become certified without prior IT experience or a technical degree. Here is a step-by-step guide for getting started with AWS self-study:</p>
-<h3 id="sign-up-for-an-aws-account">Sign up for an AWS account</h3>
-<p>The first step is to <a href="https://aws.amazon.com/" target="_blank">create a free AWS account</a>. This will give you access to the AWS Management Console and select services available under the AWS Free Tier.</p>
-<h3 id="choose-an-aws-learning-path">Choose an AWS learning path</h3>
-<p>AWS provides <a href="https://aws.amazon.com/training/learning-paths/" target="_blank">structured learning paths</a> tailored to various job roles. As a beginner, start with the AWS Cloud Practitioner or AWS Solutions Architect Associate paths. These cover fundamental concepts for understanding AWS services.</p>
-<h3 id="use-aws-training-courses-and-materials">Use AWS training courses and materials</h3>
-<p>AWS offers <a href="https://www.aws.training/LearningLibrary" target="_blank">free digital training courses</a> and self-paced labs to build hands-on experience. Refer to whitepapers, documentation, blogs, and videos from the <a href="https://aws.amazon.com/training/" target="_blank">AWS Training &amp; Certification center</a>.</p>
-<h3 id="take-practice-exams">Take practice exams</h3>
-<p>When ready, test your knowledge with <a href="https://aws.amazon.com/certification/certification-prep/" target="_blank">practice exams</a> from AWS or third parties. Repeat until scoring 80% or higher consistently.</p>
-<h3 id="get-aws-certified">Get AWS certified</h3>
-<p>Finally, register for and pass the certification exam, like <a href="https://aws.amazon.com/certification/certified-cloud-practitioner/" target="_blank">AWS Certified Cloud Practitioner</a>. This validates your AWS skills without prerequisite IT experience.</p>
-<p>With self-motivation and consistent learning, becoming AWS certified without an IT background is achievable through structured AWS training resources.</p>
+<p>Yes. Self-study works when you alternate a concept, a small experiment, and a written explanation of what happened. A useful loop is:</p>
+<ol>
+<li>Read the service overview and identify its responsibility boundary.</li>
+<li>Draw the request path: identity, network, service, data, and logs.</li>
+<li>Build the smallest example that demonstrates one behavior.</li>
+<li>Inspect the result and billing view, then remove the example.</li>
+<li>Write down one limitation and one question for the next exercise.</li>
+</ol>
+<span id="sign-up-for-an-aws-account"></span><span id="choose-an-aws-learning-path"></span><span id="use-aws-training-courses-and-materials"></span><span id="take-practice-exams"></span><span id="get-aws-certified"></span>
+
 <h2 id="which-aws-course-is-best-for-beginners%3F">Which AWS course is best for beginners?</h2>
-<p>When getting started with AWS, it's important to find a course that provides a strong foundation in cloud concepts and key services, while being approachable for those without prior AWS experience. Here are some top options for AWS beginner courses:</p>
-<h3 id="ultimate-aws-certified-solutions-architect-associate-saa-c03">Ultimate AWS Certified Solutions Architect Associate SAA-C03</h3>
+<p>For most beginners, start with the official <a href="https://aws.amazon.com/training/learn-about/cloud-practitioner/" target="_blank" rel="noopener noreferrer">Cloud Essentials Learning Plan</a> or AWS Cloud Practitioner Essentials. Both cover cloud benefits, core services, pricing, and security without assuming a particular programming language. Pair the course with the S3 lab below and the <a href="https://aws.amazon.com/training/" target="_blank" rel="noopener noreferrer">AWS Training and Certification catalog</a> when you are ready to specialize.</p>
+
+<h3 id="ultimate-aws-certified-solutions-architect-associate-saa-c03">Choose a role-based path after the foundation</h3>
+<p>Choose a Solutions Architect, Developer, or Operations learning path after you can explain IAM, VPC, compute, storage, databases, monitoring, and failure modes. Follow the current role page for the plan and prerequisites instead of using an undated course list.</p>
+
+<h3 id="aws-fundamentals%3A-building-serverless-applications">Choose serverless practice for event-driven work</h3>
+<p>Choose a serverless path when you want to build event-driven applications without operating servers. Begin with Lambda’s handler, event, permissions, retries, and logs before adding API Gateway, queues, or databases; the Lambda section below introduces those boundaries.</p>
+
+<h3 id="aws-serverless-apis-%26-apps---a-complete-introduction">Use certification as an optional checkpoint</h3>
+<p>The <a href="https://aws.amazon.com/certification/certified-cloud-practitioner/" target="_blank" rel="noopener noreferrer">AWS Certified Cloud Practitioner</a> is a foundational credential for people with no prior IT or cloud experience. Practice questions can show which topics need review, but a score target is not a universal readiness measure. Certification does not replace the ability to build, explain, secure, and clean up a small workload.</p>
+
+<h2 id="how-many-days-it-will-take-to-learn-aws-for-beginners%3F">How many days will it take to learn AWS for beginners?</h2>
+<p>There is no reliable number of days that applies to everyone. “Learn AWS” might mean understanding cloud vocabulary, passing a foundational exam, deploying one service, or designing a production platform. Define the outcome first.</p>
+<p>For a first month, a realistic bounded plan is three short study sessions each week:</p>
 <ul>
-<li><strong>Difficulty Level:</strong> Beginner</li>
-<li><strong>Duration:</strong> 27 hours</li>
+<li><strong>Week 1:</strong> account plans, IAM, Regions, Availability Zones, and the shared-responsibility model.</li>
+<li><strong>Week 2:</strong> S3 and EC2 concepts, including storage, network placement, and resource cleanup.</li>
+<li><strong>Week 3:</strong> VPC, Lambda, databases, CloudWatch, and the cost signals each service creates.</li>
+<li><strong>Week 4:</strong> repeat one lab from memory, document the request path, and choose a role-based next step.</li>
 </ul>
-<p>This comprehensive course prepares you to take the AWS Certified Solutions Architect Associate exam. It covers all aspects of designing resilient and cost-optimized infrastructure on AWS. As it's geared towards certification, it provides in-depth training across a wide range of services.</p>
-<h3 id="aws-fundamentals%3A-building-serverless-applications">AWS Fundamentals: Building Serverless Applications</h3>
-<ul>
-<li><strong>Difficulty Level:</strong> Beginner</li>
-<li><strong>Duration:</strong> 11 hours</li>
-</ul>
-<p>This hands-on course teaches you to build, secure and scale serverless applications using AWS services like Lambda, DynamoDB and API Gateway. As a beginner-friendly course, it's a great introduction to core serverless concepts.</p>
-<h3 id="aws-serverless-apis-%26-apps---a-complete-introduction">AWS Serverless APIs &amp; Apps - A Complete Introduction</h3>
-<ul>
-<li><strong>Difficulty Level:</strong> Intermediate to Advanced</li>
-<li><strong>Duration:</strong> 7.5 hours</li>
-</ul>
-<p>This course focuses specifically on developing, deploying and managing serverless APIs and applications. It covers architectural patterns and implementation details on services like Lambda and DynamoDB. Best suited for those with some prior AWS experience.</p>
-<p>The Ultimate AWS Certified Solutions Architect Associate course provides the most comprehensive foundation across the widest variety of core services. For a faster-paced introduction focusing specifically on serverless development, the Fundamentals or Serverless APIs courses are great alternatives. Evaluate each option based on your learning objectives, prior experience level and time commitments.</p>
-<h2 id="how-many-days-it-will-take-to-learn-aws-for-beginners%3F">How many days IT will take to learn AWS for beginners?</h2>
-<p>Learning AWS can seem daunting for beginners given the breadth and depth of services available. However, with focus and dedication, you can gain proficiency surprisingly quickly.</p>
-<p>Here is a general timeline for learning enough AWS fundamentals to pass the AWS Certified Solutions Architect Associate exam:</p>
-<ul>
-<li><strong>No Prior AWS Experience:</strong> Plan for <strong>80-120 hours</strong> of study over <strong>2-3 months</strong>. This allows time to get exposure across core services like EC2, S3, VPC, IAM, etc. before diving deeper.</li>
-<li><strong>Some AWS Experience:</strong> Those with basic AWS exposure can prepare in <strong>40-60 hours</strong> over <strong>1-2 months</strong>. Less time is needed to grasp intro concepts, allowing more time to focus on specific services.</li>
-</ul>
-<p>The key is consistency. To learn AWS in 2-3 months, aim for:</p>
-<ul>
-<li><strong>2-3 Hours Per Day:</strong> Consistent daily practice ensures retention and progress. This can include video courses, hands-on labs, documentation reading, and taking practice tests.</li>
-<li><strong>Weekend Review:</strong> Use weekends to reinforce knowledge, revisit difficult concepts, practice labs, and identify gaps for next week's focus.</li>
-<li><strong>A Study Plan:</strong> Create a personalized prep plan based on current AWS skills. Focus areas with less expertise demand more time.</li>
-</ul>
-<p>While timelines help guide prep, learning speed can vary. Some engineers may accelerate faster, while others need more time. Gauge your progress weekly, and adjust study plans to fit your unique pace. With diligent and consistent daily practice, AWS beginners can gain job-ready skills in AWS within a 2-3 month timeframe.</p>
-<h2 id="setting-up-your-aws-journey">Setting Up Your AWS Journey</h2>
-<h3 id="setting-up-an-aws-account">Setting up an AWS Account</h3>
-<p>To get started with AWS, you'll need to set up an AWS account. Here are the steps:</p>
-<ul>
-<li>Go to <a href="https://aws.amazon.com" target="_blank">aws.amazon.com</a> and click on "Create an AWS Account".</li>
-<li>Follow the on-screen instructions to sign-up. You'll need to provide contact and billing information.</li>
-<li>Verify your identity by entering a phone number to receive a code.</li>
-<li>Select the "Basic Support" plan. This gives access to the AWS Free Tier.</li>
-<li>Once your account is created, you can access the AWS Management Console.</li>
-</ul>
-<p>The AWS Free Tier provides free access to certain AWS services for 12 months. This allows you to gain hands-on experience without incurring costs.</p>
-<h3 id="understanding-aws-pricing">Understanding AWS Pricing</h3>
-<p>AWS uses a pay-as-you-go pricing model. You are charged based on your usage of AWS resources.</p>
-<p>Key things to know about AWS pricing:</p>
-<ul>
-<li>Compute services like EC2 are billed per hour or per second of server time.</li>
-<li>Storage services like S3 bill based on amount of data stored per month.</li>
-<li>Data transfer out of AWS data centers is charged based on volume.</li>
-<li>Some services offer tiered pricing based on usage or features.</li>
-</ul>
-<p>AWS provides tools to estimate, monitor, and control your costs:</p>
-<ul>
-<li><strong>AWS Pricing Calculator:</strong> Estimate your costs before using AWS.</li>
-<li><strong>AWS Cost Explorer:</strong> Analyze and visualize your costs over time.</li>
-<li><strong>AWS Budgets:</strong> Set custom budgets that alert you when your costs exceed set thresholds.</li>
-</ul>
+<p>Adjust the pace around your existing networking, Linux, programming, and operations knowledge. Use a written task or small portfolio project as evidence of progress instead of promising yourself a fixed career date.</p>
+
+<h2 id="setting-up-your-aws-journey">Setting up your AWS journey</h2>
+
+<h3 id="setting-up-an-aws-account">Setting up an AWS account</h3>
+<p>Use <a href="https://aws.amazon.com/free/" target="_blank" rel="noopener noreferrer">Create an AWS account</a> when you are ready to monitor it. New customers can choose a Free plan or a Paid plan. The current <a href="https://docs.aws.amazon.com/awsaccountbilling/latest/aboutv2/free-tier-plans.html" target="_blank" rel="noopener noreferrer">account-plan documentation</a> says a new customer receives USD $100 in credits and can earn up to another USD $100 through activities. The Free plan ends after six months or when its credits are used, whichever comes first. At expiry, the account closes automatically and you lose access to its resources. AWS retains the content for 90 days, during which you can upgrade to a Paid plan; upgrade before expiry to avoid that interruption. A Paid plan provides broader service access and charges for usage beyond eligible credits or for services those credits do not cover. Older accounts may have legacy offers, so check the plan and current offer in the Billing and Cost Management console.</p>
+<p>After sign-up, secure the account before opening a service:</p>
+<ol>
+<li>Sign in as the account root user only for tasks that require it, and enable MFA. Use a strong, unique password and protect the account email and recovery methods.</li>
+<li>For a standalone account, create an administrative identity for everyday work; for an organization, use IAM Identity Center or your approved identity provider. Follow AWS’s <a href="https://docs.aws.amazon.com/IAM/latest/UserGuide/root-user-best-practices.html" target="_blank" rel="noopener noreferrer">root-user best practices</a>.</li>
+<li>Use IAM roles and temporary credentials for workloads. Do not create root access keys or paste long-lived access keys into source code, shell history, or a tutorial.</li>
+<li>Choose one Region for the lab and record it. Some services, features, offers, and quotas differ by Region.</li>
+</ol>
+<p>AWS’s <a href="https://docs.aws.amazon.com/IAM/latest/UserGuide/best-practices.html" target="_blank" rel="noopener noreferrer">IAM security guidance</a> recommends temporary credentials, MFA, least privilege, and regular removal of unused identities and permissions.</p>
+
+<h3 id="understanding-aws-pricing">Understanding AWS pricing</h3>
+<p>AWS pricing depends on the service, Region, resource configuration, usage, data transfer, storage, and account plan. Before a lab, use the service pricing page or <a href="https://calculator.aws/" target="_blank" rel="noopener noreferrer">AWS Pricing Calculator</a> for an estimate. During and after the lab, check the Billing and Cost Management console and the current Free Tier page. Free Tier usage alerts can notify you when usage approaches a limit, but an alert is not a permission boundary or a guarantee that every resource is free.</p>
+<p>For an individual account, create an AWS Budget with an email notification before experimenting. AWS documents <a href="https://docs.aws.amazon.com/cost-management/latest/userguide/budgets-managing-costs.html" target="_blank" rel="noopener noreferrer">budgets and cost alerts</a>; alerts notify you but do not automatically stop every resource.</p>
+
 <h3 id="exploring-the-aws-management-console">Exploring the AWS Management Console</h3>
-<p>The AWS Management Console is a web interface to manage your AWS services and resources.</p>
-<p>Key things you can do in the Console:</p>
-<ul>
-<li>Access and manage all AWS services from a centralized dashboard</li>
-<li>Create, configure, and delete AWS resources like EC2 instances</li>
-<li>Monitor resource usage, alerts, and billing</li>
-<li>Customize the console view to suit your needs</li>
-</ul>
-<p>When first starting out, go through each service menu to understand what's available. The common services you'll use are EC2, S3, VPC, and IAM.</p>
-<h3 id="aws-global-infrastructure">AWS Global Infrastructure</h3>
-<p>AWS has a global infrastructure spanning 24 geographic Regions with 77 Availability Zones.</p>
-<ul>
-<li><strong>Regions:</strong> Physical locations with multiple data centers.</li>
-<li><strong>Availability Zones:</strong> Isolated data center infrastructure within a Region.</li>
-</ul>
-<p>When launching resources, you can choose the Region and AZ to host them in. As a best practice for high availability, distribute resources across multiple AZs.</p>
-<h3 id="aws-account-settings-and-security-credentials">AWS Account Settings and Security Credentials</h3>
-<p>Properly setting up and securing your AWS account is important when getting started. Follow these best practices:</p>
-<ul>
-<li>Enable multi-factor authentication (MFA) for additional login security.</li>
-<li>Create individual IAM users with appropriate permissions instead of using your AWS account root user for everything.</li>
-<li>Use roles and policies to manage access to resources.</li>
-<li>Rotate access keys and passwords regularly.</li>
-<li>Check your monthly account activity and billing to detect anomalies.</li>
-<li>Contact AWS support if you suspect your account has been compromised.</li>
-</ul>
-<p>Following security best practices will prevent unauthorized access as you start building on AWS.</p>
-<h2 id="aws-core-services-overview">AWS Core Services Overview</h2>
-<p>AWS offers a wide variety of cloud computing services that provide building blocks for companies to build sophisticated applications. Some of the most popular and widely-used AWS services include:</p>
-<h3 id="amazon-ec2%3A-elastic-compute-power">Amazon EC2: Elastic Compute Power</h3>
-<p>Amazon Elastic Compute Cloud (Amazon EC2) provides secure, resizable compute capacity in the cloud. It allows companies to launch as many or as few virtual servers as they need, configure security and networking, and manage storage. Some key features of Amazon EC2 include:</p>
-<ul>
-<li>On-demand, pay-as-you-go pricing - only pay for the compute time you use</li>
-<li>Multiple instance types optimized for different workloads (e.g. general purpose, compute optimized, memory optimized, etc.)</li>
-<li>Flexible configurability of CPU, memory, storage and networking capacity</li>
-<li>Secure login access and encryption of sensitive data</li>
-</ul>
-<p>With Amazon EC2, companies can quickly scale up or down to handle changes in demand, reduce costs when not fully utilizing servers, and avoid the expense and complexity of buying and managing physical servers.</p>
-<h3 id="amazon-s3%3A-scalable-storage-in-the-cloud">Amazon S3: Scalable Storage in the Cloud</h3>
-<p>Amazon Simple Storage Service (Amazon S3) provides scalable object storage in the cloud. It offers industry-leading durability, availability, security, and performance for applications that require data storage and retrieval. Key capabilities include:</p>
-<ul>
-<li>Virtually unlimited, inexpensive data storage with 99.999999999% durability</li>
-<li>File versioning for easily recovering from unintended overwrites and deletions</li>
-<li>Security features like access control lists, encryption, Multi-Factor Authentication, and more</li>
-<li>Integrates seamlessly with other AWS services like Lambda, EC2, and DynamoDB</li>
-</ul>
-<p>Companies use S3 to store everything from static assets and backups to big data analytics datasets cost-effectively. The service scales seamlessly to handle any amount of data and traffic while only paying for what you use.</p>
-<h3 id="aws-iam%3A-secure-identity-and-access-management">AWS IAM: Secure Identity and Access Management</h3>
-<p>AWS Identity and Access Management (IAM) enables secure control of access to AWS services and resources. With IAM, companies can create user identities with custom permissions, apply security policies, and get visibility into access through logs and dashboards. Key features include:</p>
-<ul>
-<li>Granular control over user permissions and access</li>
-<li>Role-based access control for easily managing permissions to groups of users</li>
-<li>Multi-factor authentication for additional login security</li>
-<li>Tools for analyzing access patterns and potential threats</li>
-</ul>
-<p>IAM is crucial for controlling who can access which resources in a secure and auditable way. Companies use it to establish least-privilege access based on job function, enforce strong authentication policies, and have visibility into access patterns.</p>
-<h3 id="amazon-vpc%3A-your-private-cloud-network">Amazon VPC: Your Private Cloud Network</h3>
-<p>Amazon Virtual Private Cloud (Amazon VPC) lets companies provision an isolated section of the AWS cloud to launch resources in a virtual private network. This gives full control over the virtual networking environment including IP address range selection, route tables, network gateways, and security settings. Benefits include:</p>
-<ul>
-<li>Logically isolated network to launch AWS resources</li>
-<li>Ability to use IPv4 and IPv6 addressing</li>
-<li>Route network traffic internally or over VPN connections</li>
-<li>Network security through security groups and network access control lists</li>
-</ul>
-<p>With Amazon VPC, companies can customize their AWS cloud infrastructure to closely resemble their on-premises setups. This enables easier migration to the cloud and hybrid cloud deployments.</p>
-<h3 id="aws-database-services%3A-rds%2C-dynamodb%2C-and-more">AWS Database Services: RDS, DynamoDB, and More</h3>
-<p>AWS offers several database services for storing, processing, and analyzing data sets in the cloud:</p>
-<p><strong>Amazon Relational Database Service (RDS)</strong> – Managed relational databases (MySQL, PostgreSQL, SQL Server, etc.) with automated provisioning, backups, software patching, monitoring, and failure recovery.</p>
-<p><strong>Amazon DynamoDB</strong> – Fully managed NoSQL database for applications that need consistent, single-digit millisecond latency at any scale. Supports key-value and document data models.</p>
-<p><strong>Amazon Redshift</strong> – Fast, scalable data warehouse for performing complex analytic and business intelligence workloads on big data. Uses columnar storage and advanced compression.</p>
-<p><strong>Amazon ElastiCache</strong> – In-memory caching service to significantly improve performance of databases and web applications by caching frequently accessed data.</p>
-<p>The variety of purpose-built databases available from AWS enables companies to use the right tool for their specific needs related to relational OLTP apps, NoSQL apps, data warehousing and analytics, caching, etc.</p>
-<h2 id="practical-aws-learning-path%3A-hands-on-tutorials">Practical AWS Learning Path: Hands-On Tutorials</h2>
-<p>This section contains step-by-step AWS hands-on tutorials for beginners to gain practical experience with AWS services such as EC2, S3, IAM, and more.</p>
-<h3 id="launching-your-first-amazon-ec2-instance">Launching Your First Amazon EC2 Instance</h3>
-<p>To get started with Amazon EC2, we will launch and configure a simple Linux instance:</p>
-<ul>
-<li>Log in to the AWS Management Console and navigate to the EC2 dashboard.</li>
-<li>Click "Launch Instance" and select an Amazon Machine Image (AMI) such as Amazon Linux 2.</li>
-<li>Choose an instance type such as t2.micro for testing purposes.</li>
-<li>Configure instance details like VPC, IAM role, etc. according to your preferences.</li>
-<li>Add storage by creating an 8 GiB general purpose SSD EBS volume.</li>
-<li>Tag your instance with a name like "MyTestInstance" for easier identification.</li>
-<li>For security group, create a new one allowing SSH access on port 22 from your IP.</li>
-<li>Review your choices and click "Launch Instance". Select an existing key pair or create a new one.</li>
-<li>Once launched, view your instance on the EC2 dashboard. Check its public IP address and SSH into it securely using your key pair.</li>
-</ul>
-<p>Congratulations, you have now launched and accessed your first EC2 instance! This demonstrates the fundamentals of using AWS compute services.</p>
-<h3 id="storing-and-retrieving-data-with-amazon-s3">Storing and Retrieving Data with Amazon S3</h3>
-<p>Amazon S3 is a highly durable and scalable object storage service. We'll learn it by creating an S3 bucket and uploading/downloading objects:</p>
-<ul>
-<li>In the S3 dashboard, click "Create bucket" and give it a globally unique name.</li>
-<li>Set appropriate read/write permissions and encryption settings.</li>
-<li>Upload a sample file to your bucket by clicking "Upload" and selecting the file.</li>
-<li>You can view objects in your S3 bucket under the "Objects" tab. Click on an object to access it.</li>
-<li>To download an object, check the box next to it and use the "Actions" menu to click "Download".</li>
-<li>You can also access S3 objects via the AWS CLI using commands like <code>aws s3 cp</code>, <code>aws s3 ls</code>, etc.</li>
-</ul>
-<p>With these basics of creating buckets and managing objects, you now have hands-on experience using Amazon S3 storage!</p>
-<h3 id="managing-access-with-aws-iam">Managing Access with AWS IAM</h3>
-<p>AWS Identity and Access Management (IAM) enables secure control over access to services and resources. Here is how to get started with some key concepts in IAM:</p>
-<ul>
-<li>Under "Access management", click "Users" and then "Add user" to create a new IAM user.</li>
-<li>Give your user a name and select "Programmatic access" to generate an access key ID and secret access key for them.</li>
-<li>Click "Next: Permissions" and simply select "AdministratorAccess" policy to start.</li>
-<li>Review your choices and click "Create user". Save the user's credentials in a secure place.</li>
-<li>You can apply finer-grained access control by creating IAM groups and roles. Try creating a "DeveloperAccess" group with more limited policies.</li>
-<li>Create an IAM role for granting access to AWS services and assign it to your EC2 instances.</li>
-</ul>
-<p>With IAM's users, groups and roles for access control, you are off to a great start in securely managing access across your AWS account!</p>
-<h3 id="building-a-virtual-network-with-amazon-vpc">Building a Virtual Network with Amazon VPC</h3>
-<p>Amazon Virtual Private Cloud (VPC) enables launching AWS resources in an isolated virtual network. Here is how to set one up:</p>
-<ul>
-<li>Navigate to VPC dashboard and click "Launch VPC Wizard".</li>
-<li>Select "VPC with Public and Private Subnets" template.</li>
-<li>Enter your preferred IPv4 CIDR block, subnet details, etc. and click "Create VPC".</li>
-<li>Once created, your VPC should have public and private subnets spanning two Availability Zones.</li>
-<li>You can launch EC2 instances and other resources into your VPC subnets to give them secure network isolation.</li>
-<li>Try creating VPC endpoints, route tables, network access control lists etc. to control access.</li>
-<li>For added security, set up a virtual private gateway to establish a VPN connection from your on-premises network.</li>
-</ul>
-<p>With your own VPC set up, you now have an isolated cloud network to deploy resources into!</p>
-<h3 id="deploying-a-database-with-amazon-rds">Deploying a Database with Amazon RDS</h3>
-<p>Amazon RDS makes it easy to set up, operate and scale databases in AWS. Let's create an RDS database instance:</p>
-<ul>
-<li>Go to RDS dashboard and click "Create database". Select engine type as PostgreSQL.</li>
-<li>For our test database, we can use the Free tier eligible db.t2.micro instance class.</li>
-<li>Enter a unique DB instance identifier and credentials for the master username and password.</li>
-<li>Configure any additional settings like VPC, backups, etc. as per your requirements.</li>
-<li>Click "Create database" to launch your RDS PostgreSQL instance.</li>
-<li>Once created, your database instance should be available with its endpoint displayed.</li>
-<li>You can connect and interact with the database using any PostgreSQL client.</li>
-</ul>
-<p>With an RDS database instance up and running, you now have hands-on experience with AWS database services!</p>
-<h2 id="expanding-your-aws-knowledge">Expanding Your AWS Knowledge</h2>
-<h3 id="aws-auto-scaling-and-load-balancing">AWS Auto Scaling and Load Balancing</h3>
-<p>AWS Auto Scaling allows you to automatically scale your Amazon EC2 capacity up or down based on conditions you define. This enables you to optimize performance, costs, and availability. AWS Auto Scaling is particularly useful if you experience frequent spikes in traffic or usage on your applications.</p>
-<p>Some key points about AWS Auto Scaling:</p>
-<ul>
-<li>Automatically launch or terminate EC2 instances based on user-defined policies</li>
-<li>Scale on metrics like CPU utilization to maintain performance</li>
-<li>Use predictive scaling to scale ahead of predicted load changes</li>
-<li>Works seamlessly with Elastic Load Balancing</li>
-</ul>
-<p>An AWS Load Balancer distributes incoming application traffic across multiple targets and EC2 instances. This increases fault tolerance and enables you to seamlessly scale to meet demand.</p>
-<p>There are three types of Load Balancers on AWS:</p>
-<ul>
-<li><strong>Application Load Balancer</strong> (HTTP/HTTPS traffic)</li>
-<li><strong>Network Load Balancer</strong> (TCP/UDP traffic)</li>
-<li><strong>Classic Load Balancer</strong> (legacy, not recommended for new apps)</li>
-</ul>
-<p>Using Auto Scaling groups with Load Balancers lets you scale your application tier seamlessly and maintain availability under all traffic conditions.</p>
-<h3 id="serverless-solutions-with-aws-lambda">Serverless Solutions with AWS Lambda</h3>
-<p>AWS Lambda allows you to run code without managing any servers. With Lambda, you simply upload your code and Lambda runs it based on triggers you define, such as HTTP requests or data uploads to S3.</p>
-<p>Benefits of AWS Lambda include:</p>
-<ul>
-<li>No servers to manage - fully managed service</li>
-<li>Continuous scaling to meet demand spikes</li>
-<li>Subsecond metering - pay only for compute time used</li>
-<li>Integrates with many AWS services as event triggers</li>
-</ul>
-<p>Common use cases for AWS Lambda:</p>
-<ul>
-<li>Process uploads to S3</li>
-<li>Serve web APIs</li>
-<li>Process streams of data</li>
-<li>Execute scheduled tasks</li>
-</ul>
-<p>Overall, Lambda is a key enabler for serverless applications on AWS. It allows you to focus on writing and uploading code without managing infrastructure.</p>
-<h3 id="monitoring-with-aws-cloudwatch">Monitoring with AWS CloudWatch</h3>
-<p>AWS CloudWatch provides monitoring and observability for your applications, services, and AWS resources. With CloudWatch you can:</p>
-<ul>
-<li>Collect and track metrics and log files</li>
-<li>Set alarms and notifications when thresholds are crossed</li>
-<li>React automatically to changes via Auto Scaling</li>
-<li>Gain system-wide visibility into resource utilization, application performance, and operational health</li>
-</ul>
-<p>Key capabilities:</p>
-<ul>
-<li>Dashboards for visualizing metrics</li>
-<li>Alarms and notifications</li>
-<li>Log analysis and insights</li>
-<li>Events to trigger actions from state changes</li>
-<li>Custom metrics and third-party service integration</li>
-</ul>
-<p>Using CloudWatch is essential for monitoring, troubleshooting, and improving your AWS-hosted solutions.</p>
-<h3 id="infrastructure-as-code-with-aws-cloudformation">Infrastructure as Code with AWS CloudFormation</h3>
-<p>AWS CloudFormation allows you to manage your infrastructure through code-based templates rather than manual processes. This enables automation, consistency, and efficiency.</p>
-<p>With AWS CloudFormation you can:</p>
-<ul>
-<li>Model your infrastructure resources via JSON/YAML templates</li>
-<li>Repeatedly create identical environments in multiple regions</li>
-<li>Apply version control and peer-reviews to your infrastructure</li>
-<li>Update and rollback changes predictably through controlled updates</li>
-</ul>
-<p>You define the AWS resources needed for your applications in a CloudFormation template and deploy this template to create a "stack" of those resources.</p>
-<p>Using Infrastructure as Code practices with CloudFormation facilitates efficiency, consistency, compliance, and productivity in your AWS environment.</p>
-<h3 id="next-steps-in-aws-training-and-certification">Next Steps in AWS Training and Certification</h3>
-<p>To further develop your AWS skills, consider the following next steps:</p>
-<ul>
-<li><strong>AWS Training Courses</strong> - Role-based courses to gain hands-on experience with key services</li>
-<li><strong>AWS Certifications</strong> - Validate your expertise through Certified Cloud Practitioner, Solutions Architect, Developer and other role-based certs</li>
-<li><strong>AWS re/Start</strong> - A skills development program that prepares individuals for entry-level cloud roles</li>
-<li><strong>AWS Educate</strong> - Provides AWS credits and content for students and educators</li>
-<li><strong>AWS Documentation</strong> - Comprehensive technical references for all services</li>
-</ul>
-<p>Investing in AWS training and certification can help advance your career by formally validating your cloud skills and readiness for AWS job roles.</p>
-<h2 id="conclusion%3A-recap-and-resources-for-continued-aws-learning">Conclusion: Recap and Resources for Continued AWS Learning</h2>
-<h3 id="summary-of-aws-core-concepts-covered">Summary of AWS Core Concepts Covered</h3>
-<p>In this beginner's tutorial, we covered the fundamentals for getting started with AWS:</p>
-<ul>
-<li>Setting up an AWS account and understanding the various pricing models</li>
-<li>Navigating the AWS Management Console and learning how to find AWS services</li>
-<li>Exploring core AWS services like EC2 for compute, S3 for storage, and IAM for access controls</li>
-<li>Understanding AWS regions, availability zones, and best practices for high availability</li>
-<li>Provisioning an EC2 instance and storing objects in an S3 bucket</li>
-</ul>
-<p>These concepts provide a foundation for leveraging AWS's vast array of cloud services. With your account configured and a grasp of the Console, you can now dig deeper into the individual services for your applications.</p>
-<h3 id="further-learning-with-aws-educate-and-aws-academy">Further Learning with AWS Educate and AWS Academy</h3>
-<p>To continue your AWS education, check out <a href="https://aws.amazon.com/education/awseducate/" target="_blank">AWS Educate</a> and <a href="https://aws.amazon.com/training/awsacademy/" target="_blank">AWS Academy</a>. These programs offer structured cloud learning with hands-on labs and instructor-led content.</p>
-<p>AWS Educate provides AWS credits for students to gain hands-on experience using cloud services. AWS Academy delivers AWS curriculum through educational institutions to skill up students with in-demand cloud knowledge.</p>
-<h3 id="staying-updated-with-aws-blogs-and-events">Staying Updated with AWS Blogs and Events</h3>
-<p>Keep current on the latest AWS features and best practices by reading the <a href="https://aws.amazon.com/blogs/aws/" target="_blank">AWS Blog</a>. You can also tune in to upcoming <a href="https://aws.amazon.com/events/" target="_blank">AWS events and webinars</a> to connect with the cloud community.</p>
-<p>These resources highlight new service launches, architecture patterns, troubleshooting tips, and customer success stories so you can stay atop the wave of AWS innovation.</p>
-<h3 id="leveraging-the-aws-partner-network">Leveraging the AWS Partner Network</h3>
-<p>Extend your cloud capabilities by engaging with the <a href="https://aws.amazon.com/partners/" target="_blank">AWS Partner Network</a>. Partners offer software solutions, tools, and services that integrate with AWS services.</p>
-<p>Partners can provide migration assistance, operational support, industry expertise, and customized solutions tailored to your use cases. Leveraging partners accelerates your cloud adoption.</p>
-<h3 id="aws-support-and-customer-success-stories">AWS Support and Customer Success Stories</h3>
-<p>To supplement your learning, explore <a href="https://aws.amazon.com/premiumsupport/" target="_blank">AWS Support plans</a> and cloud <a href="https://aws.amazon.com/solutions/case-studies/" target="_blank">customer success stories</a>. Support gives you direct access to cloud experts, while customer stories detail how real companies have implemented AWS solutions.</p>
-<p>Examining use cases across industries will uncover new ways you can apply AWS services to accomplish your cloud objectives and business goals.</p>
-<p>
-<h2>Related posts</h2>
-<ul>
-<li><a href="/blog/learn-aws-s3-fundamentals/">Learn AWS S3 Fundamentals</a></li><li><a href="/blog/getting-started-with-aws-s3-essential-concepts/">Getting Started with AWS S3: Essential Concepts</a></li><li><a href="/blog/aws-redshift-tutorial-for-beginners-first-steps/">AWS Redshift Tutorial for Beginners: First Steps</a></li><li><a href="/blog/aws-vpc-guide-configuration-essentials/">AWS VPC Guide: Configuration Essentials</a></li>
-</ul>
-</p>
+<p>Open one service at a time. Read its overview, note the Region selector, inspect the resource list, and identify the delete or terminate action before creating anything. Tags such as <code>Project=aws-beginner-lab</code> can help you find temporary resources, but tags do not stop billing and are not a substitute for cleanup.</p>
+
+<h3 id="aws-global-infrastructure">AWS global infrastructure</h3>
+<p>AWS Regions contain multiple isolated Availability Zones, and the exact number varies by Region. An AZ is not a second account and does not make a single-instance workload highly available automatically. Put resources in multiple AZs only when the application, data, routing, and budget support that design. The <a href="https://docs.aws.amazon.com/global-infrastructure/latest/regions/aws-regions.html" target="_blank" rel="noopener noreferrer">current Region list</a> is the source for availability and opt-in status.</p>
+
+<h3 id="aws-account-settings-and-security-credentials">AWS account settings and security credentials</h3>
+<p>Use the account root user rarely, require MFA for human access, and grant the smallest useful permissions. For applications on EC2, Lambda, or another AWS service, attach a role and let the service provide temporary credentials. If a use case truly requires a long-lived access key, document why, store it in an approved secret mechanism, restrict its permissions, and rotate or remove it; this is an exception to the preferred role-based pattern.</p>
+
+<h2 id="aws-core-services-overview">AWS core services overview</h2>
+<p>Think of these services as building blocks with different responsibility boundaries:</p>
+
+<h3 id="amazon-ec2%3A-elastic-compute-power">Amazon EC2: virtual compute</h3>
+<p>Amazon EC2 provides virtual servers. You choose an AMI, instance type, subnet, security group, storage, and access method. AWS operates the physical host; you maintain the guest operating system, applications, permissions, and network rules. The internal <a href="/blog/aws-ec2-basics-core-concepts-explained/">Amazon EC2 fundamentals guide</a> explains those choices, storage behavior, and pricing considerations.</p>
+
+<h3 id="amazon-s3%3A-scalable-storage-in-the-cloud">Amazon S3: object storage</h3>
+<p>Amazon S3 stores objects in buckets. An object is addressed by a key; a prefix that looks like a folder is part of that key. New general-purpose buckets default to private access, Block Public Access, and Bucket owner enforced Object Ownership. Keep those defaults for a learning lab, grant access through scoped IAM or bucket policies, and remember that encryption protects data at rest without granting API permissions. For the policy details, see the internal <a href="/blog/aws-s3-guide-understanding-access-management/">Amazon S3 access-management guide</a> and AWS’s <a href="https://docs.aws.amazon.com/AmazonS3/latest/userguide/Welcome.html" target="_blank" rel="noopener noreferrer">S3 overview</a>.</p>
+
+<h3 id="aws-iam%3A-secure-identity-and-access-management">AWS IAM: identity and access</h3>
+<p>IAM policies allow or deny actions on resources. A network path to an S3 bucket or database does not grant authorization, and an IAM allow does not create a network route. The account setup above covers the safer identity choices; this distinction is what you will use when troubleshooting a lab.</p>
+
+<h3 id="amazon-vpc%3A-your-private-cloud-network">Amazon VPC: logical networking</h3>
+<p>Amazon VPC is a logically isolated virtual network. A subnet belongs to one AZ; route tables direct traffic; an internet gateway connects a public path; VPC endpoints can connect to supported AWS services privately; security groups and network ACLs control different parts of the path. Many accounts have a default VPC in each Region, but an administrator may have deleted it or the account may not have one, so check before using it. Do not add a NAT gateway to a small lab without checking its hourly and data-processing charges. Read <a href="https://docs.aws.amazon.com/vpc/latest/userguide/what-is-amazon-vpc.html" target="_blank" rel="noopener noreferrer">What is Amazon VPC?</a> before designing custom subnets.</p>
+
+<h3 id="aws-database-services%3A-rds%2C-dynamodb%2C-and-more">Database services: RDS and DynamoDB</h3>
+<p>Amazon RDS manages common operations for relational database engines such as PostgreSQL and MySQL, while DynamoDB is a managed key-value and document database. Both still require decisions about data modeling, permissions, backups, network access, and cost. A database is not a harmless first lab: storage, backups, public IPv4 addresses, and running capacity can incur charges. Use a guided lab or a sandbox account, check the current offer, and delete the database and retained backups when finished. AWS’s <a href="https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/Welcome.html" target="_blank" rel="noopener noreferrer">RDS overview</a> describes the managed boundary.</p>
+
+<h2 id="practical-aws-learning-path%3A-hands-on-tutorials">Practical AWS learning path: hands-on tutorials</h2>
+<p>Make the S3 exercise your first AWS resource. Choose one Region, use a non-sensitive sample file, record the bucket name, and check your plan and budget before you begin.</p>
+
+<h3 id="storing-and-retrieving-data-with-amazon-s3">Create and clean up an Amazon S3 bucket</h3>
+<ol>
+<li>In the S3 console, create a globally unique bucket name in the chosen Region. Keep Block Public Access enabled and use the default encryption settings unless your exercise requires a different key.</li>
+<li>Upload a small, non-sensitive text file. Do not make the bucket public just to test a download; use the console or an authenticated request.</li>
+<li>Inspect the object key, size, encryption, and access settings. Download it once, then delete the object.</li>
+<li>Delete the empty bucket and confirm in the S3 console that no versioned objects or incomplete uploads remain. Versioning and multipart uploads can leave data behind if you delete only the visible current object.</li>
+</ol>
+<p>This exercise demonstrates the difference between a bucket, an object, a Region, and an IAM-authorized request. The <a href="https://docs.aws.amazon.com/AmazonS3/latest/userguide/access-management.html" target="_blank" rel="noopener noreferrer">S3 access-management documentation</a> is the reference for any policy you add.</p>
+
+<h3 id="managing-access-with-aws-iam">Apply the IAM lesson to the lab</h3>
+<p>For a console exercise, use the administrative access method already approved for the account; do not create a permanent administrator key. If a workload needs AWS access, use a role with only the actions and resources it needs. For example, an EC2 instance that reads a known S3 prefix needs a role scoped to that bucket and prefix, not account-wide administrator access. Remove any lab-only role or policy after testing it.</p>
+
+<h3 id="launching-your-first-amazon-ec2-instance">Optional: launch a small Amazon EC2 instance</h3>
+<p>Use this only when you specifically want server practice. Review the current <a href="https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/LaunchingAndUsingInstances.html" target="_blank" rel="noopener noreferrer">EC2 launch instructions</a>, select a supported Amazon Linux 2023 AMI and a type your account plan and Region list as eligible, and restrict security-group access. Prefer a supported Session Manager or EC2 Instance Connect workflow over broad public SSH. Tag the instance, observe its status, then terminate it and check for retained EBS volumes, snapshots, public IPv4 addresses, elastic IPs, and other resources. Stopping can end compute usage charges while leaving storage or other charges.</p>
+
+<h3 id="building-a-virtual-network-with-amazon-vpc">Inspect a VPC without adding avoidable cost</h3>
+<p>Inspect the VPC, subnets, route tables, internet gateway, and security groups in the chosen Region, then trace how a resource would reach the internet and how a response returns. Do not create a NAT gateway, VPN, transit gateway, or custom multi-AZ network for this vocabulary exercise; each adds configuration and may add charges. Create a custom VPC only for a clear subnet and route requirement, and delete every component afterward.</p>
+
+<h3 id="deploying-a-database-with-amazon-rds">Treat an RDS database as an advanced optional lab</h3>
+<p>If you need database practice, follow the current RDS guide and pricing page for your Region and account plan. Use private networking, a strong temporary password, the smallest supported configuration, and the shortest test window. Delete the DB instance when finished and decide explicitly whether snapshots and automated backups should also be removed. Do not copy an old <code>db.t2.micro</code> Free Tier instruction into a new account without checking the current offer.</p>
+
+<h2 id="expanding-your-aws-knowledge">Expanding your AWS knowledge</h2>
+
+<h3 id="aws-auto-scaling-and-load-balancing">Auto Scaling and load balancing</h3>
+<p>EC2 Auto Scaling changes the number of instances in a group; it does not make a single instance highly available or resize that instance. Elastic Load Balancing routes traffic to healthy targets. To survive an AZ failure, the application, data, health checks, deployment process, and capacity must all support the design. Learn these concepts after you can launch and clean up one instance.</p>
+
+<h3 id="serverless-solutions-with-aws-lambda">Serverless solutions with AWS Lambda</h3>
+<p>Lambda runs a handler in response to an event or API request while AWS manages the underlying server capacity and patching. A function can still have retries, duplicate events, permissions, logs, concurrency, and data-transfer costs. Store durable state in a service such as S3 or DynamoDB instead of assuming an execution environment will persist. The internal <a href="/blog/aws-lambda-getting-started-first-steps/">Lambda fundamentals guide</a> covers handlers, events, execution roles, and the first console setup.</p>
+
+<h3 id="monitoring-with-aws-cloudwatch">Monitoring with Amazon CloudWatch</h3>
+<p>CloudWatch provides metrics, alarms, dashboards, and logs for AWS resources and applications. Start by identifying one useful signal and one action: for example, an error count that should trigger an investigation. Log retention, custom metrics, dashboards, and queries can have costs, so check the current pricing and set a retention period appropriate for a temporary lab. See <a href="https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/WhatIsCloudWatch.html" target="_blank" rel="noopener noreferrer">What is Amazon CloudWatch?</a>.</p>
+
+<h3 id="infrastructure-as-code-with-aws-cloudformation">Infrastructure as code with AWS CloudFormation</h3>
+<p>CloudFormation represents resources in templates and manages them as stacks. It can make a small lab repeatable and can remove a group of resources together, but a template does not eliminate the need to review permissions, costs, or data retention. Learn parameters, change sets, stack events, and deletion behavior before using a template for a shared environment. Use the <a href="https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/Welcome.html" target="_blank" rel="noopener noreferrer">CloudFormation User Guide</a> for current syntax and service behavior.</p>
+
+<span id="next-steps-in-aws-training-and-certification"></span>
+
+<h2 id="conclusion%3A-recap-and-resources-for-continued-aws-learning">Conclusion: recap and resources for continued AWS learning</h2>
+
+<h3 id="summary-of-aws-core-concepts-covered">Carry the core concepts forward</h3>
+<p>Choose a Region, secure the account, match each service to its responsibility, check cost and logs, and delete temporary resources. Repeat the S3 exercise until you can explain the request path from identity to bucket and object, then choose one role-based topic for deeper practice.</p>
+
+<h3 id="further-learning-with-aws-educate-and-aws-academy">Choose the next learning step</h3>
+<p><a href="https://aws.amazon.com/training/digital/" target="_blank" rel="noopener noreferrer">AWS Skill Builder</a> provides free digital resources and learning plans, with optional paid hands-on experiences. <a href="https://aws.amazon.com/education/awseducate/" target="_blank" rel="noopener noreferrer">AWS Educate</a> is aimed at learners and educators. If certification supports your goal, use the current Cloud Practitioner exam page and exam guide; check eligibility, current offerings, and account or subscription terms before enrolling.</p>
+
+<h3 id="staying-updated-with-aws-blogs-and-events">Staying updated with AWS documentation and announcements</h3>
+<p>Cloud service behavior changes. Follow the <a href="https://aws.amazon.com/blogs/aws/" target="_blank" rel="noopener noreferrer">AWS News Blog</a>, service documentation, and pricing pages for new features and lifecycle changes. Recheck any tutorial that names an instance class, Region count, console control, runtime, or Free Tier term.</p>
+
+<span id="leveraging-the-aws-partner-network"></span>
+
+<h3 id="aws-support-and-customer-success-stories">AWS support and cost questions</h3>
+<p>Use the <a href="https://docs.aws.amazon.com/awsaccountbilling/latest/aboutv2/checklistforunwantedcharges.html" target="_blank" rel="noopener noreferrer">AWS guide to unexpected charges</a> when a bill is higher than expected. Identify the Region, service, resource, usage type, and account plan before changing a policy or deleting data. AWS Support options and response features depend on the account plan; see the current <a href="https://aws.amazon.com/premiumsupport/" target="_blank" rel="noopener noreferrer">AWS Support plans</a> page for details.</p>

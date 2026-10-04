@@ -2,366 +2,183 @@
 layout: post.njk
 templateEngineOverride: html
 tags: posts
-title: "AWS VPC Tutorial for Beginners: Setup and Configuration"
-description: "Learn how to set up and configure an AWS VPC with this step-by-step tutorial for beginners. Understand VPC basics, define CIDR blocks, create subnets, and more."
+title: "AWS VPC Tutorial for Beginners: Build and Clean Up a Safe Lab"
+description: "Build a safe beginner AWS VPC lab with public/private subnets, route checks, IPv4/IPv6 guidance, cost notes, and complete cleanup."
 date: "2024-01-01"
 datePublished: "2024-01-01T00:31:51.866000+00:00"
 heroImage: "/assets/media/147757e4befd0c30a2ae.jpg"
 permalink: "/blog/aws-vpc-tutorial-for-beginners-setup-and-configuration/"
 sourceUrl: "https://awsforengineers.com/blog/aws-vpc-tutorial-for-beginners-setup-and-configuration/"
-dateModified: "2026-10-03"
-updateNote: "Added author attribution and profile information."
+dateModified: "2026-10-04"
+updateNote: "Rewrote the beginner lab around current VPC console steps, explicit public and private routes, IPv4 and IPv6 behavior, security controls, costs, and dependency-aware cleanup."
 ---
-<p>Most IT professionals would agree that setting up a secure and functional virtual private cloud can be challenging.</p>
-<p>This step-by-step AWS VPC tutorial for beginners promises to walk you through the entire process of configuring your first Amazon Virtual Private Cloud.</p>
-<p>You'll learn VPC basics, how to define CIDR blocks, create subnets, set up internet and NAT gateways, configure security groups, establish connectivity with peering and VPNs, and more. By the end, you'll have a fully operational VPC architecture ready to deploy resources and applications.</p>
-<h2 id="introduction-to-amazon-vpc">Introduction to Amazon VPC</h2>
-<p>Amazon Virtual Private Cloud (VPC) is a foundational AWS service that enables users to launch AWS resources in a virtual network dedicated to their account. VPCs provide several key benefits:</p>
-<h3 id="understanding-the-basics-of-vpc">Understanding the Basics of VPC</h3>
+<p>This tutorial creates a small VPC you can inspect without launching a server. It uses one VPC, two Availability Zones, two public subnets, and two private subnets. It creates an internet gateway but no NAT gateway, EC2 instance, VPN, or interface endpoint, so the lab keeps its cost and cleanup surface small.</p>
+<p>You will learn how a CIDR block, subnet, route table, internet gateway, security group, and network ACL fit together. The companion <a href="/blog/aws-vpc-guide-configuration-essentials/">AWS VPC configuration guide</a> covers design choices for production networks; this article stays focused on a safe first build.</p>
+
+<h2 id="introduction-to-amazon-vpc">What this VPC lab teaches</h2>
+<h3 id="understanding-the-basics-of-vpc">The basic objects</h3>
+<p>A VPC is a logically isolated network in one AWS Region. It spans the Region's Availability Zones, but each subnet belongs to exactly one Availability Zone. Route tables choose a target for each destination. Security groups filter traffic at a resource's network interface, and network ACLs filter traffic at the subnet boundary.</p>
+<p>A subnet is not public because of its name. AWS considers it public when its route table has a route to an internet gateway. A resource in that subnet also needs a public IPv4 address or an IPv6 address and rules that allow the traffic. A private subnet has no direct internet gateway route; this lab leaves its private subnets without a NAT route, so they have no general internet egress.</p>
+<h3 id="amazon-vpc-overview">The lab layout</h3>
+<figure><table>
+<thead><tr><th scope="col">Resource</th><th scope="col">Example</th><th scope="col">Purpose</th></tr></thead>
+<tbody>
+<tr><td>VPC</td><td><code>10.20.0.0/16</code></td><td>Address boundary for the lab</td></tr>
+<tr><td>Public subnets</td><td><code>10.20.1.0/24</code>, <code>10.20.2.0/24</code></td><td>One in each of two Availability Zones, with an internet gateway route</td></tr>
+<tr><td>Private subnets</td><td><code>10.20.11.0/24</code>, <code>10.20.12.0/24</code></td><td>One in each Zone, with only the VPC local route</td></tr>
+<tr><td>Internet gateway</td><td>One attachment</td><td>Route target for public IPv4 or IPv6 traffic</td></tr>
+</tbody>
+</table></figure>
+<p>Each Availability Zone has one public/private pair: public-A and private-A share AZ A, while public-B and private-B share AZ B.</p>
+<h3 id="aws-vpc-documentation-and-resources">Use the current AWS references</h3>
+<p>AWS updates console labels and service behavior. Keep the official <a href="https://docs.aws.amazon.com/vpc/latest/userguide/create-vpc.html" target="_blank" rel="noopener noreferrer">Create a VPC</a>, <a href="https://docs.aws.amazon.com/vpc/latest/userguide/vpc-subnet-basics.html" target="_blank" rel="noopener noreferrer">VPC basics</a>, and <a href="https://docs.aws.amazon.com/vpc/latest/userguide/subnet-route-tables.html" target="_blank" rel="noopener noreferrer">route table</a> pages nearby while following the lab.</p>
+
+<h2 id="what-is-aws-vpc-for-dummies%3F">VPC terms in plain language</h2>
+<span id="what-is-vpc-in-aws-in-simple-words%3F" aria-hidden="true"></span>
 <ul>
-<li>VPCs allow you to create an isolated section of the AWS cloud and control the virtual networking environment. This includes selecting your own IP address range, creating subnets, configuring route tables and network gateways.</li>
-<li>Resources launched into a VPC can securely communicate with each other while being isolated from the rest of the AWS network.</li>
-<li>You have complete control over your virtual networking environment in the AWS cloud.</li>
+<li><strong>CIDR:</strong> a compact notation for an IP address range. The VPC's range contains the ranges used by its subnets.</li>
+<li><strong>Availability Zone:</strong> an isolated location inside an AWS Region. A subnet cannot span Zones.</li>
+<li><strong>Route table:</strong> a set of destination and target pairs. Every subnet is associated with one route table at a time.</li>
+<li><strong>Internet gateway:</strong> a redundant VPC attachment that can provide public internet paths when routes and addresses allow them.</li>
+<li><strong>Security group:</strong> a stateful allow-list attached to a resource. It has no deny rules.</li>
+<li><strong>Network ACL:</strong> an ordered, stateless allow/deny list applied to a subnet. Return traffic must be allowed separately.</li>
 </ul>
-<h3 id="amazon-vpc-overview">Amazon VPC Overview</h3>
-<p>Amazon VPC lets you provision an isolated section of the AWS cloud where you can launch AWS resources in a virtual network that you define. You have complete control over your virtual networking environment, including:</p>
-<ul>
-<li>Selecting your own IP address range</li>
-<li>Creating subnets</li>
-<li>Configuring route tables and network gateways</li>
-<li>Controlling access to resources with security groups and network ACLs</li>
-</ul>
-<p>This enables you to have full control over your virtual networking environment.</p>
-<h3 id="aws-vpc-documentation-and-resources">AWS VPC Documentation and Resources</h3>
-<p>For further reading on Amazon VPC capabilities and configuration best practices, refer to:</p>
-<ul>
-<li><a href="https://docs.aws.amazon.com/vpc/index.html" target="_blank">Amazon VPC Documentation</a></li>
-<li><a href="https://docs.aws.amazon.com/vpc/latest/userguide/getting-started-ipv4.html" target="_blank">AWS VPC Getting Started Guide</a></li>
-<li><a href="https://docs.aws.amazon.com/vpc/latest/userguide/VPC_Network_Admin.html" target="_blank">AWS VPC Network Administrator Guide</a></li>
-</ul>
-<p>These resources provide in-depth information on all aspects of Amazon VPC.</p>
-<h2 id="what-is-aws-vpc-for-dummies%3F">What is AWS VPC for dummies?</h2>
-<p>An AWS VPC (Virtual Private Cloud) is a logically isolated virtual network within AWS. Here are some key things to know about VPCs for beginners:</p>
-<ul>
-<li>
-<p>A VPC lets you launch AWS resources like EC2 instances in a private, isolated section instead of the public AWS cloud. This gives you more control over security, network settings, IP addresses, etc.</p>
-</li>
-<li>
-<p>A VPC spans all the Availability Zones in an AWS Region. Each AZ is like an isolated data center, so spanning AZs provides high availability.</p>
-</li>
-<li>
-<p><strong>Subnets</strong> are partitions within a VPC that allow you to group resources based on security or operational needs. Public subnets face the internet, private subnets don't.</p>
-</li>
-<li>
-<p>You can customize IP address ranges, create subnets, set route tables and network gateways to make the VPC interact with the internet and on-premises networks.</p>
-</li>
-<li>
-<p><strong>Security groups</strong> and <strong>network ACLs</strong> let you filter VPC traffic much like a firewall.</p>
-</li>
-<li>
-<p><strong>VPC peering</strong> connects two VPCs privately so resources can communicate across VPCs. This allows popular architectures like hub-and-spoke networking.</p>
-</li>
-<li>
-<p><strong>VPC endpoints</strong> let you connect to AWS services like S3 or DynamoDB without leaving the VPC. This keeps traffic private within the AWS network.</p>
-</li>
-</ul>
-<p>In summary, a VPC is your own private cloud within the AWS cloud where you can isolate AWS resources in a customized network environment. VPCs give software engineers greater control, security, and flexibility for deploying applications on AWS.</p>
-<h2 id="how-do-i-create-a-simple-vpc-in-aws%3F">How do I create a simple VPC in AWS?</h2>
-<p>Creating a simple VPC in AWS is straightforward with the VPC wizard. Here are the steps:</p>
+<p>This lab demonstrates those relationships without exposing an SSH or RDP management port and without creating a paid NAT gateway.</p>
+
+<h2 id="how-do-i-create-a-simple-vpc-in-aws%3F">Before you create anything</h2>
 <ol>
-<li>Open the Amazon VPC console at https://console.aws.amazon.com/vpc/</li>
-<li>In the VPC Dashboard, choose <strong>Create VPC</strong></li>
-<li>Under VPC settings, choose <strong>VPC and more</strong></li>
-<li>Complete these fields as follows:
-<ul>
-<li>Keep <strong>Auto-generated</strong> selected under Name tag auto-generation</li>
-<li>IPv4 CIDR block: Enter a CIDR block (e.g. 10.0.0.0/16)</li>
-<li>IPv6 CIDR block: Select <strong>No IPv6 CIDR Block</strong></li>
-</ul>
-</li>
-<li>For Tenancy, keep the default <strong>Default</strong></li>
-<li>Scroll down and leave the rest of the settings at their defaults</li>
-<li>Choose <strong>Create VPC</strong>. It takes several minutes for the VPC to be created</li>
+<li>Choose one Region and write it down. The resources in this lab are Region-specific.</li>
+<li>Use an identity that can create and delete the VPC resources, or ask an administrator to perform those actions. Do not use a long-lived root credential for routine work.</li>
+<li>Set a personal reminder to run the cleanup section when you finish. A VPC itself has no additional charge, but gateways, public IPv4 addresses, endpoints, data transfer, and other resources can cost money.</li>
+<li>Use a distinctive tag such as <code>Lab=beginner-vpc-2026-10-04</code>. It makes the resources easier to identify before deletion.</li>
 </ol>
-<p>Once the VPC status changes to Available, you have successfully created a simple VPC in AWS that can be further customized by adding subnets, route tables, network gateways etc.</p>
-<p>The key things to remember when creating a basic VPC are:</p>
-<ul>
-<li>Select the VPC wizard for simplicity</li>
-<li>Choose a valid private IPv4 CIDR block</li>
-<li>Keep tenancy as default</li>
-<li>Use the defaults for other settings initially</li>
-<li>Wait for VPC to reach Available status</li>
-</ul>
-<p>With just these few steps, you can quickly spin up a VPC in AWS to start building out your cloud network.</p>
-<h2 id="what-is-vpc-in-aws-in-simple-words%3F">What is VPC in AWS in simple words?</h2>
-<p>A VPC (Virtual Private Cloud) in AWS is essentially a private network dedicated to your AWS account. Here are some key things to know about VPCs in simple terms:</p>
-<ul>
-<li>
-<p>It is a logically isolated section of the AWS cloud where you can launch AWS resources like EC2 instances. Your VPC is private and secure, separating your AWS workloads from other accounts.</p>
-</li>
-<li>
-<p>You define a CIDR block (IP address range) for your VPC when you create it. Common CIDR blocks are 10.0.0.0/16 or 192.168.0.0/16 but you can customize to your needs.</p>
-</li>
-<li>
-<p>A VPC contains subnets, which are smaller IP ranges within your VPC CIDR where you can group resources by function or access needs. Public vs private subnets control internet access.</p>
-</li>
-<li>
-<p>You attach an internet gateway to give public subnets internet access. Private subnets access internet via NAT gateway.</p>
-</li>
-<li>
-<p>Route tables define how subnets connect - to internet gateway, NAT, VPC peering connections, etc.</p>
-</li>
-<li>
-<p>Network ACLs and security groups act like VPC firewalls, controlling allowed traffic in and out.</p>
-</li>
-</ul>
-<p>So in summary - a VPC is your own private cloud network in AWS that lets you control subnets, IP addresses, routes, security, and access. You have full control to customize it as needed for your workloads.</p>
-<h2 id="how-do-i-get-into-aws-vpc%3F">How do I get into AWS VPC?</h2>
-<p>To access resources in an AWS VPC (Virtual Private Cloud), you have a few different options:</p>
-<h3 id="use-aws-client-vpn">Use AWS Client VPN</h3>
-<p>AWS Client VPN allows you to securely connect to your VPC resources from your local computer using an OpenVPN-based VPN connection. To set this up:</p>
+<p>Read the current <a href="https://aws.amazon.com/vpc/pricing/" target="_blank" rel="noopener noreferrer">Amazon VPC pricing</a> and your account's <a href="https://docs.aws.amazon.com/awsaccountbilling/latest/aboutv2/free-tier.html" target="_blank" rel="noopener noreferrer">Free Tier or credit terms</a>. A Free Tier or credit offer is account-dependent and does not make every service free.</p>
+
+<h2 id="defining-and-setting-up-your-vpc">Create the VPC and its four subnets</h2>
+<h3 id="defining-vpc-cidr-blocks">Choose a non-overlapping IPv4 range</h3>
+<p>For this lab, use <code>10.20.0.0/16</code>. It contains 65,536 IPv4 addresses and leaves room for the four <code>/24</code> subnets below. Do not use this range if it overlaps a network you plan to connect later. A connected corporate network or VPC with the same range cannot be routed cleanly through peering, Transit Gateway, or VPN.</p>
+<p>A <code>/24</code> contains 256 IPv4 addresses, but AWS reserves the first four and the last address in each IPv4 subnet. That leaves 251 usable addresses in each lab subnet. See AWS's <a href="https://docs.aws.amazon.com/vpc/latest/userguide/subnet-sizing.html" target="_blank" rel="noopener noreferrer">subnet sizing rules</a> rather than treating the CIDR size as a host count.</p>
+<h3 id="how-to-create-a-vpc-in-aws-step-by-step">Use the current console flow</h3>
 <ol>
-<li>Create or identify a VPC with at least one subnet</li>
-<li>Identify a suitable CIDR range for the client IP addresses that does not overlap with the VPC CIDR</li>
-<li>Review the <a href="https://docs.aws.amazon.com/vpn/latest/clientvpn-admin/cvpn-limits.html" target="_blank">rules and limitations</a> for Client VPN endpoints</li>
-<li><a href="https://docs.aws.amazon.com/vpn/latest/clientvpn-admin/clientvpn-getting-started.html#cvpn-create-endpoint" target="_blank">Create a Client VPN endpoint</a> and download the client configuration</li>
-<li>Connect to the Client VPN endpoint from your local OpenVPN client</li>
+<li>Open the <a href="https://console.aws.amazon.com/vpc/" target="_blank" rel="noopener noreferrer">Amazon VPC console</a> in your chosen Region.</li>
+<li>Choose <strong>Create VPC</strong>. For <strong>Resources to create</strong>, choose <strong>VPC and more</strong>. AWS currently uses this flow to create the VPC, subnets, route tables, and gateways together.</li>
+<li>Keep name-tag auto-generation enabled or enter a lab name. Apply the same identifying tag to the resources when the form allows it.</li>
+<li>For <strong>IPv4 CIDR block</strong>, enter <code>10.20.0.0/16</code>. For <strong>IPv6 CIDR block</strong>, choose no IPv6 CIDR for the base lab. IPv6 is covered separately below.</li>
+<li>Choose <strong>Number of Availability Zones</strong>: <strong>2</strong>. Choose <strong>Number of public subnets</strong>: <strong>2</strong>. Choose <strong>Number of private subnets</strong>: <strong>2</strong>.</li>
+<li>Expand <strong>Customize subnets CIDR blocks</strong> and enter the four <code>/24</code> ranges explicitly: in AZ A, public-A is <code>10.20.1.0/24</code> and private-A is <code>10.20.11.0/24</code>; in AZ B, public-B is <code>10.20.2.0/24</code> and private-B is <code>10.20.12.0/24</code>. Keep each public/private pair in the same AZ.</li>
+<li>Set <strong>NAT gateways</strong> to <strong>None</strong>. Do not choose one for this lab. A NAT gateway is useful for private IPv4 egress, but it is billed while provisioned and is not needed to learn the routing model.</li>
+<li>If the form offers VPC endpoints, leave them disabled for the base lab. A gateway endpoint for S3 or DynamoDB is an optional extension; an interface endpoint has hourly and data-processing charges.</li>
+<li>For <strong>DNS options</strong>, keep both <strong>Enable DNS resolution</strong> and <strong>Enable DNS hostnames</strong> enabled for this lab.</li>
+<li>Review the preview and confirm the explicit mapping: public-A/private-A in AZ A, public-B/private-B in AZ B, with exactly the four <code>/24</code> CIDRs above. Do not accept generated <code>/20</code> defaults if they appear. Choose <strong>Create VPC</strong>.</li>
 </ol>
-<p>Once connected via Client VPN, your local computer will have access to resources in your VPC as if it were an instance within that VPC.</p>
-<h3 id="connect-via-aws-site-to-site-vpn">Connect via AWS Site-to-Site VPN</h3>
-<p>You can also set up a <a href="https://docs.aws.amazon.com/vpn/latest/s2svpn/VPC_VPN.html" target="_blank">Site-to-Site VPN</a> between your on-premises network and your VPC. This allows resources on either side to communicate over an encrypted VPN tunnel.</p>
-<p>To set this up:</p>
-<ol>
-<li>Create a <a href="https://docs.aws.amazon.com/vpn/latest/s2svpn/SetUpVPNConnections.html#vpn-create-customer-gateway" target="_blank">customer gateway</a> on your on-premises network</li>
-<li>Create a <a href="https://docs.aws.amazon.com/vpn/latest/s2svpn/SetUpVPNConnections.html#vpn-create-vgw" target="_blank">virtual private gateway</a> attached to your VPC</li>
-<li>Establish a Site-to-Site VPN connection between the two gateways</li>
-</ol>
-<p>Once the VPN connection is established, hosts on either side of the tunnel can communicate securely.</p>
-<h3 id="launch-an-ec2-instance">Launch an EC2 Instance</h3>
-<p>You can simply <a href="https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/EC2_GetStarted.html#ec2-launch-instance" target="_blank">launch an EC2 instance</a> directly into your VPC subnets to gain access. By default, you can connect to the instance using SSH or RDP if you configure a public IP address. For private subnets, you would need to connect via a bastion host or VPN instead.</p>
-<p>So in summary, Client VPN, Site-to-Site VPN, and direct EC2 instance access are good options for securely accessing resources within an AWS VPC.</p>
-<h2 id="defining-and-setting-up-your-vpc">Defining and Setting Up Your VPC</h2>
-<p>Defining the IP address range for your VPC is an important first step in setting it up. Here is a guide for beginners on how to create a VPC from scratch in AWS using CIDR notation and the VPC Wizard.</p>
-<h3 id="defining-vpc-cidr-blocks">Defining VPC CIDR Blocks</h3>
-<p>When creating a VPC, you need to define a CIDR block, which specifies the allowed IP address range. Some key points:</p>
+<p>The exact console labels can change. If the combined form is unavailable, follow AWS's <a href="https://docs.aws.amazon.com/vpc/latest/userguide/create-vpc.html" target="_blank" rel="noopener noreferrer">create-a-VPC procedure</a> and create the same resources individually.</p>
+<h3 id="using-the-vpc-wizard-for-easy-configuration">Check the result in Resource map</h3>
+<p>Open <strong>VPCs</strong>, select the lab VPC, and choose <strong>Resource map</strong>. Confirm that you can see the VPC, two Availability Zones, four subnets, route tables, and one internet gateway. AWS's <a href="https://docs.aws.amazon.com/vpc/latest/userguide/view-vpc-resource-map.html" target="_blank" rel="noopener noreferrer">VPC resource map</a> shows relationships and can expose a private subnet that accidentally has a public route.</p>
+
+<h2 id="creating-and-managing-subnets-within-your-vpc">Understand the subnet and route table paths</h2>
+<h3 id="understanding-the-parts-of-vpc%3A-subnets">Public and private are route outcomes</h3>
+<p>Open each subnet and note its Availability Zone and IPv4 CIDR. Then open the associated route table. Each table should contain a local route for <code>10.20.0.0/16</code>. The public route tables should also contain <code>0.0.0.0/0</code> targeting the internet gateway. The private route tables should not contain a direct internet gateway route and, because this lab has no NAT gateway, should contain no general internet route.</p>
+<p>One subnet has one route table association at a time. Several subnets can share a route table if they need identical paths. AWS chooses the most specific matching route, and IPv4 and IPv6 destinations are separate.</p>
+<h3 id="creating-subnets%3A-a-practical-guide">Verify each CIDR and association</h3>
+<p>Use this checklist:</p>
 <ul>
-<li>CIDR notation combines an IP address and subnet mask into one routeable address, like <code>10.0.0.0/16</code>.</li>
-<li>The subnet mask (<code>/16</code>) defines the number of available IP addresses. Higher masks mean fewer IPs.</li>
-<li>A <code>/16</code> block provides 65,536 IP addresses. A <code>/24</code> block provides 256 addresses.</li>
-<li>Best practice is to allocate <code>/16</code> or <code>/20</code> blocks for a VPC. This allows room to add subnets.</li>
+<li>Public-A is in one Zone with <code>10.20.1.0/24</code>.</li>
+<li>Public-B is in a different Zone with <code>10.20.2.0/24</code>.</li>
+<li>Private-A is in one Zone with <code>10.20.11.0/24</code>.</li>
+<li>Private-B is in a different Zone with <code>10.20.12.0/24</code>.</li>
+<li>All four subnet ranges are fully inside the VPC range, and the ranges are pairwise non-overlapping.</li>
+<li>Each subnet is associated with the intended public or private route table.</li>
 </ul>
-<p>Carefully consider your IP range, as it can't be easily changed later without recreating your VPC.</p>
-<h3 id="how-to-create-a-vpc-in-aws-step-by-step">How to Create a VPC in AWS Step by Step</h3>
-<p>Follow these steps to create a VPC from scratch:</p>
-<ol>
-<li>Go to the VPC Dashboard in the AWS Management Console.</li>
-<li>Click <strong>Your VPCs</strong> in the left pane and then click <strong>Create VPC</strong>.</li>
-<li>Enter a meaningful name and IPv4 CIDR block. For beginners, use <code>10.0.0.0/16</code>.</li>
-<li>Scroll down and click <strong>Create VPC</strong>. Your new VPC will now appear in the list.</li>
-</ol>
-<p>That covers the basics of creating a VPC. But additional configuration is needed before launching resources.</p>
-<h3 id="using-the-vpc-wizard-for-easy-configuration">Using the VPC Wizard for Easy Configuration</h3>
-<p>AWS provides a VPC Wizard that simplifies initial setup:</p>
+<h3 id="deploying-ec2-instances-in-custom-subnets">Why this lab does not launch an EC2 instance</h3>
+<span id="launch-an-ec2-instance" aria-hidden="true"></span>
+<p>An EC2 instance would add compute, EBS, public IPv4, IAM, security, and cleanup choices without helping you understand the route table inspection. If you extend the lab later, put a temporary instance in the intended subnet, avoid inbound SSH or RDP from the entire internet, and use a private access method such as Systems Manager when its prerequisites are configured. The site's <a href="/blog/aws-ec2-basics-core-concepts-explained/">EC2 fundamentals guide</a> explains those access choices.</p>
+
+<h2 id="configuring-internet-and-nat-gateways">Understand internet and NAT gateways</h2>
+<h3 id="setting-up-an-internet-gateway">The public path</h3>
+<p>The internet gateway is attached to the VPC, but only subnets whose route table points to it have a public route. An IPv4 resource also needs a public IPv4 address; an IPv6 resource needs an IPv6 address and an IPv6 route. Security group and NACL rules still apply. An internet gateway does not turn private subnets public.</p>
+<p>To keep this lab bounded, do not add a public server or an inbound security rule. The route-table configuration is enough to inspect the path.</p>
+<h3 id="establishing-a-nat-gateway-for-private-subnets">What a NAT gateway would change</h3>
+<p>A public NAT gateway lets resources in a private subnet initiate outbound IPv4 connections while preventing unsolicited inbound connections. A traditional zonal NAT gateway lives in a public subnet, uses an Elastic IP, and needs a public route to an internet gateway. The private subnet's route table then sends <code>0.0.0.0/0</code> to the NAT gateway.</p>
+<p>AWS also offers regional NAT gateways that can expand across Availability Zones and do not require a public subnet. Read the current <a href="https://docs.aws.amazon.com/vpc/latest/userguide/nat-gateways-regional.html" target="_blank" rel="noopener noreferrer">regional NAT gateway behavior</a> before choosing between modes. Both NAT modes have service and data-processing charges; do not add one to a short-lived lab unless you specifically need to test egress.</p>
+<h3 id="ipv4-and-ipv6-in-the-lab">IPv4 and IPv6 are separate paths</h3>
+<span id="using-ipv6-in-a-vpc" aria-hidden="true"></span>
+<p>This base lab is IPv4-only. If you enable IPv6, associate an IPv6 CIDR with the VPC and each intended subnet, then add <code>::/0</code> explicitly. A <code>0.0.0.0/0</code> route does not cover IPv6. For outbound-only native IPv6, route <code>::/0</code> to an egress-only internet gateway; that gateway is for IPv6 only and blocks internet-initiated connections. AWS documents the behavior in <a href="https://docs.aws.amazon.com/vpc/latest/userguide/egress-only-internet-gateway.html" target="_blank" rel="noopener noreferrer">egress-only internet gateway guidance</a>.</p>
+
+<h2 id="implementing-security-measures">Review security controls without opening management ports</h2>
+<h3 id="configure-security-groups-and-nacls">Security groups and NACLs do different jobs</h3>
+<p>Security groups are stateful allow rules attached to resources. If an allowed connection produces return traffic, the return traffic is allowed by the security group even without a matching reverse rule. Security groups cannot express explicit deny rules. AWS's <a href="https://docs.aws.amazon.com/vpc/latest/userguide/vpc-security-groups.html" target="_blank" rel="noopener noreferrer">security group guidance</a> describes this behavior.</p>
+<p>Network ACLs are stateless rules applied at the subnet boundary. They support allow and deny rules and evaluate entries in ascending rule-number order. Both directions need rules, including return traffic and any required ephemeral ports. The default network ACL allows traffic, while a custom NACL can easily block a valid path.</p>
+<p>Use security groups as the primary resource control and NACLs as deliberate subnet-level guardrails. See AWS's <a href="https://docs.aws.amazon.com/vpc/latest/userguide/nacl-examples.html" target="_blank" rel="noopener noreferrer">security group and NACL comparison</a>.</p>
+<h3 id="best-practices-for-vpc-security">Keep the base lab low-risk</h3>
 <ul>
-<li>Select <strong>VPC with a Single Public Subnet</strong> to deploy an end-to-end VPC with subnet, route table, internet gateway, security groups, etc.</li>
-<li>Specify the IPv4 CIDR, subnet AZ, and subnet CIDR.</li>
-<li>Review and click <strong>Create VPC</strong>. Resources like subnets and route tables will automatically be created and configured.</li>
+<li>Do not add inbound SSH or RDP from <code>0.0.0.0/0</code> or <code>::/0</code>.</li>
+<li>If you add an application rule, scope it to a known source security group or narrow address range and remove it after testing.</li>
+<li>Do not treat a public subnet as a firewall. Apply least-privilege security group rules to the actual resources.</li>
+<li>Use VPC Flow Logs only when you need traffic evidence, and choose a protected destination with an expected logging cost.</li>
 </ul>
-<p>The Wizard accelerates basic one-click VPC creation, while giving less flexibility than manual setup. It's great for VPC beginners.</p>
-<h2 id="creating-and-managing-subnets-within-your-vpc">Creating and Managing Subnets within Your VPC</h2>
-<h3 id="understanding-the-parts-of-vpc%3A-subnets">Understanding the Parts of VPC: Subnets</h3>
-<p>A VPC (Virtual Private Cloud) on AWS consists of several key components that work together to provide a private network environment. One critical piece is subnets, which segment the VPC network into smaller sections that can be associated with availability zones.</p>
-<p>Some key things to know about subnets in a VPC:</p>
-<ul>
-<li>Subnets allow you to partition your VPC network into separate sections, which provides more control and segmentation.</li>
-<li>Each subnet must be mapped to an availability zone, which provides fault tolerance and high availability.</li>
-<li>Subnets can be either public or private. Public subnets have direct access to the internet while private subnets do not.</li>
-</ul>
-<p>When creating a VPC, it's important to plan out your subnets and IP address ranges carefully based on your application architecture and security requirements.</p>
-<h3 id="creating-subnets%3A-a-practical-guide">Creating Subnets: A Practical Guide</h3>
-<p>Here is a step-by-step guide to creating subnets within your AWS VPC:</p>
-<ol>
-<li>Log into the AWS Management Console and navigate to the VPC Dashboard.</li>
-<li>In the left sidebar, click <strong>Subnets</strong> under the VPC section.</li>
-<li>Click the orange <strong>Create subnet</strong> button.</li>
-<li>Enter a descriptive name tag for your subnet.</li>
-<li>Select the target VPC you want to add this subnet to.</li>
-<li>Select an availability zone to map the subnet to.</li>
-<li>Define the IPv4 CIDR block for the subnet, such as <code>10.0.1.0/24</code>.</li>
-<li>Specify if this will be a public or private subnet.</li>
-<li>Click <strong>Create subnet</strong> to finish.</li>
-</ol>
-<p>Repeat these steps to create multiple subnets segmented however makes sense for your application infrastructure. For example, you may want both private and public subnets spread across different availability zones.</p>
-<p>When defining CIDR blocks, make sure there is no overlapping IP address range with your VPC or other subnets. Using incremental blocks like 10.0.1.0/24, 10.0.2.0/24 makes this easy.</p>
-<h3 id="deploying-ec2-instances-in-custom-subnets">Deploying EC2 Instances in Custom Subnets</h3>
-<p>Once you have subnets created within your VPC, you can launch EC2 instances directly into those subnets:</p>
-<ol>
-<li>Go to the EC2 dashboard and click <strong>Launch Instance</strong>.</li>
-<li>In <strong>Step 1</strong>, select the target AMI and instance type.</li>
-<li>In <strong>Step 2</strong>, select the VPC you created.</li>
-<li>In <strong>Step 3</strong>, select the specific subnet you want to deploy the instance into.</li>
-<li>Complete any other configuration in the steps that follow.</li>
-<li>Click <strong>Launch instance</strong>.</li>
-</ol>
-<p>Your EC2 instance will now deploy directly into the selected subnet and VPC. By launching instances across different custom subnets, you can achieve segmentation based on public/private access, availability zone resilience, and more.</p>
-<h2 id="configuring-internet-and-nat-gateways">Configuring Internet and NAT Gateways</h2>
-<p>Configuring Internet and NAT Gateways is an important step in setting up communication between your VPC resources and the internet. This section will cover:</p>
-<h3 id="setting-up-an-internet-gateway">Setting Up an Internet Gateway</h3>
-<p>An Internet Gateway allows resources in your VPC to connect to the internet. Here are the steps to set one up:</p>
-<ol>
-<li>Log into the AWS Management Console and navigate to the VPC Dashboard</li>
-<li>Click on <strong>Internet Gateways</strong> in the left sidebar and then click <strong>Create internet gateway</strong></li>
-<li>Give your internet gateway a name and click <strong>Create</strong></li>
-<li>Once created, select the internet gateway and click <strong>Attach to VPC</strong></li>
-<li>Select your VPC from the list and click <strong>Attach</strong></li>
-</ol>
-<p>The internet gateway is now attached to your VPC. Any public subnets you create in this VPC will now have internet access.</p>
-<h3 id="establishing-a-nat-gateway-for-private-subnets">Establishing a NAT Gateway for Private Subnets</h3>
-<p>A NAT Gateway allows resources in private subnets to access the internet while keeping the instances private. To create one:</p>
-<ol>
-<li>Navigate to the VPC Dashboard and click <strong>NAT Gateways</strong> in the left sidebar</li>
-<li>Click <strong>Create NAT Gateway</strong> and select the public subnet you want to place it in</li>
-<li>Click <strong>Allocate Elastic IP</strong> to assign a public IP address to the gateway</li>
-<li>Once created, edit your private subnet's route table</li>
-<li>Add a route with destination <code>0.0.0.0/0</code> and target as your NAT Gateway</li>
-</ol>
-<p>Now instances launched in your private subnet can access the internet through the NAT Gateway while remaining private.</p>
-<p>Configuring these gateways is essential for controlling internet access within your VPC. The internet gateway enables public resources to connect out, while the NAT Gateway allows private resources to access the internet in a secure way.</p>
-<h2 id="implementing-security-measures">Implementing Security Measures</h2>
-<p>Security is a critical component when setting up a VPC. Properly configuring security groups and network ACLs allows you to control access to your VPC resources. Here are some best practices for securing your VPC:</p>
-<h3 id="configure-security-groups-and-nacls">Configure Security Groups and NACLs</h3>
-<p>Security groups and network ACLs serve complementary purposes in VPC security:</p>
-<ul>
-<li><strong>Security Groups</strong> - Act as a firewall at the instance level, controlling inbound and outbound traffic for an instance</li>
-<li><strong>Network ACLs</strong> - Act as a firewall at the subnet level, controlling inbound and outbound traffic for a whole subnet</li>
-</ul>
-<p>When creating security groups:</p>
-<ul>
-<li>Start with restrictive settings and open ports as needed</li>
-<li>Use security groups to allow necessary traffic only</li>
-<li>Leverage security group rules instead of allowing all traffic</li>
-</ul>
-<p>When creating network ACLs:</p>
-<ul>
-<li>Set rules to deny all traffic by default</li>
-<li>Add rules to allow necessary subnets and ports</li>
-<li>Use NACLs as a second layer of defense behind security groups</li>
-</ul>
-<p>By leveraging both tools, you can implement fine-grained access controls.</p>
-<h3 id="best-practices-for-vpc-security">Best Practices for VPC Security</h3>
-<p>Here are some additional best practices:</p>
-<ul>
-<li>Use VPC flow logs to monitor network traffic</li>
-<li>Enable VPC endpoint services to connect directly to AWS services without an internet gateway</li>
-<li>Use multiple availability zones to improve resiliency</li>
-<li>Implement identity and access management (IAM) to manage permissions</li>
-<li>Enable encryption of data at rest and in transit</li>
-<li>Use immutable infrastructure patterns to prevent accidental misconfiguration</li>
-<li>Automate security checks and monitoring using tools like AWS Config</li>
-</ul>
-<p>Following security best practices allows you to create an isolated, trusted network environment for your applications and data.</p>
-<h2 id="expanding-connectivity-with-vpc-peering-and-vpns">Expanding Connectivity with VPC Peering and VPNs</h2>
-<p>Expanding the connectivity of your VPC enables more advanced network architectures on AWS. There are several options to connect your VPC to other VPCs and on-premises infrastructure.</p>
-<h3 id="configure-vpc-peering-connections">Configure VPC Peering Connections</h3>
-<p>VPC peering allows private connectivity between two VPCs. VPC peering connections are virtual network connections and do not utilize physical network infrastructure.</p>
-<p>To configure a VPC peering connection:</p>
-<ol>
-<li>Navigate to the VPC console and select the VPC you wish to peer with another VPC</li>
-<li>Click <strong>Actions &gt; Create Peering Connection</strong></li>
-<li>Select the second VPC to peer with</li>
-<li>Accept the peering request in the second VPC</li>
-</ol>
-<p>Once established, instances in both VPCs can communicate over private IP addresses as if they are within the same network. VPC peering does not support transitive peering between VPCs. Each VPC peering connection is between two VPCs only.</p>
-<h3 id="setting-up-aws-client-vpn-and-site-to-site-vpn">Setting Up AWS Client VPN and Site-to-Site VPN</h3>
-<p>There are two options for setting up a VPN for secure access to resources within a VPC:</p>
-<ul>
-<li>
-<p><strong>AWS Client VPN</strong> - Provides secure remote access to VPC resources for external clients. Client VPN allows clients to establish an encrypted TLS VPN session with the Client VPN endpoint.</p>
-</li>
-<li>
-<p><strong>AWS Site-to-Site VPN</strong> - Allows an on-premises network to access resources in a VPC using an IPsec VPN connection. Traffic between the on-premises network and the VPC is encrypted.</p>
-</li>
-</ul>
-<p>To configure Client VPN:</p>
-<ol>
-<li>Create a Client VPN endpoint in the target VPC</li>
-<li>Download the Client VPN endpoint configuration file</li>
-<li>Install the file on the client to establish the VPN connection</li>
-</ol>
-<p>To configure a Site-to-Site VPN:</p>
-<ol>
-<li>Create a virtual private gateway and attach it to the target VPC</li>
-<li>Create a customer gateway resource in the on-premises network</li>
-<li>Establish the Site-to-Site VPN connection between the VPC and the customer gateway</li>
-</ol>
-<h3 id="leveraging-aws-vpn-cloudhub-and-direct-connect">Leveraging AWS VPN CloudHub and Direct Connect</h3>
-<p>For more advanced connectivity, AWS offers two additional services:</p>
-<ul>
-<li>
-<p><strong>AWS VPN CloudHub</strong> - Acts as a central hub to interconnect multiple Site-to-Site VPN connections. Useful for establishing connectivity between multiple branch offices and VPCs.</p>
-</li>
-<li>
-<p><strong>AWS Direct Connect</strong> - Provides dedicated private connectivity between on-premises infrastructure and VPCs on AWS. Direct Connect offers high bandwidth options up to 100 Gbps.</p>
-</li>
-</ul>
-<p>To utilize VPN CloudHub, create multiple Site-to-Site VPN connections terminating on the CloudHub. The CloudHub will route traffic between all connected VPNs.</p>
-<p>For Direct Connect, establish a dedicated network circuit between the on-premises location and AWS Direct Connect locations. Then create a Direct Connect gateway to allow VPCs to access the dedicated connection.</p>
-<h2 id="advanced-vpc-features-and-services">Advanced VPC Features and Services</h2>
-<h3 id="creating-vpc-endpoints-for-private-service-access">Creating VPC Endpoints for Private Service Access</h3>
-<p>VPC Endpoints allow you to privately connect your VPC to supported AWS services and VPC endpoint services powered by PrivateLink without requiring an internet gateway, NAT device, VPN connection, or AWS Direct Connect connection. VPC endpoints are horizontally scaled, redundant, and highly available VPC components that allow communication between instances in your VPC and services without imposing availability risks or bandwidth constraints on your network traffic.</p>
-<p>To create a VPC endpoint:</p>
-<ol>
-<li>Open the Amazon VPC console</li>
-<li>In the left navigation pane, choose Endpoints and select Create Endpoint</li>
-<li>Select the AWS service category and service name</li>
-<li>Select the VPC and subnets to associate with the endpoint</li>
-<li>Configure the endpoint policy and route tables as needed</li>
-<li>Review and confirm the endpoint configuration</li>
-</ol>
-<p>Once created, resources in your VPC can access the service via the endpoint DNS name without leaving the AWS network. VPC endpoints enable building application architectures that maximize security and resiliency.</p>
-<h3 id="using-ipv6-in-a-vpc">Using IPv6 in a VPC</h3>
-<p>IPv6 can be enabled for VPCs to provide vastly expanded addressing capabilities over IPv4. To use IPv6:</p>
-<ul>
-<li>When creating a VPC and subnets, select the IPv6 CIDR blocks to associate in addition to IPv4 CIDR blocks.</li>
-<li>Launch EC2 instances with IPv6 addresses in your VPC subnets.</li>
-<li>Update route tables, network ACLs, and security groups to allow IPv6 traffic as needed.</li>
-<li>For internet access, an egress-only internet gateway must be created and a route for ::/0 (IPv6 equivalent of 0.0.0.0/0 in IPv4) targeting the egress-only internet gateway must be added.</li>
-</ul>
-<p>Enabling IPv6 does not impact existing IPv4 connectivity and communication from the VPC. Resources can communicate over IPv4, IPv6, or both, with no additional charges for IPv6 usage.</p>
-<h3 id="monitoring-traffic-with-vpc-flow-logs">Monitoring Traffic with VPC Flow Logs</h3>
-<p>VPC Flow Logs enable capturing information about IP traffic going into and out of network interfaces in your VPC. Flow log data can be published to Amazon CloudWatch Logs or Amazon S3.</p>
-<p>To create flow logs:</p>
-<ol>
-<li>Open the Amazon VPC console</li>
-<li>Navigate to Flow Logs in the left pane and click Create Flow Log</li>
-<li>Specify the VPC, subnet, or network interface to monitor</li>
-<li>Select the destination (CloudWatch Logs or S3)</li>
-<li>Set filters to customize the traffic captured</li>
-<li>Click Create</li>
-</ol>
-<p>Analysis of flow log data provides visibility into network traffic for security, audit, and troubleshooting purposes. Flow logs can help identify anomalous traffic, malicious activity, or network misconfigurations.</p>
-<h2 id="conclusion%3A-recap-and-best-practices">Conclusion: Recap and Best Practices</h2>
-<p>Setting up a VPC can seem daunting at first, but this tutorial has walked through the key steps for beginners. Here's a quick recap of what we've covered:</p>
-<ul>
-<li>Defined VPC basics like CIDR blocks, subnets, route tables, and more</li>
-<li>Created a custom VPC in the AWS console using the VPC Wizard</li>
-<li>Added public and private subnets across multiple Availability Zones</li>
-<li>Configured route tables and security groups appropriately</li>
-<li>Launched EC2 instances and tested connectivity</li>
-<li>Set up VPC endpoints, NAT gateways, VPN, and Direct Connect</li>
-</ul>
-<p>Following best practices will ensure your VPC is secure, resilient, and efficient:</p>
-<ul>
-<li>Use VPC flow logs and CloudTrail to monitor activity</li>
-<li>Apply the principle of least privilege with security groups</li>
-<li>Automate VPC deployments instead of manual console work</li>
-<li>Peer VPCs instead of using complicated connectivity</li>
-<li>Right size CIDR blocks to allow for future growth</li>
-</ul>
-<p>With the basics covered here, you're now ready to build real applications inside your own Amazon Virtual Private Cloud!</p>
-<p>
-<h2>Related posts</h2>
-<ul>
-<li><a href="/blog/aws-redshift-tutorial-for-beginners-first-steps/">AWS Redshift Tutorial for Beginners: First Steps</a></li><li><a href="/blog/aws-vpc-guide-configuration-essentials/">AWS VPC Guide: Configuration Essentials</a></li><li><a href="/blog/aws-tutorial-for-beginners-step-by-step-core-concepts/">AWS Tutorial for Beginners Step by Step: Core Concepts</a></li><li><a href="/blog/aws-ec2-basics-core-concepts-explained/">AWS EC2 Basics: Core Concepts Explained</a></li>
-</ul>
+
+<h2 id="advanced-vpc-features-and-services">Optional private access with a VPC endpoint</h2>
+<h3 id="creating-vpc-endpoints-for-private-service-access">Add a gateway endpoint only when you need it</h3>
+<p>A gateway endpoint can provide private access to S3 or DynamoDB from selected route tables. It adds service-prefix-list routes and does not require an internet gateway or NAT gateway. AWS states that gateway endpoints have no additional charge; the service itself and related data transfer still follow its pricing.</p>
+<p>If you add one, choose <strong>Endpoints</strong> in the VPC console, choose a gateway endpoint for S3 or DynamoDB, select this VPC and the private route tables, apply a least-privilege endpoint policy, and confirm the new prefix-list route. Delete it before deleting those route tables during cleanup. Interface endpoints are a different type: they create endpoint network interfaces, need DNS and security group configuration, and are billed per Availability Zone and per GB processed. Read the current <a href="https://docs.aws.amazon.com/vpc/latest/privatelink/concepts.html" target="_blank" rel="noopener noreferrer">endpoint types</a> first.
 </p>
+<p>For endpoint failures, continue with <a href="/blog/troubleshoot-vpc-endpoint-connectivity/">VPC endpoint connectivity troubleshooting</a>, which covers DNS, routing, security groups, NACLs, and endpoint state.</p>
+
+<h2 id="how-do-i-get-into-aws-vpc%3F">Verify the lab with read-only checks</h2>
+<span id="monitoring-traffic-with-vpc-flow-logs" aria-hidden="true"></span>
+<h3 id="check-the-resource-map-and-routes">Inspect the console</h3>
+<ol>
+<li>In Resource map, confirm each subnet's Zone and route-table relationship.</li>
+<li>In each public route table, confirm the local route and the internet gateway default route.</li>
+<li>In each private route table, confirm the local route and the absence of a direct internet gateway or NAT route.</li>
+<li>Check that the VPC DNS support and DNS hostnames settings match any later private hosted zone or interface endpoint requirement. AWS documents the settings in <a href="https://docs.aws.amazon.com/vpc/latest/userguide/vpc-dns.html" target="_blank" rel="noopener noreferrer">VPC DNS attributes</a>.</li>
+</ol>
+<h3 id="use-the-aws-cli-to-confirm-the-configuration">Use the AWS CLI when you want an audit trail</h3>
+<p>These commands read configuration; replace the placeholders with IDs from the console and keep the Region explicit:</p>
+<pre><code>aws ec2 describe-vpcs --vpc-ids vpc-xxxxxxxx --region us-east-1
+aws ec2 describe-subnets --filters Name=vpc-id,Values=vpc-xxxxxxxx --region us-east-1
+aws ec2 describe-route-tables --filters Name=vpc-id,Values=vpc-xxxxxxxx --region us-east-1
+aws ec2 describe-internet-gateways --filters Name=attachment.vpc-id,Values=vpc-xxxxxxxx --region us-east-1</code></pre>
+<p>These checks confirm objects and associations, not application connectivity. A real connectivity test requires a resource, a protocol, and a permitted path.</p>
+
+<h2 id="expanding-connectivity-with-vpc-peering-and-vpns">What to add only after the base lab</h2>
+<span id="configure-vpc-peering-connections" aria-hidden="true"></span><span id="setting-up-aws-client-vpn-and-site-to-site-vpn" aria-hidden="true"></span><span id="use-aws-client-vpn" aria-hidden="true"></span><span id="connect-via-aws-site-to-site-vpn" aria-hidden="true"></span><span id="leveraging-aws-vpn-cloudhub-and-direct-connect" aria-hidden="true"></span>
+<p>VPC peering is a direct, non-transitive connection between two non-overlapping VPCs; both sides need routes. Site-to-Site VPN connects a customer network through encrypted tunnels. Transit Gateway centralizes many VPC and hybrid attachments with separate route tables. These services extend the design and can introduce additional charges and cleanup dependencies. They are outside this bounded lab.</p>
+<p>When you need those patterns, start with the <a href="/blog/aws-vpc-guide-configuration-essentials/">VPC configuration reference</a> and record the CIDRs, ownership, routes, and deletion order before creating a connection.</p>
+
+<h2 id="costs-and-cleanup">Understand cost and clean up safely</h2>
+<h3 id="what-can-cost-money">What can create a charge</h3>
+<p>The VPC and its basic route tables do not have a separate hourly charge. Charges can come from public IPv4 addresses, NAT gateways, interface endpoints, data transfer, Flow Logs destinations and queries, EC2, EBS, VPN, Transit Gateway, or other resources you add. NAT gateways charge for availability and data processing; interface endpoints charge per Availability Zone and data processed. Prices and Free Tier offers change, so use the current <a href="https://aws.amazon.com/vpc/pricing/" target="_blank" rel="noopener noreferrer">VPC pricing page</a> and account billing view rather than copying a fixed dollar amount.</p>
+<h3 id="dependency-aware-cleanup-order">Delete resources in dependency order</h3>
+<p>For the base lab, use the VPC console to select the lab VPC and choose <strong>Delete VPC</strong> after confirming that it contains no resources you want to keep. If you added optional resources or the console reports dependencies, follow this order:</p>
+<ol>
+<li>Terminate any temporary EC2 instances and remove load balancers or other resources you added. Wait until their network interfaces disappear.</li>
+<li>Delete interface or gateway VPC endpoints. Wait for interface endpoint network interfaces to be removed.</li>
+<li>Delete NAT gateways. Wait for the status to become deleted, then release their Elastic IP addresses if they are no longer needed.</li>
+<li>Detach and delete the internet gateway. Delete an egress-only internet gateway if you created one.</li>
+<li>Remove custom route-table associations and delete custom route tables. Keep the main route table until the VPC can be deleted.</li>
+<li>Delete the four subnets, then delete custom security groups and network ACLs that are no longer attached.</li>
+<li>Delete the VPC and verify that the lab's tagged resources are gone. Check Billing or Cost Explorer later for delayed usage records.</li>
+</ol>
+<p>Do not release an Elastic IP that belongs to another workload, and do not delete a shared VPC or route table based only on a similar name. Confirm the VPC ID and tags before every destructive step.</p>
+
+<h2 id="troubleshooting-common-vpc-lab-issues">Troubleshoot a configuration that does not look right</h2>
+<ul>
+<li><strong>Private subnet has no internet:</strong> this is expected in the base lab. Add a NAT route only when private IPv4 egress is an intentional requirement and you accept its cost.</li>
+<li><strong>Public subnet is not reachable:</strong> check the internet gateway attachment, public route table association, resource public address, security group, and NACL. A public route alone is insufficient.</li>
+<li><strong>Subnets cannot communicate:</strong> check the local route and both resources' security groups. The default NACL permits traffic; a custom NACL may block the return path.</li>
+<li><strong>IPv6 does not work:</strong> verify the VPC and subnet IPv6 CIDRs, an explicit <code>::/0</code> route to the correct gateway, the resource IPv6 address, and IPv6 security rules.</li>
+<li><strong>Endpoint access fails:</strong> check endpoint type, route-table association for gateway endpoints, endpoint ENI security groups and DNS for interface endpoints, and endpoint policy. Use the site's <a href="/blog/troubleshoot-vpc-endpoint-connectivity/">endpoint troubleshooting guide</a>.</li>
+</ul>
+<p>When a supported resource-to-resource path still fails, use VPC Reachability Analyzer to identify a route or rule that blocks the path. It evaluates configuration; it does not replace a live application test.</p>
+
+<h2 id="conclusion%3A-recap-and-best-practices">What you should understand after the lab</h2>
+<ul>
+<li>A VPC CIDR contains non-overlapping subnet CIDRs, and each subnet belongs to one Availability Zone.</li>
+<li>A public subnet has an internet gateway route; a private subnet does not have that direct route.</li>
+<li>IPv4 and IPv6 need separate routes and security rules.</li>
+<li>Security groups are stateful allow-lists; NACLs are stateless ordered subnet rules.</li>
+<li>NAT is optional, has cost and routing consequences, and is not required for a private subnet to be useful.</li>
+<li>Resource inspection and safe deletion are part of VPC configuration, not afterthoughts.</li>
+</ul>
+<p>Once this small lab is deleted, use the configuration guide for production address planning, multi-AZ routing, endpoints, hybrid connectivity, and automation.</p>

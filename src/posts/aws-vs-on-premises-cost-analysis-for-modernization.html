@@ -2,300 +2,143 @@
 layout: post.njk
 templateEngineOverride: html
 tags: posts
-title: "AWS vs On-Premises: Cost Analysis for Modernization"
-description: "Explore the significant cost benefits of migrating to AWS compared to on-premises solutions, highlighting savings and operational efficiencies."
+title: "AWS vs. On-Premises Costs: A Practical TCO Model for Modernization"
+description: "Compare AWS and on-premises TCO with matched service levels, utilization, commitments, licensing, migration, and break-even analysis."
 date: "2025-02-13"
 datePublished: "2025-02-13T01:10:31.251000+00:00"
 heroImage: "/assets/media/e7b46908e5083378c272.jpg"
 permalink: "/blog/aws-vs-on-premises-cost-analysis-for-modernization/"
 sourceUrl: "https://awsforengineers.com/blog/aws-vs-on-premises-cost-analysis-for-modernization/"
-dateModified: "2026-10-03"
-updateNote: "Added author attribution and profile information; corrected the article heading hierarchy and added article navigation. Replaced unrelated FAQ cost citations with AWS cost-estimation tools and removed the unsupported fixed savings and premium claims from those answers."
+dateModified: "2026-10-04"
+updateNote: "Rebuilt the comparison around matched service levels, avoidable and sunk costs, utilization and commitments, network and operations charges, migration and dual-run costs, and an illustrative break-even model; removed unsupported savings claims and stale citations."
 ---
-<p><strong><a href="https://aws.amazon.com/" rel="nofollow noopener noreferrer" target="_blank">AWS</a> saves 51% on operational costs</strong> compared to on-premises setups, according to <a href="https://www.idc.com/" rel="nofollow noopener noreferrer" target="_blank">IDC</a> research. The choice between AWS and on-premises impacts costs across compute, storage, databases, and security. Here's a quick breakdown:</p>
-<ul>
-<li><strong>AWS</strong>: Pay-as-you-go, scalable, and managed services reduce upfront costs and ongoing maintenance.</li>
-<li><strong>On-Premises</strong>: Requires large upfront investments, dedicated IT staff, and regular hardware upgrades.</li>
-</ul>
-<h2 id="key-cost-differences">Key Cost Differences</h2>
-<ul>
-<li><strong>CapEx vs OpEx</strong>: On-premises demands high upfront costs (CapEx), while AWS uses a pay-as-you-go model (OpEx).</li>
-<li><strong>Efficiency</strong>: AWS eliminates overprovisioning and idle hardware costs.</li>
-<li><strong>Maintenance</strong>: AWS handles updates and scaling; on-premises requires IT staff and frequent hardware refreshes.</li>
-</ul>
-<h2 id="quick-comparison">Quick Comparison</h2>
-<figure><table>
-<thead>
-<tr>
-<th>Feature</th>
-<th>AWS</th>
-<th>On-Premises</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><strong>Compute</strong></td>
-<td>Pay-as-you-go EC2 instances</td>
-<td>Physical servers, upfront cost</td>
-</tr>
-<tr>
-<td><strong>Storage</strong></td>
-<td>Scalable (S3, EBS)</td>
-<td>Fixed hardware investments</td>
-</tr>
-<tr>
-<td><strong>Database</strong></td>
-<td>Managed services (RDS)</td>
-<td>Licensed software, admin costs</td>
-</tr>
-<tr>
-<td><strong>Security</strong></td>
-<td>Built-in features</td>
-<td>Separate hardware/software</td>
-</tr>
-<tr>
-<td><strong>Scalability</strong></td>
-<td>Dynamic and instant</td>
-<td>Requires overprovisioning</td>
-</tr>
-<tr>
-<td><strong>Energy Costs</strong></td>
-<td>Included in service fees</td>
-<td>High direct energy expenses</td>
-</tr>
-</tbody>
-</table></figure>
-<h2 id="conclusion">Conclusion</h2>
-<p>AWS offers <strong>52% lower total costs over 3 years</strong>, driven by reduced staffing, maintenance, and energy expenses. Use AWS tools like Cost Explorer and Compute Optimizer to manage costs post-migration.</p>
-<hr/>
-<p>Want to save costs? Moving to AWS can cut TCO in half while simplifying IT operations.</p>
-<h2 id="cost-elements-aws-vs-on-premises">Cost Elements: <a href="https://aws.amazon.com/" rel="nofollow noopener noreferrer" target="_blank">AWS</a> vs On-Premises</h2>
-<p><figure><img alt="AWS" loading="lazy" src="/assets/media/74673349349bceae770b.jpg"/></figure></p>
-<h3 id="capex-vs-opex-models">CapEx vs OpEx Models</h3>
-<p>When comparing financial models, AWS offers three major benefits over traditional on-premises setups:</p>
-<ul>
-<li><strong>Lower startup costs</strong>: No need for large upfront investments in hardware or infrastructure.</li>
-<li><strong>Predictable monthly expenses</strong>: Avoid the financial strain of significant initial cash outlays.</li>
-<li><strong>Tax advantages</strong>: Operational expenses are fully deductible, unlike capital expenditures that depreciate over time.</li>
-</ul>
-<h3 id="staff-and-upkeep-costs">Staff and Upkeep Costs</h3>
-<p>Staffing and maintenance expenses differ greatly between the two options. On-premises setups demand dedicated teams for tasks like server upkeep, network management, and security. Companies must also invest in training to ensure their staff stays updated with the latest technologies. AWS simplifies this by offering managed services, reducing the need for such specialized teams.</p>
-<p>For instance, <a href="https://www.dowjones.com/" rel="nofollow noopener noreferrer" target="_blank">Dow Jones</a> saved an estimated <strong>$100 million in global infrastructure costs</strong> after moving its data centers to AWS <a href="https://aws.amazon.com/blogs/aws-cloud-financial-management/five-things-you-should-do-to-create-an-accurate-on-premises-vs-cloud-comparison-model/" rel="nofollow noopener noreferrer" target="_blank"><sup>[3]</sup></a>. These savings primarily came from reduced staffing needs and eliminating facility maintenance.</p>
-<h3 id="hardware-usage-and-efficiency">Hardware Usage and Efficiency</h3>
-<p>On-premises environments often suffer from inefficiencies, with hardware utilization rates typically below 20% - leading to wasted resources <a href="https://trackit.io/on-premise-vs-aws-cloud-7-key-areas-of-comparison/" rel="nofollow noopener noreferrer" target="_blank"><sup>[1]</sup></a>.</p>
-<p>AWS addresses these inefficiencies through:</p>
-<figure><table>
-<thead>
-<tr>
-<th>Aspect</th>
-<th>On-Premises Impact</th>
-<th>AWS Solution</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><strong>Hardware Updates</strong></td>
-<td>Requires replacement every 3-5 years</td>
-<td>Continuous updates at no additional cost</td>
-</tr>
-<tr>
-<td><strong>Capacity Planning</strong></td>
-<td>Over-provisioning is necessary</td>
-<td>Pay only for what you use</td>
-</tr>
-<tr>
-<td><strong>Peak Load Handling</strong></td>
-<td>Limited by fixed capacity</td>
-<td>Scalable resources that adjust dynamically</td>
-</tr>
-</tbody>
-</table></figure>
-<p>Additionally, AWS offers cost-saving options like Reserved Instances (up to 72% savings) for predictable workloads and Spot Instances (up to 90% discounts) for flexible needs <a href="https://aws.amazon.com/blogs/aws-cloud-financial-management/five-things-you-should-do-to-create-an-accurate-on-premises-vs-cloud-comparison-model/" rel="nofollow noopener noreferrer" target="_blank"><sup>[3]</sup></a>.</p>
-<h2 id="total-cost-analysis">Total Cost Analysis</h2>
-<p>A 3-year cost breakdown for legacy modernization highlights that AWS costs are <strong>52% lower</strong> compared to on-premises setups:</p>
-<figure><table>
-<thead>
-<tr>
-<th>Component</th>
-<th>AWS</th>
-<th>On-Premises</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Compute</td>
-<td>$450,000</td>
-<td>$750,000</td>
-</tr>
-<tr>
-<td>Storage</td>
-<td>$180,000</td>
-<td>$400,000</td>
-</tr>
-<tr>
-<td>Networking</td>
-<td>$120,000</td>
-<td>$300,000</td>
-</tr>
-<tr>
-<td>IT Staff</td>
-<td>$300,000</td>
-<td>$600,000</td>
-</tr>
-<tr>
-<td>Maintenance</td>
-<td>$50,000</td>
-<td>$200,000</td>
-</tr>
-<tr>
-<td>Power &amp; Cooling</td>
-<td>N/A</td>
-<td>$180,000</td>
-</tr>
-<tr>
-<td>Software Licensing</td>
-<td>$200,000</td>
-<td>$350,000</td>
-</tr>
-<tr>
-<td>Security &amp; Compliance</td>
-<td>$100,000</td>
-<td>$150,000</td>
-</tr>
-<tr>
-<td><strong>Total</strong></td>
-<td><strong>$1,400,000</strong></td>
-<td><strong>$2,930,000</strong></td>
-</tr>
-</tbody>
-</table></figure>
-<p>These cost differences stem from AWS' operational efficiencies, particularly in hardware usage and reduced staffing needs. According to ESG, organizations using AWS can lower storage costs by <strong>66%</strong> with <a href="https://aws.amazon.com/s3/" rel="nofollow noopener noreferrer" target="_blank">Amazon S3</a> and reduce compute costs by <strong>63%</strong> with <a href="https://aws.amazon.com/ec2/graviton/" rel="nofollow noopener noreferrer" target="_blank">AWS Graviton</a> processors <a href="https://aws.amazon.com/blogs/aws-insights/moving-from-on-premises-to-the-cloud-with-aws-delivers-significant-cost-savings-report-finds/" rel="nofollow noopener noreferrer" target="_blank"><sup>[4]</sup></a>.</p>
-<h3 id="additional-cost-factors">Additional Cost Factors</h3>
-<p>Beyond the direct cost components, there are three key areas that impact overall expenses:</p>
-<p><strong>Data Transfer Costs</strong><br/>
-AWS charges for data leaving its platform (data egress). To avoid surprises, it’s crucial to plan data transfer strategies carefully.</p>
-<p><strong>Hidden On-Premises Expenses</strong><br/>
-Traditional infrastructure comes with less obvious costs, such as:</p>
-<ul>
-<li>High electricity rates in certain regions</li>
-<li>Extra disaster recovery systems</li>
-<li>Ongoing facility upkeep</li>
-</ul>
-<p><strong>Cost Optimization Opportunities</strong><br/>
-AWS offers built-in tools to help manage and reduce expenses, including:</p>
-<ul>
-<li>Automated scaling to align resource usage with actual demand.</li>
-</ul>
-<h2 id="when-to-modernize-cost-factors">When to Modernize: Cost Factors</h2>
-<p>Modernization costs aren't just about upfront expenses. Timing is heavily influenced by two key factors:</p>
-<h3 id="system-debt-and-growth-needs">System Debt and Growth Needs</h3>
-<p>Technical debt significantly raises the cost of modernization. Did you know that <strong>60-80% of IT budgets</strong> are spent just maintaining outdated systems<a href="https://trackit.io/on-premise-vs-aws-cloud-7-key-areas-of-comparison/" rel="nofollow noopener noreferrer" target="_blank"><sup>[1]</sup></a>? This leaves little room for new initiatives. The older the system, the heavier this burden becomes, especially for on-premises setups.</p>
-<p>Aging hardware adds to the problem, leading to:</p>
-<ul>
-<li><strong>15-30% productivity losses</strong> from slower performance<a href="https://html.spec.whatwg.org" rel="nofollow noopener noreferrer" target="_blank"><sup>[8]</sup></a></li>
-<li><strong>20-40% higher energy costs</strong> due to inefficient equipment<a href="https://www.servicenow.com/community/developer-blog/declarative-actions-in-servicenow-the-complete-guide/ba-p/2781607" rel="nofollow noopener noreferrer" target="_blank"><sup>[5]</sup></a></li>
-<li>Compatibility headaches with modern, cloud-based APIs</li>
-</ul>
-<p>If your organization expects growth exceeding 20% annually, AWS's pay-as-you-go model can make financial sense. Here's why:</p>
-<figure><table>
-<thead>
-<tr>
-<th>Aspect</th>
-<th>On-Premises Impact</th>
-<th>AWS Alternative</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Geographic Expansion</td>
-<td>High upfront complexity and costs</td>
-<td>Instant global deployment</td>
-</tr>
-</tbody>
-</table></figure>
-<p>These benefits tie directly to the <strong>52% TCO savings</strong> highlighted earlier.</p>
-<h3 id="meeting-compliance-standards">Meeting Compliance Standards</h3>
-<p>Regulations often push companies to modernize faster. AWS can trim compliance-related costs by <strong>30-60%</strong> compared to on-premises setups<a href="https://learn.microsoft.com/en-us/answers/questions/1022056/error-0x80070005" rel="nofollow noopener noreferrer" target="_blank"><sup>[7]</sup></a>. Here's how the numbers compare:</p>
-<p>On-premises compliance expenses include:</p>
-<ul>
-<li>Secure infrastructure: $10K-$100K+ upfront</li>
-<li>Compliance software: <strong>$5,000-$50,000</strong> annually</li>
-<li>Compliance officers: <strong>$80,000-$120,000</strong> per year</li>
-<li>Third-party audits: <strong>$20,000-$50,000</strong> per audit</li>
-</ul>
-<p>AWS simplifies this with built-in tools like <strong>AWS Config</strong> and <strong>CloudTrail</strong>, slashing the need for costly external resources.</p>
+<p>An AWS vs. on-premises cost analysis is useful only when both options deliver the same workload, service level, security controls, recovery objectives, and time period. AWS can move spending from owned equipment to metered services, but it does not guarantee a lower total cost. The result depends on utilization, architecture, commitments, data movement, licensing, operations, and the cost of getting there.</p>
+<p>This guide gives engineers a practical way to compare the alternatives. It separates accounting from cash flow, distinguishes sunk costs from avoidable costs, includes the charges that are easy to miss, and shows how to calculate a break-even point. Every dollar in the worked example is an illustrative assumption, not a quote or a measured result.</p>
 
-<h2 id="cost-management-after-migration">Cost Management After Migration</h2>
-<p>After migration, keeping costs under control requires ongoing monitoring. AWS offers tools that make this much easier compared to manual tracking in on-premises environments. These tools provide real-time insights and use machine learning to help optimize spending.</p>
-<h3 id="cost-tracking-tools">Cost Tracking Tools</h3>
-<p>AWS provides several tools to help track and manage costs effectively:</p>
-<ul>
-<li><strong><a href="https://aws.amazon.com/aws-cost-management/aws-cost-explorer/" rel="nofollow noopener noreferrer" target="_blank">AWS Cost Explorer</a></strong>: This tool offers detailed insights into resource usage and spending patterns, complete with customizable graphs and reports. It even includes forecasting to help avoid unexpected costs.</li>
-<li><strong><a href="https://docs.aws.amazon.com/cost-management/latest/userguide/budgets-managing-costs.html" rel="nofollow noopener noreferrer" target="_blank">AWS Budgets</a></strong>: Lets you set custom budget alerts to stay within your spending limits.</li>
-<li><strong><a href="https://docs.aws.amazon.com/compute-optimizer/" rel="nofollow noopener noreferrer" target="_blank">AWS Compute Optimizer</a></strong>: Uses machine learning to recommend resource adjustments, potentially cutting costs by up to 25% <a href="https://authorservices.taylorandfrancis.com/publishing-your-research/writing-your-paper/writing-a-journal-article/" rel="nofollow noopener noreferrer" target="_blank"><sup>[6]</sup></a>.</li>
-</ul>
+<span id="capex-vs-opex-models"></span><span id="quick-comparison"></span>
+<h2 id="key-cost-differences">Why simple AWS versus on-premises comparisons fail</h2>
+<p>“CapEx versus OpEx” describes how a cost is recorded or paid; it does not decide which option is cheaper. A server bought last year may be a sunk cost for a new decision but still have depreciation, support, power, and refresh consequences. An AWS bill may be variable, while a Savings Plan or reserved capacity creates a usage commitment. Compare the costs that the decision can change and show accounting and cash views separately.</p>
+<p>First fix the comparison boundary. State the workload volume, regions or data-center locations, availability target, latency, RTO and RPO, retention, compliance controls, support coverage, and operating period. A rehosted EC2 instance, a managed database, and a refactored serverless workflow have different responsibility boundaries. Match the outcome and service level before comparing the components that produce it.</p>
 <figure><table>
-<thead>
-<tr>
-<th>Tool</th>
-<th>Primary Function</th>
-<th>Cost Impact</th>
-</tr>
-</thead>
+<thead><tr><th>Cost area</th><th>AWS model</th><th>On-premises model</th></tr></thead>
 <tbody>
-<tr>
-<td>AWS Cost Explorer</td>
-<td>Usage analysis and forecasting</td>
-<td>Free for 12 months, then $0.01/1,000 API requests</td>
-</tr>
-<tr>
-<td>AWS Budgets</td>
-<td>Custom budget alerts</td>
-<td>2 free budgets/month, then $0.02 per budget/day</td>
-</tr>
-<tr>
-<td>AWS Compute Optimizer</td>
-<td>Resource optimization recommendations</td>
-<td>Up to 25% cost reduction <a href="https://authorservices.taylorandfrancis.com/publishing-your-research/writing-your-paper/writing-a-journal-article/" rel="nofollow noopener noreferrer" target="_blank"><sup>[6]</sup></a></td>
-</tr>
+<tr><td><strong>Compute and capacity</strong></td><td>Compute, managed-service capacity, autoscaling minimums, and storage performance charged by usage or provisioned capacity.</td><td>Servers, hypervisor capacity, spares, refreshes, maintenance, and capacity held for peaks and failures.</td></tr>
+<tr><td><strong>Storage and data protection</strong></td><td>Block, object, database, snapshot, backup, restore, replication, and retention charges.</td><td>Arrays, media, backup software, copies, off-site storage, and restore-test infrastructure.</td></tr>
+<tr><td><strong>Network</strong></td><td>Data transfer, cross-Availability-Zone traffic, NAT gateways, public IPv4 addresses, load balancing, VPN or Direct Connect, and connectivity.</td><td>Circuits, firewalls, routers, ports, colocation, egress, and network staff.</td></tr>
+<tr><td><strong>Software and licensing</strong></td><td>License-included rates, BYOL obligations, Marketplace software, operating systems, database editions, and vendor support.</td><td>Perpetual or subscription licenses, support contracts, virtualization rights, and compliance tracking.</td></tr>
+<tr><td><strong>Operations</strong></td><td>Engineering and on-call work that remains after AWS manages selected infrastructure, plus AWS Support and observability.</td><td>Administration, facilities, hardware, patching, monitoring, security, and incident response.</td></tr>
+<tr><td><strong>Migration and transition</strong></td><td>Discovery, design, data transfer, testing, training, temporary environments, cutover, and dual-run capacity.</td><td>Coexistence, decommissioning, contract termination, and the cost of keeping the source available during cutover.</td></tr>
 </tbody>
 </table></figure>
-<h3 id="serverless-cost-benefits">Serverless Cost Benefits</h3>
-<p><a href="https://aws.amazon.com/lambda/" rel="nofollow noopener noreferrer" target="_blank">AWS Lambda</a>'s pay-per-use model is a game-changer for cost efficiency. It eliminates the expense of idle resources, as you only pay for the compute time you actually use. For example, <a href="https://www.capitalone.com/about/corporate-information/our-company/" rel="nofollow noopener noreferrer" target="_blank">Capital One</a> saved significantly each year by embracing serverless technologies. Here's why:</p>
+
+<h2 id="cost-elements-aws-vs-on-premises">Cost elements to include in both models</h2>
+<p>Use the same workload demand and service-level tests for every line. A service-level change can be valuable, but it belongs in the value case as a separate benefit instead of being counted as a cost saving.</p>
+
+<h3 id="staff-and-upkeep-costs">Hardware, facilities, and people</h3>
+<p>For on-premises infrastructure, include the portion of hardware purchases or leases, warranty and maintenance, rack or colocation fees, electricity, cooling, physical security, spares, and facility labor that would change if the workload moved. Include staff time for systems, network, storage, database, security, backup, and incident work. Shared staff and facilities need a stated allocation method; otherwise the comparison can simply move a cost out of the model.</p>
+<p>For AWS, include the work that remains: account and network operations, IAM, patching where the customer owns the guest or runtime, deployment, security controls, incident response, backup and restore tests, cost management, and on-call coverage. Managed services reduce some infrastructure work; they do not make application ownership or operational readiness free.</p>
+
+<h3 id="hardware-usage-and-efficiency">Utilization, peaks, and pricing commitments</h3>
+<p>Measure normal load, peaks, batch windows, seasonal demand, recovery capacity, and the minimum capacity needed to meet the service level. Compare useful work with capacity that exists only for a rare peak. A cloud autoscaling policy can reduce idle capacity, but its minimum instances, warm capacity, load balancer, storage, database, logs, and data transfer still cost money.</p>
+<p>Start an uncertain AWS workload with On-Demand assumptions. For steady eligible usage, model a <a href="https://docs.aws.amazon.com/savingsplans/latest/userguide/what-is-savings-plans.html" rel="noopener noreferrer" target="_blank">Savings Plan</a> or a service-specific reservation after measuring usage. Savings Plans exchange a one- or three-year commitment to a consistent hourly spend for discounted eligible usage; the commitment can be underused if the workload shrinks. Spot Instances suit interruptible work and should be compared with the engineering and recovery behavior needed to handle interruption. On-premises models should likewise include the cost of capacity reserved for peaks and the cash timing of a refresh rather than assuming every server runs at full utilization.</p>
+<p>Our <a href="/blog/aws-ec2-right-sizing-cost-performance-optimization/">EC2 right-sizing guide</a> explains how to use representative CPU, memory, storage, network, and application data before choosing an instance size or commitment.</p>
+
+<h3 id="capex-vs-opex-models-detail">Separate sunk cost, depreciation, and cash flow</h3>
+<p>Show at least two views:</p>
+<ul>
+<li><strong>Run-rate view:</strong> the avoidable annual cost of operating the workload after the migration or refresh.</li>
+<li><strong>Cash-flow view:</strong> when hardware purchases, AWS commitments, migration work, and decommissioning payments are actually paid.</li>
+</ul>
+<p>Depreciation is an accounting expense rather than a cash payment in the period it is recorded. It can matter for financial reporting, but it should not be added to a cash purchase a second time. Conversely, excluding an already purchased server from the future run-rate does not mean its electricity, maintenance, renewal, or replacement is free. Record the useful life, remaining book value, salvage or termination cost, and refresh date so finance can apply its own accounting treatment.</p>
+
+<h3 id="licensing-and-support-costs">Licensing, support, and shared services</h3>
+<p>Identify the exact operating system, database edition, middleware, security products, agents, and commercial applications. AWS may offer a license-included rate, or the design may use BYOL with eligibility and mobility obligations. For example, <a href="https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/SQLServer.Concepts.General.Licensing.html" rel="noopener noreferrer" target="_blank">Amazon RDS for SQL Server documents both License Included and Bring Your Own Media models</a>; other engines and products have different rules. Include software assurance, Marketplace charges, vendor support, and license-management work in whichever option requires them.</p>
+<p>Basic AWS Support is included, while paid support plans add technical access and other features. Include the support plan appropriate to the service level and account structure; current terms and prices are on the <a href="https://aws.amazon.com/premiumsupport/pricing/" rel="noopener noreferrer" target="_blank">AWS Support pricing page</a>. The on-premises alternative should include hardware, software, and specialist support contracts that would be kept or removed.</p>
+
+<h3 id="additional-cost-factors">Network, public IPv4, and observability</h3>
+<p>Network costs are often the difference between a credible model and an optimistic one. Estimate traffic by direction and location, including internet egress, cross-Region replication, cross-Availability-Zone calls, VPN or Direct Connect, and transfers between the application and data tiers. The AWS estimate should include the data path, not just the service at each endpoint.</p>
+<p>A NAT gateway is charged for the hours it is provisioned and the gigabytes it processes, with standard data-transfer charges also possible. Cross-Availability-Zone placement can add transfer charges. AWS documents the calculation and endpoint alternatives in its <a href="https://docs.aws.amazon.com/vpc/latest/userguide/nat-gateway-pricing.html" rel="noopener noreferrer" target="_blank">NAT gateway pricing guidance</a>. Public IPv4 addresses also have a charge; count addresses attached to resources, NAT gateways, and idle allocations using the current <a href="https://aws.amazon.com/vpc/pricing/" rel="noopener noreferrer" target="_blank">Amazon VPC pricing</a>.</p>
+<p>Observability is a cost in both models. Include log and metric ingestion, retention, traces, dashboards, queries, exports, agents, and the storage and staff required to operate them. <a href="https://aws.amazon.com/cloudwatch/pricing/" rel="noopener noreferrer" target="_blank">CloudWatch pricing</a> varies by Region and usage dimension, so use expected telemetry volume rather than a placeholder “monitoring” percentage.</p>
+
+<h3 id="backup-and-disaster-recovery-costs">Backup, recovery, and availability</h3>
+<p>Match the same RTO, RPO, retention, encryption, restore-test frequency, and number of failure domains. AWS Backup can charge for backup storage, restores, restore testing, cross-Region transfer, and Audit Manager; see the <a href="https://docs.aws.amazon.com/aws-backup/latest/devguide/whatisbackup.html" rel="noopener noreferrer" target="_blank">AWS Backup overview</a>. Include snapshots, replicas, standby capacity, and the runbook work needed to prove recovery. On-premises costs may include a second site, duplicate hardware, backup media, replication links, and the people who test restores. High availability and disaster recovery are service-level choices, not automatic savings from either platform.</p>
+
+<span id="total-cost-analysis"></span>
+<h2 id="building-a-three-year-tco-model">Build a comparable TCO model</h2>
+<p>Choose a period long enough to include a planned refresh or commitment. A three-year horizon is common, but it is only useful when both options are modeled over the same three years. Define the unit of comparison—one application, a workload portfolio, or a service—and keep the scope stable.</p>
+<p>Use these formulas, with each term documented in an assumption register:</p>
+<ul>
+<li><code>TCO<sub>on-prem</sub> = avoidable hardware/facilities + software/licenses + operations + network + backup/DR + support + transition</code></li>
+<li><code>TCO<sub>AWS</sub> = core AWS resource charges (compute/storage/database) + network + observability + backup/DR + support + license fees + remaining operations + migration/dual-run</code></li>
+<li><code>Break-even months = one-time migration and transition cost / monthly run-rate difference</code>, when the AWS run rate is lower.</li>
+</ul>
+<p>Make the categories disjoint and count each meter or shared cost once. For example, exclude separately modeled network, observability, backup, support, and license fees from “core AWS resource charges”; use either a license-included rate or a separate license fee, never both. Do not mix a fully loaded on-premises number with an AWS service-only number. Add shared costs using the same allocation logic, and label taxes, financing, internal chargebacks, credits, and business benefits separately.</p>
+
+<h3 id="illustrative-three-year-example">Illustrative example: a break-even point, not a promise</h3>
+<p>Assume one workload has the same availability, performance, data retention, security controls, and recovery objectives in both designs. These rounded USD figures are deliberately illustrative assumptions for showing the arithmetic; they are not current AWS prices or an observed customer result.</p>
+<figure><table>
+<thead><tr><th>Annual run-rate assumption</th><th>On-premises</th><th>AWS</th></tr></thead>
+<tbody>
+<tr><td>Compute, storage, and database capacity</td><td>$96,000</td><td>$156,000</td></tr>
+<tr><td>Facilities, power, and cooling / network and public addresses</td><td>$36,000</td><td>$42,000</td></tr>
+<tr><td>Software, licensing, backup, and observability</td><td>$72,000</td><td>$54,000</td></tr>
+<tr><td>Operations and support staff</td><td>$120,000</td><td>$48,000</td></tr>
+<tr><td><strong>Annual run rate</strong></td><td><strong>$324,000</strong></td><td><strong>$300,000</strong></td></tr>
+</tbody>
+</table></figure>
+<p>In this assumption set, the on-premises three-year run rate is <code>3 × $324,000 = $972,000</code>. AWS adds an assumed <strong>$180,000</strong> for migration and <strong>$60,000</strong> for temporary dual-run capacity, so its three-year total is <code>3 × $300,000 + $180,000 + $60,000 = $1,140,000</code>. On-premises is <strong>$972,000</strong> over the same period, so AWS is <strong>$168,000 higher</strong> in this simple three-year nominal comparison even though its steady-state run rate is lower.</p>
+<p>The annual run-rate difference is <code>$324,000 − $300,000 = $24,000</code>, or <code>$2,000</code> per month. The transition cost is <code>$180,000 + $60,000 = $240,000</code>. Break-even is therefore <code>$240,000 / $2,000 = 120 months</code>, or <strong>10 years</strong>, assuming demand and nominal costs stay constant. This simple break-even ignores discounting and the timing of cash payments; a long-horizon decision needs a dated cash-flow model and an agreed financial method. The result may support a redesign of the migration scope, a different target architecture, or a decision to retain the workload; it does not support a universal AWS savings claim.</p>
+
+<h3 id="scenario-and-sensitivity-analysis">Test scenarios and sensitivity</h3>
+<p>Change the assumptions most likely to move the result and keep the service level fixed:</p>
+<ul>
+<li><strong>Higher AWS utilization or better purchasing:</strong> if the AWS run rate falls to $260,000, the annual difference is $64,000 and break-even is <code>$240,000 / ($64,000 / 12) = 45 months</code>.</li>
+<li><strong>Lower or burstier demand:</strong> if the AWS run rate falls to $220,000 through measured scaling, break-even is <code>$240,000 / ($104,000 / 12) ≈ 28 months</code>.</li>
+<li><strong>More network, logging, or support use:</strong> if the AWS run rate rises to $340,000, it is higher than on-premises before transition costs; there is no positive run-rate break-even under those assumptions.</li>
+</ul>
+<p>Run the scenarios with actual inventory and usage data before making a commitment. Include a sensitivity for workload growth, egress volume, database capacity, support level, license model, staffing assumptions, refresh timing, and the amount of capacity kept during dual-run. If modernization changes latency, availability, deployment speed, or resilience, report those outcomes beside the cost model rather than hiding them inside a single percentage.</p>
+
+<h2 id="when-to-modernize-cost-factors">Include modernization and migration timing</h2>
+<h3 id="system-debt-and-growth-needs">Migration is an investment with a transition period</h3>
+<p>Migration work can include discovery, dependency mapping, landing-zone and network design, application changes, data transfer, testing, security review, training, cutover, rollback preparation, and decommissioning. During a phased move, both environments may run together. Model temporary AWS resources, source capacity, replication, licenses, connectivity, and staff time until the old system is actually retired.</p>
+<p>Use <a href="https://aws.amazon.com/migration-evaluator/" rel="noopener noreferrer" target="_blank">AWS Migration Evaluator</a> to build a data-driven business case from existing environment information when it fits the assessment. It can inform a scenario; its output is not a guarantee that every workload will cost less. For AWS service estimates, the <a href="https://docs.aws.amazon.com/pricing-calculator/latest/userguide/getting-started.html" rel="noopener noreferrer" target="_blank">AWS Pricing Calculator documentation</a> describes the available calculator experiences. Select the relevant Region, services, usage, purchase options, and eligible discounts for your estimate, then verify account-specific agreements separately. The calculator estimate is not an invoice and does not replace measured usage.</p>
+<p>Our <a href="/blog/aws-content-migration-best-practices/">content migration guide</a> covers inventory, transfer, verification, cutover, and rollback decisions that should appear in the migration budget and schedule.</p>
+
+<h3 id="meeting-compliance-standards">Compare controls and service levels explicitly</h3>
+<p>Compliance is not a generic AWS discount. Record the controls the workload needs: identity and access, encryption and key management, audit retention, vulnerability management, data location, recovery tests, and incident response. AWS operates some underlying controls under its shared responsibility model; the customer still designs and operates the controls that apply to the workload. Compare the labor, tooling, attestations, and evidence required in each environment.</p>
+<span id="serverless-cost-benefits"></span><p>Modernization also changes the boundary of responsibility. Moving a database to a managed service may reduce patching and hardware work but add service-specific capacity, backup, network, licensing, and monitoring costs. Moving a batch job to Lambda may replace idle servers with per-invocation billing but add event, logging, and downstream-capacity considerations. Compare each target with a matched workload and service level. Our <a href="/blog/aws-serverless-migration-legacy-app-modernization-guide/">serverless migration guide</a> describes how to test runtime fit, downstream limits, rollback, and measured cost.</p>
+
+<span id="cost-management-after-migration"></span><span id="cost-tracking-tools"></span>
+<h2 id="cost-management-after-migration-heading">Manage the actual cost after migration</h2>
+<p>A business case becomes useful only when its assumptions can be checked against the bill and service outcomes. Use <a href="https://docs.aws.amazon.com/cost-management/latest/userguide/ce-what-is.html" rel="noopener noreferrer" target="_blank">AWS Cost Explorer</a> for trends and dimensions, AWS Budgets for alerts, and the Cost and Usage Report or Data Exports for detailed line items. Activate <a href="https://docs.aws.amazon.com/awsaccountbilling/latest/aboutv2/cost-alloc-tags.html" rel="noopener noreferrer" target="_blank">cost allocation tags</a> and use Cost Categories to assign shared charges to applications, teams, or environments. Keep unallocated costs visible.</p>
+<p>Review actual cost against the same workload volume, service level, and comparison period used in the business case. Investigate usage growth, idle capacity, data paths, unneeded public addresses, NAT processing, log retention, backup copies, database capacity, license changes, and commitment coverage. Revisit a Savings Plan or other commitment only after demand is stable enough to carry the term.</p>
+<p>Cost optimization changes should preserve performance, security, availability, retention, and recovery requirements. A lower bill that misses an agreed service objective is a changed service, not a like-for-like saving.</p>
+
+<h2 id="key-takeaways">A practical decision sequence</h2>
 <ol>
-<li><strong>No idle server costs</strong>: Pay only for the compute time used.</li>
-<li><strong>Automatic scaling</strong>: Avoid the need to over-provision resources.</li>
-<li><strong>Lower operational overhead</strong>: Reduce the time and effort spent on server management.</li>
+<li>Define the workload, service level, comparison period, and decision boundary.</li>
+<li>Collect measured on-premises inventory, utilization, traffic, licenses, staffing, facilities, support, backup, and recovery costs.</li>
+<li>Model AWS services, data paths, observability, support, licensing, commitments, migration, and dual-run costs with current regional inputs.</li>
+<li>Separate avoidable run rate, sunk cost, depreciation, and cash timing.</li>
+<li>Run base, upside, and downside scenarios; calculate break-even from the run-rate difference and transition cost.</li>
+<li>Validate the chosen scenario with a representative pilot and compare actual cost and service outcomes after cutover.</li>
 </ol>
-<p>This model is especially beneficial for workloads that fluctuate. <a href="https://www.coca-colacompany.com/" rel="nofollow noopener noreferrer" target="_blank">Coca-Cola</a>, for instance, cut operational costs by 65% using Lambda’s millisecond billing model <a href="https://aws.amazon.com/blogs/aws-insights/moving-from-on-premises-to-the-cloud-with-aws-delivers-significant-cost-savings-report-finds/" rel="nofollow noopener noreferrer" target="_blank"><sup>[4]</sup></a>.</p>
-<p>To get the most out of serverless, consider these practices:</p>
-<ul>
-<li>Adjust Lambda memory allocation for optimal performance.</li>
-<li>Use CloudWatch to monitor and fine-tune usage.</li>
-<li>Employ Step Functions for managing complex workflows.</li>
-<li>Reserve provisioned concurrency for apps that need low latency.</li>
-</ul>
-<h2 id="conclusion-1">Conclusion</h2>
-<h3 id="key-takeaways">Key Takeaways</h3>
-<p>The comparison of costs between AWS and on-premises infrastructure highlights clear trends in both short- and long-term financial outcomes. These results are tied to the main cost factors identified throughout the analysis.</p>
-<p>According to IDC's research, AWS customers see a <strong>51% lower cost of operations</strong> compared to on-premises setups <a href="https://aws.amazon.com/blogs/aws-cloud-financial-management/five-things-you-should-do-to-create-an-accurate-on-premises-vs-cloud-comparison-model/" rel="nofollow noopener noreferrer" target="_blank"><sup>[3]</sup></a>. This savings comes from cutting out hardware maintenance, automating resource management, and lowering energy usage.</p>
-<h3 id="practical-insights">Practical Insights</h3>
-<p>AWS for Engineers offers detailed guides to help optimize costs across services like Lambda, EC2, and S3. These guides include service-specific strategies to maximize efficiency.</p>
-<p>To keep AWS's Total Cost of Ownership (TCO) benefits intact, engineers should leverage AWS's cost management tools. Using these tools effectively supports cost efficiency throughout every phase of modernization.</p>
-<h2 id="faqs">FAQs</h2>
-<p>Here are answers to some commonly asked questions based on our financial analysis:</p>
-<h3 id="what-is-tco-in-aws">What is TCO in AWS?</h3>
-<p>Total Cost of Ownership (TCO) compares the full costs of operating a workload over the same period. Include service charges, licenses, support, staffing, and migration costs in the AWS model, and hardware, facilities, maintenance, and staffing in the on-premises model. <a href="https://aws.amazon.com/migration-evaluator/" rel="nofollow noopener noreferrer" target="_blank">AWS Migration Evaluator</a> helps build a data-driven migration business case using your existing environment; it does not establish a universal savings percentage for every workload.</p>
-<h3 id="how-expensive-is-cloud-computing-compared-to-on-premises">How expensive is cloud computing compared to on-premises?</h3>
-<p>Cloud costs can be higher or lower than on-premises costs depending on the workload, utilization, services, pricing options, and comparison period. Use the <a href="https://calculator.aws/" rel="nofollow noopener noreferrer" target="_blank">AWS Pricing Calculator</a> to estimate AWS service charges, then compare them with your measured on-premises costs. Consider these differences:</p>
-<ul>
-<li>No upfront hardware costs</li>
-<li>Built-in maintenance</li>
-<li>Flexible resource scaling</li>
-<li>Energy expenses included in service fees</li>
-</ul>
-<p>Use the same comparison period and include migration and operating costs in both models. A percentage from a different workload is not a substitute for your own cost estimate.</p>
-<h3 id="what-is-the-aws-tco-calculator">Which AWS tools can help compare cloud and on-premises costs?</h3>
-<p>Use the <a href="https://calculator.aws/" rel="nofollow noopener noreferrer" target="_blank">AWS Pricing Calculator</a> for an AWS service estimate and <a href="https://aws.amazon.com/migration-evaluator/" rel="nofollow noopener noreferrer" target="_blank">Migration Evaluator</a> to build a migration business case from your current environment. Add the operating and migration expenses that are relevant to your organization when comparing total costs.</p>
-<p>For more details on managing costs, refer back to the cost management strategies discussed earlier.</p>
-<h2>Related Blog Posts</h2><ul><li><a href="/blog/aws-ec2-basics-core-concepts-explained/">AWS EC2 Basics: Core Concepts Explained</a></li><li><a href="/blog/aws-content-migration-best-practices/">AWS Content Migration Best Practices</a></li><li><a href="/blog/aws-workforce-upskilling-for-legacy-system-modernization/">AWS Workforce Upskilling for Legacy System Modernization</a></li><li><a href="/blog/aws-serverless-migration-legacy-app-modernization-guide/">AWS Serverless Migration: Legacy App Modernization Guide</a></li></ul>
+<p>For a broader cost-practice reference, see our <a href="/blog/10-aws-cost-optimization-strategies-2024/">AWS cost optimization strategies</a> guide for attribution, rightsizing, purchase options, and post-migration review.</p>
+
+<span id="conclusion"></span><span id="conclusion-1"></span><span id="practical-insights"></span>
+<h2 id="conclusion-heading">Conclusion</h2>
+<p>AWS may be the better financial choice when elasticity, managed operations, or a modernization outcome removes enough avoidable cost to repay the transition investment. On-premises may remain cheaper for stable, highly utilized workloads with existing paid-for capacity, low network movement, favorable licenses, and a well-run facility. A defensible decision shows both outcomes, the assumptions that drive them, and the point at which those assumptions change.</p>
+
+<span id="faqs"></span>
+<h2 id="faqs-heading">FAQs</h2>
+<h3 id="what-is-tco-in-aws">What should AWS TCO include?</h3>
+<p>Include AWS service charges and commitments, support, software or license costs, data transfer and network components, observability, backup and recovery, remaining engineering and operations work, migration, dual-run, and decommissioning. Compare the same workload, service level, period, and allocation basis in the on-premises model.</p>
+
+<h3 id="how-expensive-is-cloud-computing-compared-to-on-premises">Is cloud computing always cheaper than on-premises infrastructure?</h3>
+<p>No. Cloud can lower avoidable costs for variable workloads or reduce infrastructure work through managed services, but steady workloads can be more expensive when utilization, data transfer, support, licensing, or commitments are modeled poorly. Use workload evidence and scenarios instead of a fixed savings percentage.</p>
+
+<h3 id="what-is-the-aws-tco-calculator">Which AWS tools help compare costs?</h3>
+<p>Use the AWS Pricing Calculator for a service estimate and Migration Evaluator for a data-driven migration business case when the service fits your assessment. Use Cost Explorer, Budgets, cost allocation tags, and detailed cost and usage data after migration to compare assumptions with actual spend. Prices, service features, and support terms change, so check the linked AWS pages for the Region and date of your estimate.</p>
+
+<h3 id="how-do-i-calculate-cloud-break-even">How do I calculate the cloud break-even point?</h3>
+<p>Subtract the AWS steady-state monthly run rate from the on-premises steady-state monthly run rate. Divide the one-time migration and transition cost by that positive monthly difference. If AWS has the higher run rate, there is no positive break-even under those assumptions; change the architecture or keep the workload where it is until the evidence changes.</p>
