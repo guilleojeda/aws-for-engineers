@@ -2,242 +2,116 @@
 layout: post.njk
 templateEngineOverride: html
 tags: posts
-title: "AWS RDS Blog Insights: Performance Tuning"
-description: "Explore proven AWS RDS optimization strategies to improve query speed, reduce costs, and enhance database performance. Learn practical steps to tune configuration, hardware, and data access patterns."
+title: "Amazon RDS Performance Tuning: A Practical Guide"
+description: "Diagnose slow Amazon RDS workloads with query plans, CloudWatch metrics, Database Insights, indexing, storage, connection pooling, and safe tests."
 date: "2023-12-30"
 datePublished: "2023-12-30T17:53:07.392000+00:00"
 heroImage: "/assets/media/7d3a4ef552f650b2ace9.jpg"
 permalink: "/blog/aws-rds-blog-insights-performance-tuning/"
 sourceUrl: "https://awsforengineers.com/blog/aws-rds-blog-insights-performance-tuning/"
-dateModified: "2026-10-03"
-updateNote: "Added author attribution and profile information."
+dateModified: "2026-10-04"
+updateNote: "Replaced generic tuning rules with workload-led guidance, current Database Insights details, and engine-specific query, index, and parameter caveats."
 ---
-<p>As an AWS user looking to optimize database performance, you likely agree that efficient resource utilization is critical for supporting application needs.</p>
-<p>By exploring proven RDS optimization strategies, you can dramatically improve query speed and throughput while reducing costs.</p>
-<p>In this post, we'll cover key areas like upgrading instance type, configuring read replicas, partitioning tables, enabling caching, and more. You'll discover practical steps to tune database configuration, hardware allocation, and data access patterns.</p>
-<h2 id="introduction-to-performance-tuning-aws-rds">Introduction to Performance Tuning AWS RDS</h2>
-<p>AWS RDS provides relational database instances running engines like PostgreSQL, MySQL, MariaDB, Oracle, and SQL Server. Performance tuning optimizes database workloads by improving query speed and lowering latency for applications. It also reduces resource costs through more efficient utilization of RDS instances.</p>
-<p>This section outlines key strategies to tune RDS performance covered in this article.</p>
-<h3 id="what-is-aws-rds">What is AWS RDS</h3>
-<p>AWS RDS is a fully managed relational database service for popular database engines. RDS handles database administration tasks like backups, software patching, automatic failure detection, and recovery.</p>
-<p>RDS provides high availability with multi-AZ deployments. It offers scalable compute and storage capacity to meet application workload demands. Performance tuning helps optimize RDS to improve query speed and lower costs.</p>
-<h3 id="why-performance-tuning-matters">Why Performance Tuning Matters</h3>
-<ul>
-<li>
-<p>Faster query performance reduces application latency and improves end user experience. Slow queries negatively impact user interactions.</p>
-</li>
-<li>
-<p>Efficient utilization of RDS resources lowers costs for a given workload. Rightsizing RDS instance type, memory, and storage saves money.</p>
-</li>
-<li>
-<p>Meeting spike demand is easier with a well-tuned system. Tuning allows supporting traffic surges without overprovisioning capacity.</p>
-</li>
-</ul>
-<h3 id="main-optimization-strategies">Main Optimization Strategies</h3>
-<p>We will cover several performance tuning techniques:</p>
-<ul>
-<li>Upgrading RDS instance type and memory/storage allocation</li>
-<li>Implementing read replicas to scale read operations</li>
-<li>Partitioning large tables to distribute I/O</li>
-<li>Enabling caching to reduce load on storage</li>
-<li>Analyzing slow query logs to identify optimizations</li>
-</ul>
-<p>Tuning RDS requires benchmarking, load testing, and monitoring to quantify improvements. We will demonstrate using these tools to guide optimization.</p>
-<h2 id="upgrading-rds-instance-type">Upgrading RDS Instance Type</h2>
-<p>Switching your RDS DB instance to a larger instance type with more CPU, memory, and network resources can significantly improve performance for resource constrained workloads.</p>
-<h3 id="assess-current-utilization">Assess Current Utilization</h3>
-<p>Check your cloudwatch metrics for CPU, memory, and storage to identify if your DB instance is constrained on resources as that can limit SQL performance:</p>
-<ul>
-<li>
-<p>Monitor the <code>CPUUtilization</code> metric over time to see if CPU usage is frequently high, indicating a need for more compute capacity. Sustained values over 75-80% may warrant upsizing.</p>
-</li>
-<li>
-<p>Review <code>FreeableMemory</code> to detect if available memory is often low. Frequently dipping near zero suggests insufficient memory allocation.</p>
-</li>
-<li>
-<p>Track write IOPS using <code>VolumeWriteIOPS</code> to determine storage requirements. If nearing maximum IOPS, a larger instance type with higher I/O performance may be beneficial.</p>
-</li>
-</ul>
-<h3 id="select-appropriate-instance-size">Select Appropriate Instance Size</h3>
-<p>Choose an RDS instance type adequate for your typical and peak workloads based on resource metrics data while optimizing costs:</p>
-<ul>
-<li>
-<p>Size up incrementally to the next logical instance type based on currently constrained resources. For example, if CPU maxes out, choose an instance type with more vCPUs.</p>
-</li>
-<li>
-<p>Consider instance families like T3/T4 (burstable), M5 (general purpose) or R5 (memory optimized) based on your primary bottleneck.</p>
-</li>
-<li>
-<p>Review AWS instance type pricing and select the most cost efficient upgrade that meets your performance needs.</p>
-</li>
-</ul>
-<h3 id="test-new-instance-type">Test New Instance Type</h3>
-<p>Validate performance gains on a test RDS instance before modifying production databases to confirm improved query speed:</p>
-<ul>
-<li>
-<p>Provision a new test DB instance using the desired upgraded instance type.</p>
-</li>
-<li>
-<p>Replay a representative sample of production workloads and queries.</p>
-</li>
-<li>
-<p>Compare performance metrics like query latency between old and new instance types.</p>
-</li>
-<li>
-<p>If satisfactory, modify production RDS instance type and decommission original DB.</p>
-</li>
-</ul>
-<h2 id="configuring-read-replicas">Configuring Read Replicas</h2>
-<p>Read replicas can enhance RDS performance by routing read queries away from the primary DB instance. Analyzing slow query logs helps identify read-heavy workloads suitable for replication.</p>
-<h3 id="identifying-read-heavy-workloads">Identifying Read-Heavy Workloads</h3>
-<p>When assessing if read replicas could improve query performance:</p>
-<ul>
-<li>Enable RDS slow query logs to capture queries exceeding a defined execution time threshold.</li>
-<li>Review slow logs over a representative period, such as 1-2 weeks.</li>
-<li>Identify the most common/expensive read queries, noting:
-<ul>
-<li>% of total queries</li>
-<li>Overall execution time</li>
-<li>Read vs write operations</li>
-</ul>
-</li>
-<li>Queries that are primarily reads and retrieve large data volumes are good candidates for redirection to read replicas.</li>
-</ul>
-<h3 id="creating-read-replicas">Creating Read Replicas</h3>
-<p>To launch one or more read replicas:</p>
+<p><strong>Start with the operation that is slow and the conditions under which it slows down.</strong> Amazon RDS performance tuning is a measured loop: establish a baseline, find the limiting part of the workload, change one likely cause, and compare the same workload again.</p>
+<p>RDS manages database infrastructure, but query plans, schemas, connection patterns, and many settings still depend on the database engine and version. The steps below apply across RDS engines; exact metrics, features, parameter groups, and change behavior vary by engine, deployment type, instance class, storage, and Region.</p>
+
+<h2 id="introduction-to-performance-tuning-aws-rds">Start with a measurable RDS workload</h2>
+<p>A database can be slow because SQL does unnecessary work, the application opens too many connections, CPU or memory is constrained, storage cannot keep up, or an architectural choice does not fit the workload. High CPU or a large table alone does not identify the cause.</p>
+<h3 id="what-is-aws-rds">What Amazon RDS manages</h3>
+<p>Amazon RDS runs managed relational database engines such as PostgreSQL, MySQL, MariaDB, Oracle, and SQL Server. AWS manages much of the underlying service operation, while database behavior remains engine-specific. A query plan or parameter valid for one engine or version might not apply to another.</p>
+<h3 id="why-performance-tuning-matters">Define what “faster” means for the application</h3>
+<p>Set a target using application outcomes such as request latency, transaction throughput, error rate, and freshness requirements. Record typical and peak traffic, query mix, concurrency, and important time-of-day or batch patterns. This makes it possible to distinguish a real improvement from a change that helps one query while slowing writes or increasing cost.</p>
+<h3 id="main-optimization-strategies">Use the tuning loop</h3>
 <ol>
-<li>In the RDS console, select the source DB instance.</li>
-<li>Choose 'Create read replica' and configure:
-<ul>
-<li>DB instance identifier</li>
-<li>Compute and storage resources</li>
-<li>Availability Zone</li>
-<li>Encryption, monitoring, etc</li>
-</ul>
-</li>
-<li>Click Create read replica.</li>
+<li>Measure application behavior and database load during a representative workload.</li>
+<li>Use query plans and wait information to identify where time is spent.</li>
+<li>Choose one change that addresses that bottleneck, such as a query or index change, a connection fix, or more compute or storage capacity.</li>
+<li>Replay the same workload, compare latency, throughput, errors, and resource use, then keep or roll back the change.</li>
 </ol>
-<p>Newly created replicas inherit security groups, parameter groups, and more from the source RDS instance.</p>
-<h3 id="updating-connections">Updating Connections</h3>
-<p>Modify application connection strings to leverage read replicas:</p>
+
+<h2 id="optimize-sql-and-indexes">Optimize queries and indexes against real plans</h2>
+<p>Begin with the slow, frequent, or high-total-time statements identified by application traces, engine logs, or query-level monitoring. Check the predicates, joins, sort order, rows returned, and frequency. A query that is individually fast can still dominate database load when it runs often.</p>
+<h3 id="inspect-query-plans">Inspect the engine’s execution plan</h3>
+<p>Use the plan command supported by the deployed engine and version to see how it expects to find and join rows. Compare estimated rows with actual behavior when the engine provides that view, and investigate avoidable scans, repeated lookups, large sorts, or estimates that differ materially from the data. For PostgreSQL, see the official <a href="https://www.postgresql.org/docs/current/using-explain.html" target="_blank" rel="noopener noreferrer">EXPLAIN documentation</a>; for MySQL, see <a href="https://dev.mysql.com/doc/refman/8.0/en/explain.html" target="_blank" rel="noopener noreferrer">EXPLAIN and EXPLAIN ANALYZE</a>.</p>
+<p>Commands that collect actual execution details run the statement. Test them with safe data and an appropriate environment, especially for statements that write data or trigger other work.</p>
+<h3 id="design-indexes-for-the-workload">Add an index only when it improves a demonstrated access path</h3>
+<p>Choose index columns from the filters, joins, and ordering used by important queries, then verify that the optimizer uses the index and that end-to-end latency improves. Composite index order matters: for example, a PostgreSQL B-tree is most effective when a query constrains its leading columns, while other index types and engines follow their own rules. Review the relevant engine documentation, including PostgreSQL’s guidance on <a href="https://www.postgresql.org/docs/current/indexes-multicolumn.html" target="_blank" rel="noopener noreferrer">multicolumn indexes</a> and MySQL’s guidance on <a href="https://dev.mysql.com/doc/refman/8.0/en/optimization-indexes.html" target="_blank" rel="noopener noreferrer">indexes and query optimization</a>.</p>
+<p>Indexes consume storage and add work to inserts, updates, deletes, and maintenance. Avoid creating one for every column or assuming that a table scan is always wrong; an engine may prefer a scan when it expects to read much of the table. For PostgreSQL, keep planner statistics current after substantial data changes and review <a href="https://www.postgresql.org/docs/current/routine-vacuuming.html" target="_blank" rel="noopener noreferrer">VACUUM and ANALYZE behavior</a>.</p>
+
+<h2 id="upgrading-rds-instance-type">Measure before resizing compute or storage</h2>
+<h3 id="assess-current-utilization">Build a baseline and locate the wait</h3>
+<p>Use application latency and database load together. CloudWatch Database Insights can show database load by wait and the SQL contributing to it; the <a href="/blog/aws-performance-insights-monitoring-rds-databases/">Database Insights monitoring guide</a> covers that workflow. AWS retired the Performance Insights console experience on July 31, 2026 and migrated users to Database Insights. The Performance Insights API remains available. Confirm supported features, engine, instance class, Region, and monitoring charges in the <a href="https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/Database-Insights.html" target="_blank" rel="noopener noreferrer">CloudWatch Database Insights documentation</a>.</p>
+<p>CloudWatch instance metrics add context. Review <code>CPUUtilization</code>, <code>FreeableMemory</code>, <code>DatabaseConnections</code>, <code>FreeStorageSpace</code>, <code>ReadIOPS</code>, <code>WriteIOPS</code>, <code>ReadLatency</code>, <code>WriteLatency</code>, throughput, and queue depth as applicable. Metric availability and meaning vary by engine, storage, and deployment; use the current <a href="https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/rds-metrics.html" target="_blank" rel="noopener noreferrer">RDS CloudWatch metrics reference</a>. A connection count or CPU percentage is a clue, not a tuning target by itself.</p>
+<h3 id="select-appropriate-instance-size">Match the change to the constrained resource</h3>
 <ul>
-<li>Programmatically check the endpoint currently in use when making a new connection.</li>
-<li>If opening a read connection, direct to the replica endpoint.</li>
-<li>If writing data, connect to the primary instance endpoint.</li>
+<li>If database load is predominantly CPU activity, inspect SQL cost and concurrency before selecting an instance class with more compute.</li>
+<li>If memory pressure is accompanied by avoidable reads or temporary work, check query plans and engine-level evidence before moving to a class with more memory.</li>
+<li>If storage latency or queueing coincides with the slowdown, compare IOPS and throughput with the provisioned volume and instance limits. Raising allocated capacity does not always raise storage performance; available choices depend on the engine and deployment.</li>
+<li>For burstable classes, check CPU-credit behavior as well as average CPU. For other classes, compare measured peak demand with the offered compute, network, memory, and I/O capacity.</li>
 </ul>
-<p>This improves read performance by shifting reads to the replicas. Monitor database load to ensure sufficient resources.</p>
-<h2 id="partitioning-large-tables">Partitioning Large Tables</h2>
-<p>Partitioning very large database tables can help improve query performance by splitting the data into more manageable chunks. Here are some tips on detecting problematic tables, choosing an appropriate partition key, and implementing table partitioning in Amazon RDS.</p>
-<h3 id="detecting-problem-tables">Detecting Problem Tables</h3>
+<p>Free storage is a capacity signal; IOPS, throughput, latency, and queue depth describe different parts of storage performance. Check both the database’s storage configuration and any instance-level limit before increasing provisioned performance. AWS documents the current RDS storage characteristics and constraints in its <a href="https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/CHAP_Storage.html" target="_blank" rel="noopener noreferrer">RDS storage guide</a>.</p>
+<h3 id="test-new-instance-type">Compare capacity changes under the same workload</h3>
+<p>Before resizing production, replay a representative workload against a staging or test database with comparable data shape, engine version, and configuration. Keep request mix, concurrency, and measurement windows consistent. Include write traffic when evaluating indexes, parameter changes, or storage, and observe both database and application latency. Plan for the operational effect of the modification and keep a rollback path; a larger class can add cost without fixing a query-level bottleneck.</p>
+
+<h2 id="configuring-read-replicas">Use read replicas for reads that can tolerate lag</h2>
+<p>A read replica can add capacity for a read-heavy workload when the primary’s query work is already understood and the application can send eligible reads to a separate endpoint. Amazon RDS replicates changes to DB instance read replicas asynchronously, so a replica can return stale data. Validate freshness and lag under the actual write and read workload before routing traffic.</p>
+<h3 id="identifying-read-heavy-workloads">Identify reads that can move safely</h3>
+<p>Group expensive statements by read or write behavior, frequency, and freshness needs. A reporting query that can use slightly delayed data may be a good candidate; a read immediately following a write that must see that write may need to stay on the writer. Fix inefficient SQL first when the same query wastes work on every instance.</p>
+<h3 id="creating-read-replicas">Size and validate the replica for its own workload</h3>
+<p>Choose a supported engine, instance class, storage setup, and Region for the replica’s expected work. Replica settings and capabilities are not a universal copy of the source configuration; check engine-specific RDS requirements and monitor the replica after it is initialized. See AWS’s current guidance for <a href="https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/USER_ReadRepl.html" target="_blank" rel="noopener noreferrer">working with DB instance read replicas</a>.</p>
+<h3 id="updating-connections">Route reads explicitly and protect writer consistency</h3>
+<p>Update application data-access code or its routing layer to use the replica endpoint only for reads that permit replica lag. Keep writes on the writer endpoint, and define what the application does when lag exceeds its freshness allowance or a replica is unavailable. A read replica is a separate read endpoint; the application still needs a routing and fallback strategy.</p>
+<p>Do not confuse read scaling with high availability. A traditional Multi-AZ DB instance deployment has a synchronous standby for failover, and that standby does not serve read traffic. A Multi-AZ DB cluster is a different deployment type with readable instances; support and behavior depend on its engine and configuration. Check the current <a href="https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/Concepts.MultiAZ.html" target="_blank" rel="noopener noreferrer">Amazon RDS Multi-AZ deployment guidance</a> before choosing between these designs.</p>
+
+<h2 id="partitioning-large-tables">Partition only when plans or data lifecycle justify it</h2>
+<p>Table size or row count alone is not a reason to partition. Partitioning can help when important queries can exclude partitions using their predicates, or when a data-retention workflow benefits from managing whole ranges of data. It also adds schema and operational work, and the rules differ by engine and version.</p>
+<h3 id="detecting-problem-tables">Look for evidence in the query plan</h3>
+<p>Inspect whether an important query reads much more data than it returns and whether its filters align with a possible partition key. Do not use a universal gigabyte or row-count cutoff; table size, access patterns, row width, cache behavior, and engine planning all affect whether partitioning helps.</p>
+<h3 id="choosing-partition-key">Choose keys from filters and retention needs</h3>
+<p>Base a candidate key on the predicates the workload actually sends and any rule for expiring or archiving data. A time-based key can help time-range queries only when the query conditions let the engine prune irrelevant partitions. Check uniqueness and foreign-key restrictions, partition counts, and other engine limitations in the deployed version’s documentation.</p>
+<h3 id="implementing-table-partitioning">Test partition pruning and the migration path</h3>
+<p>Use the engine’s plan tools to verify that relevant queries eliminate partitions and benchmark the changed read and write mix. Test the DDL, data movement, locks, constraints, and rollback procedure with production-shaped data before cutover. See the official <a href="https://www.postgresql.org/docs/current/ddl-partitioning.html" target="_blank" rel="noopener noreferrer">PostgreSQL partitioning guide</a> or <a href="https://dev.mysql.com/doc/refman/8.0/en/partitioning.html" target="_blank" rel="noopener noreferrer">MySQL partitioning guide</a> for engine-specific behavior and limits.</p>
+
+<h2 id="enabling-query-caching">Pool connections and cache reads for the bottleneck they address</h2>
+<h3 id="pool-connections-for-connection-pressure">Pool connections when connection churn is the problem</h3>
+<p>A bounded application pool or <a href="https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/rds-proxy.howitworks.html" target="_blank" rel="noopener noreferrer">Amazon RDS Proxy</a> can reuse database connections and reduce the overhead of repeatedly opening them. This helps with connection bursts or connection-management pressure; it does not make an expensive query cheaper or add CPU, memory, or storage capacity. Proxy sessions that use state some engines cannot safely multiplex may remain pinned to a database connection, so measure proxy reuse and database load with the real application behavior.</p>
+<p>Choose the mechanism that fits the symptom: pooling manages connections, read replicas can serve eligible reads, and a traditional Multi-AZ standby provides failover. None is a substitute for measuring and fixing an inefficient query.</p>
+<p>A cache outside the database can reduce repeated reads when values are reused and the application can define how fresh they must be. It does not make an expensive cache miss cheaper, and it adds invalidation, expiry, memory, and failure-handling behavior.</p>
+<h3 id="identifying-cacheable-queries">Select data that is safe to reuse</h3>
+<p>Start with measured repeated reads of stable or slowly changing data. Specify how writes invalidate affected entries, how long an entry can be stale, and what happens after an outage or a burst of simultaneous cache misses. Verify both cache-hit latency and the database load created by misses.</p>
+<h3 id="calculating-cache-memory-size">Estimate the working set from observed use</h3>
+<p>Measure the size and reuse rate of candidate results and the memory the cache can actually retain. A large cache is not automatically useful: poor reuse, eviction, invalidation, or skewed access can leave the database load unchanged while adding cost.</p>
+<h3 id="configuring-query-cache">Do not copy cache parameters across engines</h3>
+<p>MySQL 8.0 removed <code>query_cache_type</code> and <code>query_cache_size</code>. Check the target engine and version before changing a parameter; similarly named settings are not portable. The <a href="https://dev.mysql.com/doc/refman/8.0/en/added-deprecated-removed.html" target="_blank" rel="noopener noreferrer">MySQL 8.0 reference</a> lists removed options and variables.</p>
+
+<h2 id="using-change-data-capture">Use change data capture for downstream consumers</h2>
+<p>Change data capture (CDC) reads database changes from engine logs for a separate consumer, such as a data lake, search index, or integration. For example, <a href="https://docs.aws.amazon.com/dms/latest/userguide/CHAP_Task.CDC.html" target="_blank" rel="noopener noreferrer">AWS DMS CDC</a> reads the source logs through engine-specific APIs and streams changes to a target; its latency depends on the source, network, task capacity, and target. It is a distinct data pipeline, not a step that moves changes from an RDS primary to its built-in read replica. Enabling a CDC pipeline does not by itself reduce replica lag or make replica reads current.</p>
+<h3 id="measuring-replication-lag">Measure RDS replica lag directly</h3>
+<p>If a read replica falls behind, monitor the lag metric supported by that engine and compare it with source write volume and replica workload. Reduce avoidable query work or change which reads are routed to the replica if freshness requirements are missed. Choose a different replication design only after identifying the source of the lag.</p>
+<h3 id="enabling-cdc-on-source-db">Enable CDC only for a defined change stream</h3>
+<p>CDC setup depends on the source engine, version, log configuration, retention, permissions, and consumer. Review the specific service and engine requirements before enabling it, and account for the storage and I/O used to retain and read the change logs.</p>
+<h3 id="consuming-cdc-log">Monitor the consumer as a separate workload</h3>
+<p>Validate ordering, duplicate handling, schema changes, recovery, and consumer lag for the target system. Keep that pipeline’s success criteria separate from RDS query latency and built-in replica freshness.</p>
+
+<h2 id="parameter-groups-and-safe-changes">Change engine parameters with a controlled rollout</h2>
+<p>Parameter tuning comes after a measured cause. Begin with the engine and version documentation, review the current RDS parameter group, and change only settings tied to the observed workload. Avoid importing memory, cache, or connection values from another engine, version, or instance size.</p>
+<p>RDS parameters can be static or dynamic. Static changes require a reboot; dynamic changes generally take effect without one, subject to engine-specific behavior. Check whether the parameter is modifiable, whether it is an instance or cluster setting, and what a reboot or failover means for the application. AWS explains these differences in its <a href="https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/parameter-groups-overview.html" target="_blank" rel="noopener noreferrer">parameter group documentation</a>.</p>
+<p>Test a candidate setting and any required restart in a representative non-production environment. Record the previous value, change one related setting at a time, and compare the same latency, throughput, wait, and error measures before and after. Schedule production changes around the actual interruption and rollback needs of the deployment.</p>
+
+<h2 id="conclusion">Keep changes tied to measured outcomes</h2>
+<p>There is no universal CPU percentage, table size, index, cache size, or parameter value that makes every RDS workload faster. The useful setting depends on the deployed engine and version, query mix, data, concurrency, storage, and application freshness requirements.</p>
+<h3 id="key-optimization-takeaways">A practical checklist</h3>
 <ul>
-<li>
-<p>Run SHOW TABLE STATUS to check table sizes and identify extremely large tables that may benefit from partitioning. Tables over 1GB or with over 1 million rows are good partitioning candidates.</p>
-</li>
-<li>
-<p>Monitor slow queries with tools like Amazon RDS Performance Insights. Queries scanning large tables may indicate a need for partitioning.</p>
-</li>
-<li>
-<p>Review table schema and access patterns. Tables frequently queried by date range or ID are ideal for partitioning on those columns.</p>
-</li>
+<li>Set a user-facing latency and throughput goal, then capture a representative baseline.</li>
+<li>Use query plans, SQL-level load, and CloudWatch resource metrics to identify a bottleneck.</li>
+<li>Optimize SQL and indexes before adding capacity or shifting traffic.</li>
+<li>Choose replicas, caches, CDC, and Multi-AZ deployments for their distinct workload and consistency roles.</li>
+<li>Test one change at a time, compare the same workload, and keep a rollback path.</li>
 </ul>
-<h3 id="choosing-partition-key">Choosing Partition Key</h3>
+<h3 id="importance-of-ongoing-monitoring">Recheck after the workload changes</h3>
+<p>Traffic, data volume, query plans, and storage behavior change over time. Keep monitoring application outcomes and database waits after each change, then repeat the diagnosis when the workload or service configuration changes.</p>
+
+<h2>Related reading</h2>
 <ul>
-<li>
-<p>Date columns are a common RDS partitioning key for time series data. Splitting data by month or year bounds query scope and speeds date range queries.</p>
-</li>
-<li>
-<p>Auto-incrementing ID columns also make good partition keys. Define numeric ranges to shard data across partitions by ID subsets.</p>
-</li>
-<li>
-<p>Optimal partition key depends on typical query filters and access patterns. Analyze query logs to determine best columns.</p>
-</li>
+<li><a href="/blog/aws-performance-insights-monitoring-rds-databases/">CloudWatch Database Insights: monitoring RDS databases</a></li>
 </ul>
-<h3 id="implementing-table-partitioning">Implementing Table Partitioning</h3>
-<ul>
-<li>
-<p>Use PostgreSQL/MySQL syntax to partition tables by RANGE, LIST, HASH or KEY. Define partition bounds and mapping rules.</p>
-</li>
-<li>
-<p>Migrate data from original table into new partitioned table with INSERT INTO ... SELECT statement for seamless transition.</p>
-</li>
-<li>
-<p>Set up new partitions and attach them to the partitioned table. Add monthly date range partitions or ID range partitions to support scalability.</p>
-</li>
-<li>
-<p>Test queries against partitioned tables to validate performance gains before switching applications.</p>
-</li>
-</ul>
-<h2 id="enabling-query-caching">Enabling Query Caching</h2>
-<p>Enabling the RDS query cache can reduce database workload by storing result sets in memory for repetitive read queries instead of hitting storage. This allows subsequent executions of cached queries to return results much faster by avoiding disk I/O.</p>
-<h3 id="identifying-cacheable-queries">Identifying Cacheable Queries</h3>
-<p>To determine which queries may benefit from caching:</p>
-<ul>
-<li>Enable RDS slow query logging to capture queries exceeding a defined execution time threshold. This helps uncover repetitive and expensive read queries.</li>
-<li>Analyze slow logs to detect queries frequently run against largely static reference or lookup tables. These are good caching candidates since the underlying data rarely changes.</li>
-<li>Focus on read-only or read-mostly workloads. Write-intensive queries are less likely to benefit.</li>
-</ul>
-<h3 id="calculating-cache-memory-size">Calculating Cache Memory Size</h3>
-<p>Once cacheable queries are identified, estimate potential cache memory requirements:</p>
-<ul>
-<li>Check historical slow logs for the result set size of cacheable queries.</li>
-<li>Sum the result set sizes for frequently repeated queries to approximate needed cache capacity.</li>
-<li>Allocate sufficient memory to achieve a high cache hit rate without overprovisioning.</li>
-</ul>
-<h3 id="configuring-query-cache">Configuring Query Cache</h3>
-<p>Using RDS parameter groups:</p>
-<ul>
-<li>Set <code>query_cache_type</code> to <code>1</code> to enable caching.</li>
-<li>Adjust <code>query_cache_size</code> based on required memory calculations.</li>
-<li>Monitor cache hit rate metrics to fine tune as needed for optimal memory utilization.</li>
-</ul>
-<p>Enabling caching for repetitive read queries can significantly improve query performance and reduce database load. Continually tune the cache configuration to ensure optimal memory usage and cache hit ratios.</p>
-<h2 id="using-change-data-capture">Using Change Data Capture</h2>
-<p>Change data capture (CDC) can help reduce replication lag for RDS databases with heavy write volumes by asynchronously propagating data changes to read replicas. This allows read-only queries to be offloaded to replicas without experiencing stale data.</p>
-<h3 id="measuring-replication-lag">Measuring Replication Lag</h3>
-<p>Before enabling CDC, it's important to measure and confirm that replication lag is actually causing issues:</p>
-<ul>
-<li>Check the <code>replica_lag_seconds</code> metric in CloudWatch to see current replication delay</li>
-<li>Identify thresholds where lag starts impacting application performance</li>
-<li>Determine if lag is from an overall lack of capacity or inefficient replication processes</li>
-</ul>
-<p>If replica DB instances are falling too far behind on replicating changes, CDC may help offload some of that processing overhead.</p>
-<h3 id="enabling-cdc-on-source-db">Enabling CDC on Source DB</h3>
-<p>To use CDC with RDS, change data capture needs to be enabled at the database level on the primary RDS instance:</p>
-<ul>
-<li>For MySQL, this enables the binary log with row format set to <code>ROW</code></li>
-<li>For PostgreSQL, this enables publishing data changes to logical decoding slots</li>
-</ul>
-<p>This allows data changes written to the primary database to be asynchronously captured and streamed in near real-time.</p>
-<h3 id="consuming-cdc-log">Consuming CDC Log</h3>
-<p>With CDC enabled, applications can consume the CDC log and propagate data changes directly to read replicas:</p>
-<ul>
-<li>Use services like DMS or Kafka to read the CDC log</li>
-<li>Handle translating data changes and applying to replicas</li>
-<li>Offload replication processes from the primary for reduced lag</li>
-</ul>
-<p>This helps shorten the replication chain from primary DB -&gt; read replicas and may significantly improve replica lag.</p>
-<h2 id="conclusion">Conclusion</h2>
-<p>Using techniques like upgrading RDS instances, read replicas, partitioning, caching, CDC logs, and more can significantly optimize database performance. Continually monitor metrics to identify and resolve bottlenecks.</p>
-<h3 id="key-optimization-takeaways">Key Optimization Takeaways</h3>
-<ul>
-<li>Upsize RDS instance type for improved CPU and memory.</li>
-<li>Enable read replicas to offload read traffic.</li>
-<li>Partition large tables for more efficient queries.</li>
-<li>Implement Redis or Memcached caching layers.</li>
-<li>Process CDC logs for changed data replication.</li>
-</ul>
-<h3 id="importance-of-ongoing-monitoring">Importance of Ongoing Monitoring</h3>
-<p>Continually collecting and analyzing performance metrics is critical for:</p>
-<ul>
-<li>Detecting database bottlenecks under load.</li>
-<li>Tuning database configuration settings.</li>
-<li>Right-sizing RDS instance types over time.</li>
-<li>Identifying needed schema changes.</li>
-</ul>
-<p>Ongoing monitoring and incremental optimizations ensure efficient RDS resource utilization even as application demands evolve.</p>
-<p>
-<h2>Related posts</h2>
-<ul>
-<li><a href="/blog/aws-vpc-guide-configuration-essentials/">AWS VPC Guide: Configuration Essentials</a></li><li><a href="/blog/aws-tutorial-for-beginners-step-by-step-core-concepts/">AWS Tutorial for Beginners Step by Step: Core Concepts</a></li><li><a href="/blog/aws-vpc-tutorial-for-beginners-setup-and-configuration/">AWS VPC Tutorial for Beginners: Setup and Configuration</a></li><li><a href="/blog/aws-s3-getting-started-understanding-storage-classes/">AWS S3 Getting Started: Understanding Storage Classes</a></li>
-</ul>
-</p>

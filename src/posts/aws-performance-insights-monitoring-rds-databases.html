@@ -2,552 +2,164 @@
 layout: post.njk
 templateEngineOverride: html
 tags: posts
-title: "AWS Performance Insights: Monitoring RDS Databases"
-description: "Learn how AWS Performance Insights helps monitor and optimize RDS databases efficiently. Explore key benefits, supported database engines, pricing, and best practices."
+title: "AWS Performance Insights: RDS Monitoring with Database Insights"
+description: "Performance Insights' console retired on July 31, 2026. Learn how CloudWatch Database Insights monitors RDS load, waits, SQL, retention modes, and bottlenecks."
 date: "2024-05-31"
 datePublished: "2024-05-31T01:04:43.138000+00:00"
+dateModified: "2026-10-04"
+updateNote: "Updated the RDS monitoring guide for the Performance Insights console retirement and current Database Insights guidance."
 heroImage: "/assets/media/22583a15439850679db4.jpg"
 permalink: "/blog/aws-performance-insights-monitoring-rds-databases/"
 sourceUrl: "https://awsforengineers.com/blog/aws-performance-insights-monitoring-rds-databases/"
-dateModified: "2026-10-03"
-updateNote: "Added author attribution and profile information."
 ---
-<p><a href="https://aws.amazon.com/rds/performance-insights/" target="_blank">AWS Performance Insights</a> is a powerful monitoring tool that helps you assess the load on your <a href="/blog/aws-rds-blog-insights-performance-tuning/">RDS databases</a> and identify performance bottlenecks. It provides a simple dashboard to visualize database load, analyze resource-intensive SQL statements, and optimize performance.</p>
-<p><strong>Key Benefits:</strong></p>
-<ul>
-<li>Simple dashboard to visualize database load</li>
-<li>Detailed metrics like CPU usage, wait times, and locks</li>
-<li>Seamless integration with CloudWatch and other AWS services</li>
-<li>Proactive recommendations to optimize performance</li>
-<li>Automated data collection and analysis</li>
-</ul>
-<p><strong>Supported Database Engines:</strong></p>
-<figure><table>
-<thead>
-<tr>
-<th>Database Engine</th>
-<th>Supported Versions</th>
-<th>Instance Class Restrictions</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><a href="https://aws.amazon.com/rds/mariadb/" target="_blank">Amazon RDS for MariaDB</a></td>
-<td>See <a href="https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/USER_PerfInsights.Regions.html" target="_blank">Supported Regions and DB engines</a></td>
-<td>Not supported for smaller instance classes</td>
-</tr>
-<tr>
-<td>RDS for <a href="https://en.wikipedia.org/wiki/MySQL" target="_blank">MySQL</a></td>
-<td>See <a href="https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/USER_PerfInsights.Regions.html" target="_blank">Supported Regions and DB engines</a></td>
-<td>Not supported for smaller instance classes</td>
-</tr>
-<tr>
-<td>RDS for <a href="https://en.wikipedia.org/wiki/Microsoft_SQL_Server" target="_blank">Microsoft SQL Server</a></td>
-<td>See <a href="https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/USER_PerfInsights.Regions.html" target="_blank">Supported Regions and DB engines</a></td>
-<td>No restrictions</td>
-</tr>
-<tr>
-<td>RDS for <a href="https://en.wikipedia.org/wiki/PostgreSQL" target="_blank">PostgreSQL</a></td>
-<td>See <a href="https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/USER_PerfInsights.Regions.html" target="_blank">Supported Regions and DB engines</a></td>
-<td>No restrictions</td>
-</tr>
-<tr>
-<td>RDS for <a href="https://en.wikipedia.org/wiki/Oracle_Database" target="_blank">Oracle</a></td>
-<td>See <a href="https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/USER_PerfInsights.Regions.html" target="_blank">Supported Regions and DB engines</a></td>
-<td>No restrictions</td>
-</tr>
-</tbody>
-</table></figure>
-<p><strong>Pricing and Data Retention:</strong></p>
-<ul>
-<li>Free tier: 7 days of performance data history and 1 million API requests per month</li>
-<li>Paid plans: 1 to 24 months of data retention, starting at $3.50 per instance per month</li>
-</ul>
-<p><strong>Key Features:</strong></p>
-<ul>
-<li>Load chart to visualize database load over time</li>
-<li>Top Activity Table to identify resource-intensive SQL statements</li>
-<li>Counter metrics for CPU usage, disk I/O, lock waits, and more</li>
-<li>SQL statement analysis and execution plan viewing</li>
-<li>Integration with CloudWatch for alarms, dashboards, and advanced monitoring</li>
-</ul>
-<p>Performance Insights helps you monitor, analyze, and optimize your RDS databases, ensuring responsive applications, efficient resource utilization, and cost management.</p>
-<h2 id="related-video-from-youtube">Related video from YouTube</h2>
-<iframe allowfullscreen="" frameborder="0" loading="lazy" src="https://www.youtube.com/embed/YLIzUrXRzd0"></iframe><h2 id="prerequisites-for-using-performance-insights">Prerequisites for Using Performance Insights</h2>
-<h3 id="supported-rds-database-engines">Supported RDS Database Engines</h3>
-<p>Performance Insights works with several RDS database engines, including:</p>
-<figure><table>
-<thead>
-<tr>
-<th>Database Engine</th>
-<th>Supported Versions and Regions</th>
-<th>Instance Class Restrictions</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><a href="https://aws.amazon.com/rds/" target="_blank">Amazon RDS</a> for MariaDB</td>
-<td>See <a href="https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/USER_PerfInsights.Regions.html" target="_blank">Supported Regions and DB engines</a> for details.</td>
-<td>Not supported for:  <br/> <br/>- db.t2.micro  <br/> <br/>- db.t2.small  <br/> <br/>- db.t3.micro  <br/> <br/>- db.t3.small  <br/> <br/>- db.t4g.micro  <br/> <br/>- db.t4g.small</td>
-</tr>
-<tr>
-<td>RDS for MySQL</td>
-<td>See <a href="https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/USER_PerfInsights.Regions.html" target="_blank">Supported Regions and DB engines</a> for details.</td>
-<td>Not supported for:  <br/> <br/>- db.t2.micro  <br/> <br/>- db.t2.small  <br/> <br/>- db.t3.micro  <br/> <br/>- db.t3.small  <br/> <br/>- db.t4g.micro  <br/> <br/>- db.t4g.small</td>
-</tr>
-<tr>
-<td>RDS for Microsoft SQL Server</td>
-<td>See <a href="https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/USER_PerfInsights.Regions.html" target="_blank">Supported Regions and DB engines</a> for details.</td>
-<td>No restrictions</td>
-</tr>
-<tr>
-<td>RDS for PostgreSQL</td>
-<td>See <a href="https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/USER_PerfInsights.Regions.html" target="_blank">Supported Regions and DB engines</a> for details.</td>
-<td>No restrictions</td>
-</tr>
-<tr>
-<td>RDS for Oracle</td>
-<td>See <a href="https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/USER_PerfInsights.Regions.html" target="_blank">Supported Regions and DB engines</a> for details.</td>
-<td>No restrictions</td>
-</tr>
-</tbody>
-</table></figure>
-<h3 id="enabling-performance-insights">Enabling Performance Insights</h3>
-<p>To enable Performance Insights on your RDS instance:</p>
+<p>If you used Amazon RDS Performance Insights to investigate a slow database, the monitoring experience has moved. AWS ended the Performance Insights console experience on July 31, 2026, and migrated its users to CloudWatch Database Insights. The Performance Insights API remains available. This guide explains how to use Database Insights to find what is driving database load, read the signals correctly, and choose a safe next step.</p>
+<p>The most useful starting point is the database load chart. It breaks active sessions down by wait event, SQL statement, host, or user. Pair that view with CloudWatch resource metrics and application latency: Database Insights helps explain database activity, while those other signals help show whether the issue is CPU capacity, storage, a lock, a workload change, or something upstream.</p>
+
+<span id="related-video-from-youtube" aria-hidden="true"></span>
+<h2 id="performance-insights-transition">What changed from Performance Insights?</h2>
+<p>Performance Insights' former RDS console dashboard is no longer the supported console experience. The old entry point redirects users to CloudWatch Database Insights. Existing RDS monitoring configuration and the Performance Insights API continue to use names such as <code>EnablePerformanceInsights</code>; their presence in an API request or infrastructure template does not mean the retired console is still in use. See the current <a href="https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/Database-Insights.html" target="_blank" rel="noopener noreferrer">CloudWatch Database Insights overview</a> and the <a href="https://docs.aws.amazon.com/performance-insights/latest/APIReference/Welcome.html" target="_blank" rel="noopener noreferrer">Performance Insights API reference</a> for the current product and API details.</p>
+<p>Database Insights is the monitoring experience for Amazon RDS and Amazon Aurora. It has Standard and Advanced modes with different capabilities. Support and configuration details depend on the database engine, Region, and instance class, so check the current AWS support page for the database you run before changing its settings.</p>
+
+<h2 id="prerequisites-for-using-performance-insights">Before you use Database Insights</h2>
+<h3 id="supported-rds-database-engines">Check engine, Region, and instance support</h3>
+<p>Database Insights covers Amazon RDS for MariaDB, MySQL, PostgreSQL, Oracle, and SQL Server, as well as supported Amazon Aurora databases. Exact engine versions, Regions, and instance classes vary. Use the current <a href="https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/USER_DatabaseInsights.Engines.html" target="_blank" rel="noopener noreferrer">Amazon RDS Database Insights support matrix</a> and the separate Aurora matrix instead of relying on a copied list of versions or small-instance exclusions.</p>
+<p>This article focuses on managed RDS and Aurora databases. Database Insights also has a separate setup for self-managed PostgreSQL on EC2; its modes and configuration are different.</p>
+
+<h3 id="enabling-performance-insights">Enable the appropriate Database Insights mode</h3>
+<p>For an RDS instance or Multi-AZ DB cluster, select Database Insights when creating or modifying the database. Standard mode provides the core DB load and top-contributor views. Advanced mode adds capabilities such as fleet views, detailed per-query statistics, selected execution-plan and lock analysis, and process-level operating-system views when their prerequisites are met. The supported features differ by engine and Region.</p>
+<p>When a workflow or template still refers to Performance Insights, consult the current RDS instructions for the corresponding Database Insights setting. Do not assume that an older console walkthrough still matches today's labels or available choices.</p>
+
+<h3 id="required-iam-permissions">Grant access to the data people need</h3>
+<p>Database Insights uses permissions across CloudWatch and RDS; features that display logs also depend on CloudWatch Logs access. Use the current AWS <a href="https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/Database-Insights-Get-Started.html" target="_blank" rel="noopener noreferrer">Database Insights permissions guidance</a> to scope access for your account and enabled features. SQL text and workload dimensions can reveal sensitive application or customer details, so limit dashboard and query-text access to the people who need it.</p>
+
+<h2 id="enabling-performance-insights-for-rds">Turn on and configure Database Insights</h2>
+<h3 id="enabling-during-rds-instance-creation">When creating a database</h3>
 <ol>
-<li>Modify your RDS instance settings</li>
-<li>Choose the desired retention period and time zone for performance data</li>
-<li>Specify the data retention period using the <code>PerformanceInsightsRetentionPeriod</code> parameter</li>
+<li>In the Amazon RDS console, start creating a supported DB instance or Multi-AZ DB cluster.</li>
+<li>In the Database Insights settings, choose Standard or Advanced if both are available for that engine and Region.</li>
+<li>Review the retention choice, encryption key, and any feature-specific requirements shown for the database.</li>
+<li>Create the database, then open its view in the CloudWatch Database Insights console to confirm that load data is appearing.</li>
 </ol>
-<h3 id="required-iam-permissions">Required IAM Permissions</h3>
-<p>To access and manage Performance Insights, you need the following IAM permissions:</p>
+<p>Console choices can vary by database type. Follow the linked AWS procedure for the engine you are creating rather than treating these steps as a universal list of settings.</p>
+
+<h3 id="enabling-for-existing-rds-instances">When modifying an existing database</h3>
+<p>Choose the DB instance or cluster in the RDS console, select <strong>Modify</strong>, and review the Database Insights section. Pick the mode and retention appropriate for the workload, then apply the change using the options AWS presents. For a cluster, check whether monitoring settings are managed at the cluster level; do not try to change a setting independently on an instance when the cluster owns it.</p>
+<p>For API or infrastructure-as-code changes, use the current engine-specific RDS documentation. AWS still uses Performance Insights API parameter names for some Database Insights settings, and Advanced mode requirements can differ between service-level summaries and engine-specific procedures.</p>
+
+<h3 id="data-retention-and-pricing">Understand modes, retention, and cost</h3>
+<p>The current CloudWatch Database Insights overview describes these retention options:</p>
 <ul>
-<li><code>rds:DescribeDBInstances</code></li>
-<li><code>rds:ModifyDBInstance</code></li>
-<li><code>rds:CreateDBInstanceReadReplica</code></li>
-<li><code>rds:RestoreDBInstanceFromS3</code></li>
+<li><strong>Standard mode:</strong> up to 7 days of detailed database and per-query metrics at no additional charge; retention from 1 to 24 months is paid at the same price as Performance Insights.</li>
+<li><strong>Advanced mode:</strong> this is paid monitoring, with 1 to 24 months of detailed database and per-query metrics retention included in the mode's price.</li>
 </ul>
-<p>Create a custom IAM policy granting these permissions for secure, authorized usage.</p>
-<h2 id="enabling-performance-insights-for-rds">Enabling Performance Insights for RDS</h2>
-<p>Turning on Performance Insights for your RDS databases is a straightforward process. You can enable it during instance creation or for existing instances.</p>
-<h3 id="enabling-during-rds-instance-creation">Enabling During RDS Instance Creation</h3>
-<p>When creating a new RDS instance:</p>
+<p>These statements describe retention for those metrics; they do not mean that the database, CloudWatch, logs, or every Advanced feature has no cost. Check the <a href="https://aws.amazon.com/cloudwatch/pricing/" target="_blank" rel="noopener noreferrer">current CloudWatch pricing page</a> for charges tied to your configuration and Region.</p>
+<p>AWS documentation is not fully aligned: the CloudWatch mode overview lists flexible 1–24 month retention for Advanced mode, while the current <a href="https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/USER_DatabaseInsights.TurningOnAdvanced.html" target="_blank" rel="noopener noreferrer">RDS Advanced-mode setup procedure</a> still specifies a 15-month minimum (465 days) for enabling it. Do not copy a fixed retention value from an older CLI example. Check the current console or engine-specific procedure for the exact database you are changing, and confirm the applicable cost before applying the change.</p>
+
+<h2 id="understanding-the-performance-insights-dashboard">Read the Database Insights dashboard</h2>
+<h3 id="dashboard-overview">Fleet and database views</h3>
+<p>Database Insights offers a fleet view for finding databases that need attention and an instance view for investigating one database. The instance view brings the database load chart and related metrics together. Select a DB instance, choose the time range that matches the reported symptom, then compare the same interval with application latency, request volume, database events, and CloudWatch metrics.</p>
+
+<h3 id="load-chart-explained">What the load chart shows</h3>
+<p>Database load, or <code>DBLoad</code>, is measured as average active sessions (AAS). An active session has submitted work and is either running on the CPU or waiting for a resource. AAS is therefore a measure of concurrent database activity, not a CPU percentage and not a count of every open connection.</p>
+<p>The chart can divide load by dimensions such as waits and SQL. A maximum-vCPU line gives a reference for the instance's CPU capacity. Read that line together with the wait breakdown: load above the line with CPU as the main load component can indicate CPU pressure, while load dominated by storage or lock waits points to a different investigation.</p>
+
+<h3 id="top-activity-table-importance">Use top contributors to narrow the search</h3>
+<p>The Top SQL view ranks statement patterns by their contribution to DB load and shows related statistics. It helps distinguish a widely used query pattern from an isolated slow request. A high ranking identifies where to investigate; it does not prove that the SQL itself is defective. Compare the statement's load, call rate, and timing with the period when the application slowed down.</p>
+
+<h2 id="analyzing-database-load">Analyze database load</h2>
+<h3 id="average-active-sessions-(aas)">Interpret average active sessions</h3>
+<p>AAS is the average number of sessions actively doing database work during an interval. If AAS rises with application traffic, the database may simply be serving more work. If latency rises while traffic is steady, inspect which waits and SQL statements make up the increase. Idle connections do not count as active sessions just because they are open.</p>
+<p>Compare DB load with the maximum-vCPU reference and the database's CloudWatch <code>CPUUtilization</code> metric. AAS can be high because sessions are waiting; it does not by itself establish CPU saturation. The AWS <a href="https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/USER_PerfInsights.Overview.ActiveSessions.html" target="_blank" rel="noopener noreferrer">database load guide</a> explains AAS, active sessions, waits, and dimensions.</p>
+
+<h3 id="identifying-performance-bottlenecks">Find the dominant constraint</h3>
+<p>Start with the largest DB load contributors, then check the matching resource signals and database context:</p>
+<ul>
+<li><strong>CPU activity:</strong> compare DB load, CPU utilization, and the top SQL statements. Heavy CPU load may call for query tuning, connection control, or a capacity change, depending on workload and instance headroom.</li>
+<li><strong>Storage or I/O waits:</strong> compare read and write latency, throughput, queue depth, and the statements driving reads or writes. Confirm the relevant storage and engine limits before changing storage.</li>
+<li><strong>Lock waits:</strong> inspect the transactions and statements involved, their duration, and whether a long-running transaction is blocking others. Lock diagnosis is available only for supported engines and modes.</li>
+<li><strong>Other engine-specific waits:</strong> use the database engine's wait-event documentation and inspect the corresponding counter or log. A wait name is a clue about where a session stopped, not a complete root-cause diagnosis.</li>
+</ul>
+<p>Use the evidence to form a hypothesis, then validate it against the application symptom and a comparable workload period before changing instance size, indexing, query shape, or connection behavior.</p>
+
+<h3 id="analyzing-load-by-dimensions">Slice load by waits, SQL, host, and user</h3>
+<p>Each dimension answers a different question. The wait breakdown separates CPU activity from sessions waiting on I/O, locks, or other engine resources. SQL points to the statement patterns contributing to load. Host and user can help identify where or under which database identity the work runs. Use these dimensions together: for example, a storage wait concentrated in one SQL pattern is more actionable than a database-wide I/O counter alone.</p>
+<p>Availability of dimensions and detail differs by engine. Keep in mind that a host or database user is not necessarily the same thing as an application service, and the dashboard cannot infer application ownership when the database does not expose that association.</p>
+
+<h2 id="monitoring-performance-counters">Combine database load with resource metrics</h2>
+<h3 id="native-and-non-native-counters">Separate database and operating-system signals</h3>
+<p>Database Insights' DB load and wait events describe database sessions. Amazon CloudWatch's RDS metrics describe other signals, such as CPU utilization, freeable memory, connections, storage throughput, and latency. Enhanced Monitoring exposes operating-system-level metrics; Advanced Database Insights can show detailed processes when <a href="https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/USER_Monitoring.OS.html" target="_blank" rel="noopener noreferrer">RDS Enhanced Monitoring</a> is enabled. These signals answer related but different questions, so do not label an OS metric as a database wait or treat every counter as query attribution.</p>
+
+<h3 id="common-performance-counters">Choose metrics that fit the symptom</h3>
+<p>For an apparent CPU issue, compare CPU utilization with DB load and the CPU portion of DB load. For an I/O issue, examine the relevant read/write latency and throughput metrics along with I/O waits. For connection pressure, look at connection counts and the sessions consuming load. The metric set and names vary by engine; compare a useful baseline and the affected interval instead of relying on a single universal threshold.</p>
+
+<h2 id="analyzing-sql-statements-and-execution-plans">Investigate SQL statements and plans</h2>
+<h3 id="understanding-sql-statistics-and-digests">Read statement patterns and statistics</h3>
+<p>Top SQL commonly groups statements with the same parameterized shape into a digest. This reduces noise from queries that differ only in literal values. Use the digest to locate a costly pattern, then inspect its call volume and available query-level statistics. The exact statistics depend on the database engine and mode.</p>
+
+<h3 id="analyzing-top-sql-statements">Prioritize SQL that explains the incident</h3>
 <ol>
-<li>Open the Amazon RDS console and choose the instance you want to create.</li>
-<li>Click "Modify".</li>
-<li>Scroll down to the "Performance Insights" section.</li>
-<li>Check the box to "Enable Performance Insights".</li>
-<li>Choose the data retention period and time zone.</li>
-<li>Click "Continue" and review the changes.</li>
-<li>Click "Modify DB instance" to save.</li>
+<li>Choose the time range when user-facing latency or errors increased.</li>
+<li>Rank Top SQL by contribution to DB load, and compare the leading statements with the normal period.</li>
+<li>Check whether a statement became more frequent, more expensive per call, or both.</li>
+<li>Inspect the query and related database metrics before changing indexes, query structure, or application behavior.</li>
 </ol>
-<h3 id="enabling-for-existing-rds-instances">Enabling for Existing RDS Instances</h3>
-<p>To enable Performance Insights for an existing RDS instance:</p>
-<ol>
-<li>Open the Amazon RDS console and choose the instance to modify.</li>
-<li>Click "Modify".</li>
-<li>Scroll down to the "Performance Insights" section.</li>
-<li>Check the box to "Enable Performance Insights".</li>
-<li>Choose the data retention period and time zone.</li>
-<li>Click "Continue" and review the changes.</li>
-<li>Click "Modify DB instance" to save.</li>
-</ol>
-<h3 id="data-retention-and-pricing">Data Retention and Pricing</h3>
-<p>Performance Insights offers a free tier with 7 days of performance data history and 1 million API requests per month. You can purchase longer retention periods from 1 to 24 months, based on your needs.</p>
+<p>High total load and high latency per call are different signals. A fast query called extremely often can dominate load; a slow query called rarely may have little effect on the overall database.</p>
+
+<h3 id="viewing-and-analyzing-execution-plans">Use execution plans when supported</h3>
+<p>Execution plans show how the database engine intends to access and combine data. Database Insights plan capture and guided analysis require Advanced mode and are available only for selected engines. Check the current feature matrix for your engine before expecting plans in the console. Review a plan with the query's statistics and schema; a scan or join is not automatically a defect without workload context.</p>
+
+<h2 id="integrating-with-cloudwatch">Use CloudWatch for context and alerting</h2>
+<h3 id="publishing-metrics-to-cloudwatch">Know what is already available</h3>
+<p>Database Insights is a CloudWatch experience, and supported RDS metrics are available in CloudWatch for graphs and alarms. Advanced mode can also <a href="https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/USER_PerfInsights.Enabling.html" target="_blank" rel="noopener noreferrer">import Performance Insights counter metrics into CloudWatch automatically</a>. You do not need to build a Lambda function that copies every metric through the API just to use the built-in database views. The Performance Insights API remains available for custom integrations or workflows that need it.</p>
+
+<h3 id="setting-up-cloudwatch-alarms-and-dashboards">Build alerts around a symptom</h3>
+<p>Choose a metric or alarm condition that corresponds to a user-visible problem or a confirmed capacity risk. Combine a DB load signal with a resource or application metric when that reduces false alarms, and set periods and evaluation rules from observed workload behavior. Avoid paging on a short, harmless spike. See the related guide to <a href="/blog/cloudwatch-alarms-best-practices-for-thresholds-and-conditions/">CloudWatch alarm thresholds and conditions</a> for practical alarm design.</p>
+
+<h3 id="integration-with-other-aws-monitoring-tools">Correlate the full request path</h3>
+<p>CloudWatch metrics and logs add resource and event context; application tracing or service telemetry can show which upstream request generated work. Use these together with database waits and SQL to distinguish a database bottleneck from a traffic surge or application behavior. Slow SQL visibility in Database Insights requires database log export to CloudWatch Logs and the engine-specific configuration described in the AWS guide.</p>
+
+<h2 id="best-practices-for-performance-insights">A practical troubleshooting workflow</h2>
+<h3 id="using-performance-insights-effectively">Start with one incident window</h3>
+<ul>
+<li>Record the symptom, affected database, and time window from the application or alert.</li>
+<li>Compare that interval with a normal period at similar traffic levels.</li>
+<li>Use DB load, wait events, and Top SQL to identify the largest change.</li>
+<li>Check matching CloudWatch metrics, events, and logs before deciding on a cause.</li>
+<li>After a change, compare the same signals under a representative workload and confirm application latency improved.</li>
+</ul>
+
+<h3 id="optimizing-database-performance">Tune the cause, not just the largest number</h3>
+<p>If SQL contributes most of the load, inspect query frequency, plans, indexes, and the application call pattern. If waits are caused by storage, locks, or a constrained instance, check those resources and their limits. Make one well-scoped change at a time where practical and measure the result. For broader RDS tuning strategies, see the <a href="/blog/aws-rds-blog-insights-performance-tuning/">RDS performance tuning guide</a>.</p>
+
+<h3 id="troubleshooting-performance-issues">Know what the dashboard cannot prove</h3>
+<p>Database Insights samples database activity and presents selected metrics. It does not, on its own, prove that a specific SQL statement caused application latency, that a CPU spike requires a larger class, or that every query pattern is unhealthy. Confirm the timing and impact with application metrics, resource headroom, database logs, and a repeatable test when the proposed change carries operational risk.</p>
+
+<h2 id="comparison-with-other-monitoring-tools">How the monitoring signals fit together</h2>
+<h3 id="comparison-table">Compare the question each view answers</h3>
 <figure><table>
 <thead>
-<tr>
-<th>Retention Period</th>
-<th>Price</th>
-</tr>
+<tr><th>Signal or tool</th><th>What it helps answer</th><th>What it does not establish alone</th></tr>
 </thead>
 <tbody>
-<tr>
-<td>7 days (free tier)</td>
-<td>Free</td>
-</tr>
-<tr>
-<td>1 month</td>
-<td>$3.50 per database instance per month</td>
-</tr>
-<tr>
-<td>12 months</td>
-<td>$37.00 per database instance per month</td>
-</tr>
-<tr>
-<td>24 months</td>
-<td>$63.00 per database instance per month</td>
-</tr>
+<tr><td>Database Insights DB load and waits</td><td>How many sessions are active, what they are waiting for, and which SQL patterns contribute most to load.</td><td>Whether the application symptom came only from the database, or which resource change will fix it.</td></tr>
+<tr><td>Amazon CloudWatch RDS metrics</td><td>How CPU, memory, connections, storage performance, and other supported resource measures changed over time.</td><td>Which statement or transaction produced a metric change.</td></tr>
+<tr><td>RDS Enhanced Monitoring and database logs</td><td>Operating-system process detail and engine-specific diagnostic records when enabled and configured.</td><td>A complete workload explanation without correlating the data to DB load and application behavior.</td></tr>
 </tbody>
 </table></figure>
-<p>For more details on pricing and data retention options, see the <a href="https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/USER_PerfInsights.Pricing.html" target="_blank">Pricing and data retention for Performance Insights</a> documentation.</p>
-<h2 id="understanding-the-performance-insights-dashboard">Understanding the Performance Insights Dashboard</h2>
-<h3 id="dashboard-overview">Dashboard Overview</h3>
-<p>The Performance Insights dashboard provides a clear view of your database's performance. It has:</p>
-<ul>
-<li><strong>Load Chart</strong>: Shows the database load over time, including the average active sessions (AAS) and maximum CPU capacity.</li>
-<li><strong>Top Activity Table</strong>: Lists the SQL statements using the most resources, with details on wait times and CPU usage.</li>
-<li><strong>Counter Metrics</strong>: Additional performance data like connections, queries, and locks.</li>
-</ul>
-<h3 id="load-chart-explained">Load Chart Explained</h3>
-<p>The load chart is a key part of the dashboard. It visually shows your database load over time, helping you spot performance issues and trends. The chart displays:</p>
-<ul>
-<li><strong>Average Active Sessions (AAS)</strong>: The average number of active sessions at a time. This measures the database load.</li>
-<li><strong>Maximum vCPU Capacity</strong>: The maximum CPU capacity available.</li>
-</ul>
-<p>Analyzing the load chart lets you see if your database is experiencing high load and take steps to optimize performance.</p>
-<h3 id="top-activity-table-importance">Top Activity Table Importance</h3>
-<p>The top activity table is another essential part of the dashboard. It lists the SQL statements using the most resources, along with:</p>
-<ul>
-<li>Wait times</li>
-<li>CPU usage</li>
-</ul>
-<p>This information helps you find the root cause of performance problems, like slow queries or poor indexing. By analyzing this table, you can optimize performance by tuning the most resource-intensive SQL statements. The table breaks down each statement's impact on wait times and CPU usage, giving you insights into improving database performance.</p>
-<h2 id="analyzing-database-load">Analyzing Database Load</h2>
-<p>Analyzing database load is crucial for understanding your database's performance and identifying areas that need improvement. Performance Insights provides several metrics and dimensions to help you analyze database load effectively.</p>
-<h3 id="average-active-sessions-(aas)">Average Active Sessions (AAS)</h3>
-<p>Average Active Sessions (AAS) is a key metric that measures the average number of active sessions at a given time. A high AAS value indicates a high database load, which can lead to performance issues.</p>
-<p>To analyze AAS, you can:</p>
-<ul>
-<li>View the load chart in the Performance Insights dashboard, which displays the AAS value over time.</li>
-<li>Use the Top Activity Table to identify the SQL statements contributing to the high AAS value.</li>
-</ul>
-<h3 id="identifying-performance-bottlenecks">Identifying Performance Bottlenecks</h3>
-<p>Performance Insights provides metrics to help you identify performance bottlenecks, such as:</p>
-<figure><table>
-<thead>
-<tr>
-<th>Metric</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>CPU usage</td>
-<td>Identifies if your SQL statements or database configuration need optimization.</td>
-</tr>
-<tr>
-<td>Wait times</td>
-<td>Helps pinpoint the cause of delays, such as CPU waits or I/O waits.</td>
-</tr>
-<tr>
-<td>Locks</td>
-<td>Indicates if there are issues with concurrent access to resources.</td>
-</tr>
-<tr>
-<td>Disk I/O</td>
-<td>Shows if disk performance is causing slowdowns.</td>
-</tr>
-</tbody>
-</table></figure>
-<p>By analyzing these metrics, you can identify the root cause of performance issues and take corrective action.</p>
-<h3 id="analyzing-load-by-dimensions">Analyzing Load by Dimensions</h3>
-<p>Performance Insights allows you to analyze load by various dimensions, including:</p>
-<ul>
-<li><strong>Waits</strong>: Identify the types of waits contributing to performance issues.</li>
-<li><strong>SQL statements</strong>: Find the most resource-intensive statements and optimize them.</li>
-<li><strong>Hosts</strong>: Identify performance issues related to specific hosts.</li>
-<li><strong>Users</strong>: Identify performance issues related to specific users.</li>
-</ul>
-<p>Analyzing load by dimensions provides a deeper understanding of database performance and helps you pinpoint areas that need optimization.</p>
-<p>In the next section, we'll explore monitoring performance counters in Performance Insights.</p>
-<h2 id="monitoring-performance-counters">Monitoring Performance Counters</h2>
-<p>Monitoring performance counters is key to understanding your database's performance. Performance Insights provides counters that help identify bottlenecks and optimize your database.</p>
-<h3 id="native-and-non-native-counters">Native and Non-Native Counters</h3>
-<p>Performance Insights offers two types of counters:</p>
-<figure><table>
-<thead>
-<tr>
-<th>Counter Type</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Native</td>
-<td>Specific to the database engine, providing detailed performance insights. For example, <a href="https://aws.amazon.com/rds/aurora/" target="_blank">Amazon Aurora</a> has native counters for CPU usage, disk I/O, and lock waits.</td>
-</tr>
-<tr>
-<td>Non-Native</td>
-<td>Generic counters that apply to multiple database engines, such as CPU usage and disk I/O.</td>
-</tr>
-</tbody>
-</table></figure>
-<p>Understanding the difference between native and non-native counters helps you monitor performance effectively.</p>
-<h3 id="common-performance-counters">Common Performance Counters</h3>
-<p>Here are some common performance counters in Performance Insights:</p>
-<figure><table>
-<thead>
-<tr>
-<th>Counter</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>CPU Usage</td>
-<td>Percentage of CPU utilized by the database instance.</td>
-</tr>
-<tr>
-<td>Disk I/O</td>
-<td>Number of disk I/O operations per second.</td>
-</tr>
-<tr>
-<td>Lock Waits</td>
-<td>Time spent waiting for locks on database resources.</td>
-</tr>
-<tr>
-<td>Row Locks</td>
-<td>Number of row locks acquired by the database instance.</td>
-</tr>
-</tbody>
-</table></figure>
-<p>Monitoring these counters helps identify performance bottlenecks, optimize database configuration, and improve overall performance.</p>
-<p>In the next section, we'll explore analyzing SQL statements and execution plans in Performance Insights.</p>
-<h2 id="analyzing-sql-statements-and-execution-plans">Analyzing SQL Statements and Execution Plans</h2>
-<p>Analyzing SQL statements and execution plans is crucial for optimizing database performance. AWS Performance Insights provides tools to identify and address performance bottlenecks caused by resource-intensive queries.</p>
-<h3 id="understanding-sql-statistics-and-digests">Understanding SQL Statistics and Digests</h3>
-<p>Performance Insights collects SQL statistics and digests, which help identify the top SQL statements contributing to database load. A SQL digest is a summarized representation of a SQL statement, grouping similar queries together. This feature allows you to focus on the most resource-intensive queries and optimize them.</p>
-<h3 id="analyzing-top-sql-statements">Analyzing Top SQL Statements</h3>
-<p>To analyze top SQL statements:</p>
-<ol>
-<li>Open the Performance Insights dashboard and go to the <strong>Top SQL</strong> tab.</li>
-<li>Select a time range for analyzing the top SQL statements.</li>
-<li>The top SQL statements are displayed, along with their corresponding database load and average active sessions.</li>
-</ol>
-<p>Analyzing the top SQL statements helps you identify and optimize the queries that contribute the most to database load.</p>
-<h3 id="viewing-and-analyzing-execution-plans">Viewing and Analyzing Execution Plans</h3>
-<p>Execution plans are crucial for query optimization. Performance Insights allows you to view and analyze execution plans for your top SQL statements:</p>
-<ol>
-<li>Select a top SQL statement from the <strong>Top SQL</strong> tab.</li>
-<li>Click on the <strong>Plans</strong> tab to view the execution plan.</li>
-<li>Analyze the execution plan to identify performance bottlenecks, such as inefficient joins or indexing issues.</li>
-</ol>
-<figure><table>
-<thead>
-<tr>
-<th>Step</th>
-<th>Action</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>1</td>
-<td>Select a top SQL statement from the <strong>Top SQL</strong> tab</td>
-</tr>
-<tr>
-<td>2</td>
-<td>Click on the <strong>Plans</strong> tab to view the execution plan</td>
-</tr>
-<tr>
-<td>3</td>
-<td>Analyze the execution plan to identify performance bottlenecks, such as inefficient joins or indexing issues</td>
-</tr>
-</tbody>
-</table></figure>
-<h2 id="integrating-with-cloudwatch">Integrating with CloudWatch</h2>
-<p>Performance Insights can work with <a href="https://aws.amazon.com/cloudwatch/" target="_blank">Amazon CloudWatch</a> to improve monitoring and alerting. This integration lets you:</p>
-<ul>
-<li>View and set alarms on Performance Insights metrics in CloudWatch</li>
-<li>Combine these metrics with other CloudWatch metrics on one dashboard</li>
-</ul>
-<h3 id="publishing-metrics-to-cloudwatch">Publishing Metrics to CloudWatch</h3>
-<p>You can export Performance Insights metrics to CloudWatch. This allows you to use CloudWatch's advanced monitoring features, like:</p>
-<ul>
-<li>Anomaly detection</li>
-<li>Metric math</li>
-<li>Statistics</li>
-</ul>
-<p>You can also export the metrics to external monitoring tools like Prometheus and Grafana.</p>
-<p>To publish metrics to CloudWatch:</p>
-<ol>
-<li>Use the Performance Insights API to retrieve metrics</li>
-<li>Use the CloudWatch API to publish metrics to CloudWatch</li>
-</ol>
-<p>You can automate this process by creating a Lambda function and scheduling it in <a href="https://aws.amazon.com/eventbridge/" target="_blank">Amazon EventBridge</a> to run at specific times.</p>
-<h3 id="setting-up-cloudwatch-alarms-and-dashboards">Setting Up CloudWatch Alarms and Dashboards</h3>
-<p>Once Performance Insights metrics are in CloudWatch, you can:</p>
-<ul>
-<li>Set up alarms based on key performance indicators (KPIs), such as:
-<ul>
-<li>DB Load</li>
-<li>DB Load CPU</li>
-<li>DB Load Non-CPU</li>
-</ul>
-</li>
-<li>Create custom dashboards to visualize Performance Insights metrics alongside other CloudWatch metrics</li>
-</ul>
-<p>This gives you a comprehensive view of your database performance and notifications when thresholds are breached.</p>
-<h3 id="integration-with-other-aws-monitoring-tools">Integration with Other AWS Monitoring Tools</h3>
-<p>Integrating Performance Insights with other AWS monitoring tools like Amazon CloudWatch Logs and AWS X-Ray provides a complete monitoring solution. You can:</p>
-<ul>
-<li>Use CloudWatch Logs to analyze log data</li>
-<li>Use X-Ray to trace requests and identify performance bottlenecks</li>
-</ul>
-<h2 id="best-practices-for-performance-insights">Best Practices for Performance Insights</h2>
-<h3 id="using-performance-insights-effectively">Using Performance Insights Effectively</h3>
-<p>To get the most out of Performance Insights, follow these practices:</p>
-<ul>
-<li>Choose the right dimension to analyze the load, such as users or hosts, to identify the root cause of performance issues.</li>
-<li>Use the Top SQL feature to find the most resource-intensive queries and optimize them.</li>
-<li>Set up alarms and dashboards in CloudWatch to get notified of performance issues and view your database performance comprehensively.</li>
-</ul>
-<h3 id="optimizing-database-performance">Optimizing Database Performance</h3>
-<p>Performance Insights provides insights into database performance, but you need to act on them. Here are some strategies:</p>
-<ul>
-<li>Identify and optimize resource-intensive queries to reduce CPU usage and improve overall performance.</li>
-<li>Analyze wait events to identify bottlenecks and take corrective action, such as optimizing database configuration or adjusting application design.</li>
-<li>Use the Average Active Sessions (AAS) metric to identify periods of high load and adjust database resources accordingly.</li>
-</ul>
-<h3 id="troubleshooting-performance-issues">Troubleshooting Performance Issues</h3>
-<p>When performance issues arise, troubleshoot them quickly and effectively:</p>
-<ul>
-<li>Use the Performance Insights dashboard to identify the root cause, such as high CPU usage or wait events.</li>
-<li>Analyze the Top SQL feature to identify and optimize the most resource-intensive queries.</li>
-<li>Use the load chart to identify periods of high load and adjust database resources accordingly.</li>
-</ul>
-<h2 id="comparison-with-other-monitoring-tools">Comparison with Other Monitoring Tools</h2>
-<p>AWS Performance Insights is not the only tool for monitoring databases. There are several other popular options that offer similar features. In this section, we'll compare Performance Insights with other monitoring tools, highlighting its pros and cons.</p>
-<h3 id="comparison-table">Comparison Table</h3>
-<figure><table>
-<thead>
-<tr>
-<th>Feature</th>
-<th>AWS Performance Insights</th>
-<th><a href="https://newrelic.com/" target="_blank">New Relic</a></th>
-<th><a href="https://www.datadoghq.com/" target="_blank">Datadog</a></th>
-<th><a href="https://www.solarwinds.com/" target="_blank">SolarWinds</a></th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Database Support</td>
-<td>MySQL, PostgreSQL, Oracle, SQL Server</td>
-<td>MySQL, PostgreSQL, Oracle, SQL Server, MongoDB</td>
-<td>MySQL, PostgreSQL, Oracle, SQL Server, MongoDB</td>
-<td>MySQL, PostgreSQL, Oracle, SQL Server</td>
-</tr>
-<tr>
-<td>Performance Metrics</td>
-<td>CPU, Memory, Disk I/O, Network I/O</td>
-<td>CPU, Memory, Disk I/O, Network I/O, Query Analysis</td>
-<td>CPU, Memory, Disk I/O, Network I/O, Query Analysis</td>
-<td>CPU, Memory, Disk I/O, Network I/O</td>
-</tr>
-<tr>
-<td>Query Analysis</td>
-<td>Yes</td>
-<td>Yes</td>
-<td>Yes</td>
-<td>Yes</td>
-</tr>
-<tr>
-<td>Alerting and Notifications</td>
-<td>Yes</td>
-<td>Yes</td>
-<td>Yes</td>
-<td>Yes</td>
-</tr>
-<tr>
-<td>Integration with CloudWatch</td>
-<td>Yes</td>
-<td>No</td>
-<td>No</td>
-<td>No</td>
-</tr>
-<tr>
-<td>Pricing</td>
-<td>Free (7 days), Paid (longer retention)</td>
-<td>Paid</td>
-<td>Paid</td>
-<td>Paid</td>
-</tr>
-</tbody>
-</table></figure>
-<p>From the table above, we can see that AWS Performance Insights offers similar features to other popular database monitoring tools. However, its integration with CloudWatch and AWS services makes it a better option for AWS users. Additionally, Performance Insights offers a free tier with 7 days of data retention, making it cost-effective for small to medium-sized databases.</p>
-<p>While Performance Insights is a powerful tool, it may not be the best choice for databases running on non-AWS platforms. In such cases, tools like New Relic, Datadog, or SolarWinds may be more suitable. The choice of monitoring tool depends on the specific needs of the database and the organization.</p>
-<h3 id="pros-and-cons">Pros and Cons</h3>
-<p>Here are some pros and cons of using AWS Performance Insights:</p>
-<p><strong>Pros</strong>:</p>
-<ul>
-<li>Seamless integration with other AWS services like CloudWatch</li>
-<li>Free tier with 7 days of data retention</li>
-<li>Easy to set up and use</li>
-<li>Provides detailed performance metrics and query analysis</li>
-<li>Supports multiple database engines (MySQL, PostgreSQL, Oracle, SQL Server)</li>
-</ul>
-<p><strong>Cons</strong>:</p>
-<ul>
-<li>Limited support for non-AWS databases</li>
-<li>Paid plans can be expensive for longer data retention periods</li>
-<li>May not offer as many advanced features as some third-party tools</li>
-</ul>
-<h3 id="making-the-right-choice">Making the Right Choice</h3>
-<p>When choosing a database monitoring tool, consider the following factors:</p>
-<ul>
-<li>The database engine(s) you need to monitor</li>
-<li>Whether you're using AWS or a different cloud platform</li>
-<li>The level of detail and features you require</li>
-<li>Your budget and data retention needs</li>
-<li>Integration with other tools and services you're using</li>
-</ul>
-<p>For AWS users, Performance Insights can be a great choice, especially for smaller databases or those with limited monitoring requirements. However, for more advanced needs or non-AWS databases, third-party tools like New Relic, Datadog, or SolarWinds may be better suited.</p>
-<p>Ultimately, the right choice depends on your specific requirements and priorities. It's always a good idea to evaluate multiple options and consider their strengths and weaknesses before making a decision.</p>
+
+<h3 id="pros-and-cons">Strengths and limits</h3>
+<p>Database Insights is useful when you need a managed view of RDS/Aurora load, waits, and leading SQL contributors. Its value depends on the engine, Region, mode, retention, and configured log or monitoring prerequisites. CloudWatch resource metrics and Enhanced Monitoring add different context; database-native tools and application tracing may still be needed for details those views do not collect.</p>
+
+<h3 id="making-the-right-choice">Choose a next action from the evidence</h3>
+<p>Use a query-level finding to investigate SQL and its execution plan; use sustained CPU load plus high CPU utilization to evaluate compute capacity; use I/O waits with storage metrics to investigate storage or access patterns; and use lock waits to investigate transaction behavior. If the evidence points to persistent capacity mismatch, the <a href="/blog/rightsizing-rds-instances-step-by-step-guide/">RDS rightsizing guide</a> covers how to compare resource demand before changing an instance class.</p>
+
 <h2 id="conclusion">Conclusion</h2>
-<h3 id="key-points">Key Points</h3>
+<h3 id="key-points">Key points</h3>
 <ul>
-<li>AWS Performance Insights is a powerful monitoring tool for RDS databases, seamlessly integrating with CloudWatch and other AWS services.</li>
-<li>It provides detailed performance metrics, query analysis, and alerting capabilities to help you:
-<ul>
-<li>Identify performance bottlenecks</li>
-<li>Optimize database performance</li>
-<li>Troubleshoot issues quickly</li>
+<li>The Performance Insights console experience ended on July 31, 2026; CloudWatch Database Insights is the current dashboard for RDS and Aurora monitoring.</li>
+<li>The Performance Insights API remains available, and some RDS configuration fields retain the older Performance Insights names.</li>
+<li>DB load is AAS: active sessions running or waiting. It is not a CPU percentage or an open-connection count.</li>
+<li>Read waits, Top SQL, CloudWatch resource metrics, logs, and application signals together before choosing a fix.</li>
+<li>Retention and Advanced-mode setup guidance currently differs between the CloudWatch overview and some engine-specific RDS procedures. Verify the option and price for your database before applying changes.</li>
 </ul>
-</li>
-<li>Using Performance Insights can improve database performance, reduce latency, and enhance overall application performance.</li>
-<li>It offers a cost-effective solution with a free tier for 7 days of data retention, making it suitable for small to medium-sized databases.</li>
-</ul>
-<figure><table>
-<thead>
-<tr>
-<th>Benefit</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Identify Issues</td>
-<td>Pinpoint performance bottlenecks and root causes</td>
-</tr>
-<tr>
-<td>Optimize Performance</td>
-<td>Tune queries and configurations for better efficiency</td>
-</tr>
-<tr>
-<td>Troubleshoot Quickly</td>
-<td>Resolve issues rapidly with detailed insights</td>
-</tr>
-<tr>
-<td>Enhance Applications</td>
-<td>Improve overall application performance and responsiveness</td>
-</tr>
-<tr>
-<td>Cost-Effective</td>
-<td>Free tier with 7 days of data retention</td>
-</tr>
-</tbody>
-</table></figure>
-<p>Performance Insights is a valuable tool for database administrators and developers. By leveraging its features, you can:</p>
-<ul>
-<li>Monitor database performance effectively</li>
-<li>Analyze and optimize resource-intensive queries</li>
-<li>Set up alerts for performance issues</li>
-<li>Visualize metrics alongside other CloudWatch data</li>
-</ul>
-<p>With its user-friendly interface and integration with AWS services, Performance Insights simplifies database monitoring and optimization. It empowers you to deliver high-performing, responsive applications while managing costs efficiently.</p>
-<p>
-<h2>Related posts</h2>
-<ul>
-<li><a href="/blog/aws-rds-blog-insights-performance-tuning/">AWS RDS Blog Insights: Performance Tuning</a></li><li><a href="/blog/aws-redshift-tutorial-for-beginners-first-steps/">AWS Redshift Tutorial for Beginners: First Steps</a></li><li><a href="/blog/aws-lambda-insights-serverless-monitoring-guide/">AWS Lambda Insights: Serverless Monitoring Guide</a></li><li><a href="/blog/10-aws-cost-optimization-strategies-2024/">10 AWS Cost Optimization Strategies 2024</a></li>
-</ul>
-</p>
+<p>For the current feature matrix and setup instructions, start with the <a href="https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/Database-Insights.html" target="_blank" rel="noopener noreferrer">CloudWatch Database Insights documentation</a> and follow its engine-specific RDS or Aurora links.</p>
