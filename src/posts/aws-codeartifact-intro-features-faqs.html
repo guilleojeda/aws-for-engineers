@@ -2,387 +2,97 @@
 layout: post.njk
 templateEngineOverride: html
 tags: posts
-title: "AWS CodeArtifact: Intro, Features, FAQs"
-description: "Discover the features and benefits of AWS CodeArtifact for package management in software development, including secure storage, automation, and integration with popular tools."
+title: "AWS CodeArtifact Guide: Formats, Setup, Pricing, and FAQs"
+description: "Learn what AWS CodeArtifact supports, how domains and repositories differ, how to configure npm access, set token permissions, control package origins, and estimate cost."
 date: "2024-05-01"
 datePublished: "2024-05-01T12:57:07.058000+00:00"
 heroImage: "/assets/media/d9f6b26960ba125f64c2.jpg"
 permalink: "/blog/aws-codeartifact-intro-features-faqs/"
 sourceUrl: "https://awsforengineers.com/blog/aws-codeartifact-intro-features-faqs/"
 dateModified: "2026-10-03"
-updateNote: "Added author attribution and profile information."
+updateNote: "Revised supported formats, repository design, IAM and token guidance, package-origin controls, cleanup, and pricing against current AWS documentation."
 ---
-<p><a href="https://aws.amazon.com/codeartifact/" target="_blank">AWS CodeArtifact</a> is a fully managed service that simplifies package management for software development teams. It stores, publishes, and shares software packages, eliminating the need for setting up and maintaining infrastructure. By integrating with popular package managers and build tools, CodeArtifact streamlines handling of software dependencies and enables secure fetching of public packages within your VPC.</p>
-<p><strong>Key Benefits:</strong></p>
-<ul>
-<li>Reduces overhead of managing artifact servers</li>
-<li>Integrates with popular tools like <a href="https://maven.apache.org/" target="_blank">Maven</a>, <a href="https://gradle.org/" target="_blank">Gradle</a>, <a href="https://www.npmjs.com/" target="_blank">npm</a>, <a href="https://pip.pypa.io/" target="_blank">pip</a></li>
-<li>Provides secure and scalable artifact management</li>
-<li>Enables automation with <a href="https://aws.amazon.com/eventbridge/" target="_blank">Amazon EventBridge</a></li>
-<li>Ensures high availability and durability with multi-AZ and <a href="https://aws.amazon.com/s3/" target="_blank">Amazon S3</a>/DynamoDB storage</li>
-</ul>
-<p><strong>Getting Started:</strong></p>
-<ol>
-<li>Set up an <a href="https://aws.amazon.com/" target="_blank">AWS</a> account and create an IAM user with CodeArtifact access</li>
-<li>Create a CodeArtifact domain</li>
-<li>Create repositories and manage access</li>
-</ol>
-<p><strong>Pricing and Free Tier:</strong></p>
-<figure><table>
-<thead>
-<tr>
-<th>Resource</th>
-<th>Pricing</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Stored packages</td>
-<td>Pay for storage used</td>
-</tr>
-<tr>
-<td>Queries made</td>
-<td>Pay for number of queries</td>
-</tr>
-<tr>
-<td>Data transfer out</td>
-<td>Pay for data transferred out of AWS Region</td>
-</tr>
-<tr>
-<td>Free Tier</td>
-<td>2GB storage, 100,000 requests/month</td>
-</tr>
-</tbody>
-</table></figure>
-<p><strong>Best Practices:</strong></p>
-<ul>
-<li>Organize domains and repositories logically</li>
-<li>Secure artifacts with IAM and encryption</li>
-<li>Integrate CodeArtifact into development workflows</li>
-</ul>
-<p>By following best practices, you can ensure efficient, secure, and scalable package management with AWS CodeArtifact.</p>
-<h2 id="key-features-of-aws-codeartifact">Key Features of <a href="https://aws.amazon.com/codeartifact/" target="_blank">AWS CodeArtifact</a></h2>
-<p><figure><img alt="AWS CodeArtifact" loading="lazy" src="/assets/media/44ee26eed7c724550ba9.jpg"/></figure></p>
-<h3 id="tool-and-package-manager-integration">Tool and Package Manager Integration</h3>
-<p>AWS CodeArtifact supports popular package managers and build tools, making it easy to integrate into existing development workflows. This integration enables developers to use their preferred tools, such as <strong>Maven</strong>, <strong>Gradle</strong>, <strong>npm</strong>, <strong>pip</strong>, and others, to manage software dependencies.</p>
-<figure><table>
-<thead>
-<tr>
-<th>Package Manager/Build Tool</th>
-<th>Supported</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Maven</td>
-<td></td>
-</tr>
-<tr>
-<td>Gradle</td>
-<td></td>
-</tr>
-<tr>
-<td>npm</td>
-<td></td>
-</tr>
-<tr>
-<td>pip</td>
-<td></td>
-</tr>
-<tr>
-<td>Others</td>
-<td></td>
-</tr>
-</tbody>
-</table></figure>
-<h3 id="secure-and-scalable-artifact-management">Secure and Scalable Artifact Management</h3>
-<p>CodeArtifact provides a secure and scalable artifact management system. It integrates with <strong>AWS Identity and Access Management (IAM)</strong> to control access to software packages, ensuring that only authorized users can access and manage packages.</p>
-<p><strong>Security Features:</strong></p>
-<ul>
-<li>Encryption at rest and in transit</li>
-<li>Access control with AWS IAM</li>
-</ul>
-<h3 id="automating-with-amazon-eventbridge">Automating with <a href="https://aws.amazon.com/eventbridge/" target="_blank">Amazon EventBridge</a></h3>
-<p><figure><img alt="Amazon EventBridge" loading="lazy" src="/assets/media/f1cfe682e12b0615afda.jpg"/></figure></p>
-<p>AWS CodeArtifact can be used in conjunction with <strong>Amazon EventBridge</strong> to automate package approval and other workflows. EventBridge enables developers to create event-driven architectures, allowing them to respond to changes in their software development lifecycle.</p>
-<p><strong>Automation Benefits:</strong></p>
-<ul>
-<li>Automate tasks, such as package approval</li>
-<li>Integrate with other AWS services, such as <strong><a href="https://aws.amazon.com/codepipeline/" target="_blank">AWS CodePipeline</a></strong> and <strong><a href="https://aws.amazon.com/codebuild/" target="_blank">AWS CodeBuild</a></strong></li>
-</ul>
-<h3 id="high-availability-and-durability">High Availability and Durability</h3>
-<p>CodeArtifact operates in multiple <strong>Availability Zones</strong> and stores artifact data and metadata in <strong>Amazon S3</strong> and <strong><a href="https://aws.amazon.com/dynamodb/" target="_blank">Amazon DynamoDB</a></strong>. This ensures that packages are highly available and durable, even in the event of an outage.</p>
-<p><strong>High Availability and Durability Features:</strong></p>
-<ul>
-<li>Multiple Availability Zones</li>
-<li>Storage in Amazon S3 and Amazon DynamoDB</li>
-</ul>
-<h2 id="getting-started-with-aws-codeartifact">Getting Started with <a href="https://aws.amazon.com/" target="_blank">AWS</a> CodeArtifact</h2>
-<p><figure><img alt="AWS" loading="lazy" src="/assets/media/2d135ce4df17cc4bb773.jpg"/></figure></p>
-<h3 id="setting-up-aws-account-and-iam-user">Setting Up AWS Account and IAM User</h3>
-<p>Before using AWS CodeArtifact, you need to set up an AWS account and configure an IAM user with the necessary permissions. If you don't have an AWS account, sign up for one on the AWS website. Once you have an account, create an IAM user with the required permissions to access CodeArtifact.</p>
-<p><strong>Create an IAM User:</strong></p>
-<ol>
-<li>Log in to the AWS Management Console and navigate to the IAM dashboard.</li>
-<li>Click on "Users" and then click on "Create user".</li>
-<li>Enter a username and select "Programmatic access" as the access type.</li>
-<li>Attach the necessary policies to the user, such as the "CodeArtifactReadOnlyAccess" or "CodeArtifactFullAccess" policy.</li>
-<li>Click on "Create user" to create the IAM user.</li>
-</ol>
-<h3 id="creating-and-configuring-a-domain">Creating and Configuring a Domain</h3>
-<p>A domain is a CodeArtifact-specific construct that allows grouping and managing multiple CodeArtifact repositories owned by a single organization across multiple AWS accounts. To create a domain, follow these steps:</p>
-<p><strong>Create a Domain:</strong></p>
-<ol>
-<li>Log in to the AWS Management Console and navigate to the CodeArtifact dashboard.</li>
-<li>Click on "Domains" and then click on "Create domain".</li>
-<li>Enter a name for your domain and select the AWS account that will own the domain.</li>
-<li>Choose a KMS key to encrypt your domain's artifacts. You can use an AWS managed KMS key or a KMS key that you manage.</li>
-<li>Click on "Create domain" to create the domain.</li>
-</ol>
-<h3 id="managing-and-using-repositories">Managing and Using Repositories</h3>
-<p>A repository is a collection of packages and artifacts that are stored in a domain. To create a repository, follow these steps:</p>
-<p><strong>Create a Repository:</strong></p>
-<ol>
-<li>Log in to the AWS Management Console and navigate to the CodeArtifact dashboard.</li>
-<li>Click on "Repositories" and then click on "Create repository".</li>
-<li>Enter a name for your repository and select the domain that you created earlier.</li>
-<li>Choose the package manager that you want to use, such as npm or Maven.</li>
-<li>Click on "Create repository" to create the repository.</li>
-</ol>
-<p><strong>Managing Repository Access:</strong></p>
-<p>You can manage access to your repository by specifying who has access to the repository and what level of access they have. You can grant read-only access to the repository, or you can grant write access to allow users to upload packages and artifacts to the repository.</p>
-<p>Remember to upload packages and artifacts to your repository using the CodeArtifact console, the AWS CLI, or your preferred package manager.</p>
-<h2 id="common-questions-about-aws-codeartifact">Common Questions about AWS CodeArtifact</h2>
-<h3 id="general-questions">General Questions</h3>
-<p>AWS CodeArtifact is a fully managed artifact repository service that stores, publishes, and shares software packages used in development. It integrates with popular package managers and build tools like Maven, Gradle, npm, yarn, twine, and pip.</p>
-<h3 id="pricing-and-availability">Pricing and Availability</h3>
-<p><strong>Pricing Model:</strong></p>
-<figure><table>
-<thead>
-<tr>
-<th><strong>Resource</strong></th>
-<th><strong>Pricing</strong></th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Stored software packages</td>
-<td>You only pay for the storage used</td>
-</tr>
-<tr>
-<td>Number of queries made</td>
-<td>You only pay for the number of queries made</td>
-</tr>
-<tr>
-<td>Data transferred out of an AWS Region</td>
-<td>You only pay for the data transferred out</td>
-</tr>
-</tbody>
-</table></figure>
-<p><strong>Free Tier:</strong></p>
-<ul>
-<li>2GB of storage</li>
-<li>100,000 requests per month</li>
-</ul>
-<p>You can estimate your costs using the <a href="https://calculator.aws/" target="_blank">AWS Pricing Calculator</a>.</p>
-<h3 id="authentication-and-cross-account-access">Authentication and Cross-Account Access</h3>
-<p>To authenticate to a repository from the AWS CLI:</p>
-<ol>
-<li>Install the AWS CLI and configure AWS credentials for an IAM user or role with the appropriate permission to access CodeArtifact.</li>
-<li>Use the CLI to call the CodeArtifact GetAuthorizationToken API, which vends auth tokens that can be included in the HTTP Authorization header in requests made by package managers and build tools.</li>
-</ol>
-<p>CodeArtifact repositories support resource policies to enable cross-account access. You can add a resource policy via the console or AWS CLI.</p>
-<h3 id="integrating-with-aws-services">Integrating with AWS Services</h3>
-<p>AWS CodeArtifact integrates with other AWS services, including:</p>
-<ul>
-<li><strong>AWS CodeBuild</strong>: Use CodeArtifact as a package repository for your AWS CodeBuild projects.</li>
-<li><strong>AWS CodePipeline</strong>: Integrate CodeArtifact with AWS CodePipeline to automate your continuous integration and continuous deployment (CI/CD) pipelines.</li>
-<li><strong>AWS CloudFormation</strong>: Manage your artifact repositories as part of your infrastructure as code.</li>
-</ul>
-<h3 id="troubleshooting-common-issues">Troubleshooting Common Issues</h3>
-<p>If you encounter issues with CodeArtifact, check the AWS CodeArtifact documentation and troubleshooting guides for common issues and solutions. You can also contact AWS Support for further assistance. Some common issues include:</p>
-<ul>
-<li>Authentication errors</li>
-<li>Package upload failures</li>
-<li>Repository access issues</li>
-</ul>
-<p>Make sure to check the CodeArtifact logs and error messages to help diagnose and resolve the issues.</p>
-<h2 id="best-practices-for-aws-codeartifact">Best Practices for AWS CodeArtifact</h2>
-<h3 id="organizing-domains-and-repositories">Organizing Domains and Repositories</h3>
-<p>To get the most out of AWS CodeArtifact, it's essential to organize your domains and repositories in a logical and structured way. Here are some best practices to follow:</p>
-<figure><table>
-<thead>
-<tr>
-<th><strong>Best Practice</strong></th>
-<th><strong>Description</strong></th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Separate domains for production and development</td>
-<td>Isolate packages for different environments</td>
-</tr>
-<tr>
-<td>Individual domains per application or business unit</td>
-<td>More isolated permissions and better organization</td>
-</tr>
-<tr>
-<td>Segment experimental and stable packages</td>
-<td>Keep packages organized and easy to manage</td>
-</tr>
-<tr>
-<td>Logically group packages per application, language, or team</td>
-<td>Easy to find and manage related packages</td>
-</tr>
-<tr>
-<td>Size repositories appropriately</td>
-<td>Contain related packages, not too big or too small</td>
-</tr>
-<tr>
-<td>Set up upstream repositories</td>
-<td>Proxy public package registries for easier access</td>
-</tr>
-</tbody>
-</table></figure>
-<p>By following these best practices, you can ensure that your domains and repositories are organized, scalable, and secure.</p>
-<h3 id="securing-aws-codeartifact">Securing AWS CodeArtifact</h3>
-<p>Security is crucial when using AWS CodeArtifact. Here are some best practices to follow:</p>
-<figure><table>
-<thead>
-<tr>
-<th><strong>Best Practice</strong></th>
-<th><strong>Description</strong></th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Use AWS IAM to control access</td>
-<td>Control who can access your repositories and domains</td>
-</tr>
-<tr>
-<td>Enable encryption</td>
-<td>Protect your packages and repositories from unauthorized access</td>
-</tr>
-<tr>
-<td>Use resource policies</td>
-<td>Enable cross-account access to your repositories</td>
-</tr>
-<tr>
-<td>Implement package-level write permissions</td>
-<td>Control who can publish packages</td>
-</tr>
-<tr>
-<td>Use Amazon CloudWatch Events</td>
-<td>Monitor and respond to changes to your packages and repositories</td>
-</tr>
-</tbody>
-</table></figure>
-<p>By following these best practices, you can ensure that your packages and repositories are secure and protected from unauthorized access.</p>
-<h3 id="integrating-into-development-workflows">Integrating into Development Workflows</h3>
-<p>AWS CodeArtifact can be easily integrated into your existing development workflows. Here are some best practices to follow:</p>
-<figure><table>
-<thead>
-<tr>
-<th><strong>Best Practice</strong></th>
-<th><strong>Description</strong></th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Use popular package managers and build tools</td>
-<td>Easy integration with tools like Maven, Gradle, npm, and pip</td>
-</tr>
-<tr>
-<td>Integrate with CI/CD pipelines</td>
-<td>Automate the build, test, and deployment of your packages</td>
-</tr>
-<tr>
-<td>Use AWS CodeArtifact with AWS CodeBuild and AWS CodePipeline</td>
-<td>Create a fully managed CI/CD pipeline</td>
-</tr>
-<tr>
-<td>Use Amazon CloudWatch Events</td>
-<td>Trigger automated workflows in response to changes to your packages and repositories</td>
-</tr>
-</tbody>
-</table></figure>
-<p>By following these best practices, you can ensure that AWS CodeArtifact is seamlessly integrated into your development workflows, making it easier to manage and deploy your packages.</p>
+<p><a href="https://aws.amazon.com/codeartifact/" rel="noopener noreferrer" target="_blank">AWS CodeArtifact</a> is a managed repository for storing, publishing, and sharing software packages. It gives package managers such as npm, pip, Maven, and NuGet a repository endpoint for internal packages and, when configured, packages fetched from public registries. You do not operate the repository servers yourself.</p>
+<p>CodeArtifact supports Cargo, generic, Maven, npm, NuGet, PyPI, Ruby, and Swift package formats. It does not support Docker images; use <a href="https://docs.aws.amazon.com/AmazonECR/latest/userguide/Registries.html" rel="noopener noreferrer" target="_blank">Amazon Elastic Container Registry (ECR)</a> for Docker and OCI container images. <a href="https://docs.aws.amazon.com/codeartifact/latest/ug/packages-overview.html" rel="noopener noreferrer" target="_blank">AWS lists the supported package formats and publishing tools</a>.</p>
+
+<h2 id="key-features-of-aws-codeartifact">How AWS CodeArtifact works</h2>
+<h3 id="tool-and-package-manager-integration">Supported package formats and tools</h3>
+<p>A repository can contain more than one package format. The format is separate from the client you use: Maven and Gradle work with Maven packages, while pip installs Python packages and twine publishes them to PyPI repositories. NuGet and dotnet work with NuGet packages; npm and pnpm use npm repositories. Generic packages let you version files that do not belong to one of the language-specific ecosystems, using the AWS CLI or SDK.</p>
+<p>The AWS CLI's <code>aws codeartifact login</code> helper supports <code>dotnet</code>, <code>npm</code>, <code>nuget</code>, <code>pip</code>, <code>swift</code>, and <code>twine</code>. This list is shorter than the supported format list. For package managers that the helper does not configure, request a token with <code>get-authorization-token</code> and configure the tool using its documented settings. See AWS's <a href="https://docs.aws.amazon.com/codeartifact/latest/ug/tokens-authentication.html" rel="noopener noreferrer" target="_blank">authentication guide</a> and <a href="https://docs.aws.amazon.com/codeartifact/latest/ug/getting-started-install-package-manager.html" rel="noopener noreferrer" target="_blank">package-manager setup overview</a>.</p>
+
+<h3 id="organizing-domains-and-repositories">Domains and repositories have different jobs</h3>
+<p>A <strong>domain</strong> groups repositories and provides an organization-level policy and encryption scope. Package assets and metadata in a domain share one KMS key, and a package asset is stored once per domain even when it is available from several repositories. A repository is the endpoint clients use to fetch or publish packages, and its policies can control access to that endpoint. AWS recommends a shared production domain so teams can find and reuse published artifacts; repositories can separate team, stage, or access needs within it. A repository cannot be moved to another domain, so choose a separate domain when a different encryption or administrative boundary is required. See <a href="https://docs.aws.amazon.com/codeartifact/latest/ug/domain-overview.html" rel="noopener noreferrer" target="_blank">CodeArtifact domain concepts</a>.</p>
+
+<h3 id="upstream-repositories">Upstreams and external connections</h3>
+<p>An <strong>upstream</strong> makes packages in another CodeArtifact repository available through a downstream repository's endpoint. When a package manager requests a version, CodeArtifact checks the downstream repository first, then searches its upstreams in their configured priority order. The first matching version is returned and retained in the downstream repository.</p>
+<p>An <strong>external connection</strong> lets a repository fetch packages from a supported public source such as npmjs.com, Maven Central, PyPI, or NuGet Gallery. A repository can have an external connection or upstream repositories, but not both. A common layout gives one repository an external connection to a public registry, then makes that repository an upstream of team repositories. AWS describes this setup in its guides to <a href="https://docs.aws.amazon.com/codeartifact/latest/ug/external-connection.html" rel="noopener noreferrer" target="_blank">external connections</a> and <a href="https://docs.aws.amazon.com/codeartifact/latest/ug/repo-upstream-behavior.html" rel="noopener noreferrer" target="_blank">upstream search and retention</a>.</p>
+
+<h2 id="getting-started-with-aws-codeartifact">Configure a repository for npm</h2>
+<p>First create a domain and one or more repositories, or ask the platform owner for their names and the AWS Region. To install public npm packages through CodeArtifact, the team repository must have an upstream path to a repository connected to npmjs.com. Then configure a short-lived AWS role for your local session or CI job. The commands below assume a macOS or Linux shell, an AWS CLI profile that supplies temporary role credentials, npm, and an existing repository. If you use npm 10 or newer, AWS requires AWS CLI version 2.9.5 or newer for <code>codeartifact login</code>. Replace every placeholder with your account's values.</p>
+<pre><code>export AWS_PROFILE="YOUR_SSO_OR_ASSUMED_ROLE_PROFILE"
+export AWS_REGION="us-east-1"
+export CODEARTIFACT_DOMAIN="YOUR_DOMAIN"
+export CODEARTIFACT_DOMAIN_OWNER="123456789012"
+export CODEARTIFACT_REPOSITORY="YOUR_NPM_REPOSITORY"
+
+# Confirm which AWS identity this profile uses.
+aws sts get-caller-identity --profile "$AWS_PROFILE"
+
+# Inspect the repository's upstream and external-connection configuration.
+aws codeartifact describe-repository \
+  --domain "$CODEARTIFACT_DOMAIN" \
+  --domain-owner "$CODEARTIFACT_DOMAIN_OWNER" \
+  --repository "$CODEARTIFACT_REPOSITORY" \
+  --region "$AWS_REGION" \
+  --profile "$AWS_PROFILE" \
+  --query 'repository.{upstreams:upstreams,externalConnections:externalConnections}' \
+  --output json
+
+# Configure npm and request a token that expires with the assumed-role session.
+aws codeartifact login \
+  --tool npm \
+  --domain "$CODEARTIFACT_DOMAIN" \
+  --domain-owner "$CODEARTIFACT_DOMAIN_OWNER" \
+  --repository "$CODEARTIFACT_REPOSITORY" \
+  --region "$AWS_REGION" \
+  --profile "$AWS_PROFILE" \
+  --duration-seconds 0
+
+# Check that npm can authenticate and read from the repository.
+npm ping
+
+# If the repository has an npmjs.com upstream, check public package resolution.
+npm view lodash version</code></pre>
+<p>The <code>npm ping</code> command checks authentication and read permission without depending on a particular package. The final command assumes the repository can reach npmjs.com through an upstream. For an internal-only repository, use a package that is already present and that your role may read. These checks do not print the authorization token.</p>
+
+<h2 id="best-practices-for-aws-codeartifact">Security and publishing practices</h2>
+<h3 id="authentication-and-cross-account-access">Grant the role the required permissions</h3>
+<p>To request a CodeArtifact token and configure npm, the IAM user or role needs <code>codeartifact:GetAuthorizationToken</code>, <code>sts:GetServiceBearerToken</code>, and <code>codeartifact:GetRepositoryEndpoint</code>. The <code>sts:GetServiceBearerToken</code> permission must be granted in an identity policy; adding it only to a CodeArtifact domain resource policy has no effect. A consuming role needs <code>codeartifact:ReadFromRepository</code> on the repository. The example's configuration check also requires <code>codeartifact:DescribeRepository</code>. A publishing role needs the format-specific package publishing actions, such as <code>codeartifact:PublishPackageVersion</code>; Maven and NuGet have additional requirements. Keep read and publish roles separate where practical, and scope package and repository permissions to the resources they need. For cross-account access, include the relevant domain or repository resource policy as well as the caller's IAM permissions. Check AWS's <a href="https://docs.aws.amazon.com/codeartifact/latest/ug/tokens-authentication.html" rel="noopener noreferrer" target="_blank">token permission requirements</a>, <a href="https://docs.aws.amazon.com/codeartifact/latest/ug/auth-and-access-control-permissions-reference.html" rel="noopener noreferrer" target="_blank">IAM action reference</a>, and <a href="https://docs.aws.amazon.com/codeartifact/latest/ug/packages-overview.html" rel="noopener noreferrer" target="_blank">publishing permission table</a>.</p>
+
+<h3 id="securing-aws-codeartifact">Treat authorization tokens as secrets</h3>
+<p>A CodeArtifact token is a bearer credential. The default lifetime is 12 hours; you can set it from 900 seconds to 43,200 seconds. When you call <code>login</code> or <code>get-authorization-token</code> using assumed-role credentials, <code>--duration-seconds 0</code> makes the token expire with the remaining role session. Without zero, the token lifetime is independent of the role session and can outlast it. Use a short duration for automation.</p>
+<p>For npm, <code>login</code> writes the endpoint and authorization token to <code>~/.npmrc</code>. Do not commit or cache that file, include it in a container image, or print the token in build logs. In CI, use the job's temporary role credentials and run login in an ephemeral job environment; omit <code>--profile</code> so the AWS CLI uses the job identity. For tools that need a manually configured token, AWS recommends passing it through an environment variable instead of saving it in a file that could be read or checked in. The token lifetime and storage behavior are documented in AWS's <a href="https://docs.aws.amazon.com/codeartifact/latest/ug/tokens-authentication.html" rel="noopener noreferrer" target="_blank">authentication and token guide</a> and <a href="https://docs.aws.amazon.com/codeartifact/latest/ug/npm-auth.html" rel="noopener noreferrer" target="_blank">npm setup guide</a>. For a broader example of temporary identities and safer cloud CI checks, see our <a href="/blog/10-best-practices-for-end-to-end-testing-aws-apps/">AWS end-to-end testing guide</a>.</p>
+
+<h3 id="integrating-into-development-workflows">Control where package versions can come from</h3>
+<p>CodeArtifact package and package-group <strong>origin controls</strong> can allow or block direct publishing and versions ingested from upstream sources. Use them to keep private package names from being fetched from a public registry, a dependency-substitution risk. Review the controls for your own package names and repositories: defaults can depend on how the first version entered the repository. Origin controls govern permitted sources; they do not scan a package or prove that its code is safe. See AWS's guides to <a href="https://docs.aws.amazon.com/codeartifact/latest/ug/package-origin-controls.html" rel="noopener noreferrer" target="_blank">package origin controls</a> and <a href="https://docs.aws.amazon.com/codeartifact/latest/ug/package-group-origin-controls.html" rel="noopener noreferrer" target="_blank">package-group controls</a>.</p>
+
+<h3 id="package-version-publishing">Publish versions deliberately and clean them up carefully</h3>
+<p>Do not reuse a published package version as a general-purpose mutable release. CodeArtifact rejects replacing an existing asset with different content. Some formats, including Maven and PyPI, can add separately named assets to an existing version, which creates a new package-version revision; npm versions have a single asset. Publish a new version for a fix and retain the build inputs needed to reproduce it. The details vary by format, as AWS explains in its <a href="https://docs.aws.amazon.com/codeartifact/latest/ug/packages-overview.html" rel="noopener noreferrer" target="_blank">package publishing documentation</a>.</p>
+<p>Deleting a package version removes it from that repository and can break consumers that resolve it there. AWS recommends copying a version to a backup repository before deleting it. Also check downstream repositories: versions already retained from an upstream remain available there even if the upstream repository, relationship, or source version is later removed. Inventory repositories and consumers before cleanup, and verify each deletion. See AWS's <a href="https://docs.aws.amazon.com/codeartifact/latest/ug/delete-package.html" rel="noopener noreferrer" target="_blank">package deletion guidance</a> and <a href="https://docs.aws.amazon.com/codeartifact/latest/ug/repo-upstream-behavior.html" rel="noopener noreferrer" target="_blank">upstream retention behavior</a>.</p>
+
+<h2 id="pricing-and-availability">How CodeArtifact pricing works</h2>
+<p>AWS bills CodeArtifact based on artifact storage over time, requests, and applicable data transfer out of an AWS Region. Requests used to fetch artifacts from public package sources also count. The service has a monthly Free Tier for storage and requests, but check current terms, rates, and your Region in the <a href="https://aws.amazon.com/codeartifact/pricing/" rel="noopener noreferrer" target="_blank">CodeArtifact pricing page</a> and <a href="https://calculator.aws/" rel="noopener noreferrer" target="_blank">AWS Pricing Calculator</a>; do not rely on old fixed request or storage allowances. Assets are deduplicated within a domain, which can reduce repeated storage for packages shared across repositories.</p>
+
+<span id="faqs"></span>
+<h2 id="common-questions-about-aws-codeartifact">AWS CodeArtifact FAQs</h2>
+<h3 id="what-is-a-codeartifact-package-on-aws%3F">What is a package in CodeArtifact?</h3>
+<p>A package is a named software bundle with one or more versions, assets such as archives or binaries, and package metadata. A version may contain multiple assets, depending on the package format.</p>
+<h3 id="does-aws-codeartifact-support-docker%3F">Does CodeArtifact support Docker images?</h3>
+<p>No. CodeArtifact supports Cargo, generic, Maven, npm, NuGet, PyPI, Ruby, and Swift packages. Use Amazon ECR for Docker or OCI container images.</p>
+<h3 id="is-codeartifact-inside-my-vpc">Is CodeArtifact inside my VPC?</h3>
+<p>CodeArtifact is a managed AWS service. You can access its public service endpoints or configure same-Region interface VPC endpoints using AWS PrivateLink so traffic between your VPC and CodeArtifact stays on the AWS network. A private path requires separate interface endpoints for the CodeArtifact API and repository endpoints. Package downloads also use Amazon S3: most formats need an S3 gateway endpoint for package assets, while Python and Swift do not. Plan all three endpoint paths where needed before removing internet egress. See AWS's <a href="https://docs.aws.amazon.com/codeartifact/latest/ug/vpc-endpoints.html" rel="noopener noreferrer" target="_blank">VPC endpoint guide</a> and <a href="https://docs.aws.amazon.com/codeartifact/latest/ug/create-s3-gateway-endpoint.html" rel="noopener noreferrer" target="_blank">S3 gateway endpoint guidance</a>.</p>
+<h3 id="what-is-the-cost-of-codeartifact%3F">How much does CodeArtifact cost?</h3>
+<p>Cost depends on stored artifacts, requests, and applicable data transfer out of the Region. Check the current AWS pricing page and calculator for your Region and usage rather than using an old fixed Free Tier figure.</p>
+
 <h2 id="conclusion">Conclusion</h2>
-<p>In this guide, we've explored the features and benefits of AWS CodeArtifact, a fully managed artifact repository service that simplifies package management for software development teams.</p>
-<h3 id="key-takeaways">Key Takeaways</h3>
-<p>By using CodeArtifact, you can:</p>
-<ul>
-<li>Centralize your package management</li>
-<li>Reduce overhead and improve collaboration across teams</li>
-<li>Integrate with popular tools and AWS services</li>
-</ul>
-<h3 id="best-practices">Best Practices</h3>
-<p>To get the most out of CodeArtifact, follow these best practices:</p>
-<figure><table>
-<thead>
-<tr>
-<th><strong>Best Practice</strong></th>
-<th><strong>Description</strong></th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Organize domains and repositories logically</td>
-<td>Isolate packages for different environments</td>
-</tr>
-<tr>
-<td>Secure your artifacts with IAM and encryption</td>
-<td>Protect your packages and repositories from unauthorized access</td>
-</tr>
-<tr>
-<td>Integrate CodeArtifact into your development workflows</td>
-<td>Automate package management and deployment</td>
-</tr>
-</tbody>
-</table></figure>
-<p>By following these best practices, you can ensure that your package management and software development workflows are efficient, secure, and scalable.</p>
-<h3 id="start-exploring-codeartifact-today">Start Exploring CodeArtifact Today</h3>
-<p>With AWS CodeArtifact, you can focus on building high-quality software that meets the needs of your users. Start exploring CodeArtifact today and discover how it can simplify your package management and software development workflows.</p>
-<h2 id="faqs">FAQs</h2>
-<h3 id="why-use-aws-codeartifact%3F">Why use AWS CodeArtifact?</h3>
-<p>AWS CodeArtifact is a fully managed service that stores, publishes, and shares software packages. It eliminates the need to set up and maintain infrastructure, allowing you to focus on software development.</p>
-<h3 id="what-is-a-codeartifact-package-on-aws%3F">What is a CodeArtifact package on AWS?</h3>
-<p>A package is a bundle of software and data required to resolve dependencies and launch a program. In CodeArtifact, a package consists of a package name, an optional namespace, a set of package versions, and package-level data.</p>
-<h3 id="does-aws-codeartifact-support-docker%3F">Does AWS CodeArtifact support Docker?</h3>
-<p>Yes, CodeArtifact supports all major package formats, including Docker.</p>
-<h3 id="what-is-the-cost-of-codeartifact%3F">What is the cost of CodeArtifact?</h3>
-<p>CodeArtifact has no up-front charges or commitments. You only pay for the stored software packages, the number of queries made, and the data transferred out of an AWS Region. CodeArtifact provides a monthly free-of-charge storage and request tier.</p>
-<figure><table>
-<thead>
-<tr>
-<th><strong>Resource</strong></th>
-<th><strong>Pricing</strong></th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Stored software packages</td>
-<td>You only pay for the storage used</td>
-</tr>
-<tr>
-<td>Number of queries made</td>
-<td>You only pay for the number of queries made</td>
-</tr>
-<tr>
-<td>Data transferred out of an AWS Region</td>
-<td>You only pay for the data transferred out</td>
-</tr>
-</tbody>
-</table></figure>
-<p><strong>Free Tier:</strong></p>
-<ul>
-<li>2GB of storage</li>
-<li>100,000 requests per month</li>
-</ul>
-<p>You can estimate your costs using the AWS Pricing Calculator.</p>
-<p>
-<h2>Related posts</h2>
-<ul>
-<li><a href="/blog/aws-ec2-and-s3-for-beginners/">AWS EC2 and S3 for Beginners</a></li><li><a href="/blog/learn-aws-s3-fundamentals/">Learn AWS S3 Fundamentals</a></li><li><a href="/blog/aws-engineering-blog-mastering-infrastructure-as-code/">AWS Engineering Blog: Mastering Infrastructure as Code</a></li><li><a href="/blog/aws-services-overview-core-components/">AWS Services Overview: Core Components</a></li>
-</ul>
-</p>
+<p>CodeArtifact is useful when teams need private package publishing, shared dependencies, or a controlled path to public registries. Start with a domain that fits your organization and encryption boundary, use repositories for client endpoints and access patterns, grant short-lived roles only the required actions, and decide explicitly which package origins are allowed. For container images, use ECR.</p>
