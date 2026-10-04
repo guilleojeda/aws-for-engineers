@@ -2,277 +2,95 @@
 layout: post.njk
 templateEngineOverride: html
 tags: posts
-title: "AWS EC2 and S3 for Beginners"
-description: "Learn everything you need to know to get started with AWS EC2 and S3 as a beginner, including key capabilities, integrations, and advanced use cases."
+title: "Amazon EC2 and S3 for Beginners: A Practical Guide"
+description: "Learn how Amazon EC2, S3, and EBS work together, launch an instance safely, connect it to S3, and manage access, networking, and costs."
 date: "2024-01-30"
 datePublished: "2024-01-30T18:56:23.311000+00:00"
+dateModified: "2026-10-04"
+updateNote: "Rewrote the guide with current EC2, S3, access, networking, and pricing guidance."
 heroImage: "/assets/media/6b4ca4d2049e510ef6a2.jpg"
 permalink: "/blog/aws-ec2-and-s3-for-beginners/"
 sourceUrl: "https://awsforengineers.com/blog/aws-ec2-and-s3-for-beginners/"
-dateModified: "2026-10-03"
-updateNote: "Added author attribution and profile information."
 ---
-<p>Most people looking to learn about AWS would agree that getting started with core services like EC2 and S3 can be daunting.</p>
-<p>Well, this post will walk you through <strong>everything</strong> you need to know to get up and running with AWS EC2 and S3 as a beginner...</p>
-<p>You're going to learn exactly what EC2 and S3 are, how to create instances and buckets, establish connectivity, manage access, understand pricing models, and even automate advanced integrations between the two services.</p>
-<h2 id="introduction-to-aws-ec2-and-s3">Introduction to AWS EC2 and S3</h2>
-<p>This introductory section provides an overview of <a href="/">AWS EC2</a> and S3, explaining what they are and their key capabilities for hosting applications and storing data in the cloud.</p>
-<h3 id="understanding-aws-compute-services-with-amazon-ec2">Understanding AWS Compute Services with Amazon EC2</h3>
-<p>Amazon EC2 provides scalable compute capacity in the AWS cloud to support a wide range of workloads. It allows launching various types of virtual machine instances tailored to your application's needs.</p>
-<p>Some key capabilities of Amazon EC2 include:</p>
+<p>Amazon EC2 and Amazon S3 are common starting points for AWS. This practical guide shows how to launch an instance, give it safe access to S3, and understand the storage, networking, and cost choices behind the setup.</p>
+<p>If you want a broader introduction to cloud terms first, see our <a href="/blog/aws-tutorial-for-beginners-step-by-step-core-concepts/">AWS tutorial for beginners</a>.</p>
+<h2 id="introduction-to-aws-ec2-and-s3">Introduction to Amazon EC2 and S3</h2>
+<p>EC2 runs application code on virtual servers. S3 stores objects such as uploads, reports, and backups. Used together, they let an application keep compute capacity separate from data storage. First, it helps to understand how EBS—the disk storage commonly attached to an instance—fits beside them.</p>
+<h2 id="what-is-the-difference-between-ec2-ebs-and-s3%3F">EC2, S3, and EBS: what each service does</h2>
+<h3 id="what-is-ec2-and-s3-in-aws%3F">What do EC2 and S3 provide?</h3>
+<p>Think of EC2 as the computer that runs an application, S3 as an object store the application can call to save or retrieve data, and EBS as a disk-like storage volume for an EC2 instance.</p>
+<h3 id="understanding-aws-compute-services-with-amazon-ec2">Amazon EC2 runs virtual servers</h3>
+<p>An EC2 instance is a virtual server in your AWS account. When you launch one, you choose an Amazon Machine Image (AMI) that supplies its operating system and software, an instance type that sets its compute and memory resources, storage, and network settings. EC2 gives you control over the server; AWS manages the underlying physical infrastructure.</p>
+<p>EC2 does not automatically add or remove instances when demand changes. You can scale capacity yourself or configure services such as EC2 Auto Scaling to do it in response to policies or demand.</p>
+<h3 id="exploring-amazon-simple-storage-service-(s3)">Amazon S3 stores objects</h3>
+<p>Amazon S3 is object storage. You put data into a bucket as objects; each object has data, metadata, and a key that identifies it. A key such as <code>images/logo.png</code> can look like a folder path, but S3 is accessed through its API, the AWS console, or tools such as the AWS CLI. It is not an attached disk or a general-purpose file system. Read more in our guide to <a href="/blog/getting-started-with-aws-s3-essential-concepts/">essential S3 concepts</a>.</p>
+<p>S3 is useful for data that an application needs to store and retrieve as whole objects, including user uploads, static assets, reports, and backups. A bucket is created in an AWS Region. Names in the shared global namespace must be unique across accounts in the AWS partition; AWS also offers an account-regional namespace for names reserved to your account. See AWS's current <a href="https://docs.aws.amazon.com/AmazonS3/latest/userguide/bucketnamingrules.html">general-purpose bucket naming rules</a>.</p>
+<h3 id="what-is-ebs">Amazon EBS provides instance storage</h3>
+<p>EBS volumes provide block storage that an EC2 instance can use like a disk, for example, for its operating system, application files, or a database that needs block storage. An EBS volume normally remains attached when an instance is stopped. What happens on termination depends on that volume's <code>DeleteOnTermination</code> setting: the root volume is deleted by default in common launch flows, while other volume defaults vary. Check the setting and back up anything important before terminating an instance. AWS explains how to <a href="https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/preserving-volumes-on-termination.html">preserve EBS data when an instance is terminated</a>.</p>
+<p>A simple choice is: use EBS for disk-like storage attached to an instance, S3 for objects accessed through an API, and a file service such as Amazon EFS when multiple Linux instances need a shared mounted file system.</p>
+<h2 id="can-we-integrate-s3-with-ec2%3F">How EC2 and S3 work together</h2>
+<h3 id="key-benefits-of-integrating-ec2-with-s3-for-cloud-infrastructure">Why combine EC2 and S3?</h3>
+<p>This separation lets you adjust compute independently of stored objects. Multiple instances or other AWS services can use the same bucket when their permissions allow it.</p>
+<h3 id="use-cases">Common workflows</h3>
+<p>An application on EC2 can call S3 to save a file or read one later. For example, a web service might keep its code and temporary working files on the instance, then store customer uploads in S3. A batch job can read source objects from S3, process them on EC2, and write its results back to a bucket.</p>
+<h3 id="ways-to-integrate">Use an SDK or the AWS CLI</h3>
+<p>An application can use an AWS SDK to call S3, or an operator can use the AWS CLI for a manual transfer.</p>
+<h3 id="requirements">What EC2 needs to reach S3</h3>
+<p>In either case, permission and network connectivity must both be in place:</p>
 <ul>
-<li>Launching instances in minutes with various configurations for CPU, memory, storage and networking</li>
-<li>Choosing from multiple instance types optimized for different use cases</li>
-<li>Automatically scaling capacity up or down based on demand</li>
-<li>Paying only for the compute time you use without long-term commitments</li>
+<li><strong>Permission:</strong> an IAM policy must allow the required S3 actions on the intended bucket or object keys.</li>
+<li><strong>Network path:</strong> the instance must be able to reach the S3 service endpoint for the bucket's Region.</li>
 </ul>
-<p>With Amazon EC2, you can quickly obtain and configure virtual servers to meet the needs of your applications.</p>
-<h3 id="exploring-amazon-simple-storage-service-(s3)">Exploring Amazon Simple Storage Service (S3)</h3>
-<p>Amazon S3 offers highly durable object storage for any type of data in the AWS cloud. It enables storing and accessing data from anywhere through simple web service APIs.</p>
-<p>Some key capabilities of Amazon S3 include:</p>
-<ul>
-<li>Storing unlimited amounts of data with high durability and availability</li>
-<li>Setting detailed access controls and encryption on your data</li>
-<li>Easily uploading, downloading, and managing objects through the S3 console or APIs</li>
-<li>Integrating with a wide range of AWS services as a core storage layer</li>
-</ul>
-<p>Amazon S3 allows storing static assets, backups, big data analytics outputs, and more in the cloud. You pay only for what you use without overhead costs.</p>
-<h3 id="key-benefits-of-integrating-ec2-with-s3-for-cloud-infrastructure">Key Benefits of Integrating EC2 with S3 for Cloud Infrastructure</h3>
-<p>Using EC2 and S3 together enables building robust cloud-native applications by separating compute from storage for greater flexibility. S3 also facilitates moving data between on-prem and cloud.</p>
-<p>Some key benefits include:</p>
-<ul>
-<li>Storing application data and assets in S3 while running compute workloads on EC2</li>
-<li>Streamlining data transfers between EC2 instances and S3 for processing</li>
-<li>Serving static web content directly from S3 buckets</li>
-<li>Backing up EC2 instance data easily into durable S3 storage</li>
-</ul>
-<p>The integrated capabilities allow focusing on application logic while leveraging the scale and resilience of AWS.</p>
-<h2 id="what-is-ec2-and-s3-in-aws%3F">What is EC2 and S3 in AWS?</h2>
-<p>Amazon EC2 and Amazon S3 are two of the most popular AWS services that work together to enable flexible and scalable computing in the cloud.</p>
-<p>EC2 stands for Elastic Compute Cloud. It provides resizable compute capacity using virtual servers called EC2 instances. You can launch different types and sizes of instances as you need them, scaling up during peak times and down during low usage periods. EC2 enables you to build and host applications in the AWS cloud without needing to maintain your own physical servers.</p>
-<p>S3 stands for Simple Storage Service. It offers highly durable and available object storage for any type of data. This includes things like images, videos, log files, backups, and big data. S3 provides easy ways to store and retrieve data from anywhere via simple API calls. It's inexpensive, scales massively to handle any amount of data, and requires no upfront payments or resource procurement.</p>
-<p>EC2 and S3 are frequently used together. For example, you might:</p>
-<ul>
-<li>Launch EC2 instances to host a dynamic website, while storing images and videos on S3 that get served to your site visitors</li>
-<li>Process big data on EC2 then output results to S3 for long term storage and analysis</li>
-<li>Backup EC2 instance data regularly to S3 buckets</li>
-<li>Automatically transfer log files from EC2 to S3 using services like AWS Lambda</li>
-</ul>
-<p>The combo of compute and storage resources provided by EC2 and S3 enable a wide variety of cloud-native apps and workloads. They form core building blocks of cloud infrastructure that can scale on demand.</p>
-<h2 id="can-we-integrate-s3-with-ec2%3F">Can we integrate S3 with EC2?</h2>
-<p>Yes, EC2 instances can easily integrate with S3 for storage and retrieval of files. Here's a quick overview:</p>
-<h3 id="requirements">Requirements</h3>
-<p>For your EC2 instance to connect to S3 endpoints, the instance must be one of the following:</p>
-<ul>
-<li>EC2 instance with a public IP address and a route table entry with the default route pointing to an Internet Gateway</li>
-<li>Private EC2 instance with a default route through a NAT gateway</li>
-</ul>
-<h3 id="ways-to-integrate">Ways to Integrate</h3>
-<p>There are a few main ways to integrate S3 with your EC2 instances:</p>
-<ul>
-<li><strong>Install the AWS CLI</strong> - You can install the AWS Command Line Interface on your EC2 instance to run S3 commands for uploading, downloading, copying, etc.</li>
-<li><strong>Create an IAM role</strong> - Attach an IAM role to your EC2 instance with S3 permissions to access specified buckets and objects.</li>
-<li><strong>Use the AWS SDK</strong> - If you're developing an application on EC2, use the AWS Software Development Kit to call S3 operations.</li>
-</ul>
-<h3 id="use-cases">Use Cases</h3>
-<p>Some common use cases for EC2 + S3:</p>
-<ul>
-<li>Store application data like files, images, csv exports, etc.</li>
-<li>Host static website assets like HTML, CSS, JS, and images</li>
-<li>Backup EC2 instance data automatically</li>
-<li>Transfer data from on-prem servers to the cloud</li>
-</ul>
-<p>So in summary - yes, S3 integration works seamlessly with EC2 once the proper permissions are set up. The AWS CLI, SDKs, and IAM roles make it simple to connect the services.</p>
-<h2 id="what-is-the-difference-between-ec2-ebs-and-s3%3F">What is the difference between EC2 EBS and S3?</h2>
-<p>Amazon EC2 and Amazon S3 are two core AWS services that serve different purposes.</p>
-<p><strong>Amazon EC2</strong> provides resizable compute capacity in the cloud. It allows you to launch virtual server instances that can run applications. EC2 instances come with varying amounts of CPU, memory, storage and networking capacity to suit different workloads.</p>
-<p><strong>Elastic Block Store (EBS)</strong> provides persistent block-level storage volumes for EC2 instances. EBS volumes function as raw unformatted block devices that can be attached to EC2 instances. This allows your instances to persist data, even after they are stopped or terminated.</p>
-<p><strong>Amazon S3</strong> offers object storage through a web service interface. It allows you to store and retrieve files and objects of up to 5TB in size. Some key differences between EBS and S3:</p>
-<ul>
-<li><strong>Accessibility</strong> - S3 can be accessed directly over HTTP, while EBS can only be mounted to an EC2 instance</li>
-<li><strong>Durability</strong> - S3 offers 99.999999999% durability, higher than EBS</li>
-<li><strong>Use cases</strong> - EBS is used for applications needing raw block storage like databases. S3 suits any application needing to store objects like files, images or videos</li>
-</ul>
-<p>In summary, EC2 and EBS provide the compute and storage building blocks for cloud-based applications. S3 offers a highly durable and scalable object store accessible from anywhere. They can be used together, with EC2 application servers storing data in S3 buckets.</p>
-<h2 id="can-we-mount-s3-to-ec2%3F">Can we mount S3 to EC2?</h2>
-<p>Yes, it is possible to mount an Amazon S3 bucket to an Amazon EC2 instance. This allows you to access S3 objects like a file system from your EC2 instance.</p>
-<p>To mount an S3 bucket to EC2, you can use a tool called <strong>S3fs</strong>. S3fs is an open source FUSE file system that allows you to mount an S3 bucket locally.</p>
-<p>Here are the key things to know about using S3fs to mount S3 to EC2:</p>
-<ul>
-<li>
-<p>S3fs makes the S3 bucket appear as a local file system on your EC2 instance. This means you can interact with S3 objects using standard file system commands like <code>cp</code>, <code>mkdir</code>, etc.</p>
-</li>
-<li>
-<p>Data transfer between the EC2 instance and S3 travels over the fast AWS network, providing good performance.</p>
-</li>
-<li>
-<p>IAM policies on the EC2 instance role determine the level of access to the S3 bucket.</p>
-</li>
-<li>
-<p>You don't need to make any changes to your S3 buckets to use S3fs. The tool handles authentication and mapping the bucket to a local file path.</p>
-</li>
-<li>
-<p>S3fs has some performance limitations to be aware of when handling a large number of small files or directories.</p>
-</li>
-</ul>
-<p>Overall, S3fs provides a simple way to integrate S3 storage into your EC2 workloads. Just install it on your instance and mount a bucket for convenient, file system-like access.</p>
-<h2 id="getting-started-with-amazon-ec2">Getting Started with Amazon EC2</h2>
-<p>This section will guide you through the fundamentals of launching your first EC2 instance and connecting to it.</p>
-<h3 id="how-to-create-an-aws-account">How to Create an AWS Account</h3>
-<p>To get started with Amazon EC2, you first need to sign up for an AWS account. This will allow you to access the AWS Management Console and launch EC2 instances.</p>
-<p>Here are the steps to create an AWS account:</p>
+<p>A public IP address is not itself permission to read a bucket, and an IAM role does not create network connectivity. Keeping these controls separate makes troubleshooting and security reviews clearer.</p>
+<h2 id="getting-started-with-amazon-ec2">Launch and connect to an EC2 instance</h2>
+<p>The EC2 launch wizard changes over time, but the decisions it asks you to make are consistent. For more detail on the instance, AMI, and network concepts, see <a href="/blog/aws-ec2-basics-core-concepts-explained/">AWS EC2 basics</a>.</p>
+<h3 id="how-to-create-an-aws-account">Set up an AWS account</h3>
+<p>Create or sign in to the AWS account you will use for practice. You need access to EC2, IAM, and S3 actions to complete the walkthrough. Start at <a href="https://aws.amazon.com/free/">AWS account signup</a>, then review the current <a href="https://docs.aws.amazon.com/awsaccountbilling/latest/aboutv2/free-tier-plans.html">Free Tier account plans</a>: eligibility and offers depend on the account's creation date and plan.</p>
+<h3 id="launching-your-first-amazon-ec2-instance">Choose an AMI, size, and Region</h3>
 <ol>
-<li>Go to <a href="https://aws.amazon.com" target="_blank">aws.amazon.com</a> and click on "Create an AWS Account".</li>
-<li>Follow the on-screen instructions to sign-up for the basic free-tier eligible plan.</li>
-<li>Enter your account details and credit card information. Note that some AWS services are available for free in the first 12 months.</li>
-<li>Once your account is created, you will be redirected to the AWS Management Console.</li>
+<li>Open the EC2 console and choose the AWS Region where you want to work. Resources, prices, and service availability can differ by Region.</li>
+<li>Select a maintained AMI from a trusted publisher, then choose an instance type that fits the operating system and workload. Do not pick a type just because an old tutorial calls it free-tier eligible.</li>
+<li>Review the EBS storage configuration. Note the volume size and whether it will be deleted when the instance is terminated.</li>
 </ol>
-<h3 id="launching-your-first-amazon-ec2-instance">Launching Your First Amazon EC2 Instance</h3>
-<p>Now that you have an AWS account, you can launch your first EC2 instance:</p>
+<h3 id="limit-network-access">Limit network access</h3>
+<p>A security group acts as a virtual firewall for the instance. Allow only the inbound traffic the exercise needs. For SSH, limit port 22 to your current IP address; do not open it to every IPv4 address. A web server may need HTTP or HTTPS from its intended audience. If you use AWS Systems Manager Session Manager and configure its IAM and connectivity prerequisites, you can connect without opening inbound SSH or assigning the instance a public IP. See AWS's current <a href="https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/connect.html">EC2 connection options</a>.</p>
+<p>Review the instance, storage, network, and connection settings, then choose <strong>Launch instance</strong>. Wait for the instance to pass its status checks before connecting.</p>
+<h3 id="establishing-connectivity-to-your-ec2-instance">Connect to the instance</h3>
+<p>For Linux, you can use an SSH client with the key pair selected at launch, or a supported browser-based connection method. The required path depends on the option: SSH needs a route to the instance and an inbound security-group rule, while Session Manager needs the instance role and Systems Manager connectivity. Windows instances use different connection methods. Follow the prerequisites for the method you choose instead of assuming every instance needs a public address.</p>
+<h2 id="understanding-and-using-amazon-s3">Create a bucket and transfer a file</h2>
+<h3 id="creating-your-first-s3-bucket">Create a bucket</h3>
 <ol>
-<li>In the AWS Console, navigate to the EC2 dashboard.</li>
-<li>Click "Launch Instance" to start the wizard.</li>
-<li>Select a small t2.micro Red Hat Enterprise Linux instance that is eligible under the free tier.</li>
-<li>On the Configure Instance page, review the default settings and ensure you allow HTTP traffic on port 80 in the security group.</li>
-<li>Click "Launch Instance" after reviewing to start your first instance!</li>
+<li>In the S3 console, create a general-purpose bucket in the Region you selected. Keep S3 Block Public Access enabled for a private application bucket.</li>
 </ol>
-<p>The EC2 instance should start running after a few minutes.</p>
-<h3 id="establishing-connectivity-to-your-ec2-instance">Establishing Connectivity to Your EC2 Instance</h3>
-<p>To connect to your EC2 instance:</p>
-<ol>
-<li>Go to the EC2 Dashboard and copy the Public DNS address of your instance.</li>
-<li>On your local machine, open an SSH client like PuTTY.</li>
-<li>Connect using the public DNS address and provided key pair.</li>
-<li>After successfully connecting, you can now interact with your EC2 instance!</li>
-</ol>
-<h3 id="create-iam-instance-profile-for-enhanced-access-management">Create IAM Instance Profile for Enhanced Access Management</h3>
-<p>It's good practice to create an IAM instance profile that grants your EC2 instance permissions to access other <a href="/blog/getting-started-with-aws-s3-essential-concepts/">AWS services like S3</a>. Here is a quick overview:</p>
-<ol>
-<li>In the IAM dashboard, create a new policy with S3 access permissions.</li>
-<li>Create a new IAM role and attach the policy.</li>
-<li>Create an instance profile and associate it with the role.</li>
-<li>When launching new EC2 instances, assign the instance profile to securely grant access.</li>
-</ol>
-<p>This completes the basics of <a href="/blog/aws-ec2-basics-core-concepts-explained/">getting started with Amazon EC2</a>. You can now build on this foundation to leverage the full capabilities of EC2 for hosting applications.</p>
-<h2 id="understanding-and-using-amazon-s3">Understanding and Using Amazon S3</h2>
-<p>Amazon Simple Storage Service (Amazon S3) provides scalable object storage for any type of data. As a software engineer, understanding how to leverage S3 is key for building cloud-native applications.</p>
-<h3 id="creating-your-first-s3-bucket">Creating Your First S3 Bucket</h3>
-<p>To get started with Amazon S3, you first need to create an S3 bucket. An S3 bucket is similar to a folder in a file system, but scaled for the cloud. Some tips for creating your first bucket:</p>
-<ul>
-<li>Give your bucket a globally unique name across all AWS accounts</li>
-<li>Select an AWS region geographically close to your users</li>
-<li>Enable versioning to preserve previous versions of objects</li>
-<li>Set an encryption method to secure data at rest</li>
-</ul>
-<p>You can create a bucket through the S3 console, AWS CLI, or programmatically via SDK.</p>
-<h3 id="uploading-and-downloading-data-with-amazon-s3">Uploading and Downloading Data with Amazon S3</h3>
-<p>Once your S3 bucket is created, you can start uploading objects. Options for uploading data include:</p>
-<ul>
-<li>S3 console UI - Drag and drop files</li>
-<li>AWS CLI - <code>aws s3 cp</code> command</li>
-<li>SDK upload API calls</li>
-<li>Automated transfers from EC2</li>
-</ul>
-<p>You can download objects through similar methods. By default, all objects in S3 are private. You will need to make them public or set access controls to allow other AWS services or users to access them.</p>
-<h3 id="managing-identity-and-access-in-amazon-s3">Managing Identity and Access in Amazon S3</h3>
-<p>As a shared storage service, Amazon S3 requires robust identity and access management (IAM) to control data access. Some best practices include:</p>
-<ul>
-<li>Leverage IAM roles and policies instead of using root credentials</li>
-<li>Grant least privilege access with fine-grained permissions</li>
-<li>Use multi-factor authentication for sensitive data</li>
-<li>Enable S3 Block Public Access to limit public exposure</li>
-</ul>
-<p>Following IAM best practices ensures your S3 data remains secure and compliant.</p>
-<h3 id="understanding-amazon-s3-pricing">Understanding Amazon S3 Pricing</h3>
-<p>Amazon S3 pricing has three main components:</p>
-<ul>
-<li>Storage costs based on amount of data stored</li>
-<li>Request costs for accessing data</li>
-<li>Data transfer fees for moving data in/out of S3</li>
-</ul>
-<p>S3 Standard provides high durability at low cost, starting at $0.023/GB/month. S3 Glacier offers an archival tier at $0.004/GB/month. Using cost optimization features like S3 Lifecycle policies can help manage costs.</p>
-<h2 id="advanced-s3-and-ec2-integrations">Advanced S3 and EC2 Integrations</h2>
-<p>This section explores some more advanced use cases around running EC2 alongside S3 for cloud applications.</p>
-<h3 id="setting-up-a-web-server-on-s3-with-amazon-cloudfront">Setting Up a Web Server on S3 with Amazon CloudFront</h3>
-<p>Configure an S3 bucket to host static website content and use CloudFront for globally fast delivery.</p>
-<ul>
-<li>S3 buckets can be configured to host static websites, providing low-cost and scalable hosting</li>
-<li>CloudFront improves website performance by caching content at edge locations around the world</li>
-<li>Follow these steps to setup:
-<ul>
-<li>Create S3 bucket and upload website files</li>
-<li>Enable static website hosting in S3 bucket settings</li>
-<li>Configure bucket policy to make content publicly readable</li>
-<li>Create a CloudFront web distribution pointing to the S3 bucket</li>
-<li>Set CloudFront origin access identity to restrict access only through CloudFront</li>
-</ul>
-</li>
-</ul>
-<p>This allows fast and reliable hosting of static sites on S3 while using CloudFront for low-latency delivery.</p>
-<h3 id="automating-data-transfer-from-ec2-to-s3">Automating Data Transfer from EC2 to S3</h3>
-<p>Setup automatic sync or transfer of application data from EC2 instances to durable S3 object storage.</p>
-<ul>
-<li>Applications running on EC2 often still need durable data storage</li>
-<li>Manually copying data between EC2 and S3 has reliability and scaling challenges</li>
-<li>Automated solutions:
-<ul>
-<li>Periodic sync using AWS DataSync</li>
-<li>Event-driven transfers with AWS Lambda functions</li>
-<li>Stream data continuously using Kinesis Firehose</li>
-</ul>
-</li>
-<li>Benefits include built-in encryption, versioning, lifecycle policies</li>
-</ul>
-<p>Automating the transfer of data from EC2 to S3 improves reliability while making use of S3's scalability and durability.</p>
-<h3 id="accessing-s3-from-ec2-instances">Accessing S3 from EC2 Instances</h3>
-<p>Learn the methods to access and manipulate S3 data directly from your EC2 instances, including using the AWS CLI and SDKs.</p>
-<ul>
-<li>Applications on EC2 need to access or upload data to S3 buckets</li>
-<li>Options for EC2 to S3 integration:
-<ul>
-<li>Install AWS CLI for command line transfers</li>
-<li>Use AWS SDK in app code for programmatic access</li>
-<li>Generate temporary credentials using IAM roles</li>
-</ul>
-</li>
-<li>Enables building complex workflows with data stored in S3</li>
-</ul>
-<p>EC2 instances can directly leverage S3 for secure and scalable object storage using AWS-provided tools and SDKs.</p>
-<h3 id="copying-files-from-s3-to-ec2-windows-instances">Copying Files from S3 to EC2 Windows Instances</h3>
-<p>Explore the process of transferring files from an S3 bucket to a Windows-based EC2 instance using AWS tools.</p>
-<ul>
-<li>Retrieving files from S3 to EC2 is a common task</li>
-<li>For Windows instances, use AWS CLI:
-<ul>
-<li>Install CLI on Windows instance</li>
-<li>Configure credentials</li>
-<li>Use <code>aws s3 cp</code> command to copy files</li>
-</ul>
-</li>
-<li>Can also automate with PowerShell scripts or AWS Tools for Windows</li>
-<li>Enables Windows workloads on EC2 to utilize S3 for storage</li>
-</ul>
-<p>S3's data can be directly accessed from Windows EC2 instances for transferring files using the AWS CLI.</p>
-<h2 id="conclusion">Conclusion</h2>
-<p>To recap, this beginner's guide introduced EC2 for scalable compute and S3 for durable, global object storage, how to get started using both services, and how they can be integrated to build cloud-native applications on AWS.</p>
-<p>AWS EC2 provides resizable compute capacity in the cloud. We covered key concepts like:</p>
-<ul>
-<li>EC2 instances for running applications</li>
-<li>Security groups for controlling network access</li>
-<li>Elastic IPs for static IP addresses</li>
-</ul>
-<p>We also looked at how to launch, connect to, and manage EC2 instances with the AWS Management Console or CLI.</p>
-<p>For storage, <a href="/blog/learn-aws-s3-fundamentals/">AWS S3</a> offers a simple web services interface to store and retrieve data from anywhere. We explored topics like:</p>
-<ul>
-<li>S3 buckets for organizing objects</li>
-<li>Access control for permissions</li>
-<li>SDKs for programmatic access from applications</li>
-</ul>
-<p>In addition, we discussed transferring data between EC2 instances and S3 with CLI commands for common use cases.</p>
-<p>With this introduction, software engineers now have the building blocks to host applications on EC2 and leverage S3 for storage. Going forward, these AWS services can scale on-demand to meet application needs. There are many additional capabilities as well to explore with EC2 and S3 over time.</p>
-<p>
-<h2>Related posts</h2>
-<ul>
-<li><a href="/blog/learn-aws-s3-fundamentals/">Learn AWS S3 Fundamentals</a></li><li><a href="/blog/getting-started-with-aws-s3-essential-concepts/">Getting Started with AWS S3: Essential Concepts</a></li><li><a href="/blog/aws-ec2-basics-core-concepts-explained/">AWS EC2 Basics: Core Concepts Explained</a></li><li><a href="/blog/aws-tutorial-for-beginners-step-by-step-core-concepts/">AWS Tutorial for Beginners Step by Step: Core Concepts</a></li>
-</ul>
-</p>
+<h3 id="uploading-and-downloading-data-with-amazon-s3">Upload and download a test object</h3>
+<p>Use the console, or the AWS CLI after replacing the placeholder with your bucket name:</p>
+<pre><code>aws s3 cp ./sample.txt s3://YOUR-BUCKET/sample.txt</code></pre>
+<p>To copy that object back to the current directory, use:</p>
+<pre><code>aws s3 cp s3://YOUR-BUCKET/sample.txt ./downloaded-sample.txt</code></pre>
+<h3 id="copying-files-from-s3-to-ec2-windows-instances">Copy an object to a Windows EC2 instance</h3>
+<p>The AWS CLI also works on Windows. Install it using AWS's <a href="https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html">Windows installation instructions</a>, give the instance a role with the needed S3 access, then use a Windows destination path:</p>
+<pre><code>aws s3 cp s3://YOUR-BUCKET/sample.txt C:\data\sample.txt</code></pre>
+<p>Amazon S3 automatically applies server-side encryption with S3-managed keys (SSE-S3) to new object uploads by default. Encryption does not make an object public; access still depends on authorization. New buckets block public access by default, and objects are private unless access is granted. Review the AWS guidance for <a href="https://docs.aws.amazon.com/AmazonS3/latest/userguide/default-encryption-faq.html">S3 default encryption</a> and <a href="https://docs.aws.amazon.com/AmazonS3/latest/userguide/access-control-block-public-access.html">blocking public access</a>.</p>
+<h2 id="create-iam-instance-profile-for-enhanced-access-management">Give EC2 permission to use S3</h2>
+<p>For software running on EC2, attach an IAM role to the instance. The role supplies temporary credentials to AWS SDKs and the CLI, so you do not need to copy long-lived IAM access keys onto the server. AWS describes the setup in its guide to <a href="https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/attach-iam-role.html">attaching an IAM role to an EC2 instance</a>.</p>
+<h3 id="managing-identity-and-access-in-amazon-s3">Scope the role to the data</h3>
+<p>Grant only the actions the application needs. For example, uploading and downloading a known object requires object-level write and read permissions on the relevant keys; listing a bucket requires a separate bucket-level permission. Avoid broad policies that allow every S3 action on every bucket. The bucket policy, any VPC endpoint policy, and encryption-key permissions can also affect a request, so check those if the role appears to have the right permissions but S3 still returns an access error.</p>
+<p>You can test the role from the instance with the two <code>aws s3 cp</code> examples above. Install the CLI if it is not already available in your AMI, and use the EC2 role for credentials instead of running <code>aws configure</code> with a user's access keys.</p>
+<h2 id="accessing-s3-from-ec2-instances">EC2 network access to S3</h2>
+<p>Instances in a public subnet can reach public AWS service endpoints through an internet gateway when routing and addressing are configured. A private-subnet instance might use a NAT device for general outbound internet access. S3 also supports a gateway VPC endpoint: you add it to the relevant route tables, and instances in that VPC can reach S3 without an internet gateway or NAT device for that S3 traffic. AWS says gateway endpoints have no additional endpoint charge, but access still depends on IAM, endpoint, bucket, and network rules. The endpoint must be in the Region for the S3 bucket.</p>
+<p>That endpoint is specifically a route to S3; it does not give an instance general internet access. See AWS's documentation on <a href="https://docs.aws.amazon.com/vpc/latest/privatelink/vpc-endpoints-s3.html">Amazon S3 gateway endpoints</a> for their scope and limitations.</p>
+<h2 id="can-we-mount-s3-to-ec2%3F">Can you mount S3 on EC2?</h2>
+<p>Amazon provides <a href="https://docs.aws.amazon.com/AmazonS3/latest/userguide/mountpoint.html">Mountpoint for Amazon S3</a>, which mounts a bucket for Linux applications and translates supported file operations into S3 API calls. It is designed for workloads such as high-throughput reads of large objects and sequential creation of new objects. Mountpoint does not implement a full POSIX file system or arbitrary in-place and random writes. Its behavior depends on the bucket type and mount options: for example, it can replace existing objects when configured with <code>--allow-overwrite</code>, and S3 Express One Zone supports append-style writes with <code>--incremental-upload</code> and atomic rename. Check the current <a href="https://github.com/awslabs/mountpoint-s3/blob/main/doc/SEMANTICS.md">Mountpoint file-system behavior</a> against your application before using it. For a mounted disk, consider EBS; for a shared file system, consider EFS or FSx. AWS compares <a href="https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/file-storage.html">object and file storage choices for EC2</a>.</p>
+<h2 id="advanced-s3-and-ec2-integrations">Build with EC2 and S3 together</h2>
+<h3 id="setting-up-a-web-server-on-s3-with-amazon-cloudfront">Serve static files with S3 and CloudFront</h3>
+<p>S3 can store static website files such as HTML, CSS, JavaScript, and images. For a typical public site, CloudFront can deliver those files while the bucket remains private: use a regular S3 bucket origin, configure CloudFront Origin Access Control (OAC), and grant the distribution read access in the bucket policy. Keep S3 Block Public Access enabled. CloudFront can serve viewers over HTTPS.</p>
+<p>There are two S3 origin configurations that are easy to confuse. An S3 static website endpoint is a website endpoint and requires a different CloudFront origin configuration; it cannot use OAC. For a private S3 origin protected by OAC, use the regular S3 bucket endpoint. Follow AWS's steps to <a href="https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/private-content-restricting-access-to-s3.html">restrict access to an S3 origin with CloudFront</a>.</p>
+<h3 id="automating-data-transfer-from-ec2-to-s3">Automate application data transfers</h3>
+<p>When an EC2 application creates files that belong in S3, have the application upload them through an AWS SDK or a controlled job that runs on a schedule. Assign the job the same narrowly scoped instance role and make it safe to retry; for important data, monitor failures and test that you can retrieve a backup. The right design depends on whether the application writes each object, exports batches, or moves a large dataset, so avoid treating an S3 mount or manual copy as a backup plan.</p>
+<h2 id="understand-costs-and-clean-up">Understand costs and clean up</h2>
+<h3 id="understanding-amazon-s3-pricing">What adds to the bill</h3>
+<p>There is no single EC2 or S3 price. The total depends on Region, instance type and running time, EBS storage, S3 storage class and requests, data transfer, public IPv4 use, and other resources you add. Stopping an instance stops its compute use, but attached EBS volumes continue to incur storage charges, as described in AWS's guide to <a href="https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/how-ec2-instance-stop-start-works.html">EC2 stop and start costs</a>. An Elastic IP address and other supporting resources can also remain billable. Build an estimate with the <a href="https://docs.aws.amazon.com/pricing-calculator/latest/userguide/generate-estimate.html">AWS Pricing Calculator</a> and check the current service pricing before launching.</p>
+<p>Do not rely on old claims that every new account gets a particular first-year free allowance. AWS Free Tier offers depend on account creation date, account plan, and eligible usage. Check the offer shown for your own account in the <a href="https://docs.aws.amazon.com/awsaccountbilling/latest/aboutv2/free-tier.html">AWS Free Tier documentation</a> and monitor usage in Billing and Cost Management.</p>
+<p>When you finish a learning exercise, stop the instance if you need to keep it, or terminate it if you are done. Before termination, verify whether its EBS volumes will be deleted or retained; retained volumes keep accruing charges. Empty and delete any test bucket you no longer need, including object versions if versioning was enabled, then review the account for other resources left behind.</p>
+<h2 id="conclusion">Conclusion and next steps</h2>
+<p>The core pattern is straightforward: EC2 runs compute, an IAM role gives that compute narrowly scoped S3 permissions, and network routing lets it reach the S3 service. EBS remains the instance's disk-like storage, while S3 holds objects that can be accessed through AWS APIs. From here, deepen your knowledge with our guides to <a href="/blog/aws-ec2-basics-core-concepts-explained/">EC2 fundamentals</a> and <a href="/blog/getting-started-with-aws-s3-essential-concepts/">S3 fundamentals</a>, then try a small application that uploads and retrieves one private object.</p>

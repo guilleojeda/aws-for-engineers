@@ -2,271 +2,78 @@
 layout: post.njk
 templateEngineOverride: html
 tags: posts
-title: "AWS DR: Pilot Light vs Warm Standby"
-description: "Explore the differences between AWS Pilot Light and Warm Standby disaster recovery strategies, their costs, benefits, and suitability for various workloads."
+title: "AWS Pilot Light vs. Warm Standby: Disaster Recovery Compared"
+description: "Compare AWS Pilot Light and Warm Standby disaster recovery patterns, their recovery steps and cost tradeoffs, and how to choose and test one against workload RTO and RPO."
 date: "2024-05-01"
 datePublished: "2024-05-01T10:53:26.091000+00:00"
+dateModified: "2026-10-04"
+updateNote: "Revised Pilot Light and Warm Standby definitions, recovery objectives, and regional disaster recovery guidance."
 heroImage: "/assets/media/7854a8df7f7d610a2e66.jpg"
 permalink: "/blog/aws-dr-pilot-light-vs-warm-standby/"
 sourceUrl: "https://awsforengineers.com/blog/aws-dr-pilot-light-vs-warm-standby/"
-dateModified: "2026-10-03"
-updateNote: "Added author attribution and profile information; corrected the article heading hierarchy and added article navigation."
 ---
-<p><a href="https://aws.amazon.com/" target="_blank">AWS</a> offers two popular disaster recovery (DR) strategies: Pilot Light and Warm Standby. The key differences are:</p>
-<p><strong>Pilot Light</strong></p>
-<ul>
-<li>Minimal core infrastructure deployed in AWS</li>
-<li>Higher Recovery Time Objective (RTO)</li>
-<li>Lower cost</li>
-<li>Suitable for non-critical workloads</li>
-</ul>
-<p><strong>Warm Standby</strong></p>
-<ul>
-<li>Fully functional scaled-down infrastructure deployed in AWS</li>
-<li>Lower Recovery Time Objective (RTO)</li>
-<li>Higher cost</li>
-<li>Suitable for business-critical systems</li>
-</ul>
-<h2 id="quick-comparison">Quick Comparison</h2>
-<figure><table>
+<p>AWS Pilot Light and Warm Standby are two active-passive disaster recovery (DR) patterns for running a workload in a recovery Region. Both keep data and parts of the application environment available there, but they differ in how much of the application is already running and how much work remains before it can serve production traffic.</p>
+<p>That difference affects recovery effort and ongoing cost, but neither pattern promises a fixed recovery time or amount of data loss. Choose against the recovery time objective (RTO) and recovery point objective (RPO) set for the workload, then test the complete recovery procedure.</p>
+
+<h2 id="quick-comparison">Pilot Light vs. Warm Standby at a glance</h2>
+<figure style="overflow-x: auto"><table style="min-width: 680px">
+<colgroup><col style="width: 25%"><col style="width: 37.5%"><col style="width: 37.5%"></colgroup>
 <thead>
-<tr>
-<th>Strategy</th>
-<th>Infrastructure</th>
-<th>RTO</th>
-<th>Cost</th>
-<th>Suitability</th>
-</tr>
+<tr><th scope="col">Dimension</th><th scope="col">Pilot Light</th><th scope="col">Warm Standby</th></tr>
 </thead>
 <tbody>
-<tr>
-<td>Pilot Light</td>
-<td>Minimal core</td>
-<td>Higher</td>
-<td>Lower</td>
-<td>Non-critical workloads</td>
-</tr>
-<tr>
-<td>Warm Standby</td>
-<td>Scaled-down full</td>
-<td>Lower</td>
-<td>Higher</td>
-<td>Business-critical systems</td>
-</tr>
+<tr><th scope="row">Recovery environment</th><td>Core infrastructure and replicated data are prepared; application compute may be stopped or deployed during recovery.</td><td>A functional, reduced-capacity copy of the workload is already running.</td></tr>
+<tr><th scope="row">Work before serving traffic</th><td>Start or deploy missing components, scale capacity, validate dependencies, then route traffic.</td><td>Validate readiness, route traffic, and scale up as needed.</td></tr>
+<tr><th scope="row">RTO and RPO</th><td>Often needs more recovery steps than Warm Standby. Actual RTO and RPO depend on the workload, data protection, and runbook.</td><td>Can reduce activation time because more of the stack is running. Data recovery point still depends on replication and backup behavior.</td></tr>
+<tr><th scope="row">Cost profile</th><td>Often has lower ongoing compute cost because fewer application resources run in standby.</td><td>Usually costs more to operate because a reduced-capacity application stack stays active.</td></tr>
+<tr><th scope="row">Good fit when</th><td>The workload can tolerate activation work during recovery and the team can automate and test it.</td><td>The workload needs a shorter recovery path and the business can fund and operate a live standby stack.</td></tr>
 </tbody>
 </table></figure>
-<p>The choice between these strategies depends on your organization's recovery objectives (RTO, RPO) and budget. Pilot Light offers a cost-effective option with some downtime, while Warm Standby ensures faster recovery at a higher operational cost.</p>
-<h2 id="rpo-and-rto-explained">RPO and RTO Explained</h2>
-<p>Recovery Point Objective (RPO) and Recovery Time Objective (RTO) are two critical metrics in disaster recovery planning. Understanding these metrics is essential for making informed decisions about which disaster recovery strategy best suits your organization's needs.</p>
-<h3 id="what-is-rpo%3F">What is RPO?</h3>
-<p><strong>Recovery Point Objective (RPO)</strong> measures the maximum age of files that an organization must recover from backup storage for normal operations to resume after a disaster. In other words, it determines how much data an organization can afford to lose in the event of a disaster. RPO is typically measured in terms of time, such as minutes, hours, or days.</p>
-<h3 id="what-is-rto%3F">What is RTO?</h3>
-<p><strong>Recovery Time Objective (RTO)</strong> measures the targeted duration of time within which a business process must be restored after a disaster to avoid unacceptable consequences. In other words, it determines how long an organization can afford to be down in the event of a disaster. RTO is also typically measured in terms of time, such as minutes, hours, or days.</p>
-<h3 id="importance-of-rpo-and-rto">Importance of RPO and RTO</h3>
-<p>RPO and RTO are crucial metrics because they help organizations quantify the potential impact of a disaster and determine the resources required to mitigate that impact. By understanding the RPO and RTO of their organization, engineers can design a disaster recovery strategy that meets the organization's specific needs and ensures business continuity.</p>
-<figure><table>
-<thead>
-<tr>
-<th><strong>RPO and RTO Examples</strong></th>
-<th><strong>Description</strong></th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Low RPO and RTO</td>
-<td>Requires a more robust disaster recovery strategy, such as Warm Standby or Multi-Site Active/Active, to ensure minimal data loss and downtime.</td>
-</tr>
-<tr>
-<td>High RPO and RTO</td>
-<td>May allow for a less expensive strategy, such as Backup and Restore or Pilot Light, with more flexibility in terms of data loss and downtime.</td>
-</tr>
-</tbody>
-</table></figure>
-<p>In the next sections, we will explore the Pilot Light and Warm Standby strategies in more detail, highlighting their similarities and differences, and providing guidance on how to choose the right strategy for your AWS disaster recovery needs.</p>
-<h2 id="pilot-light-strategy-overview">Pilot Light Strategy Overview</h2>
-<p>The Pilot Light strategy is a cost-effective disaster recovery approach that involves maintaining a minimal version of an application infrastructure in the cloud. This minimal infrastructure, also known as the 'pilot light,' can be quickly scaled up to full capacity in the event of a disaster, ensuring minimal downtime and data loss.</p>
-<h3 id="key-characteristics">Key Characteristics</h3>
-<p>The Pilot Light strategy is characterized by:</p>
+<p>These are design tendencies, not service guarantees. Actual costs depend on the services, data volume, replication, backup retention, and standby capacity you choose. AWS describes both patterns as workload-level strategies; its <a href="https://docs.aws.amazon.com/whitepapers/latest/disaster-recovery-workloads-on-aws/disaster-recovery-options-in-the-cloud.html" target="_blank" rel="noopener noreferrer">disaster recovery guidance</a> explains the differences in more detail.</p>
+
+<h2 id="rpo-and-rto-explained">Set recovery objectives before choosing</h2>
+<p><strong>RTO</strong> is the maximum acceptable delay between a service interruption and restoration. <strong>RPO</strong> is the maximum acceptable time since the latest recoverable data point, which defines how much recent data the business can tolerate losing. These objectives belong to the business and should be defined for each workload. AWS explains the relationship in its <a href="https://docs.aws.amazon.com/wellarchitected/latest/reliability-pillar/disaster-recovery-dr-objectives.html" target="_blank" rel="noopener noreferrer">DR objectives guidance</a>.</p>
+<p>State the failure you need to recover from as well. Multi-AZ design in one Region can address some Availability Zone failures; a second Region is a separate recovery boundary for regional failures. Neither Pilot Light nor Warm Standby alone protects against every cause of outage, such as a destructive deployment, compromised credentials, or corrupted data. Keep recoverable backups and point-in-time recovery where those events matter: replication can copy a bad change to the recovery Region.</p>
+
+<h2 id="pilot-light-strategy-overview">How Pilot Light works</h2>
+<p>In a Pilot Light design, data is replicated to the recovery Region and the core infrastructure needed to rebuild the workload is prepared there. Resources needed for replication and data access remain available. Application compute may be stopped or not deployed until recovery; infrastructure as code, machine images, application artifacts, and configuration let the team create or start the missing pieces consistently.</p>
+<p>During recovery, the team or automation starts or deploys application components, scales the environment, checks dependencies and data, and redirects traffic after the recovery site is ready. This pattern can reduce idle compute compared with keeping a live application stack in the recovery Region, while preserving more prepared infrastructure than a backup-and-restore design. It still requires a tested sequence and enough regional capacity and service quotas for the recovered workload.</p>
+<h3 id="pilot-light-tradeoffs">Pilot Light tradeoffs</h3>
 <ul>
-<li>A minimal core infrastructure that is always running in the cloud</li>
-<li>The core infrastructure hosts critical application functionality</li>
-<li>Can be scaled up quickly to support a full-scale production environment</li>
+<li><strong>Lower standby compute is possible:</strong> fewer application resources run continuously, though replicated data, backups, and other always-on services still have costs.</li>
+<li><strong>More actions remain during recovery:</strong> starting or deploying services, promoting data stores, and scaling capacity add steps and dependencies to the runbook.</li>
+<li><strong>Automation matters:</strong> keep the recovery environment and application configuration aligned with production, and rehearse changes that could affect deployment or permissions.</li>
 </ul>
-<h3 id="benefits">Benefits</h3>
-<p>The benefits of the Pilot Light strategy include:</p>
+
+<h2 id="warm-standby-strategy-overview">How Warm Standby works</h2>
+<p>Warm Standby keeps a reduced-capacity but functional copy of the workload running in another Region. It should be able to process traffic at its current capacity, rather than waiting for application compute to be deployed. When a disaster is declared, the recovery procedure validates the environment, directs traffic to it, and scales resources to meet the production load as required.</p>
+<p>Warm Standby can shorten the work before service resumes because the application stack is already running. Recovery can still depend on traffic routing, database promotion, scaling operations, regional quotas, and application checks. Provisioning enough resources ahead of time may reduce scaling dependence, but it also increases ongoing cost. The appropriate standby size depends on how much degraded capacity the business can accept while the recovered workload scales up.</p>
+<h3 id="warm-standby-tradeoffs">Warm Standby tradeoffs</h3>
 <ul>
-<li><strong>Cost efficiency</strong>: Only a minimal infrastructure is required to be running in standby mode, reducing operational costs</li>
-<li><strong>Reduced downtime</strong>: The Pilot Light infrastructure can be quickly scaled up, reducing downtime and ensuring business continuity</li>
-<li><strong>Minimal configuration changes</strong>: The Pilot Light approach typically requires minimal configuration changes, streamlining the recovery process</li>
+<li><strong>Fewer activation steps:</strong> a live, reduced-capacity environment avoids some deployment and startup steps.</li>
+<li><strong>Standby resources cost more to operate:</strong> the recovery Region continuously runs more of the workload than a Pilot Light design.</li>
+<li><strong>Data recovery is a separate concern:</strong> a running application does not guarantee a current recovery point or protect against corrupted data. Plan replication and backups for the data service you use.</li>
 </ul>
-<h3 id="limitations">Limitations</h3>
-<p>The Pilot Light strategy may not be suitable for organizations with very low RTO and RPO requirements. In such cases, a more robust disaster recovery strategy, such as Warm Standby or Multi-Site Active/Active, may be necessary.</p>
-<p>In the next section, we will explore the Warm Standby strategy, highlighting its similarities and differences with the Pilot Light approach.</p>
-<h2 id="warm-standby-strategy-overview">Warm Standby Strategy Overview</h2>
-<p>The Warm Standby strategy is a disaster recovery approach that involves maintaining a fully functional, yet scaled-down version of an application infrastructure in the cloud. This scaled-down infrastructure is always running and can be quickly scaled up to full capacity in the event of a disaster, ensuring minimal downtime and data loss.</p>
-<h3 id="key-characteristics-1">Key Characteristics</h3>
-<p>The Warm Standby strategy is characterized by:</p>
-<figure><table>
-<thead>
-<tr>
-<th><strong>Characteristics</strong></th>
-<th><strong>Description</strong></th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Fully functional infrastructure</td>
-<td>Always running in the cloud</td>
-</tr>
-<tr>
-<td>Scaled-down capacity</td>
-<td>Reduced capacity compared to full production environment</td>
-</tr>
-<tr>
-<td>Quick scaling</td>
-<td>Can be quickly scaled up to full capacity in the event of a disaster</td>
-</tr>
-</tbody>
-</table></figure>
-<h3 id="benefits-1">Benefits</h3>
-<p>The benefits of the Warm Standby strategy include:</p>
-<ul>
-<li><strong>Rapid failover</strong>: Quickly scale up to full capacity, reducing downtime and ensuring business continuity</li>
-<li><strong>Low RTO</strong>: Achieve a low Recovery Time Objective (RTO), making it suitable for business-critical systems</li>
-<li><strong>Reduced data loss</strong>: Minimize data loss with a fully functional infrastructure always running</li>
-</ul>
-<h3 id="limitations-1">Limitations</h3>
-<p>The Warm Standby strategy has some limitations:</p>
-<figure><table>
-<thead>
-<tr>
-<th><strong>Limitations</strong></th>
-<th><strong>Description</strong></th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Higher upfront investment</td>
-<td>Requires a higher initial investment compared to the Pilot Light approach</td>
-</tr>
-<tr>
-<td>Ongoing operational costs</td>
-<td>Higher operational costs compared to the Pilot Light approach</td>
-</tr>
-<tr>
-<td>Complexity</td>
-<td>Managing a scaled-down infrastructure can be more complex than a minimal core infrastructure</td>
-</tr>
-</tbody>
-</table></figure>
-<p>In the next section, we will compare the Pilot Light and Warm Standby strategies, highlighting their similarities and differences.</p>
-<h2 id="comparing-pilot-light-and-warm-standby">Comparing Pilot Light and Warm Standby</h2>
-<h3 id="shared-aspects">Shared Aspects</h3>
-<p>Both Pilot Light and Warm Standby are disaster recovery strategies that involve replicating data from the primary Region to the recovery Region. This ensures that data is available in the recovery Region and can be quickly accessed in case of a disaster. Both strategies also require continuous backups to be created in the recovery Region, enabling recovery to a known good state in case of data corruption or deletion.</p>
-<h3 id="key-differences">Key Differences</h3>
-<p>The main difference between Pilot Light and Warm Standby lies in the size and readiness of the infrastructure deployment in the recovery Region.</p>
-<h4 id="infrastructure-deployment">Infrastructure Deployment</h4>
-<ul>
-<li>Pilot Light: Minimal, core infrastructure deployment that can be quickly scaled up in case of a disaster.</li>
-<li>Warm Standby: Fully functional, scaled-down infrastructure that is always running and can be quickly scaled up to full capacity.</li>
-</ul>
-<h4 id="recovery-time-objective-(rto)">Recovery Time Objective (RTO)</h4>
-<ul>
-<li>Pilot Light: Higher RTO, as it requires additional time to deploy and scale up the infrastructure before it can handle traffic.</li>
-<li>Warm Standby: Lower RTO, as it can quickly scale up to full capacity and handle traffic immediately.</li>
-</ul>
-<h3 id="quick-comparison-table">Quick Comparison Table</h3>
-<figure><table>
-<thead>
-<tr>
-<th><strong>Strategy</strong></th>
-<th><strong>Infrastructure Deployment</strong></th>
-<th><strong>Recovery Time Objective (RTO)</strong></th>
-<th><strong>Cost</strong></th>
-<th><strong>Suitability</strong></th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Pilot Light</td>
-<td>Minimal, core infrastructure</td>
-<td>Higher</td>
-<td>Lower</td>
-<td>Suitable for non-critical workloads</td>
-</tr>
-<tr>
-<td>Warm Standby</td>
-<td>Fully functional, scaled-down infrastructure</td>
-<td>Lower</td>
-<td>Higher</td>
-<td>Suitable for business-critical systems</td>
-</tr>
-</tbody>
-</table></figure>
-<p>Note: The table provides a concise comparison of the two strategies. The suitability of each strategy depends on the specific requirements of the workload and the organization.</p>
-<h2 id="summary-and-final-thoughts">Summary and Final Thoughts</h2>
-<p>In this article, we explored the world of AWS disaster recovery strategies, focusing on the Pilot Light and Warm Standby approaches. Both strategies offer a robust way to ensure business continuity in the face of disasters, but they differ in their infrastructure deployment, recovery time objectives, and costs.</p>
-<h3 id="key-takeaways">Key Takeaways</h3>
-<p>Here's a quick summary of the two strategies:</p>
-<figure><table>
-<thead>
-<tr>
-<th><strong>Strategy</strong></th>
-<th><strong>Infrastructure Deployment</strong></th>
-<th><strong>Recovery Time Objective (RTO)</strong></th>
-<th><strong>Cost</strong></th>
-<th><strong>Suitability</strong></th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Pilot Light</td>
-<td>Minimal, core infrastructure</td>
-<td>Higher</td>
-<td>Lower</td>
-<td>Non-critical workloads</td>
-</tr>
-<tr>
-<td>Warm Standby</td>
-<td>Fully functional, scaled-down infrastructure</td>
-<td>Lower</td>
-<td>Higher</td>
-<td>Business-critical systems</td>
-</tr>
-</tbody>
-</table></figure>
-<p>When selecting a disaster recovery strategy, it's essential to consider the specific needs of your business's AWS infrastructure and the criticality of your workloads. By carefully evaluating your requirements and weighing the pros and cons of each strategy, you can choose the right approach to ensure the continuity and resilience of your operations.</p>
-<p>Remember, disaster recovery is not a one-size-fits-all solution. By understanding the differences between Pilot Light and Warm Standby, you can make informed decisions to protect your business from the unexpected.</p>
-<h2 id="faqs">FAQs</h2>
-<h3 id="which-disaster-recovery-option-is-the-least-expensive%3F">Which disaster recovery option is the least expensive?</h3>
-<p>The least expensive disaster recovery option is not Warm Standby. Instead, the Backup and Restore strategy is the most cost-effective option, similar to tape-backed recovery. Warm Standby is a more expensive option that offers a faster recovery time objective (RTO) compared to Pilot Light.</p>
-<h3 id="what-is-the-difference-between-warm-standby-and-pilot-light%3F">What is the difference between Warm Standby and Pilot Light?</h3>
-<p>The main difference between Warm Standby and Pilot Light lies in their infrastructure deployment and readiness.</p>
-<figure><table>
-<thead>
-<tr>
-<th><strong>Strategy</strong></th>
-<th><strong>Infrastructure Deployment</strong></th>
-<th><strong>Recovery Time Objective (RTO)</strong></th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Warm Standby</td>
-<td>Fully functional, scaled-down infrastructure</td>
-<td>Lower RTO</td>
-</tr>
-<tr>
-<td>Pilot Light</td>
-<td>Minimal, core infrastructure</td>
-<td>Higher RTO</td>
-</tr>
-</tbody>
-</table></figure>
-<p>In a Warm Standby scenario, a fully functional but scaled-down infrastructure is deployed in the recovery region, allowing for faster recovery times. In contrast, a Pilot Light strategy involves deploying only the minimal, essential infrastructure in the recovery region, which requires additional actions to become production-ready.</p>
-<p>
-<h2>Related posts</h2>
-<ul>
-<li><a href="/blog/aws-rds-blog-insights-performance-tuning/">AWS RDS Blog Insights: Performance Tuning</a></li><li><a href="/blog/aws-engineering-blog-autoscaling-for-high-availability/">AWS Engineering Blog: Autoscaling for High Availability</a></li><li><a href="/blog/aws-content-migration-best-practices/">AWS Content Migration Best Practices</a></li><li><a href="/blog/aws-ec2-basics-core-concepts-explained/">AWS EC2 Basics: Core Concepts Explained</a></li>
-</ul>
-</p>
+
+<h2 id="comparing-pilot-light-and-warm-standby">Choose the pattern for the workload</h2>
+<p>Use these questions to make the tradeoff concrete:</p>
+<ol>
+<li><strong>What RTO and RPO has the business approved?</strong> Treat them as acceptance targets, not assumptions inferred from a named AWS pattern.</li>
+<li><strong>What must be ready before users can work?</strong> Map application components, data stores, identity and access, secrets, encryption keys, networking, dependencies, and traffic routing in the recovery Region.</li>
+<li><strong>What can the recovery site handle before it is scaled?</strong> For Warm Standby, specify which customer operations can run at reduced capacity. For Pilot Light, identify every step required before any production request can succeed.</li>
+<li><strong>Can the team operate the recovery path?</strong> Include people, approvals, runbooks, automation, quotas, monitoring, and failback. A pattern whose steps cannot be completed within the RTO is not a fit, whatever its diagram suggests.</li>
+<li><strong>What protection is needed from data loss or corruption?</strong> Define replication behavior and lag, and keep backups or point-in-time recovery for recovery cases replication cannot address.</li>
+</ol>
+<p>AWS's <a href="https://docs.aws.amazon.com/wellarchitected/latest/framework/rel_planning_for_recovery_disaster_recovery.html" target="_blank" rel="noopener noreferrer">Well-Architected disaster recovery guidance</a> recommends selecting a strategy against each workload's recovery requirements and ensuring the recovery Region has the resources needed. If regional failover, dependencies, and data consistency are part of a broader resilience design, see our guide to <a href="/blog/aws-cross-service-resilience-patterns/">cross-service resilience and disaster recovery</a>.</p>
+
+<h2 id="test-recovery-not-just-infrastructure">Test recovery, not just infrastructure</h2>
+<p>A running instance, completed replication, or successful backup job does not prove that the user-facing service can recover. Run the recovery procedure in an isolated environment and include the steps that count toward your RTO: detection or declaration, data promotion or restore, application startup, dependency checks, traffic changes, and a representative health check. Record the recovery-point timestamp to assess RPO and the time when the defined service check passes to assess RTO. If a test omits part of the real procedure, report the measured segment separately.</p>
+<p>Test failback as well as failover. Before routing service back, verify the original Region, reconcile data, restore the intended replication direction, and confirm the application can safely receive traffic. For a detailed test plan covering AWS Elastic Disaster Recovery drills, AWS Backup restore tests, application checks, and cleanup, read our guide to <a href="/blog/automated-disaster-recovery-testing-with-aws/">testing AWS disaster recovery</a>.</p>
+
+<h2 id="faqs">Frequently asked questions</h2>
+<h3 id="is-warm-standby-always-faster-than-pilot-light">Is Warm Standby always faster than Pilot Light?</h3>
+<p>Warm Standby keeps a functional reduced-capacity workload running, so it commonly has fewer activation steps. The actual recovery time still depends on data promotion, traffic routing, scaling, dependencies, and the validation process. Measure it in a recovery exercise instead of treating the pattern name as an RTO guarantee.</p>
+<h3 id="does-warm-standby-prevent-data-loss">Does Warm Standby prevent data loss?</h3>
+<p>No. Its application environment is ready to run, but RPO depends on the selected data services, their replication behavior, and backup or point-in-time recovery. Replication may lag and may reproduce unwanted writes or deletions, so include a recovery point that can address data corruption where needed.</p>
+<h3 id="which-pattern-costs-less">Which pattern costs less?</h3>
+<p>Pilot Light often has lower ongoing compute costs because less application capacity runs in standby. Warm Standby keeps more resources active and generally costs more to run. Compare the full design, including data replication, backups, network transfer, recovery tests, and the standby capacity required to meet your objectives.</p>

@@ -2,251 +2,118 @@
 layout: post.njk
 templateEngineOverride: html
 tags: posts
-title: "AWS Direct Connect vs VPN: Key Differences"
-description: "Explore the differences between AWS Direct Connect and VPN, focusing on performance, cost, and security to determine the best connection for your needs."
+title: "AWS Direct Connect vs. Site-to-Site VPN: Key Differences"
+description: "Compare AWS Direct Connect and AWS Site-to-Site VPN for hybrid connectivity, including network paths, encryption, bandwidth, resilience, cost, and when to combine them."
 date: "2025-02-20"
 datePublished: "2025-02-20T07:27:38.646000+00:00"
 heroImage: "/assets/media/3e8ed942f0e3492d28b3.jpg"
 permalink: "/blog/aws-direct-connect-vs-vpn-key-differences/"
 sourceUrl: "https://awsforengineers.com/blog/aws-direct-connect-vs-vpn-key-differences/"
-dateModified: "2026-10-03"
-updateNote: "Added author attribution and profile information; corrected the article heading hierarchy and added article navigation."
+dateModified: "2026-10-04"
+updateNote: "Reframed the comparison around Site-to-Site VPN and corrected bandwidth, cost, latency, encryption, and remote-access claims."
 ---
-<p><a href="https://aws.amazon.com/directconnect/" rel="nofollow noopener noreferrer" target="_blank">AWS Direct Connect</a> and <a href="https://aws.amazon.com/vpn/" rel="nofollow noopener noreferrer" target="_blank">AWS VPN</a> are two ways to connect your on-premises network to AWS cloud resources. Here’s a quick breakdown of their key differences:</p>
-<ul>
-<li><strong>AWS Direct Connect</strong>: Provides a dedicated, private connection to AWS with consistent performance, low latency, and high bandwidth (up to 100 Gbps). It’s ideal for large data transfers, real-time applications, and industries with strict compliance needs. However, it has higher setup costs and takes weeks to deploy.</li>
-<li><strong>AWS VPN</strong>: Uses encrypted tunnels over the public Internet, offering lower costs and quick setup (within minutes). It’s best for smaller workloads, remote access, and backup connections but has variable performance and lower bandwidth (up to 1.25 Gbps per tunnel).</li>
-</ul>
-<h2 id="quick-comparison">Quick Comparison</h2>
-<figure><table>
+<p><a href="https://aws.amazon.com/directconnect/" target="_blank" rel="noopener noreferrer">AWS Direct Connect</a> and <a href="https://docs.aws.amazon.com/vpn/latest/s2svpn/VPC_VPN.html" target="_blank" rel="noopener noreferrer">AWS Site-to-Site VPN</a> can both connect an on-premises network to AWS. They use different network paths and have different performance, encryption, deployment, and cost considerations.</p>
+<p>This comparison uses “VPN” to mean <strong>AWS Site-to-Site VPN</strong>, which connects networks through IPsec tunnels. AWS Client VPN is a separate service for individual users connecting from their devices; it is usually the relevant service for remote workforce access. See the <a href="https://docs.aws.amazon.com/vpn/latest/clientvpn-admin/what-is.html" target="_blank" rel="noopener noreferrer">AWS Client VPN overview</a>.</p>
+<h2 id="quick-comparison">Direct Connect vs. Site-to-Site VPN at a Glance</h2>
+<figure style="overflow-x: auto"><table style="min-width: 680px">
+<colgroup><col style="width: 25%"><col style="width: 37.5%"><col style="width: 37.5%"></colgroup>
 <thead>
 <tr>
-<th>Feature</th>
+<th>Factor</th>
 <th>AWS Direct Connect</th>
-<th>AWS VPN</th>
+<th>AWS Site-to-Site VPN</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><strong>Setup Time</strong></td>
-<td>4–12 weeks</td>
-<td>Minutes</td>
+<td><strong>Network path</strong></td>
+<td>A dedicated connection from your network to an AWS Direct Connect location, through a provider or colocation arrangement.</td>
+<td>IPsec tunnels between your customer gateway and an AWS gateway. Standard tunnels use public VPN endpoints; private IP VPN can run over Direct Connect.</td>
 </tr>
 <tr>
-<td><strong>Bandwidth</strong></td>
-<td>Up to 100 Gbps</td>
-<td>Up to 1.25 Gbps/tunnel</td>
-</tr>
-<tr>
-<td><strong>Cost</strong></td>
-<td>High (infrastructure)</td>
-<td>$37.20/month+</td>
+<td><strong>Encryption</strong></td>
+<td>Traffic is not encrypted by default. MACsec is available for eligible connections, or use an IPsec VPN overlay where required.</td>
+<td>IPsec encryption is built into the VPN tunnels.</td>
 </tr>
 <tr>
 <td><strong>Performance</strong></td>
-<td>Consistent, low latency</td>
-<td>Variable</td>
+<td>Offers a more consistent network path that bypasses internet service providers in the path to AWS. Actual latency and throughput depend on the full route and workload.</td>
+<td>Performance depends on the internet path, tunnel configuration, customer gateway, traffic, and AWS attachment type.</td>
 </tr>
 <tr>
-<td><strong>Security</strong></td>
-<td>Private, optional <a href="https://en.wikipedia.org/wiki/IEEE_802.1AE" rel="nofollow noopener noreferrer" target="_blank">MACsec</a></td>
-<td>Built-in <a href="https://en.wikipedia.org/wiki/IPsec" rel="nofollow noopener noreferrer" target="_blank">IPSec</a></td>
+<td><strong>Capacity</strong></td>
+<td>Dedicated ports are available at 1, 10, 100, and 400 Gbps. Hosted connections offer partner-provisioned capacities from 50 Mbps to 25 Gbps. End-to-end throughput can be lower.</td>
+<td>Standard tunnels support up to 1.25 Gbps each. Large Bandwidth Tunnels support up to 5 Gbps each when attached to Transit Gateway or Cloud WAN, subject to regional availability.</td>
+</tr>
+<tr>
+<td><strong>Provisioning</strong></td>
+<td>Requires arranging a physical or partner-provided connection to a Direct Connect location. Timing depends on location, provider, and connection type.</td>
+<td>Does not require provisioning a dedicated circuit, but still requires configuring the customer gateway, AWS gateway, and routes.</td>
+</tr>
+<tr>
+<td><strong>Cost model</strong></td>
+<td>AWS charges depend on capacity, port hours, and data transfer out; a network provider may charge separately.</td>
+<td>Charges depend on connection type, Region, and data transfer. Other components, such as Transit Gateway, can add charges.</td>
 </tr>
 </tbody>
 </table></figure>
-<p><strong>TL;DR</strong>: Choose Direct Connect for high-performance, large-scale workloads. Opt for VPN if you need a fast, budget-friendly solution. For maximum security and reliability, combine both.</p>
-<h2 id="direct-connect-vs-vpn-main-differences">Direct Connect vs VPN: Main Differences</h2>
-<h3 id="network-performance">Network Performance</h3>
-<p>AWS Direct Connect relies on dedicated physical connections, offering consistent and low-latency performance. With bandwidth options ranging from 50 Mbps to 100 Gbps, it ensures reliable connectivity. On the other hand, AWS VPN operates over the public internet, providing a maximum bandwidth of 1.25 Gbps per tunnel. While this can meet the needs of many applications, its performance depends on internet routing and traffic conditions.</p>
-<h3 id="pricing-structure">Pricing Structure</h3>
-<p>AWS Direct Connect comes with notable upfront infrastructure costs. In contrast, AWS VPN offers a simpler pricing model at $37.20 per month per connection. This price includes hourly connection charges and data transfer fees, with no initial setup costs.</p>
-<h3 id="security-options">Security Options</h3>
-<p>AWS VPN includes built-in IPSec encryption by default, securing data as it travels over the public internet. AWS Direct Connect, however, does not provide encryption by default. It does support optional MACsec encryption for dedicated connections. For encrypted traffic, users can implement a private IP VPN over Direct Connect.</p>
-<p>These differences in performance, cost, and security play a key role in determining the best fit for specific use cases, which will be discussed in the upcoming sections.</p>
-<h2 id="best-use-cases">Best Use Cases</h2>
-<h3 id="direct-connect-use-cases">Direct Connect Use Cases</h3>
-<p>AWS Direct Connect is ideal for situations where consistent network performance and high bandwidth are critical. For example, financial institutions rely on it for high-frequency trading, where ultra-low latency is a must. Similarly, healthcare organizations use it to securely transfer large medical imaging files.</p>
-<p>Here are some common scenarios where Direct Connect stands out:</p>
+<p>Neither option is automatically cheaper or more reliable for every design. Compare the expected traffic, required encryption, route design, availability target, provider costs, and AWS charges for your Region. AWS maintains separate <a href="https://aws.amazon.com/directconnect/pricing/" target="_blank" rel="noopener noreferrer">Direct Connect pricing</a> and <a href="https://aws.amazon.com/vpn/pricing/" target="_blank" rel="noopener noreferrer">VPN pricing</a> pages; use them with the <a href="https://calculator.aws/" target="_blank" rel="noopener noreferrer">AWS Pricing Calculator</a> for an estimate.</p>
+<h2 id="direct-connect-vs-vpn-main-differences">How the Two Connection Types Work</h2>
+<h3 id="network-performance">AWS Direct Connect</h3>
+<p>Direct Connect links your network to an AWS Direct Connect location over Ethernet fiber. You then create a virtual interface to reach a VPC, Transit Gateway, or public AWS services, depending on the interface type. <a href="https://aws.amazon.com/directconnect/pricing/" target="_blank" rel="noopener noreferrer">AWS describes Direct Connect as providing consistent, low-latency network performance</a> and a path that bypasses internet service providers between your network and the Direct Connect location. That description is not a promise of sub-millisecond latency: measure the path and application behavior that matter to your workload.</p>
+<p>A provisioned port's capacity is only one limit in the path; routers, virtual interfaces, gateways, application protocols, and the destination workload can also constrain throughput. See AWS documentation for <a href="https://docs.aws.amazon.com/directconnect/latest/UserGuide/connection_options.html" target="_blank" rel="noopener noreferrer">Direct Connect connection options</a> and <a href="https://docs.aws.amazon.com/directconnect/latest/APIReference/API_AllocateHostedConnection.html" target="_blank" rel="noopener noreferrer">hosted connection capacity options</a>.</p>
+<h3 id="aws-site-to-site-vpn">AWS Site-to-Site VPN</h3>
+<p>Site-to-Site VPN connects a customer gateway device in your network to an AWS virtual private gateway or Transit Gateway using IPsec tunnels. A standard connection includes two tunnels with separate AWS endpoints. Configure and monitor both so traffic can use the second tunnel when the first is unavailable. AWS describes the setup and tunnel behavior in its <a href="https://docs.aws.amazon.com/vpn/latest/s2svpn/VPC_VPN.html" target="_blank" rel="noopener noreferrer">Site-to-Site VPN guide</a> and <a href="https://docs.aws.amazon.com/vpn/latest/s2svpn/VPNTunnels.html" target="_blank" rel="noopener noreferrer">tunnel options documentation</a>.</p>
+<p>A standard tunnel supports up to 1.25 Gbps. Large Bandwidth Tunnels support up to 5 Gbps per tunnel for VPN connections attached to Transit Gateway or Cloud WAN, where available. This is a per-tunnel limit, not a guarantee of end-to-end application throughput or a claim that two tunnels automatically provide twice the bandwidth. AWS notes that realized throughput depends on factors such as packet size, traffic mix, intermediate networks, and the application.</p>
+<h3 id="vpn-for-remote-users">Site-to-Site VPN and Client VPN serve different users</h3>
+<p>Site-to-Site VPN connects networks, such as a branch office or data center to a VPC. Client VPN provides user-based remote access from a computer or device. Direct Connect also connects networks; it does not replace a remote-access service for individual users. Keeping these service roles separate avoids choosing a site-to-site circuit for a user-access problem.</p>
+<h2 id="best-use-cases">Choose Based on the Workload and Network Design</h2>
+<h3 id="direct-connect-use-cases">When Direct Connect may fit</h3>
 <ul>
-<li><strong>Large-scale data migrations</strong>: When moving petabytes of data to AWS, Direct Connect ensures steady transfer speeds without the delays caused by internet traffic.</li>
-<li><strong>Real-time data processing</strong>: Applications like financial trading systems or real-time analytics benefit from its reliable, low-latency performance.</li>
-<li><strong>Regulatory compliance</strong>: Industries with strict data security requirements can use the private, dedicated connection to avoid the public internet.</li>
+<li><strong>Sustained, high-volume data exchange:</strong> A provisioned circuit may be appropriate when traffic volume and throughput needs justify the connection and provider arrangements.</li>
+<li><strong>A more consistent network path:</strong> Consider Direct Connect when reducing reliance on internet routing is important. Validate latency, packet loss, and throughput from the locations and applications that will use it.</li>
+<li><strong>Hybrid routing at scale:</strong> Direct Connect virtual interfaces and gateways can connect on-premises networks to VPCs and Transit Gateway. Plan route propagation and associations as part of the design.</li>
 </ul>
-<p>However, if you need flexibility or a quick setup, AWS VPN might be a better fit.</p>
-<h3 id="vpn-use-cases">VPN Use Cases</h3>
-<p>VPN connectivity is well-suited for businesses that prioritize fast deployment and lower costs. For instance, a software development company could use VPN to provide secure remote access to AWS for testing and development.</p>
-<p>VPN works best for:</p>
+<p>A Direct Connect circuit alone does not provide a complete resilience design. AWS recommends selecting redundant connections and locations to meet the workload's availability objective, then testing failover. Its <a href="https://docs.aws.amazon.com/directconnect/latest/UserGuide/resiliency_toolkit.html" target="_blank" rel="noopener noreferrer">Direct Connect Resiliency Toolkit</a> describes the available models.</p>
+<h3 id="vpn-use-cases">When Site-to-Site VPN may fit</h3>
 <ul>
-<li><strong>Development and testing</strong>: Teams with occasional AWS access needs can establish secure connections quickly.</li>
-<li><strong>Disaster recovery</strong>: Organizations can maintain backup connectivity that activates only during outages.</li>
-<li><strong>Remote workforce access</strong>: Distributed teams can securely connect to AWS without the need for dedicated infrastructure.</li>
+<li><strong>Connectivity without a dedicated circuit:</strong> A standard Site-to-Site VPN can connect a network to AWS over IPsec tunnels using an existing internet connection.</li>
+<li><strong>Development, smaller traffic volumes, or an initial hybrid connection:</strong> VPN avoids arranging a Direct Connect circuit, but its throughput and performance depend on the customer gateway and network path.</li>
+<li><strong>A backup path:</strong> A VPN can provide an alternate route for Direct Connect if it uses a sufficiently independent path and routing failover is configured and tested.</li>
 </ul>
-<p>Choosing between these services depends on your technical requirements and business priorities. For instance, a media company processing 4K video content would benefit from Direct Connect's high bandwidth, while a web development agency working with smaller clients might prefer VPN for its flexibility and lower cost.</p>
-<figure><table>
-<thead>
-<tr>
-<th>Requirement</th>
-<th>Recommended Service</th>
-<th>Key Benefit</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>High-frequency trading</td>
-<td>Direct Connect</td>
-<td>Consistent sub-millisecond latency</td>
-</tr>
-<tr>
-<td>Remote developer access</td>
-<td>VPN</td>
-<td>Quick setup, low cost</td>
-</tr>
-<tr>
-<td>Large dataset processing</td>
-<td>Direct Connect</td>
-<td>Up to 100 Gbps bandwidth</td>
-</tr>
-<tr>
-<td>Backup connectivity</td>
-<td>VPN</td>
-<td>Easy activation when needed</td>
-</tr>
-<tr>
-<td>Healthcare imaging</td>
-<td>Direct Connect</td>
-<td>Private, compliant data transfer</td>
-</tr>
-</tbody>
-</table></figure>
-
-<h2 id="using-direct-connect-with-vpn">Using Direct Connect with VPN</h2>
-<p>Pairing AWS Direct Connect with VPN creates a powerful hybrid solution that combines consistent, high-speed connectivity with end-to-end encryption. This setup involves deploying a private IP VPN over a Direct Connect transit virtual interface (VIF), offering better throughput, more route capacity, and reduced reliance on public IPs. Here’s a breakdown of the key benefits and considerations:</p>
-<figure><table>
-<thead>
-<tr>
-<th>Aspect</th>
-<th>Benefit</th>
-<th>Technical Details</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><strong>Performance</strong></td>
-<td>Higher throughput</td>
-<td>Supports up to 100 Gbps bandwidth with Direct Connect while retaining VPN security</td>
-</tr>
-<tr>
-<td><strong>Route Capacity</strong></td>
-<td>Increased route limits</td>
-<td>Handles 5000 outbound and 1000 inbound routes</td>
-</tr>
-<tr>
-<td><strong>Security</strong></td>
-<td>Better protection</td>
-<td>Ensures end-to-end encryption, eliminating exposure to public IPs</td>
-</tr>
-<tr>
-<td><strong>Management</strong></td>
-<td>Streamlined operations</td>
-<td>Reduces dependency on third-party VPN infrastructure</td>
-</tr>
-</tbody>
-</table></figure>
-<p>This setup is particularly useful for industries like healthcare and finance, where strict regulations demand secure and private connections. By using a private IP VPN, organizations can avoid public IP exposure, shrinking their attack surface while still taking advantage of Direct Connect’s high bandwidth.</p>
-<h3 id="setup-and-costs">Setup and Costs</h3>
-<p>While Direct Connect offers unmatched performance, it requires more time to establish - typically 4 to 12 weeks - compared to the few hours needed for VPN setup. Additionally, the hybrid approach is more expensive. VPN alone costs roughly $37.20/month, but Direct Connect involves significant infrastructure investments. However, the trade-off is improved security and performance.</p>
-<h3 id="key-technical-tips">Key Technical Tips</h3>
+<p>These are starting points, not fixed rules. Compare actual traffic patterns and failure requirements before choosing. For a Transit Gateway design, the related guide to <a href="/blog/aws-transit-gateway-route-tables-explained/">AWS Transit Gateway route tables</a> explains how associations and route propagation affect traffic flow.</p>
+<h2 id="pricing-structure">Compare the Full Cost, Not a Single Monthly Figure</h2>
+<p>There is no universal monthly price for either design. Direct Connect cost can include AWS port-hour, capacity, and data transfer out charges, plus any colocation or network-provider costs. VPN pricing varies by connection type and Region and can include connection-hour charges and data transfer charges. A Transit Gateway, accelerated VPN, public IPv4 addresses, or other networking components can add cost.</p>
+<p>Data transfer charges are separate from a VPN connection's hourly charge. Likewise, the Direct Connect port charge is not the entire cost of moving data: account for data transfer out and any provider charges.</p>
+<p>Build an estimate from your traffic direction and volume, AWS Region, selected connection type and capacity, attachment design, and provider quote. Recheck prices when the design or Region changes.</p>
+<h2 id="security-options">Encryption, Privacy, and Compliance</h2>
+<p>Site-to-Site VPN uses IPsec to encrypt traffic inside the tunnels. With the standard public VPN pattern, the tunnels use public endpoints over the internet. Private IP Site-to-Site VPN is a separate option that runs IPsec over a Direct Connect transit virtual interface, using a Direct Connect gateway and Transit Gateway. It encrypts traffic between the on-premises network and AWS without public IP addresses for the VPN endpoints. See AWS's guide to <a href="https://docs.aws.amazon.com/vpn/latest/s2svpn/private-ip-dx.html" target="_blank" rel="noopener noreferrer">Private IP VPN with Direct Connect</a>.</p>
+<p><a href="https://docs.aws.amazon.com/whitepapers/latest/aws-vpc-connectivity-options/aws-direct-connect.html" target="_blank" rel="noopener noreferrer">Direct Connect does not encrypt traffic by default</a>. MACsec can encrypt the Layer 2 connection between your router and the Direct Connect location on supported links and at supported locations. MACsec protects that Ethernet segment; it is not end-to-end encryption across every segment. Review the current <a href="https://docs.aws.amazon.com/directconnect/latest/UserGuide/MACsec.html" target="_blank" rel="noopener noreferrer">MACsec prerequisites and coverage</a> before relying on it.</p>
+<p>A private connection or an encrypted tunnel does not by itself establish compliance with a regulation or an organization's security policy. Select encryption, access controls, logging, routing, and evidence based on the data and applicable requirements. If encryption is required over Direct Connect, evaluate MACsec where it fits or an IPsec overlay. The IPsec tunnel's capacity still applies: a VPN over Direct Connect does not inherit the full Direct Connect port bandwidth.</p>
+<h2 id="using-direct-connect-with-vpn">When to Combine Direct Connect and VPN</h2>
+<p>Combining the services can serve two different purposes:</p>
 <ul>
-<li>Set up a private IP VPN over Direct Connect transit VIFs.</li>
-<li>Use redundant connections to ensure high availability.</li>
-<li>Monitor bandwidth usage to take full advantage of the 100 Gbps capacity.</li>
-<li>Optimize route management to handle the expanded limits effectively.</li>
+<li><strong>Failover:</strong> Use Direct Connect as a primary path and a Site-to-Site VPN over a separate internet path as backup. Configure routing and health checks so traffic moves to the alternate path, and test failover. A backup sharing the same provider, facility, or last-mile route may not protect against failures in that shared infrastructure.</li>
+<li><strong>Encryption overlay:</strong> Use Private IP Site-to-Site VPN over a Direct Connect transit virtual interface when IPsec encryption is required over the private connection. This design uses Transit Gateway and a Direct Connect gateway, and the VPN tunnel remains a throughput limit even when the Direct Connect circuit has more capacity.</li>
 </ul>
-<p>This combination of Direct Connect and VPN strikes a balance between performance and security, making it an ideal choice for organizations with demanding connectivity requirements.</p>
-<h2 id="summary">Summary</h2>
-<h3 id="key-points">Key Points</h3>
-<p>When deciding between <strong>AWS Direct Connect</strong> and <strong>AWS VPN</strong>, the choice often hinges on performance needs and budget. Direct Connect is ideal for industries like healthcare and finance that demand stable, high-speed connections, offering bandwidths from 50 Mbps to 100 Gbps.</p>
-<figure><table>
-<thead>
-<tr>
-<th>Aspect</th>
-<th>AWS Direct Connect</th>
-<th>AWS VPN</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><strong>Performance</strong></td>
-<td>Up to 100 Gbps, low latency</td>
-<td>Up to 1.25 Gbps per tunnel</td>
-</tr>
-<tr>
-<td><strong>Setup Time</strong></td>
-<td>4–12 weeks</td>
-<td>Minutes</td>
-</tr>
-<tr>
-<td><strong>Base Cost</strong></td>
-<td>Thousands of dollars</td>
-<td>$37.20/month</td>
-</tr>
-<tr>
-<td><strong>Security</strong></td>
-<td>Private connection, optional MACsec</td>
-<td>IPSec encryption</td>
-</tr>
-</tbody>
-</table></figure>
-<p>For quick and budget-friendly solutions, VPN works well, especially for smaller-scale needs. On the other hand, Direct Connect provides unmatched reliability and speed, making it a go-to for handling sensitive data or large-scale workloads, despite its higher cost and longer setup process.</p>
-<h3 id="learn-more">Learn More</h3>
-<p>Your decision will largely depend on how critical performance is for your use case and what your budget allows. For step-by-step guides on implementing AWS connectivity solutions like Direct Connect and VPN, check out <a href="/">AWS for Engineers</a>. This resource is packed with technical insights tailored for software engineers, including configuration tips and best practices for AWS services.</p>
-<h2 id="faqs">FAQs</h2>
-<h3 id="what-is-the-difference-between-aws-direct-connect-and-vpn">What is the difference between <a href="https://aws.amazon.com/directconnect/" rel="nofollow noopener noreferrer" target="_blank">AWS Direct Connect</a> and VPN?</h3>
-<p><figure><img alt="AWS Direct Connect" loading="lazy" src="/assets/media/16492f5b36d18696a290.jpg"/></figure></p>
-<p>AWS Direct Connect relies on a dedicated physical connection, while AWS VPN uses an encrypted tunnel over the public internet.</p>
-<figure><table>
-<thead>
-<tr>
-<th>Aspect</th>
-<th>AWS Direct Connect</th>
-<th>AWS VPN</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><strong>Connection Type</strong></td>
-<td>Dedicated physical line</td>
-<td>Virtual tunnel over internet</td>
-</tr>
-<tr>
-<td><strong>Bandwidth</strong></td>
-<td>50 Mbps - 100 Gbps</td>
-<td>Up to 1.25 Gbps per tunnel</td>
-</tr>
-<tr>
-<td><strong>Setup Time</strong></td>
-<td>4-12 weeks</td>
-<td>Minutes</td>
-</tr>
-<tr>
-<td><strong>Default Security</strong></td>
-<td>No built-in encryption</td>
-<td>IPSec encryption</td>
-</tr>
-<tr>
-<td><strong>Network Stability</strong></td>
-<td>Consistent performance</td>
-<td>Variable performance</td>
-</tr>
-<tr>
-<td><strong>Cost Structure</strong></td>
-<td>Port hours + data transfer</td>
-<td>Connection hours + data transfer</td>
-</tr>
-</tbody>
-</table></figure>
-<p>Here’s a closer look at each option:</p>
-<p><strong>AWS Direct Connect</strong> offers a private connection that bypasses the public internet, ensuring more stable and predictable performance. While it doesn’t include encryption by default, you can enable MACsec encryption for added security.</p>
-<p>On the other hand, <strong>AWS VPN</strong> secures data by encrypting all traffic using IPSec protocols. It operates over the public internet, making it quicker to set up but subject to variable network performance.</p>
-<p>For businesses needing both reliability and security, combining Direct Connect with VPN can deliver the best of both worlds - dedicated performance and encrypted communication.</p>
-<h2>Related Blog Posts</h2><ul><li><a href="/blog/aws-services-overview-core-components/">AWS Services Overview: Core Components</a></li><li><a href="/blog/aws-transit-gateway-scalability-and-limits-explained/">AWS Transit Gateway: Scalability &amp; Limits Explained</a></li><li><a href="/blog/ultimate-guide-to-aws-network-performance-benchmarking/">Ultimate Guide to AWS Network Performance Benchmarking</a></li><li><a href="/blog/enterprise-integration-patterns-with-aws-services/">Enterprise Integration Patterns with AWS Services</a></li></ul>
+<p>These designs add components, charges, routing policy, and operational work. Pick the one that addresses a specific availability or encryption requirement, and test the relevant failure and traffic paths.</p>
+<h2 id="summary">A Practical Decision Process</h2>
+<ol>
+<li><strong>Confirm what is connecting.</strong> Use Site-to-Site VPN or Direct Connect for network-to-network connectivity. Evaluate Client VPN for individual remote users.</li>
+<li><strong>Measure the workload.</strong> Estimate busy-hour throughput and check latency, loss, and application response from representative locations. The <a href="/blog/ultimate-guide-to-aws-network-performance-benchmarking/">AWS network performance benchmarking guide</a> covers useful measurement approaches.</li>
+<li><strong>Set security and availability requirements.</strong> Decide whether IPsec or MACsec is required, what failures the connection must survive, and how routing should respond.</li>
+<li><strong>Estimate the complete cost.</strong> Include AWS connection, attachment, address, and transfer charges, plus provider or colocation costs where relevant.</li>
+<li><strong>Test the design.</strong> Verify routing, throughput, encryption, and failover under realistic conditions. For Direct Connect issues across physical, BGP, and routing layers, see the site's <a href="/blog/troubleshooting-aws-direct-connect-step-by-step/">Direct Connect troubleshooting guide</a>.</li>
+</ol>
+<p>Direct Connect is a candidate when a dedicated path and sustained capacity justify its provisioning and cost. Site-to-Site VPN is a candidate when encrypted network connectivity without a dedicated circuit fits the workload. Some architectures use both, either for failover or to add IPsec encryption over Direct Connect.</p>
+<h2 id="faqs">Frequently Asked Questions</h2>
+<h3 id="is-direct-connect-encrypted-by-default">Is AWS Direct Connect encrypted by default?</h3>
+<p>No. Direct Connect does not encrypt traffic by default. MACsec is available on supported connections for link encryption, while IPsec can be added with a VPN overlay. Check whether the selected encryption covers the complete path required by your policy.</p>
+<h3 id="is-site-to-site-vpn-limited-to-1-25-gbps">Is AWS Site-to-Site VPN limited to 1.25 Gbps?</h3>
+<p>Standard VPN tunnels support up to 1.25 Gbps each. Large Bandwidth Tunnels support up to 5 Gbps each for connections attached to Transit Gateway or Cloud WAN in supported Regions. These are tunnel limits; actual application throughput can be lower.</p>
+<h3 id="can-vpn-over-direct-connect-use-the-full-circuit-speed">Can a VPN over Direct Connect use the full circuit speed?</h3>
+<p>No. IPsec tunnel throughput remains a separate limit. Private IP Site-to-Site VPN over Direct Connect provides an encrypted overlay, but it does not make the VPN tunnel as fast as the underlying Direct Connect port.</p>
+<h3 id="is-site-to-site-vpn-for-remote-employees">Is Site-to-Site VPN for remote employees?</h3>
+<p>Site-to-Site VPN connects networks. AWS Client VPN is designed for individual users connecting from their devices to AWS and on-premises resources.</p>
+<h3 id="is-direct-connect-always-faster-or-cheaper">Is Direct Connect always faster or cheaper?</h3>
+<p>No. Direct Connect can provide a more consistent path and higher provisioned capacity, but application performance depends on the full network path and workload. Total cost depends on traffic, Region, circuit type, provider arrangements, and other AWS networking services. Measure performance and estimate the complete design.</p>
