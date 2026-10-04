@@ -3,260 +3,67 @@ layout: post.njk
 templateEngineOverride: html
 tags: posts
 title: "CloudFront DDoS Protection: AWS Shield Best Practices"
-description: "Learn how to effectively protect your web applications from DDoS attacks using CloudFront and AWS Shield, along with best practices for enhanced security."
+description: "Learn how CloudFront, AWS Shield Standard and Advanced, and AWS WAF work together to mitigate DDoS attacks, secure origins, and monitor application health."
 date: "2025-09-01"
 datePublished: "2025-09-01T03:59:09.069000+00:00"
 heroImage: "/assets/media/2e7299eb0be77b8ba56d.jpg"
 permalink: "/blog/cloudfront-ddos-protection-aws-shield-best-practices/"
 sourceUrl: "https://awsforengineers.com/blog/cloudfront-ddos-protection-aws-shield-best-practices/"
-dateModified: "2026-10-03"
-updateNote: "Added author attribution and profile information; corrected the article heading hierarchy and added article navigation."
+dateModified: "2026-10-04"
+updateNote: "Revised Shield and WAF guidance, corrected origin protection advice, and updated pricing and monitoring details."
 ---
-<p><strong>DDoS attacks can disrupt your web applications, causing downtime, revenue loss, and reputational damage.</strong> <a href="https://aws.amazon.com/" rel="nofollow noopener noreferrer" target="_blank">AWS</a> offers two powerful tools - <strong><a href="https://aws.amazon.com/cloudfront/" rel="nofollow noopener noreferrer" target="_blank">CloudFront</a></strong> and <strong><a href="https://aws.amazon.com/shield/" rel="nofollow noopener noreferrer" target="_blank">AWS Shield</a></strong> - to defend against such threats. Together, they block malicious traffic before it reaches your servers, ensuring better availability and performance.</p>
-<h2 id="key-takeaways">Key Takeaways:</h2>
-<ul>
-<li><strong>CloudFront</strong>: Acts as a global content delivery network (CDN) to absorb and filter attack traffic at edge locations. It reduces load on your origin servers by caching content and analyzing traffic patterns.</li>
-<li><strong>AWS Shield</strong>: Provides automatic DDoS detection and mitigation. It comes in two tiers:
-<ul>
-<li><strong>Shield Standard</strong> (free): Protects against common Layer 3 and 4 attacks like SYN floods.</li>
-<li><strong>Shield Advanced</strong> ($3,000/month): Adds Layer 7 protection, detailed metrics, cost protection, and 24/7 AWS Shield Response Team (SRT) support.</li>
-</ul>
-</li>
-<li><strong>Best Practices</strong>:
-<ul>
-<li>Enable HTTPS to secure traffic between CloudFront and origin servers.</li>
-<li>Use <strong><a href="https://aws.amazon.com/waf/" rel="nofollow noopener noreferrer" target="_blank">AWS WAF</a></strong> to block application-layer threats.</li>
-<li>Configure <strong>Origin Access Control (OAC)</strong> to restrict direct access to your servers.</li>
-<li>Monitor metrics like <code>DDoSDetected</code> and set alarms for unusual activity.</li>
-</ul>
-</li>
-</ul>
-<h2 id="quick-comparison-of-shield-standard-vs-advanced">Quick Comparison of Shield Standard vs Advanced:</h2>
-<figure><table>
-<thead>
-<tr>
-<th>Feature</th>
-<th>Shield Standard</th>
-<th>Shield Advanced</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><strong>Cost</strong></td>
-<td>Free</td>
-<td>$3,000/month</td>
-</tr>
-<tr>
-<td><strong>Protection Scope</strong></td>
-<td>Layers 3 &amp; 4</td>
-<td>Layers 3, 4, &amp; 7</td>
-</tr>
-<tr>
-<td><strong>Expert Support</strong></td>
-<td>None</td>
-<td>24/7 AWS Shield Response Team</td>
-</tr>
-<tr>
-<td><strong>Cost Protection</strong></td>
-<td>Not included</td>
-<td>Covers scaling charges during attacks</td>
-</tr>
-<tr>
-<td><strong>Monitoring &amp; Reporting</strong></td>
-<td>Basic metrics</td>
-<td>Real-time diagnostics</td>
-</tr>
-</tbody>
-</table></figure>
-<h2 id="why-it-matters">Why It Matters:</h2>
-<p>CloudFront and AWS Shield together provide a multi-layered defense against DDoS attacks. For basic needs, Shield Standard works automatically with no extra cost. For businesses facing frequent or complex threats, Shield Advanced adds tailored protections and expert support.</p>
-<p>To stay protected, <strong>monitor traffic, implement origin restrictions, and refine your defenses regularly</strong>.</p>
-<h2 id="aws-shield-standard-vs-advanced"><a href="https://aws.amazon.com/shield/" rel="nofollow noopener noreferrer" target="_blank">AWS Shield</a> Standard vs Advanced</h2>
-<p><figure><img alt="AWS Shield" loading="lazy" src="/assets/media/cb930d52a76685254e81.jpg"/></figure></p>
-<p>AWS Shield comes in two tiers, each offering different levels of protection and features. This flexibility allows you to choose the right level of defense for your CloudFront distributions and overall security needs.</p>
-<h3 id="aws-shield-standard-features"><a href="https://aws.amazon.com/" rel="nofollow noopener noreferrer" target="_blank">AWS</a> Shield Standard Features</h3>
-<p><figure><img alt="AWS" loading="lazy" src="/assets/media/bb32e4c9ed811cb9153a.jpg"/></figure></p>
-<p>AWS Shield Standard builds on CloudFront's edge defenses, offering baseline DDoS protection to all AWS customers at no extra cost. This service automatically safeguards CloudFront distributions against common network and transport layer attacks.</p>
-<p>Shield Standard primarily focuses on protecting against Layer 3 and Layer 4 threats, such as SYN floods and UDP reflection attacks. These types of attacks aim to overwhelm your infrastructure by consuming bandwidth or exhausting resources. The system detects these attack patterns and applies mitigation techniques automatically - no setup required.</p>
-<p>By leveraging CloudFront's global edge network, Shield Standard blocks harmful traffic before it ever reaches your origin servers. This protection is available across all AWS regions and availability zones where your resources are deployed.</p>
-<p>For monitoring, Shield Standard provides basic <a href="/blog/custom-cloudwatch-metrics-setup-guide-2024/">CloudWatch metrics</a>, giving you insights into traffic trends and potential threats. However, the reporting capabilities are more limited compared to the advanced tier.</p>
-<h3 id="aws-shield-advanced-features">AWS Shield Advanced Features</h3>
-<p>AWS Shield Advanced steps up the protection by defending against more complex DDoS attacks, including application layer threats. This enhanced service is available for a monthly fee of $3,000 per organization.</p>
-<p>One of the key benefits of Shield Advanced is 24/7 access to the AWS Shield Response Team (SRT). During a DDoS event, the SRT assists with attack analysis, mitigation strategies, and post-incident reviews. However, this support requires a Business or Enterprise support plan.</p>
-<p>Shield Advanced tailors its detection to your application's normal traffic patterns, making it easier to identify unusual activity. It also uses <a href="https://aws.amazon.com/route53/" rel="nofollow noopener noreferrer" target="_blank">Route 53</a> health checks to monitor your application's availability and trigger protective measures if performance issues arise.</p>
-<p>Another standout feature is DDoS cost protection. This safeguards you from unexpected scaling charges on protected resources like EC2, ELB, CloudFront, Global Accelerator, and Route 53 during a DDoS attack. Essentially, it prevents surprise bills when AWS scales your resources to handle attack traffic.</p>
-<p>For visibility, Shield Advanced provides near-instant attack notifications through CloudWatch metrics and detailed diagnostics. It also offers access to a global threat environment dashboard and up to 13 months of incident history, allowing you to analyze trends and plan your security strategy.</p>
-<p>Additionally, Shield Advanced integrates with AWS WAF, covering standard WAF costs for protected resources. It includes the Application Layer DDoS protection AWS Managed Rule group, which supports up to 50 billion requests per month. For organizations managing multiple AWS accounts, centralized protection management is available via <a href="https://aws.amazon.com/firewall-manager/" rel="nofollow noopener noreferrer" target="_blank">AWS Firewall Manager</a>.</p>
-<h3 id="feature-comparison-table">Feature Comparison Table</h3>
-<figure><table>
-<thead>
-<tr>
-<th>Feature</th>
-<th>Shield Standard</th>
-<th>Shield Advanced</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><strong>Cost</strong></td>
-<td>Free for all AWS customers</td>
-<td>$3,000/month per organization </td>
-</tr>
-<tr>
-<td><strong>Protection Scope</strong></td>
-<td>Layer 3 &amp; 4 (Network/Transport)</td>
-<td>Layer 3, 4 &amp; 7 (includes Application)</td>
-</tr>
-<tr>
-<td><strong>Attack Detection</strong></td>
-<td>Generic signatures</td>
-<td>Tailored to application patterns</td>
-</tr>
-<tr>
-<td><strong>Expert Support</strong></td>
-<td>None</td>
-<td>24/7 AWS Shield Response Team</td>
-</tr>
-<tr>
-<td><strong>Cost Protection</strong></td>
-<td>Not included</td>
-<td>DDoS-related scaling charge protection</td>
-</tr>
-<tr>
-<td><strong>Monitoring &amp; Reporting</strong></td>
-<td>Basic CloudWatch metrics</td>
-<td>Real-time visibility with detailed diagnostics</td>
-</tr>
-<tr>
-<td><strong>WAF Integration</strong></td>
-<td>Separate billing</td>
-<td>WAF costs included for protected resources</td>
-</tr>
-<tr>
-<td><strong>Multi-Account Management</strong></td>
-<td>Individual account basis</td>
-<td>Centralized via AWS Firewall Manager</td>
-</tr>
-<tr>
-<td><strong>Attack History</strong></td>
-<td>Limited visibility</td>
-<td>Up to 13 months of incident history</td>
-</tr>
-</tbody>
-</table></figure>
-<p>This comparison helps you decide based on your application's criticality and your tolerance for risk. Shield Standard is ideal for basic protection needs, while Shield Advanced is better suited for enterprise-level security, offering comprehensive features and expert support.</p>
-<p>Next, we’ll explore how to set up AWS Shield with CloudFront for maximum protection.</p>
-<h2 id="setting-up-aws-shield-with-cloudfront">Setting Up AWS Shield with <a href="https://aws.amazon.com/cloudfront/" rel="nofollow noopener noreferrer" target="_blank">CloudFront</a></h2>
-<p><figure><img alt="CloudFront" loading="lazy" src="/assets/media/b46403f9eb0ca89ac36e.jpg"/></figure></p>
-<p>Getting AWS Shield protection for your CloudFront distributions is a straightforward process. The setup varies depending on whether you’re using Shield Standard or Shield Advanced. To ensure full DDoS protection, it’s also essential to configure HTTPS properly and restrict origin access.</p>
-<h3 id="enabling-aws-shield-on-cloudfront">Enabling AWS Shield on CloudFront</h3>
-<p>AWS Shield Standard is automatically enabled for all CloudFront distributions. This basic layer of protection kicks in as soon as you create a CloudFront distribution, defending against common network and transport layer attacks without any additional cost.</p>
-<p>For those needing more advanced protection, Shield Advanced offers several activation methods. The easiest way is through the AWS Shield console, where you can select your CloudFront distributions and enable the enhanced safeguards. You can also activate Shield Advanced directly from the CloudFront console while managing your distribution settings.</p>
-<p>If you prefer a command-line approach, the <a href="https://aws.amazon.com/cli/" rel="nofollow noopener noreferrer" target="_blank">AWS CLI</a> allows you to enable Shield Advanced. This method is particularly useful for <a href="/blog/aws-engineering-blog-mastering-infrastructure-as-code/">infrastructure-as-code setups</a> or managing multiple distributions across various environments.</p>
-<p>For organizations with multiple AWS accounts, AWS Firewall Manager provides centralized management for Shield Advanced. When configuring Firewall Manager for CloudFront resources, make sure to select the "Global" region, as CloudFront operates globally. This centralized setup ensures consistent protection policies across all your distributions and accounts.</p>
-<p>Once Shield is enabled, the next step is to configure HTTPS and restrict origin access to complete the security setup.</p>
-<h3 id="configuring-https-and-origin-access-restrictions">Configuring HTTPS and Origin Access Restrictions</h3>
-<p>HTTPS plays a key role in protecting against DDoS attacks. With CloudFront, you can enforce HTTPS both between viewers and CloudFront, and between CloudFront and your origin servers.</p>
-<p>To enforce HTTPS for viewers, adjust your CloudFront distribution’s viewer protocol policy to either redirect HTTP requests to HTTPS or block HTTP entirely. On the backend, CloudFront can require HTTPS when connecting to your origin servers, whether they are <a href="https://aws.amazon.com/s3/" rel="nofollow noopener noreferrer" target="_blank">Amazon S3</a> buckets, MediaStore containers, or custom HTTP servers. CloudFront handles SSL/TLS negotiation with viewers and, if needed, separately with origin servers.</p>
-<p>Additionally, CloudFront mitigates SSL renegotiation attacks, safeguarding against vulnerabilities that attackers might exploit.</p>
-<p>The updated CloudFront console simplifies TLS provisioning and DNS setup when integrated with Route 53. This streamlined process minimizes configuration errors and ensures certificates are managed correctly.</p>
-<p>If you’re using Amazon S3 as your origin, enabling the "Grant CloudFront access to origin" option is crucial. This setting, enabled by default, automatically updates your S3 bucket policy to allow CloudFront access while configuring Origin Access Control (OAC). OAC ensures that your S3 content is only accessible via CloudFront, blocking direct public access to your bucket.</p>
-<h2 id="ddos-protection-best-practices">DDoS Protection Best Practices</h2>
-<p>Protecting against DDoS attacks takes more than just enabling AWS Shield. A strong defense strategy involves layering multiple security tools and keeping a close eye on your CloudFront distributions to catch and respond to threats quickly. Adding AWS WAF to your setup helps create a more comprehensive defense.</p>
-<h3 id="using-aws-waf-with-cloudfront">Using <a href="https://aws.amazon.com/waf/" rel="nofollow noopener noreferrer" target="_blank">AWS WAF</a> with CloudFront</h3>
-<p><figure><img alt="AWS WAF" loading="lazy" src="/assets/media/5894e89d13db2ad8bb9f.jpg"/></figure></p>
-<p>AWS WAF complements AWS Shield by adding protection at the application layer. While Shield handles large-scale attacks targeting network and transport layers, WAF filters out harmful application-layer traffic before it can reach your origin servers. This is particularly effective for attacks that mix high-volume traffic with application-level vulnerabilities.</p>
-<p>To strengthen your defenses, configure AWS WAF with rate-limiting rules to block IP addresses that exceed a set number of requests within a specific time frame. This helps defend against automated attacks and aggressive web scraping. AWS WAF also offers managed rule groups to counter common attack patterns, and reusable rule groups make it easier to apply consistent security policies across multiple CloudFront distributions.</p>
-<h3 id="monitoring-cloudfront-security-dashboard">Monitoring CloudFront Security Dashboard</h3>
-<p>Effective protection isn’t just about blocking attacks - it’s also about spotting and reacting to threats as they develop. The <a href="/blog/aws-network-dashboard-issues-troubleshooting-tips/">CloudFront security dashboard</a> provides a real-time view of traffic and potential risks. With AWS Shield Advanced, you can access detailed metrics for both ongoing and past DDoS events. When unusual traffic is detected, Shield Advanced analyzes factors like traffic volume, request behavior, and source details, then initiates mitigation efforts.</p>
-<p>To stay on top of attacks, set up <a href="/blog/cloudwatch-alarms-best-practices-for-thresholds-and-conditions/">CloudWatch alarms</a> for critical Shield Advanced metrics, such as:</p>
-<ul>
-<li><strong>DDoSDetected</strong> – Alerts you when an attack is identified.</li>
-<li><strong>DDoSAttackBitsPerSecond</strong> and <strong>DDoSAttackPacketsPerSecond</strong> – Show the size of Layer 3/4 attacks.</li>
-<li><strong>DDoSAttackRequestsPerSecond</strong> – Measures the intensity of application-layer (Layer 7) attacks.</li>
-</ul>
-<p>The "network top contributors" feature provides insights into traffic sources during an event, sorting data by protocol, source port, TCP flags, and more. Additionally, CloudFront’s standard metrics - like Requests and TotalErrorRate - can act as early warning signs. Regularly reviewing CloudFront access logs can also help you uncover attack patterns that might not immediately trigger alerts [12, 13].</p>
-<figure><table>
-<thead>
-<tr>
-<th>Metric</th>
-<th>Purpose</th>
-<th>Attack Type</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>DDoSDetected</code></td>
-<td>Identifies when a DDoS attack occurs</td>
-<td>All types</td>
-</tr>
-<tr>
-<td><code>DDoSAttackBitsPerSecond</code></td>
-<td>Measures attack volume in bits per second</td>
-<td>Layer 3/4</td>
-</tr>
-<tr>
-<td><code>DDoSAttackPacketsPerSecond</code></td>
-<td>Tracks packets during an attack</td>
-<td>Layer 3/4</td>
-</tr>
-<tr>
-<td><code>DDoSAttackRequestsPerSecond</code></td>
-<td>Monitors application-layer attack requests</td>
-<td>Layer 7</td>
-</tr>
-</tbody>
-</table></figure>
-<h3 id="configuring-origin-access-controls">Configuring Origin Access Controls</h3>
-<p>Building on HTTPS and origin restrictions, it’s critical to block direct access to your origin servers. This ensures all traffic passes through CloudFront, allowing AWS Shield and WAF to provide full protection. Without these controls, attackers could bypass CloudFront and target your origin servers directly.</p>
-<p>For <strong>Amazon S3 origins</strong>, use Origin Access Control (OAC) instead of the older Origin Access Identity (OAI). OAC enhances security by using short-term credentials that rotate frequently, reducing the risk of confused deputy attacks.</p>
-<p>When using <strong><a href="https://aws.amazon.com/lambda/" rel="nofollow noopener noreferrer" target="_blank">AWS Lambda</a> function URLs</strong> as origins, set the function’s authentication type to <code>AWS_IAM</code> and create a Lambda-specific OAC. After configuring your CloudFront distribution, update the Lambda function’s resource policy to allow the <code>lambda:InvokeFunctionUrl</code> action for your CloudFront distribution.</p>
-<p>For <strong>custom origins</strong> like <a href="/blog/aws-elastic-load-balancing-setup-guide/">Application Load Balancers</a> or EC2 instances, configure CloudFront to include a secret header (e.g., <code>X-Shared-Secret</code>) in all requests sent to your origin. Your origin should validate this header to ensure requests are legitimate. This method is particularly effective in managing connection limits during high-traffic attacks.</p>
+<p>Amazon CloudFront can put a managed edge network in front of a website or API, while AWS Shield and AWS WAF add different kinds of attack protection. A resilient design uses CloudFront as the intended public entry point, protects the origin from direct requests, and applies request rules that match the application. These controls reduce risk; they do not guarantee that every attack is blocked or that an application remains available under every traffic pattern.</p>
 
-<h2 id="monitoring-and-responding-to-ddos-attacks">Monitoring and Responding to DDoS Attacks</h2>
-<p>Keeping a close watch on your systems and having a clear plan can significantly reduce the impact of DDoS attacks. Quick detection and a well-coordinated response can minimize downtime and protect your applications from harm.</p>
-<h3 id="real-time-monitoring-and-metrics">Real-Time Monitoring and Metrics</h3>
-<p>Comprehensive monitoring is key to spotting attacks early, before they escalate. AWS offers a range of tools to monitor your CloudFront distributions and detect unusual activity patterns.</p>
-<p><strong>CloudWatch Metrics</strong> act as your first line of defense. Keep an eye on standard metrics from CloudFront, such as <strong>BytesDownloaded</strong> and <strong>BytesUploaded</strong>, which may spike during volumetric attacks.</p>
-<p>Set alarms in CloudWatch to flag traffic surges that exceed normal levels. For instance, if your typical traffic averages 10,000 requests per minute, you might set an alarm for 50,000 requests per minute to catch sudden spikes. However, don’t set thresholds too low, as this could trigger false alarms during legitimate traffic increases.</p>
-<p>The <strong>AWS Personal Health Dashboard</strong> is another critical tool. It provides notifications tailored to your account, alerting you when AWS detects DDoS activity targeting your resources - even if you’re using Shield Standard.</p>
-<p>These monitoring strategies feed directly into a responsive incident management process.</p>
-<h3 id="ddos-incident-response-steps">DDoS Incident Response Steps</h3>
-<p>When a DDoS attack is detected, a structured response plan can help minimize disruption and restore normal operations quickly.</p>
-<p><strong>Immediate Assessment</strong>: Begin by evaluating the situation. Use the CloudFront security dashboard to analyze the scope and type of the attack. Look into traffic sources, request patterns, and affected resources. Document the time the attack began and any initial findings for later review.</p>
-<p>If you’re using <strong>AWS Shield Advanced</strong>, reach out to the DDoS Response Team (DRT). They’re available 24/7 to assist with active attacks and can implement tailored mitigations swiftly. Open a high-severity support case with AWS, providing details about your CloudFront distribution and observations from the attack.</p>
-<p>Take immediate steps to mitigate the attack. For example, enable additional AWS WAF rules to block suspicious patterns, such as traffic from specific regions or user agents. If necessary, adjust your origin server’s capacity or apply emergency rate limits at the application level.</p>
-<p>Keep internal teams informed and escalate issues based on predefined criteria, especially if the attack impacts critical business functions or lasts more than two hours. Communicate with customers about any service disruptions, sharing updates every 30–60 minutes during the incident.</p>
-<h3 id="post-attack-analysis-and-updates">Post-Attack Analysis and Updates</h3>
-<p>After the attack has been mitigated, it’s crucial to analyze what happened and refine your defenses to prepare for future incidents.</p>
-<p><strong>Analyze Logs</strong>: Dive into CloudFront access logs from the attack period to identify patterns - such as specific IP addresses, user agents, or requested resources - that reveal the nature of the attack. This can help pinpoint vulnerabilities and better understand the attack source.</p>
-<p><strong>Assess Performance Impact</strong>: Evaluate the business effects of the attack. Calculate metrics like the number of requests blocked, legitimate traffic affected, revenue lost during downtime, and any additional AWS costs incurred. This data can guide future security investments.</p>
-<p><strong>Review Defense Effectiveness</strong>: Examine how well your protections performed. Identify which AWS WAF rules were most effective, how quickly Shield Advanced detected and mitigated the attack, and whether your monitoring systems provided sufficient early warnings. Note any gaps in your response.</p>
-<p><strong>Update Configurations</strong>: Address any weaknesses uncovered during the attack. Create new AWS WAF rules based on observed attack patterns. Adjust CloudWatch alarm thresholds if they were too high or low. Update origin access controls to block bypass attempts.</p>
-<p>Document the incident thoroughly and update your response procedures. Hold post-incident reviews with all involved teams to identify areas for improvement. You might also consider conducting tabletop exercises to simulate future attack scenarios and refine your response strategy.</p>
-<p><strong>Proactive Enhancements</strong>: Take steps to strengthen your overall security posture. Review your architecture for potential vulnerabilities and consider adding extra layers of protection, such as better monitoring tools or backup origin servers. Based on your experience, you may also evaluate whether upgrading to Shield Advanced aligns with your business needs.</p>
-<h2 id="conclusion">Conclusion</h2>
-<p>Integrating <strong>AWS Shield</strong> with <strong>CloudFront</strong> establishes a solid, multi-layered approach to defending against DDoS attacks. CloudFront's global edge network acts as the first line of defense, absorbing and filtering malicious traffic before it reaches your origin servers. Meanwhile, AWS Shield provides automatic protections and advanced tools to mitigate even complex threats.</p>
-<p>With <strong>Shield Standard</strong>, you get baseline network protection, while <strong>Shield Advanced</strong> adds layers of defense for application-level attacks and includes access to expert support. Pairing Shield with <strong>AWS WAF</strong> offers even greater control, letting you fine-tune traffic filtering based on specific patterns or behaviors.</p>
-<p>To maximize your defenses, implement origin access controls, enforce HTTPS connections, and actively monitor metrics through <strong>CloudWatch</strong> and the <strong>Personal Health Dashboard</strong>. Having a clear incident response plan ensures you're prepared to reduce the impact of any attack. These practices, combined with regular access log reviews and post-incident analyses, help fine-tune your defenses and adapt to emerging threats. For organizations running critical applications or facing frequent attacks, Shield Advanced's enhanced features and expert support can be a game-changer.</p>
-<p>DDoS protection is not a one-and-done effort. It demands ongoing vigilance. Regularly update WAF rules, adjust monitoring thresholds, and refine response procedures to stay ahead of threats. These steps, when tied to the configurations and strategies discussed earlier, highlight the importance of maintaining and enhancing your security posture over time.</p>
-<h2 id="faqs">FAQs</h2>
-<h3 id="whats-the-difference-between-aws-shield-standard-and-shield-advanced-and-how-do-i-choose-the-right-one">What’s the difference between AWS Shield Standard and Shield Advanced, and how do I choose the right one?</h3>
-<h2 id="aws-shield-standard-vs-advanced-1">AWS Shield: Standard vs. Advanced</h2>
-<p>AWS Shield Standard provides <strong>free, basic protection</strong> against common DDoS attacks, focusing on network and transport layer threats. It's a great fit for smaller applications or workloads with lower security demands.</p>
-<p>On the other hand, <strong>AWS Shield Advanced</strong> steps up the game with <strong>real-time attack monitoring</strong>, integration with AWS WAF, and access to the <strong>AWS DDoS Response Team (DRT)</strong> for expert guidance during attacks. This option is tailored for high-traffic or mission-critical applications that need a stronger security framework.</p>
-<p>When choosing between the two, think about your application's <strong>size, complexity, and exposure to risk</strong>. For less sensitive or smaller workloads, Shield Standard does the job. However, if you're dealing with sensitive data or face a higher risk of attacks, Shield Advanced is the way to go.</p>
-<h3 id="how-does-using-aws-waf-with-cloudfront-improve-ddos-protection-and-what-rules-should-i-set-up">How does using AWS WAF with CloudFront improve DDoS protection, and what rules should I set up?</h3>
-<p>Integrating <strong>AWS WAF</strong> with <strong>CloudFront</strong> adds a powerful layer of protection against DDoS attacks. By blocking malicious traffic at the edge, it stops harmful requests before they even reach your origin servers. This not only reduces your system's vulnerability but also helps maintain performance during traffic spikes.</p>
-<p>Here are some key rules to consider:</p>
+<h2 id="key-takeaways">Key takeaways</h2>
 <ul>
-<li><strong>Rate-based rules</strong>: These help control excessive requests from a single IP address, reducing the risk of abuse.</li>
-<li><strong>Geographic match rules</strong>: Block traffic from regions known for higher attack risks, keeping your system safer.</li>
-<li><strong>Managed rule groups</strong>: Leverage AWS's pre-configured Anti-DDoS rules to automatically identify and mitigate common attack patterns.</li>
+<li><strong>Shield Standard</strong> is automatically available to AWS customers at no extra charge. It provides baseline protection against common network and transport layer DDoS attacks, including for CloudFront.</li>
+<li><strong>Shield Advanced</strong> is a paid subscription. You must subscribe and add protection for the CloudFront distribution to receive its expanded protections and event visibility.</li>
+<li><strong>AWS WAF</strong> evaluates HTTP and HTTPS requests against rules you configure. Rate limits and managed rules can help with application-layer abuse, but they need testing and tuning.</li>
+<li><strong>Origin restrictions matter.</strong> If an attacker can reach a public origin directly, CloudFront, Shield, and its web ACL may not inspect that path.</li>
+<li><strong>HTTPS encrypts connections; it does not filter DDoS traffic.</strong> Require HTTPS from viewers to CloudFront and from CloudFront to a custom origin, then configure the origin's access controls separately.</li>
 </ul>
-<p>Pairing these measures with <strong>Shield Advanced</strong> creates a strong, multi-layered defense capable of handling both large-scale (volumetric) and application-layer DDoS attacks effectively.</p>
-<h3 id="how-can-i-monitor-and-respond-to-ddos-attacks-using-aws-tools-like-cloudwatch-and-the-personal-health-dashboard">How can I monitor and respond to DDoS attacks using AWS tools like CloudWatch and the Personal Health Dashboard?</h3>
-<p>To keep a close eye on and respond to DDoS attacks, start by setting up <strong>Amazon CloudWatch</strong> to monitor critical metrics like request rates, data transfer volumes, and error rates. These metrics can reveal unusual traffic patterns that might signal an attack. By configuring alarms for these metrics, you’ll get instant notifications when something out of the ordinary happens.</p>
-<p>Consider creating a dedicated DDoS monitoring dashboard in CloudWatch. This will let you visualize traffic activity in real-time, making it much easier to spot and analyze potential threats. Pair this with the <strong>AWS Personal Health Dashboard</strong>, which provides real-time updates about issues affecting your resources, including DDoS incidents. This way, you can respond swiftly and take the necessary steps to mitigate the attack.</p>
-<p>Using these tools together helps you stay ahead of potential threats, ensuring you’re alerted promptly and ready to act to protect your infrastructure.</p>
-<h2>Related Blog Posts</h2><ul><li><a href="/blog/5-best-practices-for-aws-operational-excellence/">5 Best Practices for AWS Operational Excellence</a></li><li><a href="/blog/eventbridge-security-best-practices/">EventBridge Security Best Practices</a></li><li><a href="/blog/aws-waf-and-shield-pricing-explained/">AWS WAF and Shield Pricing Explained</a></li><li><a href="/blog/how-to-reduce-dynamodb-throttling-issues/">How to Reduce DynamoDB Throttling Issues</a></li></ul><script type="application/ld+json">{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"What’s the difference between AWS Shield Standard and Shield Advanced, and how do I choose the right one?","acceptedAnswer":{"@type":"Answer","text":"<h2 id=\"aws-shield-standard-vs-advanced-1\" tabindex=\"-1\" class=\"sb h2-sbb-cls\">AWS Shield: Standard vs. Advanced</h2> <p>AWS Shield Standard provides <strong>free, basic protection</strong> against common DDoS attacks, focusing on network and transport layer threats. It's a great fit for smaller applications or workloads with lower security demands.</p> <p>On the other hand, <strong>AWS Shield Advanced</strong> steps up the game with <strong>real-time attack monitoring</strong>, integration with AWS WAF, and access to the <strong>AWS DDoS Response Team (DRT)</strong> for expert guidance during attacks. This option is tailored for high-traffic or mission-critical applications that need a stronger security framework.</p> <p>When choosing between the two, think about your application's <strong>size, complexity, and exposure to risk</strong>. For less sensitive or smaller workloads, Shield Standard does the job. However, if you're dealing with sensitive data or face a higher risk of attacks, Shield Advanced is the way to go.</p>"}},{"@type":"Question","name":"How does using AWS WAF with CloudFront improve DDoS protection, and what rules should I set up?","acceptedAnswer":{"@type":"Answer","text":"<p>Integrating <strong>AWS WAF</strong> with <strong>CloudFront</strong> adds a powerful layer of protection against DDoS attacks. By blocking malicious traffic at the edge, it stops harmful requests before they even reach your origin servers. This not only reduces your system's vulnerability but also helps maintain performance during traffic spikes.</p> <p>Here are some key rules to consider:</p> <ul> <li><strong>Rate-based rules</strong>: These help control excessive requests from a single IP address, reducing the risk of abuse.</li> <li><strong>Geographic match rules</strong>: Block traffic from regions known for higher attack risks, keeping your system safer.</li> <li><strong>Managed rule groups</strong>: Leverage AWS's pre-configured Anti-DDoS rules to automatically identify and mitigate common attack patterns.</li> </ul> <p>Pairing these measures with <strong>Shield Advanced</strong> creates a strong, multi-layered defense capable of handling both large-scale (volumetric) and application-layer DDoS attacks effectively.</p>"}},{"@type":"Question","name":"How can I monitor and respond to DDoS attacks using AWS tools like CloudWatch and the Personal Health Dashboard?","acceptedAnswer":{"@type":"Answer","text":"<p>To keep a close eye on and respond to DDoS attacks, start by setting up <strong>Amazon CloudWatch</strong> to monitor critical metrics like request rates, data transfer volumes, and error rates. These metrics can reveal unusual traffic patterns that might signal an attack. By configuring alarms for these metrics, you’ll get instant notifications when something out of the ordinary happens.</p> <p>Consider creating a dedicated DDoS monitoring dashboard in CloudWatch. This will let you visualize traffic activity in real-time, making it much easier to spot and analyze potential threats. Pair this with the <strong>AWS Personal Health Dashboard</strong>, which provides real-time updates about issues affecting your resources, including DDoS incidents. This way, you can respond swiftly and take the necessary steps to mitigate the attack.</p> <p>Using these tools together helps you stay ahead of potential threats, ensuring you’re alerted promptly and ready to act to protect your infrastructure.</p>"}}]}</script>
+
+<h2 id="how-cloudfront-shield-and-waf-fit-together">How CloudFront, Shield, and WAF fit together</h2>
+<p>CloudFront is a content delivery network and reverse proxy. It handles viewer requests at AWS edge locations and forwards requests to the configured origin when needed. Caching can reduce origin work for cacheable responses; dynamic requests and cache misses still depend on the origin and application capacity.</p>
+<p>AWS Shield is the managed DDoS protection service. Shield Standard is on by default and protects against common network and transport layer attacks. AWS describes particular availability protection for CloudFront distributions, Route 53 hosted zones, and Global Accelerator. The protection you get also depends on how traffic reaches your application and how the application is designed. See the <a href="https://docs.aws.amazon.com/waf/latest/developerguide/ddos-standard-summary.html" target="_blank" rel="noopener noreferrer">Shield Standard overview</a>.</p>
+<p>AWS WAF is a configurable web application firewall. A web ACL can count, allow, or block HTTP(S) requests based on conditions such as IP addresses, request fields, managed rule groups, or request rates. It is useful for application-layer threats, but it does not replace Shield's infrastructure-layer protections. AWS explains the <a href="https://docs.aws.amazon.com/waf/latest/developerguide/web-acl.html" target="_blank" rel="noopener noreferrer">request controls available in a web ACL</a>.</p>
+
+<h2 id="aws-shield-standard-vs-advanced">AWS Shield Standard vs. Shield Advanced</h2>
+<p>Shield Standard requires no setup or separate subscription. It is included at no additional charge and automatically protects AWS customers against common network and transport layer DDoS events. For a CloudFront distribution, this baseline is already in place.</p>
+<p>Shield Advanced is for applications that need expanded DDoS protections and event visibility. You must subscribe to Shield Advanced and add the distribution as a protected resource. AWS currently lists a <strong>$3,000 monthly subscription fee per payer account</strong> for eligible customers, a one-year subscription commitment, and additional data-transfer-out usage charges. Check the current <a href="https://aws.amazon.com/shield/pricing/" target="_blank" rel="noopener noreferrer">AWS Shield pricing page</a> for the applicable rates and terms before budgeting. For a broader comparison of WAF charges, Shield Advanced inclusions, and CloudFront plans, see our <a href="/blog/aws-waf-and-shield-pricing-explained/">AWS WAF and Shield pricing guide</a>.</p>
+<p>The subscription covers standard AWS WAF web ACL, rule, and request charges for Shield-protected resources up to 1,500 web ACL capacity units, the default body-inspection size, and 50 billion WAF requests per month across the payer ID. It does not make every WAF feature free: AWS lists additional charges for some capabilities, including Bot Control, Fraud Control, higher web ACL capacity, and request-body inspection beyond the default size. Review the current <a href="https://docs.aws.amazon.com/waf/latest/developerguide/ddos-advanced-summary.html" target="_blank" rel="noopener noreferrer">Shield Advanced and WAF cost details</a>.</p>
+<p>Shield Advanced also provides access to the AWS Shield Response Team (SRT). Current AWS DDoS guidance lists Business Support+, Enterprise Support, or Unified Operations as eligible plans for escalating an event. Some Shield-specific pages still use the predecessor “Business Support” name; AWS's support-plan notice says that plan is scheduled to end January 1, 2027, with separate GovCloud treatment. Check your account's plan before assuming SRT access. Proactive engagement is a separate opt-in and uses a Route 53 health check associated with the protected resource. See the current <a href="https://docs.aws.amazon.com/whitepapers/latest/aws-best-practices-ddos-resiliency/support.html" target="_blank" rel="noopener noreferrer">AWS DDoS support guidance</a>, <a href="https://docs.aws.amazon.com/awssupport/latest/user/aws-support-plans.html" target="_blank" rel="noopener noreferrer">support plan notice</a>, and <a href="https://docs.aws.amazon.com/waf/latest/developerguide/ddos-advanced-health-checks.html" target="_blank" rel="noopener noreferrer">health-based detection guidance</a>.</p>
+<p>Shield Advanced cost protection is also conditional. Eligible customers can request credits for certain attack-driven charges on resources that were protected before the attack; this is not a general cap on the AWS bill. AWS lists additional prerequisites for CloudFront and Application Load Balancer resources, including an associated web ACL with a rate-based rule in Block mode. Review the current <a href="https://docs.aws.amazon.com/waf/latest/developerguide/ddos-request-service-credit.html" target="_blank" rel="noopener noreferrer">service-credit eligibility requirements</a>.</p>
+<p>Shield Advanced is not a substitute for an AWS WAF policy. Associate a web ACL with CloudFront when you need custom request filtering or WAF-based application-layer controls. When creating CloudFront-scoped WAF resources, use the Global (CloudFront) scope, which is managed in US East (N. Virginia), <code>us-east-1</code>.</p>
+
+<h2 id="setting-up-aws-shield-with-cloudfront">Setting up protection for a CloudFront distribution</h2>
+<h3 id="enabling-aws-shield-on-cloudfront">Shield Standard and Advanced setup</h3>
+<p>There is nothing to enable for Shield Standard. For Shield Advanced, subscribe in the AWS WAF and Shield console, then add the CloudFront distribution to the protected resources. Follow the Shield Advanced workflow to associate a web ACL and configure the protections you need. If you manage multiple accounts, AWS Firewall Manager can apply Shield policies centrally; use its Global scope for CloudFront distributions.</p>
+<p><strong>Layer 7 guidance is changing in 2026.</strong> AWS is moving Shield Advanced application-layer automatic mitigation to the AWS WAF Anti-DDoS managed rule group. AWS's current migration announcement says automatic migration is scheduled through October 24, 2026, and the legacy Shield Advanced application-layer automatic mitigation is scheduled to end January 29, 2027. Check the current <a href="https://aws.amazon.com/blogs/security/aws-shield-advanced-is-embracing-the-aws-waf-anti-ddos-managed-rule-group-what-changes-and-how-to-prepare/" target="_blank" rel="noopener noreferrer">Shield Advanced migration guidance</a> and inspect each web ACL's status; older setup instructions may describe the legacy feature.</p>
+
+<h3 id="configuring-https-and-origin-access-restrictions">Configure HTTPS and origin access separately</h3>
+<p>HTTPS protects data in transit between a viewer and CloudFront, and between CloudFront and a custom origin. Set the viewer protocol policy to redirect HTTP to HTTPS or accept HTTPS only. For a custom origin, set CloudFront's origin protocol policy to HTTPS only when the origin supports a valid certificate. These settings encrypt the connections, but they do not prevent a direct request to a public origin. AWS documents the <a href="https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/RequestAndResponseBehaviorCustomOrigin.html" target="_blank" rel="noopener noreferrer">protocol behavior for custom origins</a>.</p>
+
+<h2 id="ddos-protection-best-practices">DDoS protection best practices</h2>
+<h3 id="using-aws-waf-with-cloudfront">Use AWS WAF for application-layer rules</h3>
+<p>Associate an AWS WAF web ACL with the CloudFront distribution when you need rules for web requests. Use managed rules to address the threats they are designed for, and add rate-based rules for endpoints that need request-rate controls. A rate limit can reduce abusive traffic, but attackers can distribute requests across many sources and legitimate users can share addresses, so a single IP threshold is not a complete DDoS strategy.</p>
+<p>Start new or changed rules in Count or monitor mode where available. Review sampled requests and logs, then enable blocking only after confirming the rules do not interfere with expected users. If you configure the AWS WAF Anti-DDoS managed rule group, test its sensitivity and any Challenge action with your clients. AWS warns that browser-based single-page applications and native mobile API clients may need integration work to handle challenges. See AWS's current guidance for the <a href="https://docs.aws.amazon.com/waf/latest/developerguide/aws-managed-rule-groups-anti-ddos.html" target="_blank" rel="noopener noreferrer">Anti-DDoS managed rule group</a>, <a href="https://aws.amazon.com/blogs/networking-and-content-delivery/configuring-the-aws-waf-anti-ddos-managed-rule-group-for-your-resources-and-clients/" target="_blank" rel="noopener noreferrer">client compatibility</a>, and <a href="https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/WAF-one-click.html" target="_blank" rel="noopener noreferrer">monitoring WAF protections before blocking</a>.</p>
+<p>Do not use geographic blocks or broad IP blocks just because traffic looks unusual. First check whether the traffic matches your application's real access patterns and business requirements.</p>
+
+<h3 id="configuring-origin-access-controls">Prevent requests from bypassing CloudFront</h3>
+<p>CloudFront, Shield, and a CloudFront-associated web ACL protect the path that passes through the distribution. Restrict the origin as well, or an attacker may use its public hostname or IP address to bypass those controls and target the application directly.</p>
+<p>For an Amazon S3 bucket origin, use Origin Access Control (OAC) with the regular S3 bucket endpoint, then update the bucket policy so the intended CloudFront distribution can read objects. Review public access settings and remove any other permission that would allow direct anonymous reads; OAC does not revoke them by itself. OAC does not apply to an S3 static website endpoint; that endpoint also cannot use HTTPS between CloudFront and S3. See AWS's guide to <a href="https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/private-content-restricting-access-to-s3.html" target="_blank" rel="noopener noreferrer">restricting access to an S3 origin</a>.</p>
+<p>CloudFront also supports a separate OAC type for Lambda function URL origins, which requires the function URL's authentication type to be <code>AWS_IAM</code>; follow its <a href="https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/private-content-restricting-access-to-lambda.html" target="_blank" rel="noopener noreferrer">Lambda origin setup</a>. For an Application Load Balancer, EC2 instance, or other custom origin, OAC is not the general-purpose option. One approach is to configure CloudFront to send a secret custom header and make the origin reject requests without the expected value. Keep the value secret, use HTTPS, and rotate it periodically. Where supported, CloudFront VPC origins let you place an ALB, NLB, or EC2 origin in private subnets and use CloudFront as the public entry point. Check the current <a href="https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/private-content-overview.html" target="_blank" rel="noopener noreferrer">custom-origin access guidance</a> and <a href="https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/private-content-vpc-origins.html" target="_blank" rel="noopener noreferrer">VPC origin requirements</a>. If your custom origin is an ALB, our <a href="/blog/aws-elastic-load-balancing-setup-guide/">Application Load Balancer setup guide</a> covers listener, certificate, and security-group configuration.</p>
+<p>Do not assume a secret header alone makes an origin private. The origin must validate it, and its network path should admit only the traffic sources your design intends to allow. Test that a direct-origin request fails after you change access controls.</p>
+
+<h2 id="monitoring-cloudfront-security-dashboard">Monitor traffic and attack signals</h2>
+<p>The CloudFront security dashboard combines CloudFront and AWS WAF security information. You must enable AWS WAF to see its request security metrics; without WAF, the dashboard cannot show allowed and blocked request trends. WAF logging can help identify request paths and sources, but log ingestion and queries may add CloudWatch charges. See the <a href="https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/security-dashboard.html" target="_blank" rel="noopener noreferrer">CloudFront security dashboard requirements</a>.</p>
+<p>Shield Advanced publishes DDoS detection and mitigation metrics in CloudWatch for protected resources. For global services such as CloudFront, view these metrics in <code>us-east-1</code>. The <code>DDoSDetected</code> metric is a useful signal, not proof by itself that an attack is in progress; AWS recommends investigating resource health and combining request-flood signals with application health and request volume. See the <a href="https://docs.aws.amazon.com/waf/latest/developerguide/shield-metrics.html" target="_blank" rel="noopener noreferrer">Shield Advanced metrics reference</a>.</p>
+<p>Set alarms from your normal traffic and availability patterns instead of copying a generic request threshold. Correlate CloudFront request and error metrics, WAF allowed and blocked requests, origin health, and the user-facing symptoms. A traffic increase can be a legitimate launch or event; a DDoS indicator can also be mitigated before it causes an outage. Keep a runbook that tells the on-call team what to inspect, who can change WAF rules, and how to confirm that legitimate traffic still works.</p>
+
+<h2 id="monitoring-and-responding-to-ddos-attacks">Respond and review after an event</h2>
+<p>During an incident, confirm which entry points and origins are affected, compare viewer traffic with origin load, and review WAF and Shield event details that are available for your configuration. If you have Shield Advanced and the required support plan, contact the SRT through AWS Support for help analyzing and responding to the event. Avoid making broad emergency blocks without checking their effect on legitimate requests.</p>
+<p>Afterward, record the event window, affected resources, user impact, rules or mitigations applied, and any service or data-transfer costs. Use that evidence to tune rules, caching, origin restrictions, application capacity, and the response runbook. CloudFront and Shield reduce exposure, but application resilience still depends on origin capacity, cache behavior, dependencies, and a tested recovery plan.</p>
+
+<h2 id="conclusion">Conclusion</h2>
+<p>CloudFront gives an application a managed edge entry point, Shield Standard provides automatic baseline DDoS protection, and Shield Advanced adds paid protections and event support for resources you explicitly protect. AWS WAF controls HTTP(S) requests through a web ACL associated with CloudFront. These services have different roles: combine them where they fit the workload, secure the origin against direct access, and monitor both attack signals and application health.</p>

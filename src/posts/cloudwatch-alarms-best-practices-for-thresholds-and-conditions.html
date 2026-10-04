@@ -2,341 +2,72 @@
 layout: post.njk
 templateEngineOverride: html
 tags: posts
-title: "CloudWatch Alarms: Best Practices for Thresholds & Conditions"
-description: "Learn best practices for setting CloudWatch alarms, choosing metrics, and optimizing thresholds to enhance AWS resource monitoring."
+title: "CloudWatch Alarms: Thresholds, Periods, and Conditions"
+description: "Set CloudWatch alarm thresholds from workload objectives, tune evaluation periods, and choose appropriate missing-data, percentile, metric-math, and composite alarm behavior."
 date: "2024-09-05"
 datePublished: "2024-09-05T01:51:57.309000+00:00"
 heroImage: "/assets/media/5da507386a03a72c6ad0.jpg"
 permalink: "/blog/cloudwatch-alarms-best-practices-for-thresholds-and-conditions/"
 sourceUrl: "https://awsforengineers.com/blog/cloudwatch-alarms-best-practices-for-thresholds-and-conditions/"
-dateModified: "2026-10-03"
-updateNote: "Added author attribution and profile information."
+dateModified: "2026-10-04"
+updateNote: "Updated alarm guidance for evaluation timing, missing data, percentiles, metric math, composites, and action behavior."
 ---
-<p><a href="https://aws.amazon.com/cloudwatch/" target="_blank">CloudWatch</a> Alarms are crucial for monitoring <a href="https://aws.amazon.com/" target="_blank">AWS</a> resources effectively. Here's what you need to know:</p>
+<p>A useful <a href="https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/CloudWatch_Alarms.html" target="_blank" rel="noopener noreferrer">Amazon CloudWatch alarm</a> detects a condition that matters to a workload and gives someone or something a clear next step. Set the threshold from a service objective, a known resource limit, or an operational failure condition. Then tune the period, number of breaching data points, and missing-data behavior to match how the metric is published and how quickly the team must respond.</p>
 <ul>
-<li>CloudWatch Alarms track metrics and trigger actions when thresholds are met</li>
-<li>Good thresholds prevent false alarms and catch real issues</li>
-<li>Key steps for setting effective alarms:</li>
+<li>Alert on customer impact or an actionable limit, not simply a value above the historical average.</li>
+<li>Use <code>DatapointsToAlarm</code> and <code>EvaluationPeriods</code> to balance detection speed with short-lived noise.</li>
+<li>Decide what missing data means for each metric; CloudWatch does not always apply the configured missing-data choice.</li>
+<li>Use metric math, percentile statistics, anomaly detection, and composite alarms only when they express a clearer operational condition.</li>
 </ul>
-<ol>
-<li>Choose the right metrics (e.g., CPU usage, error rates)</li>
-<li>Set smart thresholds based on historical data</li>
-<li>Use composite alarms to reduce false positives</li>
-<li>Leverage features like Metric Math and Anomaly Detection</li>
-<li>Continuously review and improve alarm performance</li>
-</ol>
-<figure><table>
-<thead>
-<tr>
-<th>Feature</th>
-<th>Best Practice</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Thresholds</td>
-<td>Set slightly above average levels</td>
-</tr>
-<tr>
-<td>Check time</td>
-<td>Short for critical, longer for stable metrics</td>
-</tr>
-<tr>
-<td>Data points</td>
-<td>Use multiple points to avoid temporary spikes</td>
-</tr>
-<tr>
-<td>Alarm states</td>
-<td>OK, ALARM, INSUFFICIENT_DATA</td>
-</tr>
-</tbody>
-</table></figure>
-<p>Remember: Effective alarms balance sensitivity with avoiding alert fatigue. Regular reviews and adjustments are key to maintaining a robust monitoring system.</p>
-<h2 id="related-video-from-youtube">Related video from YouTube</h2>
-<iframe allowfullscreen="" frameborder="0" loading="lazy" src="https://www.youtube-nocookie.com/embed/E2gAm12Ldq0"></iframe><h2 id="setting-good-thresholds">Setting good thresholds</h2>
-<p>Setting the right thresholds for CloudWatch Alarms is key to effective monitoring. Let's explore how to create thresholds that catch real issues without triggering false alarms.</p>
-<h3 id="finding-normal-metric-levels">Finding normal metric levels</h3>
-<p>To set good thresholds, you need to understand what's normal for your system. Here's how:</p>
-<ol>
-<li>Gather data over time (at least a few days)</li>
-<li>Look at average minute-level metrics</li>
-<li>Set initial thresholds slightly above the average</li>
-</ol>
-<p>For example, if your API's average response time is 200ms, you might set an initial threshold at 250ms.</p>
-<h3 id="picking-the-right-metrics">Picking the right metrics</h3>
-<p>Choose metrics that truly reflect your service's health. For instance:</p>
-<ul>
-<li>CPU usage for compute-intensive tasks</li>
-<li>Memory usage for data processing jobs</li>
-<li>Error rates for API endpoints</li>
-</ul>
-<p>Avoid metrics that don't directly impact performance or user experience.</p>
-<h3 id="using-fixed-thresholds">Using fixed thresholds</h3>
-<p>Fixed thresholds are simple to set up but require careful tuning:</p>
-<figure><table>
-<thead>
-<tr>
-<th>Pros</th>
-<th>Cons</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Easy to understand</td>
-<td>May not adapt to changing patterns</td>
-</tr>
-<tr>
-<td>Good for absolute limits</td>
-<td>Can lead to false positives</td>
-</tr>
-<tr>
-<td>Suitable for small to medium setups</td>
-<td>Requires manual adjustments</td>
-</tr>
-</tbody>
-</table></figure>
-<p><strong>Example</strong>: Set a CPU usage alarm at 80% for 15 minutes to catch sustained high load.</p>
-<h3 id="using-changing-thresholds">Using changing thresholds</h3>
-<p>Changing thresholds adapt to your system's behavior:</p>
-<ul>
-<li>Use anomaly detection for metrics with organic growth or seasonal patterns</li>
-<li>CloudWatch creates a "confidence band" of normal values</li>
-<li>Alarms trigger when metrics fall outside this band</li>
-</ul>
-<p><strong>Real-world application</strong>: A business used anomaly detection to monitor "Plastic Fern Orders". When orders dropped below the normal range for 15 minutes, it triggered a Lambda function to update product visibility and pricing, boosting sales.</p>
-<h3 id="using-percentile-thresholds">Using percentile thresholds</h3>
-<p>Percentile thresholds help balance sensitivity and false alarms:</p>
-<ul>
-<li>Good for metrics with occasional spikes</li>
-<li>Catch issues affecting a portion of users</li>
-</ul>
-<p><strong>Example setup</strong>: Trigger an alarm if login latency for 5% of users exceeds 2 seconds over a 5-minute period.</p>
-<h2 id="setting-good-alarm-conditions">Setting good alarm conditions</h2>
-<p>Setting effective alarm conditions in CloudWatch is crucial for maintaining a healthy monitoring system. Let's explore key strategies to create alarms that catch real issues without overwhelming your team.</p>
-<h3 id="picking-the-right-check-time">Picking the right check time</h3>
-<p>The frequency of alarm checks impacts both responsiveness and stability. Here's how to strike the right balance:</p>
-<ul>
-<li><strong>Short intervals</strong>: Good for critical metrics needing quick responses</li>
-<li><strong>Longer intervals</strong>: Suitable for slower-changing metrics or to reduce false alarms</li>
-</ul>
-<p>For example, check CPU usage every minute, but database connections every 5 minutes.</p>
-<h3 id="setting-data-points-that-trigger-alarms">Setting data points that trigger alarms</h3>
-<p>To cut down on false alarms, configure the right number of data points:</p>
-<figure><table>
-<thead>
-<tr>
-<th>Data Points</th>
-<th>Use Case</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>1 out of 1</td>
-<td>Critical issues needing instant action</td>
-</tr>
-<tr>
-<td>3 out of 3</td>
-<td>Persistent problems, avoiding temporary spikes</td>
-</tr>
-<tr>
-<td>M out of N</td>
-<td>Complex scenarios (e.g., 4 out of 5)</td>
-</tr>
-</tbody>
-</table></figure>
-<p>A real-world example: <a href="https://aws.amazon.com/sqs/" target="_blank">Amazon SQS</a> queue monitoring uses 3 out of 3 data points over 5-minute periods to trigger an alarm when visible messages exceed 1 million.</p>
-<h3 id="using-combined-alarms">Using combined alarms</h3>
-<p>Combined alarms help monitor complex systems more efficiently:</p>
-<ol>
-<li>Create individual metric alarms</li>
-<li>Combine them using AND/OR logic</li>
-<li>Set actions for the combined alarm</li>
-</ol>
-<p>This approach reduces noise and provides a clearer picture of system health.</p>
-<h3 id="using-metric-math">Using metric math</h3>
-<p>Metric math allows for more sophisticated alarm conditions:</p>
-<ul>
-<li>Combine multiple metrics into a single, meaningful KPI</li>
-<li>Create ratios or percentages for better context</li>
-<li>Apply functions like SUM, AVG, or MAX to groups of metrics</li>
-</ul>
-<p>For instance, calculate the error rate as (errors / total requests) * 100 and set an alarm when it exceeds 5% for 15 minutes.</p>
-<h2 id="advanced-alarm-methods">Advanced alarm methods</h2>
-<p>CloudWatch alarms become more complex when managing multiple accounts and regions. Let's explore advanced methods to enhance your monitoring capabilities.</p>
-<h3 id="alarms-across-regions-and-accounts">Alarms across regions and accounts</h3>
-<p><a href="/blog/aws-devops-monitoring-metrics-tools-best-practices/">Monitoring metrics</a> from various accounts and regions can be challenging. To simplify this process:</p>
-<p>1. Enable cross-account, cross-region CloudWatch dashboard:</p>
-<ul>
-<li>In the target account, go to CloudWatch Settings and enable data sharing.</li>
-<li>In the monitoring account, allow viewing of cross-account, cross-region information.</li>
-</ul>
-<p>2. Use <a href="https://aws.amazon.com/cloudformation/" target="_blank">CloudFormation</a> StackSets for deployment:</p>
-<ul>
-<li>Store configurations as code in a Git repository.</li>
-<li>Trigger deployments by commits or account enrollment events.</li>
-</ul>
-<p>This approach allows monitoring teams to access metrics from different accounts without switching between them, streamlining the process.</p>
-<h3 id="connecting-with-problem-management-systems">Connecting with problem management systems</h3>
-<p>To improve incident response:</p>
-<ol>
-<li>Set up alarm actions for different severity levels.</li>
-<li>Integrate with ticketing systems for automatic issue creation.</li>
-<li>Use SNS topics to route alerts to the right teams.</li>
-</ol>
-<p>For example, you might send critical alarms directly to on-call engineers via <a href="https://www.pagerduty.com/" target="_blank">PagerDuty</a>, while routing lower-priority issues to a <a href="https://slack.com/" target="_blank">Slack</a> channel for review during business hours.</p>
-<h3 id="automating-alarm-management">Automating alarm management</h3>
-<p>Automation can help maintain a clean and efficient alarm system:</p>
-<p>1. Use CloudFormation templates to deploy cleanup mechanisms:</p>
-<pre><code>| Alarm Type | Action |
-|------------|--------|
-| Stale alarms (ALARM or INSUFFICIENT_DATA for days) | Review and potentially delete |
-| No-action alarms | Identify and assess value |
-</code></pre>
-<p>2. Implement periodic reviews:</p>
-<ul>
-<li>Generate reports of low-value alarms.</li>
-<li>Use <a href="/blog/aws-lambda-getting-started-first-steps/">AWS Lambda</a> to analyze alarm patterns and suggest optimizations.</li>
-</ul>
-<p>3. Leverage AWS best practices:</p>
-<p>AWS has introduced out-of-the-box alarm recommendations for 19 managed services. Allen Helton, ecosystem engineer at <a href="https://momentoapp.com/" target="_blank">Momento</a> and AWS Serverless Hero, notes:</p>
-<blockquote>
-<p>"This was a big gap in the observability space. I love that we can use this to tell us what we need to know about our applications."</p>
-</blockquote>
-<p>These recommendations provide pre-filled configurations based on best practices, helping you set up effective monitoring quickly.</p>
-<h2 id="checking-and-improving-alarm-performance">Checking and improving alarm performance</h2>
-<h3 id="looking-at-alarm-history">Looking at alarm history</h3>
-<p>CloudWatch's Alarm History feature is a powerful tool for assessing alarm performance and spotting patterns. It displays status changes of all alarm rules in the last 30 days, helping you identify issues and optimize your monitoring setup.</p>
-<p>To check your alarm history:</p>
-<ol>
-<li>Log in to the AWS Management Console</li>
-<li>Navigate to CloudWatch &gt; Alarm Management &gt; Alarm History</li>
-<li>Filter results by alarm rule name, resource ID, or alarm rule ID</li>
-</ol>
-<p><strong>Pro tip</strong>: Use the <code>aws cloudwatch describe-alarm-history</code> command to retrieve alarm history via the AWS CLI. This can be useful for automating performance checks.</p>
-<h3 id="always-making-alarms-better">Always making alarms better</h3>
-<p>Continuous improvement is key to maintaining <a href="/blog/cloudwatch-alarms-automate-ec2-recovery/">effective CloudWatch Alarms</a>. Here's how to keep your alarms in top shape:</p>
-<ol>
-<li>
-<p><strong>Regular reviews</strong>: Set a schedule to assess alarm performance. Weekly or monthly checks can help you stay on top of changes in your system's behavior.</p>
-</li>
-<li>
-<p><strong>Threshold adjustments</strong>: Use historical data to fine-tune your thresholds. For example, if you notice that an alarm for CPU usage is triggering too frequently, you might adjust the threshold from 80% to 90%.</p>
-</li>
-<li>
-<p><strong>Learn from incidents</strong>: After each alarm-triggered incident, ask:</p>
-<ul>
-<li>Was the alarm timely?</li>
-<li>Did it provide enough information?</li>
-<li>Could we have detected the issue earlier?</li>
-</ul>
-</li>
-</ol>
-<p>Use these insights to refine your alarm settings.</p>
-<ol start="4">
-<li><strong>Leverage CloudWatch features</strong>: Take advantage of built-in tools to enhance your alarms:</li>
-</ol>
-<figure><table>
-<thead>
-<tr>
-<th>Feature</th>
-<th>Use Case</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Metric Math</td>
-<td>Combine multiple metrics for more detailed analysis</td>
-</tr>
-<tr>
-<td>Anomaly Detection</td>
-<td>Automatically alert on unusual patterns</td>
-</tr>
-<tr>
-<td>Composite Alarms</td>
-<td>Create sophisticated alerting mechanisms</td>
-</tr>
-</tbody>
-</table></figure>
-<ol start="5">
-<li><strong>Custom metrics</strong>: Don't hesitate to create custom metrics for aspects of your application that standard metrics don't cover.</li>
-</ol>
-<p>Remember, the goal is to have alarms that are sensitive enough to catch real issues but not so sensitive that they cause alarm fatigue. It's a balancing act that requires ongoing attention and adjustment.</p>
-<h2 id="wrap-up">Wrap-up</h2>
-<p>Setting up effective CloudWatch alarms is key to maintaining a healthy AWS infrastructure. Here's what you need to remember:</p>
-<p>1. <strong>Choose the right metrics</strong></p>
-<p>Pick metrics that truly reflect your system's health. For example, CPU usage for EC2 instances or error rates for Lambda functions.</p>
-<p>2. <strong>Set smart thresholds</strong></p>
-<p>Base your thresholds on historical data. Look at average values over a few days and set thresholds slightly higher. For instance, if your average CPU usage is 70%, you might set an alarm at 85%.</p>
-<p>3. <strong>Use composite alarms</strong></p>
-<p>Combine multiple conditions to reduce false alarms. For example, trigger an alarm only if both CPU usage is high AND network traffic is low, which could indicate a problem.</p>
-<p>4. <strong>Leverage CloudWatch features</strong></p>
-<p>Take advantage of built-in tools:</p>
-<figure><table>
-<thead>
-<tr>
-<th>Feature</th>
-<th>Use Case</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Metric Math</td>
-<td>Combine metrics for deeper insights</td>
-</tr>
-<tr>
-<td>Anomaly Detection</td>
-<td>Spot unusual patterns automatically</td>
-</tr>
-<tr>
-<td>Alarm Recommendations</td>
-<td>Get pre-configured best practices</td>
-</tr>
-</tbody>
-</table></figure>
-<p>5. <strong>Continuously improve</strong></p>
-<p>Regularly review your alarm history and adjust as needed. If an alarm is triggering too often, you might need to raise the threshold.</p>
+
+<h2 id="setting-good-thresholds">Choose metrics and thresholds</h2>
+<p>Start with the question the alarm should answer: are customers receiving errors, is a queue falling behind, or is a resource nearing a limit that could affect service? Select a metric and statistic that measure that condition. For example, a request error count can show failures, while an error ratio puts that count in the context of traffic. For latency, an upper percentile can reveal slow requests that an average hides. Resource metrics such as CPU are useful when they explain a capacity risk or help a responder act before customer impact.</p>
+<p>Set the threshold from the workload's service objective, a tested capacity boundary, or a known failure mode. Historical data helps you understand normal variation, time-of-day patterns, and the lead time available to respond; it does not by itself define what is acceptable. A CPU threshold slightly above its average, for example, may page too late or on harmless spikes. Define what action follows the alarm and who owns that action. For a broader view of choosing workload signals and actionable alerts, see the site's <a href="/blog/aws-devops-monitoring-metrics-tools-best-practices/">AWS monitoring guide</a>.</p>
+
+<h3 id="static-and-anomaly-detection-thresholds">Static thresholds and anomaly detection</h3>
+<p>A static threshold is a good fit for a clear boundary, such as a maximum supported connection count or an error rate tied to a service objective. It is straightforward to explain and test. A static value can be a poor fit when a metric changes with regular hourly, daily, or weekly demand.</p>
+<p><a href="https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/CloudWatch_Anomaly_Detection.html" target="_blank" rel="noopener noreferrer">CloudWatch anomaly detection</a> models expected metric behavior and creates a band. You choose whether values above, below, or outside that band should breach. Review the band against the workload and exclude exceptional periods such as outages or unusual deployments from training when appropriate. A learned band describes historical behavior; it does not decide whether that behavior meets a service objective.</p>
+
+<h3 id="percentile-thresholds">Percentile thresholds</h3>
+<p>A percentile describes the distribution of observed metric values. A p95 latency of 800 ms means 95% of the recorded observations are at or below 800 ms for the selected statistic and period; it does not necessarily mean that 5% of users had a slow experience. Use a percentile when the metric has enough samples and each observation represents the behavior you care about.</p>
+<p>For percentile alarms, CloudWatch lets you choose whether to evaluate low-sample periods or keep the current alarm state until samples are sufficient. For example, a p99 alarm has low sample count below 1,000 observations in an evaluation period. See AWS's guidance on <a href="https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/percentiles-with-low-samples.html" target="_blank" rel="noopener noreferrer">percentile alarms and low data samples</a> before relying on a high percentile for a low-traffic metric.</p>
+
+<h2 id="setting-good-alarm-conditions">Set periods and datapoint conditions</h2>
+<p>The <code>Period</code> groups metric data into each alarm datapoint. <code>EvaluationPeriods</code> is the number of recent datapoints CloudWatch considers (N), and <code>DatapointsToAlarm</code> is how many of them must breach (M). With a one-minute period and no missing datapoints, a 2-of-3 condition goes to <code>ALARM</code> when any two of the three recent one-minute datapoints breach; they do not need to be consecutive. When M and N are equal, every datapoint in that window must breach.</p>
+<p>Choose a period the metric can support and a window that fits the response. Shorter periods can detect a fast failure sooner, but can make the alarm more sensitive to bursts and metric gaps. Longer periods smooth noise but delay detection. Standard-resolution metrics use periods of at least one minute. High-resolution custom metrics can be alarmed on at 10, 20, or 30 seconds, with more frequent evaluations and additional cost. Match the period to the metric's publication cadence as well as the incident's time scale; a one-minute alarm period does not create one-minute data if the metric only arrives every five minutes. For example, EC2 basic monitoring sends most metrics every five minutes but status checks every minute; see AWS's <a href="https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/manage-detailed-monitoring.html" target="_blank" rel="noopener noreferrer">EC2 metric schedule</a> and the site's <a href="/blog/cloudwatch-standard-vs-detailed-monitoring-key-differences/">EC2 basic and detailed monitoring guide</a> for the details and exceptions. AWS also documents the <a href="https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/alarm-evaluation.html" target="_blank" rel="noopener noreferrer">M-out-of-N behavior and high-resolution periods</a>.</p>
+<p>Metric alarms use a sliding evaluation window by default. The window moves forward as CloudWatch reevaluates the alarm. A <a href="https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/alarm-evaluation-window.html" target="_blank" rel="noopener noreferrer">wall-clock window</a> aligns periods to calendar boundaries and a selected time zone, which can suit scheduled jobs, daily reports, or backups where a completed calendar interval matters. It is evaluated at the same frequency as a sliding window, but reflects new data only after the calendar period ends.</p>
+<p>When <code>Period</code> multiplied by <code>EvaluationPeriods</code> is greater than one day, CloudWatch evaluates a multi-day alarm once per hour. With the default sliding window, evaluation uses metric data through the current hour's <code>:00</code> boundary, so a batch failure just after that point can wait for a later hourly evaluation. With a wall-clock window, the evaluated interval is calendar-aligned and only includes completed periods. Do not use a multi-day window when an incident needs minute-level detection; see the CloudWatch <a href="https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/alarm-evaluation.html" target="_blank" rel="noopener noreferrer">alarm evaluation guide</a> for these timing details.</p>
+
+<h2 id="advanced-alarm-methods">Use metric math and composite alarms</h2>
+<h3 id="metric-math-rates-ratios-and-units">Rates, ratios, and units with metric math</h3>
+<p><a href="https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/using-metric-math.html" target="_blank" rel="noopener noreferrer">Metric math</a> can turn related metrics into one alarm signal. A ratio can make an alert meaningful at both low and high traffic. For example, if <code>errors</code> and <code>requests</code> are aligned metric IDs, <code>IF(requests &gt; 0, errors / requests)</code> produces an error ratio only when requests are present. A threshold of <code>0.02</code> means 2%; if the expression multiplies the ratio by 100, compare it with <code>2</code> instead. Keep both metrics on the same period and make the expression's units and threshold agree.</p>
+<p>Metric units are part of the metric definition, not a conversion instruction. CloudWatch's <code>Unit</code> parameter filters datapoints; it does not scale their values. Publish values consistently with one unit, and avoid specifying a unit filter unless needed: if a metric has been published with multiple units, alarm evaluation without a filter can be unpredictable. See the <a href="https://docs.aws.amazon.com/AmazonCloudWatch/latest/APIReference/API_PutMetricAlarm.html" target="_blank" rel="noopener noreferrer"><code>PutMetricAlarm</code> API reference</a> for the unit behavior. If no requests should mean healthy, choose missing-data behavior to match that intent; the expression above omits a datapoint when its denominator is zero.</p>
+
+<h3 id="composite-alarms-and-suppression">Composite alarms and action suppression</h3>
+<p>A <a href="https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/Create_Composite_Alarm.html" target="_blank" rel="noopener noreferrer">composite alarm</a> evaluates the states of other alarms with <code>AND</code>, <code>OR</code>, and <code>NOT</code> rules. Use one when a notification should depend on a useful combination of signals—for example, when elevated application errors and a database connection alarm occur together. Keep the underlying metric alarms: they still evaluate and can retain their own actions.</p>
+<p>Composite alarms cannot perform EC2 or Auto Scaling actions. They can route notifications and supported alarm actions, but use a metric alarm for a native EC2 or scaling action; see the <a href="https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/CloudWatch_Alarms.html" target="_blank" rel="noopener noreferrer">CloudWatch alarm documentation</a> for supported composite actions. Composite action suppression can delay or prevent actions while a suppressor alarm is active; it does not hide the component alarm states. The configured wait and extension periods allow time for suppressor and composite states to settle, so choose them with the metric evaluation cadence in mind. See AWS's docs on <a href="https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/alarm-suppression.html" target="_blank" rel="noopener noreferrer">suppressing composite alarm actions</a>.</p>
+
+<h2 id="checking-and-improving-alarm-performance">Handle missing data and review alarm behavior</h2>
+<h3 id="choose-missing-data-treatment">Choose missing-data treatment deliberately</h3>
+<p>Missing data can mean a collector stopped, a resource became unavailable, or an event-only metric simply had nothing to report. The options are <code>missing</code> (the default), <code>notBreaching</code>, <code>breaching</code>, and <code>ignore</code> (keep the current state). Choose based on the metric's publishing contract: a missing point for a continuously reported health signal may indicate a monitoring problem, while an event count that reports only when an event occurs may be quiet during healthy operation.</p>
+<p>CloudWatch retrieves extra datapoints when evaluating a sliding window. If it finds enough real datapoints, it evaluates those and may not need the configured missing-data treatment. The setting is used to fill only when there are too few real datapoints. Also, alarms on metrics in the <code>AWS/DynamoDB</code> namespace always ignore missing data, even if another setting is configured; this override is described in the <a href="https://docs.aws.amazon.com/AmazonCloudWatch/latest/APIReference/API_PutMetricAlarm.html" target="_blank" rel="noopener noreferrer"><code>PutMetricAlarm</code> API reference</a>. Check AWS's detailed guide to <a href="https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/alarms-and-missing-data.html" target="_blank" rel="noopener noreferrer">alarm evaluation with missing data</a> before treating silence as zero or as a failure.</p>
+
+<h3 id="actions-follow-state-changes">Actions follow alarm state changes</h3>
+<p>CloudWatch alarms have three states: <code>OK</code>, <code>ALARM</code>, and <code>INSUFFICIENT_DATA</code>. Most configured actions run when the alarm changes state, not continuously while it stays in that state. Auto Scaling actions are an exception: CloudWatch continues invoking them once per minute while the alarm remains in its new state. Keep this behavior in mind when choosing a scaling policy and when testing notification delivery. For a list of supported actions and their behavior, see <a href="https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/alarm-actions.html" target="_blank" rel="noopener noreferrer">CloudWatch alarm actions</a>.</p>
+
+<h3 id="troubleshoot-an-alarm">Troubleshoot an alarm</h3>
+<p>When an alarm behaves unexpectedly, inspect its graph and history before changing the threshold. Confirm the namespace, dimensions, statistic, unit, and period identify the intended metric. Then compare the most recent datapoints with M and N, check whether the metric arrived on time, review missing-data and low-sample settings, and confirm the notification or action is configured for the state transition you expect. Alarm history and the state reason help distinguish a threshold problem from missing input or an action-routing issue.</p>
+<p>After an incident or a noisy page, adjust the condition only when the evidence points to a mismatch: wrong metric, threshold unrelated to user impact, overly short window, incorrect missing-data assumption, or an action without a clear owner. Review the result against real traffic and failure scenarios so the alarm remains both useful and actionable.</p>
+
+<h2 id="wrap-up">Build alarms around the response</h2>
+<p>Choose a metric that expresses a real service or resource condition, set a threshold from an objective or limit, and tune M-of-N timing to the metric's resolution and response window. Treat missing data according to how the metric is emitted, and verify that every alarm action reaches an owner or a safe automation. A concise, tested alarm gives responders more value than a large collection of thresholds without a clear next step.</p>
+
 <h2 id="faqs">FAQs</h2>
-<h3 id="what-are-the-3-states-of-the-cloudwatch-metric-alarm%3F">What are the 3 states of the <a href="https://aws.amazon.com/cloudwatch/" target="_blank">CloudWatch</a> metric alarm?</h3>
-<p><figure><img alt="CloudWatch" loading="lazy" src="/assets/media/361c9f0e35d01f1b4cdc.jpg"/></figure></p>
-<p>CloudWatch metric alarms have three possible states:</p>
-<ol>
-<li><strong>OK</strong>: The metric is within the defined threshold.</li>
-<li><strong>ALARM</strong>: The metric has exceeded the defined threshold.</li>
-<li><strong>INSUFFICIENT_DATA</strong>: Not enough data is available to determine the alarm state.</li>
-</ol>
-<p>These states help you quickly assess the health of your AWS resources. For example, if your <a href="/blog/aws-ec2-basics-core-concepts-explained/">EC2 instance</a>'s CPU usage alarm is in the <strong>OK</strong> state, it means the usage is within acceptable limits.</p>
-<h3 id="which-of-the-following-are-valid-alarm-statuses-in-cloudwatch%3F">Which of the following are valid alarm statuses in CloudWatch?</h3>
-<p>The valid alarm statuses in CloudWatch are the same as the three states mentioned above:</p>
-<figure><table>
-<thead>
-<tr>
-<th>Status</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>OK</td>
-<td>Metric is within the defined threshold</td>
-</tr>
-<tr>
-<td>ALARM</td>
-<td>Metric has exceeded the defined threshold</td>
-</tr>
-<tr>
-<td>INSUFFICIENT_DATA</td>
-<td>Not enough data to determine alarm state</td>
-</tr>
-</tbody>
-</table></figure>
-<p>It's worth noting that the transition between states isn't always immediate. As one user on Stack Overflow pointed out:</p>
-<blockquote>
-<p>"The state changes to Alarm immediately whenever the metric exceeds the threshold. But to change back to OK/ Insufficient data takes 6 mins. This happens only for missing data."</p>
-</blockquote>
-<p>This delay helps prevent false positives due to temporary fluctuations or network issues.</p>
-<p>
-<h2>Related posts</h2>
-<ul>
-<li><a href="/blog/cloudwatch-alarms-automate-ec2-recovery/">CloudWatch Alarms: Automate EC2 Recovery</a></li><li><a href="/blog/custom-cloudwatch-metrics-setup-guide-2024/">Custom CloudWatch Metrics: Setup Guide 2024</a></li><li><a href="/blog/aws-engineering-blog-autoscaling-for-high-availability/">AWS Engineering Blog: Autoscaling for High Availability</a></li><li><a href="/blog/aws-devops-monitoring-metrics-tools-best-practices/">AWS DevOps Monitoring: Metrics, Tools, Best Practices</a></li>
-</ul>
-</p>
+<h3 id="what-do-m-out-of-n-settings-mean">What do M-out-of-N settings mean?</h3>
+<p><code>EvaluationPeriods</code> is N, the number of recent datapoints considered. <code>DatapointsToAlarm</code> is M, the number that must breach. For example, with a one-minute period, 2 of 3 means two breaching points among the three most recent minutes; the points do not have to be consecutive.</p>
+
+<h3 id="why-is-an-alarm-in-insufficient-data">Why is an alarm in INSUFFICIENT_DATA?</h3>
+<p>CloudWatch has not received enough usable datapoints to determine whether the condition is breaching. Check the metric's dimensions, publishing cadence, period, and data pipeline, then review the configured missing-data behavior. Some metrics report only when events occur, so no datapoint does not always mean zero or failure.</p>
+
+<h3 id="will-an-alarm-repeat-its-action">Will an alarm repeat its action while it stays in ALARM?</h3>
+<p>Most alarm actions run on a state transition and do not repeat just because the alarm remains in <code>ALARM</code>. Auto Scaling actions are the exception and repeat once per minute while the alarm stays in its new state. Alarm state can also change while a composite alarm's actions are suppressed; suppression affects those actions, not the underlying states.</p>
