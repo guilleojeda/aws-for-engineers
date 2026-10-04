@@ -3,330 +3,109 @@ layout: post.njk
 templateEngineOverride: html
 tags: posts
 title: "Lambda Error Monitoring: Best Practices"
-description: "Learn essential strategies for monitoring AWS Lambda errors, optimizing performance, and ensuring reliable serverless applications."
+description: "Monitor Lambda failures across synchronous, asynchronous, and event source mapping invocations. Distinguish errors from throttles and choose useful CloudWatch signals."
 date: "2024-11-30"
 datePublished: "2024-11-30T21:19:57.133000+00:00"
 heroImage: "/assets/media/f4c69f6180ab1665b249.jpg"
 permalink: "/blog/lambda-error-monitoring-best-practices/"
 sourceUrl: "https://awsforengineers.com/blog/lambda-error-monitoring-best-practices/"
-dateModified: "2026-10-03"
-updateNote: "Added author attribution and profile information."
+dateModified: "2026-10-04"
+updateNote: "Rewrote the monitoring guidance to distinguish Lambda execution errors from handled outcomes and throttles, explain trigger-specific retries and failure destinations, and align metrics, logs, alarms, and tracing guidance with current AWS documentation."
 ---
-<p>Monitoring <a href="https://docs.aws.amazon.com/lambda/" rel="nofollow noopener noreferrer" target="_blank">AWS Lambda</a> errors is crucial for ensuring reliable and efficient serverless applications. Here's how you can effectively track and resolve issues:</p>
-<ul>
-<li><strong>Key Metrics to Monitor</strong>: Errors, Throttles, Duration, and ConcurrentExecutions.</li>
-<li><strong>Common Errors to Watch</strong>: Unhandled exceptions, timeouts, memory issues, permission problems, and throttling.</li>
-<li><strong>Tools to Use</strong>: <a href="https://docs.aws.amazon.com/cloudwatch/" rel="nofollow noopener noreferrer" target="_blank">AWS CloudWatch</a> for metrics, logs, and alarms; <a href="https://docs.aws.amazon.com/xray/latest/devguide/aws-xray.html" rel="nofollow noopener noreferrer" target="_blank">AWS X-Ray</a> for tracing; and <a href="https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/AnalyzingLogData.html" rel="nofollow noopener noreferrer" target="_blank">CloudWatch Logs Insights</a> for detailed log analysis.</li>
-<li><strong>Best Practices</strong>:
-<ul>
-<li>Set meaningful alerts for critical metrics.</li>
-<li>Automate responses to alarms using Lambda functions.</li>
-<li>Regularly review and update monitoring configurations.</li>
-</ul>
-</li>
-</ul>
-<h2 id="metrics-and-error-types-to-watch-in-aws-lambda">Metrics and Error Types to Watch in <a href="https://docs.aws.amazon.com/lambda/" rel="nofollow noopener noreferrer" target="_blank">AWS Lambda</a></h2>
-<p><figure><img alt="AWS Lambda" loading="lazy" src="/assets/media/f87b56689025ce0f0e96.jpg"/></figure></p>
-<h3 id="common-lambda-error-types">Common Lambda Error Types</h3>
-<p>Keeping an eye on typical Lambda errors can help you troubleshoot and fix problems faster. Here are the main error types worth monitoring:</p>
-<ul>
-<li>
-<strong>Unhandled Exceptions</strong>: These occur when your code doesn't properly handle errors, leading to retries and higher costs. Use <strong>CloudWatch Logs</strong> to track and address them.
-</li>
-<li>
-<strong>Timeouts</strong>: Functions nearing their timeout limits can cause disruptions. Keep an eye on the <code>Duration</code> metric and optimize functions as needed.
-</li>
-<li>
-<strong>Memory Issues</strong>: When a function runs out of memory, it fails. Monitor the memory usage metric to ensure your function has enough resources. If memory usage is consistently high, increase the allocation.
-</li>
-<li>
-<strong>Permission Problems</strong>: Errors related to permissions, like missing IAM roles or policies, often show up in <strong>CloudWatch Logs</strong>. These logs can help pinpoint and resolve such issues.
-</li>
-<li>
-<strong>Throttling</strong>: Throttling happens when functions exceed their concurrency limits. The <code>Throttles</code> metric in <strong>CloudWatch</strong> reveals how often this occurs. If throttling is frequent, consider adjusting concurrency limits to reduce the impact.
-</li>
-</ul>
-<p>By keeping these errors in check, you can use metrics to address them proactively and maintain performance.</p>
-<h3 id="important-lambda-metrics">Important Lambda Metrics</h3>
-<p><strong>CloudWatch</strong> provides key metrics to help you monitor and respond to errors effectively. Here's a quick overview:</p>
-<figure><table>
-<thead>
-<tr>
-<th>Metric</th>
-<th>Description</th>
-<th>Why It Matters</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><strong>Errors</strong></td>
-<td>Counts failed function invocations</td>
-<td>Reflects how reliable your function is</td>
-</tr>
-<tr>
-<td><strong>Throttles</strong></td>
-<td>Tracks throttled function calls</td>
-<td>Highlights concurrency bottlenecks</td>
-</tr>
-<tr>
-<td><strong>Duration</strong></td>
-<td>Measures function execution time</td>
-<td>Helps identify performance trends</td>
-</tr>
-<tr>
-<td><strong>ConcurrentExecutions</strong></td>
-<td>Shows functions running at the same time</td>
-<td>Indicates concurrent usage levels</td>
-</tr>
-</tbody>
-</table></figure>
-<p>To calculate the error rate for your function, divide the <code>Errors</code> metric by the total number of <code>Invocations</code>.</p>
-<p>For more detailed analysis, combine these metrics with <strong>AWS X-Ray tracing</strong>. This tool gives you an end-to-end view of your function's behavior, making it easier to identify and resolve root causes.</p>
-<h2 id="using-cloudwatch-lambda-insights">Using CloudWatch Lambda Insights</h2>
-<iframe allowfullscreen="" frameborder="0" loading="lazy" src="https://www.youtube-nocookie.com/embed/m452gokXTME"></iframe><h2 id="how-to-set-up-cloudwatch-for-lambda-error-monitoring">How to Set Up CloudWatch for Lambda Error Monitoring</h2>
-<p>To monitor Lambda errors effectively with CloudWatch, you need to set up the right metrics and configure alarms.</p>
-<h3 id="creating-alarms-in-cloudwatch">Creating Alarms in CloudWatch</h3>
-<p><a href="/blog/cloudwatch-alarms-best-practices-for-thresholds-and-conditions/">CloudWatch alarms</a> help you keep track of critical metrics and notify you when thresholds are crossed. To set one up, navigate to <strong>CloudWatch &gt; Alarms</strong> in the AWS Console. Select the <strong>AWS Lambda</strong> namespace and pick the metrics for your function. Define thresholds based on your application's error tolerance and performance needs.</p>
-<p>For automation, you can use the <a href="https://docs.aws.amazon.com/cli/" rel="nofollow noopener noreferrer" target="_blank">AWS CLI</a>:</p>
-<pre><code>aws cloudwatch put-metric-alarm \
-  --alarm-name "HighErrorRate" \
-  --metric-name Errors \
-  --namespace AWS/Lambda \
-  --statistic Sum \
-  --period 300 \
-  --threshold 5 \
-  --comparison-operator GreaterThanThreshold \
-  --evaluation-periods 1 \
-  --alarm-actions arn:aws:sns:us-east-1:123456789012:my-sns-topic
-</code></pre>
-<p><strong>Key parameters:</strong></p>
-<ul>
-<li><strong><code>alarm-name</code></strong>: A unique name for your alarm</li>
-<li><strong><code>metric-name</code></strong>: The specific metric you want to monitor</li>
-<li><strong><code>period</code></strong>: Evaluation interval in seconds (300 = 5 minutes)</li>
-<li><strong><code>threshold</code></strong>: Value that, when exceeded, triggers the alarm</li>
-<li><strong><code>evaluation-periods</code></strong>: Number of intervals before the alarm activates</li>
-<li><strong><code>alarm-actions</code></strong>: <a href="https://aws.amazon.com/sns/" rel="nofollow noopener noreferrer" target="_blank">Amazon SNS</a> topic ARN for notifications</li>
-</ul>
-<p>Set your alarm actions to notify your team via Amazon SNS whenever a threshold is breached. This ensures you’re immediately alerted to critical issues.</p>
-<p>While alarms provide real-time notifications, analyzing logs gives you a deeper understanding of your function's behavior.</p>
-<h3 id="using-cloudwatch-logs-insights">Using <a href="https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/AnalyzingLogData.html" rel="nofollow noopener noreferrer" target="_blank">CloudWatch Logs Insights</a></h3>
-<p><figure><img alt="CloudWatch Logs Insights" loading="lazy" src="/assets/media/7b7b24e7b4e03e1c8afe.jpg"/></figure></p>
-<p>Analyzing logs is crucial for diagnosing and fixing errors. CloudWatch Logs Insights offers a powerful query tool for digging into your log data. Here's an example query:</p>
-<pre><code>filter @type = "REPORT" 
-| stats avg(@duration) as avgDuration, 
-        max(@duration) as maxDuration, 
-        min(@duration) as minDuration 
-by bin(30m)
-</code></pre>
-<p><strong>Tips for effective log analysis:</strong></p>
-<ul>
-<li><strong>Start Simple</strong>: Begin with basic queries focused on error messages and gradually refine them.</li>
-<li><strong>Group by Time</strong>: Use time intervals to spot trends or recurring issues.</li>
-<li><strong>Filter Smartly</strong>: Narrow down logs to focus on specific error types or severe problems.</li>
-</ul>
-<p>For a more detailed view of your Lambda execution, combine CloudWatch with AWS X-Ray to trace requests end-to-end.</p>
-<figure><table>
-<thead>
-<tr>
-<th>Monitoring Task</th>
-<th>Tool</th>
-<th>Purpose</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Error Detection</td>
-<td>CloudWatch Alarms</td>
-<td>Real-time alerts for error thresholds</td>
-</tr>
-<tr>
-<td>Log Analysis</td>
-<td>CloudWatch Logs Insights</td>
-<td>Spot patterns and debug issues</td>
-</tr>
-<tr>
-<td>Performance Tracing</td>
-<td>AWS X-Ray</td>
-<td>Track requests from start to finish</td>
-</tr>
-</tbody>
-</table></figure>
+<p>Useful Lambda error monitoring starts with the invocation path. The CloudWatch <code>Errors</code> metric counts function or runtime errors; it does not count every unsuccessful business outcome, request rejected before the handler runs, or record-level failure that a batch handler reports as a normal response. Retries and recovery also depend on whether a caller invokes the function synchronously, Lambda queues an asynchronous event, or an event source mapping polls a queue or stream.</p>
+<p>Use function metrics to detect a change, logs to explain an invocation, and source-specific metrics to see delivery or backlog problems. For a console and CLI walkthrough that creates an error-rate alarm and runs Logs Insights queries, see <a href="/blog/monitor-lambda-errors-with-cloudwatch/">Monitor Lambda Errors with CloudWatch</a>. For definitions and dimensions of the standard metrics, see <a href="/blog/aws-lambda-metrics-explained/">AWS Lambda metrics in CloudWatch</a>.</p>
 
-<h2 id="best-practices-for-monitoring-lambda-errors">Best Practices for Monitoring Lambda Errors</h2>
-<h3 id="using-multiple-monitoring-tools">Using Multiple Monitoring Tools</h3>
-<p>CloudWatch is a powerful tool for monitoring your Lambda functions, but pairing it with others can give you a more complete picture. CloudWatch provides metrics, logs, and alerts, while AWS X-Ray adds detailed tracing to track requests through your architecture. You can also integrate third-party tools for additional features tailored to your specific needs.</p>
+<h2 id="metrics-and-error-types-to-watch-in-aws-lambda">Monitor the invocation path, not just Errors</h2>
+<h3 id="common-lambda-error-types">Classify the failure before choosing a signal</h3>
+<p>Lambda uses “function error” for an invocation in which the handler or runtime returns an error. An uncaught exception, timeout, or some configuration and runtime failures can increment <code>Errors</code>. If the handler catches an exception and returns normally, Lambda sees a successful function invocation even if the application logs an error or returns an HTTP 4xx or 5xx response. Emit an application metric or measure the response at the API boundary when those outcomes matter.</p>
+<p>Throttling is separate. A request that Lambda rejects because concurrency is unavailable increments <code>Throttles</code>; it does not increment <code>Invocations</code> or <code>Errors</code>. A source may retry the request, delay it, or eventually drop it, so investigate the source and its delivery metrics as well as the function.</p>
+<p>The distinction matters even for a batch handler. For SQS, an event source mapping retries only the records identified as failed when partial batch responses are enabled. With a FIFO queue, stop after the first failure and report that message plus every unprocessed message so the queue's order is preserved. For Kinesis and DynamoDB Streams, Lambda checkpoints at the earliest failed sequence number and can replay later records from that batch. In all these cases, the handler's partial-failure response is a normal function response, not a Lambda function error. Log or count record-level failures separately so a low <code>Errors</code> value does not conceal a poison message or repeated business failure. AWS describes the required configuration for <a href="https://docs.aws.amazon.com/lambda/latest/dg/services-sqs-errorhandling.html" target="_blank" rel="noopener noreferrer">SQS partial batch responses</a> and <a href="https://docs.aws.amazon.com/lambda/latest/dg/services-ddb-batchfailurereporting.html" target="_blank" rel="noopener noreferrer">stream partial batch responses</a>.</p>
+
+<h3 id="important-lambda-metrics">Choose metrics that match the trigger</h3>
+<p>Lambda publishes standard service metrics in CloudWatch's <code>AWS/Lambda</code> namespace at one-minute intervals. They do not require additional permissions on the function's execution role. Use <code>Sum</code> for invocation and error counts, and <code>Max</code> for concurrency. Metric timestamps can precede the time a long invocation finishes, so allow for reporting delay during an incident. AWS maintains the current <a href="https://docs.aws.amazon.com/lambda/latest/dg/monitoring-metrics-types.html" target="_blank" rel="noopener noreferrer">Lambda metric definitions</a>.</p>
 <figure><table>
 <thead>
-<tr>
-<th>Tool</th>
-<th>Purpose</th>
-</tr>
+<tr><th>Signal</th><th>What it tells you</th><th>What to check next</th></tr>
 </thead>
 <tbody>
-<tr>
-<td>CloudWatch</td>
-<td>Metrics, logs, and alerts</td>
-</tr>
-<tr>
-<td>AWS X-Ray</td>
-<td>Tracing requests end-to-end</td>
-</tr>
-<tr>
-<td>Third-party tools</td>
-<td>Extra monitoring capabilities</td>
-</tr>
+<tr><td><code>Invocations</code></td><td>Calls that reached the function code, including calls that returned function errors. Throttled and other rejected invocation requests are not included.</td><td>Traffic volume and the function, version, or alias dimension.</td></tr>
+<tr><td><code>Errors</code></td><td>Invocations that returned a function or runtime error. This is not a count of handled application errors or failed records in a successful partial-batch response.</td><td>Request IDs, exception details, runtime logs, and the handler's error behavior.</td></tr>
+<tr><td><code>Throttles</code></td><td>Requests rejected before function code ran because execution capacity was not available.</td><td>Concurrency, account and function limits, and source retry or backoff behavior.</td></tr>
+<tr><td><code>Duration</code></td><td>Function processing time; it excludes initialization time.</td><td>Latency objectives, percentiles, downstream calls, and initialization fields in logs.</td></tr>
+<tr><td><code>ConcurrentExecutions</code></td><td>Executions in flight.</td><td>Regional and reserved concurrency, traffic bursts, and downstream capacity.</td></tr>
+<tr><td><code>AsyncEventAge</code>, <code>AsyncEventsDropped</code></td><td>Age of queued asynchronous events and events discarded without successful execution, for example after expiry or retry exhaustion.</td><td><code>Errors</code>, <code>Throttles</code>, event age limits, retry settings, and the configured failure destination.</td></tr>
+<tr><td>Source queue or stream metrics</td><td>Backlog and processing progress for an event source mapping. Examples include SQS oldest-message age and stream iterator age.</td><td>Batch size, visibility or retention, mapping errors, partial responses, and source-specific retry limits.</td></tr>
+<tr><td><code>DeadLetterErrors</code>, <code>DestinationDeliveryFailures</code></td><td><code>DeadLetterErrors</code> counts failed delivery to an asynchronous function's DLQ. <code>DestinationDeliveryFailures</code> counts failed delivery to a configured destination, including supported stream mappings. Both are delivery problems, not totals of function failures.</td><td>Destination type, permissions, resource configuration, and size limits.</td></tr>
 </tbody>
 </table></figure>
-<h3 id="setting-meaningful-alerts">Setting Meaningful Alerts</h3>
-<p>Alerts are essential for catching issues without overwhelming your team with noise. Focus on key metrics that directly affect your application's performance:</p>
-<p><strong>Key Metrics to Monitor:</strong></p>
-<ul>
-<li>Error rates that deviate from normal levels</li>
-<li>Function execution times nearing their timeout limits</li>
-<li>Memory usage exceeding 80%</li>
-<li>A rise in throttling events</li>
-</ul>
-<p>Tailor thresholds to fit the environment. For instance, production systems might need stricter settings (e.g., error rates &gt;1%) compared to development setups (e.g., &gt;5%).</p>
-<p>Here’s an example of how to set up an alert using CloudWatch:</p>
-<pre><code>aws cloudwatch put-metric-alarm \
-  --alarm-name "HighErrorRate" \
-  --metric-name Errors \
-  --namespace AWS/Lambda \
-  --period 300 \
-  --threshold 1 \
-  --comparison-operator GreaterThanPercentThreshold
-</code></pre>
-<p>Keep in mind that as your application evolves, you’ll need to fine-tune these alerts to stay effective.</p>
-<h3 id="reviewing-monitoring-settings-regularly">Reviewing Monitoring Settings Regularly</h3>
-<p>Make it a habit to review your monitoring setup every month. Check settings like CloudWatch Log retention periods, alert thresholds, custom metrics, X-Ray sampling rates, and notification channels to ensure they’re still relevant.</p>
-<p>During these reviews, use tools like CloudWatch Logs Insights to analyze data and uncover trends:</p>
-<pre><code>filter @type = "REPORT"
-| stats count(*) as invocations,
-        avg(@duration) as avgDuration,
-        max(@duration) as maxDuration
-by bin(1h)
-| sort by avgDuration desc
-</code></pre>
-<p>This type of analysis can reveal patterns in performance and execution times, helping you adjust your monitoring strategy before issues arise.</p>
-<h2 id="advanced-techniques-for-monitoring-lambda-errors">Advanced Techniques for Monitoring Lambda Errors</h2>
-<h3 id="using-aws-x-ray-for-tracing">Using <a href="https://docs.aws.amazon.com/xray/latest/devguide/aws-xray.html" rel="nofollow noopener noreferrer" target="_blank">AWS X-Ray</a> for Tracing</h3>
-<p><figure><img alt="AWS X-Ray" loading="lazy" src="/assets/media/2ac703b090d598eedd0b.jpg"/></figure></p>
-<p>AWS X-Ray helps you trace requests across your application, making it easier to identify bottlenecks and diagnose issues that might not be obvious through <a href="/blog/custom-cloudwatch-metrics-setup-guide-2024/">CloudWatch metrics</a>.</p>
-<p>Here’s how to get the most out of X-Ray with Lambda:</p>
-<p>1. <strong>Enable X-Ray Selectively</strong><br/>
-Turn on X-Ray for the most critical functions or those with complex dependencies. This helps you focus on key areas without incurring unnecessary costs.</p>
-<p>2. <strong>Set Up Sampling Rules</strong><br/>
-Use custom sampling rules to strike a balance between cost and visibility. For example, you could sample 5% of requests during normal operations and increase it to 25% when troubleshooting.</p>
-<h3 id="automating-responses-to-alarms">Automating Responses to Alarms</h3>
-<p>Monitoring is great for visibility, but automation can speed up the resolution of critical issues.</p>
-<figure><table>
-<thead>
-<tr>
-<th><strong>Alarm Trigger</strong></th>
-<th><strong>Automated Response</strong></th>
-<th><strong>Implementation Method</strong></th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>High Error Rate or Memory Usage &gt; 80%</td>
-<td>Scale resources or adjust memory allocation</td>
-<td>Lambda + CloudWatch Alarm Action</td>
-</tr>
-<tr>
-<td>Cold Start Spikes</td>
-<td>Provision concurrency</td>
-<td><a href="https://docs.aws.amazon.com/eventbridge/" rel="nofollow noopener noreferrer" target="_blank">EventBridge</a> + Lambda</td>
-</tr>
-</tbody>
-</table></figure>
-<p>To automate responses effectively:</p>
-<ul>
-<li><strong>Create a Lambda function</strong> that is triggered by CloudWatch alarms to handle specific remediation actions.</li>
-<li><strong>Set up proper IAM permissions</strong> to ensure the Lambda function has access to necessary resources.</li>
-<li><strong>Test the automation</strong> in a staging environment to ensure it works as expected.</li>
-</ul>
-<p>Here’s an example Lambda function that increases memory allocation automatically when triggered:</p>
-<pre><code>import boto3
+<p>For asynchronous invocations, a failure destination receives an invocation record with request and response context, while a function-level DLQ stores the original event. A stream event source mapping's on-failure destination receives failed source records. SQS redrive and dead-letter handling belong to the source queue. Check which payload the recovery process expects before configuring a destination; AWS compares <a href="https://docs.aws.amazon.com/lambda/latest/dg/invocation-async-retain-records.html" target="_blank" rel="noopener noreferrer">asynchronous destinations and DLQs</a> with <a href="https://docs.aws.amazon.com/lambda/latest/dg/services-sqs-configure.html" target="_blank" rel="noopener noreferrer">SQS queue redrive settings</a>.</p>
+<p>For an approximate function error rate, compare the sum of <code>Errors</code> with the sum of <code>Invocations</code> over the same period: <code>Errors / Invocations</code>. Do not treat a zero or missing denominator as a healthy request. For batch sources, also measure record-level outcomes because one invocation can contain many records.</p>
 
-def lambda_handler(event, context):
-    lambda_client = boto3.client('lambda')
+<h2 id="using-cloudwatch-lambda-insights">Add runtime telemetry when a specific question needs it</h2>
+<p>CloudWatch Lambda Insights adds runtime and execution-environment telemetry such as memory use and initialization details. It complements the standard <code>AWS/Lambda</code> metrics; it does not replace the function's error metrics or application logs. Enable it for functions where that additional data will help answer a concrete resource or startup question, then account for its extension, metrics, and log costs. Our guide explains <a href="/blog/aws-lambda-insights-serverless-monitoring-guide/">Lambda Insights setup, metrics, and costs</a>.</p>
 
-    # Increase memory for the affected function
-    response = lambda_client.update_function_configuration(
-        FunctionName='affected-function-name',
-        MemorySize=512  # Adjust memory allocation
-    )
-</code></pre>
-<p>This kind of automation can make a big difference in maintaining application performance and minimizing downtime.</p>
+<h2 id="how-to-set-up-cloudwatch-for-lambda-error-monitoring">Connect metrics, logs, and alarms</h2>
+<p>In CloudWatch, select the <code>AWS/Lambda</code> namespace and choose dimensions that match the unit you operate: function, version, alias, or Region. A function-name graph can combine versions; inspect a version or alias separately when a rollout could be hiding a regression. Keep the Lambda function and CloudWatch view in the same Region.</p>
+<p>Pair a metric with invocation logs. The function's execution role needs permission to write to CloudWatch Logs; the <code>AWSLambdaBasicExecutionRole</code> managed policy supplies the usual log-group, log-stream, and log-event permissions. A restricted or custom log-group setup may need a policy adjusted to that group. The role does not need extra permissions for Lambda's standard service metrics. See AWS's guidance for <a href="https://docs.aws.amazon.com/lambda/latest/dg/monitoring-cloudwatchlogs.html" target="_blank" rel="noopener noreferrer">Lambda logging permissions and destinations</a>.</p>
+<p>Prefer structured JSON application logs when the runtime and logging method support them. Include the Lambda request ID, a safe business identifier, an error type, and a concise message. Do not log credentials, tokens, or entire event payloads by default. Logging an error is not the same as throwing it: record handled business failures in an application metric or log field if they need their own alarm. AWS documents <a href="https://docs.aws.amazon.com/lambda/latest/dg/monitoring-cloudwatchlogs-logformat.html" target="_blank" rel="noopener noreferrer">JSON log formats and supported logging methods</a>.</p>
+
+<h3 id="creating-alarms-in-cloudwatch">Make alarms reflect impact and recovery</h3>
+<p>Start with signals a responder can act on: function <code>Errors</code>, <code>Throttles</code>, an error rate tied to a service objective, and source backlog or event age where delivery delay matters. An absolute error-count alarm can catch a failure at low traffic; a rate alarm gives volume context. For the rate, use CloudWatch metric math over <code>Errors</code> and <code>Invocations</code> with the same dimensions and period. Do not copy a generic threshold such as one percent or a memory percentage without checking the workload and its acceptable impact.</p>
+<p>Choose the evaluation window and number of breaching datapoints based on how quickly the team must respond and how much short-lived variation is acceptable. Decide what missing data means. For an event-driven error count or a rate expression with no invocations, <code>notBreaching</code> can avoid paging on idle periods; it also will not detect missing telemetry. If the function should receive traffic continuously, monitor expected invocations or a synthetic heartbeat separately. AWS explains <a href="https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/alarms-and-missing-data.html" target="_blank" rel="noopener noreferrer">missing-data treatment</a> and <a href="https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/using-metric-math.html" target="_blank" rel="noopener noreferrer">metric math alarms</a>.</p>
+<p>Route notifications to an owner and test the full alarm action. CloudWatch can invoke a Lambda function as an alarm action, but its resource-based policy must allow the CloudWatch alarms service to invoke it; see AWS's guidance to <a href="https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/alarms-and-actions-Lambda.html" target="_blank" rel="noopener noreferrer">invoke a Lambda function from an alarm</a>. Use automation only for a bounded, retry-safe response; a function error by itself does not tell you whether to change memory, concurrency, or a downstream service.</p>
+
+<h3 id="using-cloudwatch-logs-insights">Use Logs Insights to find the cause</h3>
+<p>Logs Insights helps search and aggregate records over a selected time range and log group. Start with application errors or Lambda platform messages, then correlate the request ID with the metric window. A count of matching log entries is not a guaranteed invocation error rate: applications can log more than once per invocation, catch errors, or report failures inside a successful batch response.</p>
+
+<h2 id="best-practices-for-monitoring-lambda-errors">Build a monitoring practice around response</h2>
+<h3 id="using-multiple-monitoring-tools">Use each tool for the question it answers</h3>
+<p>Use Lambda and source metrics to spot changing error volume, throttles, latency, and backlog. Use CloudWatch Logs to find the invocation or record that explains the change. Use distributed tracing when you need to follow a request across services; it complements these signals but does not replace the event source's delivery metrics.</p>
+
+<h3 id="setting-meaningful-alerts">Keep alerts actionable and low-noise</h3>
+<ul>
+<li>Alert on a service objective, user-visible failure, supported capacity limit, or growing event backlog.</li>
+<li>Use count and rate together when a small absolute count or a traffic-relative percentage could each matter.</li>
+<li>Choose percentile latency alarms only when the period has enough samples to make that percentile useful; <code>Duration</code> also excludes initialization.</li>
+<li>Keep <code>Throttles</code> separate from <code>Errors</code>, and investigate the source's retry behavior before changing concurrency.</li>
+<li>Give each notification an owner, a reason to respond, and a runbook or next diagnostic step.</li>
+</ul>
+<p>There is no universal error-rate, duration, or memory threshold for every Lambda function. Calibrate alarms against real traffic, the service's acceptable failure rate, and the cost of a delayed or false page. See our guide to <a href="/blog/cloudwatch-alarms-best-practices-for-thresholds-and-conditions/">CloudWatch alarm thresholds, periods, and missing data</a> for evaluation details.</p>
+
+<h3 id="reviewing-monitoring-settings-regularly">Review logs, permissions, and alarm behavior</h3>
+<p>After a release or incident, check whether metrics and log fields still identify the intended function version and source. Review log retention against investigation and compliance needs, and use the shortest query range and fewest relevant log groups that answer the question. CloudWatch Logs retains data indefinitely unless a retention period is set, and ingestion, storage, and queries can incur charges.</p>
+<p>Test missing-data behavior, notification delivery, and any automated action in a safe environment. When an alarm fires, inspect the alarm graph and history before changing a threshold: verify the namespace, dimensions, statistic, period, metric math expression, and datapoints that caused the state change.</p>
+
+<h2 id="advanced-techniques-for-monitoring-lambda-errors">Handle retries and responses safely</h2>
+<h3 id="using-aws-x-ray-for-tracing">Trace cross-service failures with current instrumentation</h3>
+<p>A trace can show whether time was spent in the function or a downstream service, but use it alongside function metrics and request logs. X-Ray's service remains available; AWS recommends OpenTelemetry for new instrumentation because its X-Ray SDKs and daemon are in maintenance mode. Check AWS's <a href="https://docs.aws.amazon.com/xray/latest/devguide/xray-sdk-migration.html" target="_blank" rel="noopener noreferrer">X-Ray SDK migration guidance</a> before adopting older setup instructions. Avoid assuming that a trace covers every invocation: sampling and instrumentation determine what is recorded.</p>
+
+<h3 id="automating-responses-to-alarms">Automate only bounded, retry-safe actions</h3>
+<p>CloudWatch alarm actions can notify an operator or invoke a Lambda function after a state change. A remediation function needs an explicit resource-based permission for the alarm and narrowly scoped permissions for the action it performs. Test duplicate delivery, repeated state changes, rollback behavior, and failure handling before relying on automation.</p>
+<p>Do not automatically increase function memory or concurrency just because an error or latency alarm fired. First distinguish code errors, throttles, and downstream failures; then make a measured change with a clear rollback path. Lambda's <code>Errors</code> metric alone does not say which resource change will fix the incident.</p>
+
 <h2 id="conclusion">Conclusion</h2>
-<h3 id="summary-of-key-points">Summary of Key Points</h3>
-<p>Keeping track of Lambda errors is crucial for maintaining dependable serverless applications. <strong>CloudWatch</strong> plays a major role in monitoring by providing metrics and logs to help diagnose problems. Meanwhile, <strong>AWS X-Ray</strong> offers tracing capabilities to pinpoint bottlenecks and troubleshoot complex issues.</p>
-<p>Here are some essential monitoring practices:</p>
-<figure><table>
-<thead>
-<tr>
-<th>Practice</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Multi-layer Monitoring</td>
-<td>Use metrics, logs, and traces together for better visibility.</td>
-</tr>
-<tr>
-<td>Automated Response Systems</td>
-<td>Set up automated error handling to minimize downtime.</td>
-</tr>
-<tr>
-<td>Regular Monitoring Review</td>
-<td>Update your monitoring setup as the application evolves.</td>
-</tr>
-</tbody>
-</table></figure>
-<p>Effective alerts and layered monitoring are key to identifying issues early. By leveraging CloudWatch, AWS X-Ray, and automation, you can build a monitoring system that reduces downtime and improves performance.</p>
-<h3 id="additional-resources">Additional Resources</h3>
-<p>For more detailed guidance on these practices, check out the following:</p>
+<h3 id="summary-of-key-points">A concise operating checklist</h3>
 <ul>
-<li><strong>AWS CloudWatch documentation</strong>: Learn how to configure metrics effectively.</li>
-<li><strong>AWS X-Ray documentation</strong>: Dive into advanced tracing techniques.</li>
-<li><strong>AWS Lambda best practices guide</strong>: Optimize your Lambda functions for better performance.</li>
+<li>Separate thrown function errors from handled application outcomes and throttles.</li>
+<li>Follow the trigger's delivery, retry, partial-batch, and failure-destination behavior.</li>
+<li>Combine Lambda metrics, source metrics, structured logs, and tracing only where each adds a useful signal.</li>
+<li>Set rate, count, latency, and missing-data alarm behavior from the workload and the response it requires.</li>
+<li>Make retries safe with idempotent processing and logs that identify a request or record without exposing sensitive payloads.</li>
 </ul>
-<p>Also, visit <a href="/">AWS for Engineers</a> for in-depth technical guides created for software engineers.</p>
-<p>Regularly revisiting and refining your monitoring strategy ensures your Lambda functions stay efficient, cost-effective, and reliable over time.</p>
+
+<h3 id="additional-resources">Current AWS references</h3>
+<p>The linked AWS documentation covers Lambda metrics, event-source retries, failure destinations, log formats, and CloudWatch alarm evaluation. Recheck the service references when changing runtime, event-source, or alarm configuration because those details can vary by trigger and feature.</p>
+
 <h2 id="faqs">FAQs</h2>
-<p>This section answers common questions about monitoring and resolving AWS Lambda errors, along with steps to troubleshoot effectively.</p>
 <h3 id="how-can-i-get-alerts-for-lambda-failures%3F">How can I get alerts for Lambda failures?</h3>
-<p>To set up alerts for Lambda failures, follow these steps:</p>
-<ul>
-<li><strong>Create a CloudWatch alarm</strong> for your function's 'Errors' metric.</li>
-<li><strong>Link the alarm to an SNS topic</strong> to manage notifications.</li>
-<li><strong>Add email subscribers</strong> to the SNS topic to receive alerts.</li>
-</ul>
-<p>For more advanced monitoring, you can:</p>
-<ul>
-<li>Use metric filters in CloudWatch Logs to detect specific error patterns.</li>
-<li>Set different thresholds depending on the environment (e.g., stricter for production).</li>
-<li>Enable additional notification channels like SMS or Slack through SNS.</li>
-</ul>
+<p>Create a CloudWatch alarm on the function's <code>Errors</code> metric for returned function and runtime errors. Add a separate alarm for <code>Throttles</code> when rejected requests matter, and use metric math for an error rate when traffic volume should affect the signal. Configure notifications or a safe alarm action, then test it. If you need alerts for handled business failures, emit a custom metric or structured log signal for those outcomes; the built-in <code>Errors</code> metric will not count a handler that returns normally.</p>
+
 <h3 id="what-happens-when-lambda-encounters-an-error-during-event-processing%3F">What happens when Lambda encounters an error during event processing?</h3>
-<p>How Lambda deals with errors depends on the invocation type:</p>
+<p>It depends on the invocation path:</p>
 <ul>
-<li><strong>Synchronous Invocations</strong>: No automatic retries; the client needs to handle retries.</li>
-<li><strong>Asynchronous Invocations</strong> (e.g., SNS, EventBridge): The event source manages retries automatically.</li>
-<li><strong>Stream-based Invocations</strong>: Retry behavior can be customized for each service.</li>
+<li><strong>Synchronous invocation:</strong> Lambda returns the function response or error to the caller and does not automatically retry that function error. The caller or service decides whether to retry.</li>
+<li><strong>Asynchronous invocation:</strong> after Lambda accepts the event into its queue, function errors are retried twice by default. Throttles and system errors are retried for up to the configured event age, which defaults to six hours. Configure retry and event-age limits, and use an on-failure destination or DLQ if failed events must be retained.</li>
+<li><strong>Event source mapping:</strong> behavior belongs to the mapping and source. SQS messages can reappear after a visibility timeout and eventually move to a source-queue DLQ under its redrive policy. Kinesis and DynamoDB Streams retry batches according to mapping settings and stream retention; partial batch responses must be enabled before Lambda uses them.</li>
 </ul>
-<p>To manage errors effectively:</p>
-<ul>
-<li>Use dead-letter queues to capture failed asynchronous invocations.</li>
-<li>Add custom retry logic for synchronous calls.</li>
-<li>Monitor error trends using CloudWatch metrics.</li>
-<li>Set appropriate timeout values to prevent unnecessary failures.</li>
-</ul>
-<p>Combining these strategies with tools like CloudWatch and AWS X-Ray can help you maintain better control over error handling in your Lambda functions.</p>
-<h2>Related posts</h2>
-<ul>
-<li><a href="/blog/aws-engineering-blog-autoscaling-for-high-availability/">AWS Engineering Blog: Autoscaling for High Availability</a></li><li><a href="/blog/aws-lambda-insights-serverless-monitoring-guide/">AWS Lambda Insights: Serverless Monitoring Guide</a></li><li><a href="/blog/7-ways-to-mitigate-aws-lambda-cold-starts/">7 Ways to Mitigate AWS Lambda Cold Starts</a></li><li><a href="/blog/aws-devops-monitoring-metrics-tools-best-practices/">AWS DevOps Monitoring: Metrics, Tools, Best Practices</a></li>
-</ul>
+<p>Sources and clients can deliver duplicates, so make processing idempotent. For asynchronous invocation details, see AWS's guides to <a href="https://docs.aws.amazon.com/lambda/latest/dg/invocation-async-error-handling.html" target="_blank" rel="noopener noreferrer">retry behavior</a> and <a href="https://docs.aws.amazon.com/lambda/latest/dg/invocation-async-retain-records.html" target="_blank" rel="noopener noreferrer">failure destinations and DLQs</a>. For SQS, configure its source queue's <a href="https://docs.aws.amazon.com/lambda/latest/dg/with-sqs.html" target="_blank" rel="noopener noreferrer">redrive policy</a>.</p>
+

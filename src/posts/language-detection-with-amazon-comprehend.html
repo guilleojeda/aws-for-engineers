@@ -2,421 +2,156 @@
 layout: post.njk
 templateEngineOverride: html
 tags: posts
-title: "Language Detection with Amazon Comprehend"
-description: "Learn how to leverage a powerful machine learning service for accurate language detection across multilingual texts, streamlining workflows and enhancing data analysis."
+title: "Amazon Comprehend Language Detection: API Limits and Examples"
+description: "Learn how Amazon Comprehend detects a document's dominant language, compare API size limits, and choose between Boto3, synchronous batch, and S3 jobs."
 date: "2025-04-03"
 datePublished: "2025-04-03T01:44:11.077000+00:00"
 heroImage: "/assets/media/dcec44869bdb53ae8f7d.jpg"
 permalink: "/blog/language-detection-with-amazon-comprehend/"
 sourceUrl: "https://awsforengineers.com/blog/language-detection-with-amazon-comprehend/"
-dateModified: "2026-10-03"
-updateNote: "Added author attribution and profile information."
+dateModified: "2026-10-04"
+updateNote: "Corrected Comprehend request limits and response semantics, replaced unsafe examples, and documented current processing modes and IAM requirements."
 ---
-<p><a href="https://aws.amazon.com/comprehend/" rel="nofollow noopener noreferrer" target="_blank">Amazon Comprehend</a> is a machine learning service that helps identify the main language in any text. It's easy to use and supports over 100 languages, making it a great tool for multilingual applications. Here's what you need to know:</p>
-<ul>
-<li>
-<strong>Key Features</strong>:
-<ul>
-<li>Detects the primary language of text with high accuracy.</li>
-<li>Provides a confidence score for each detection.</li>
-<li>Supports both real-time and batch processing for small or large datasets.</li>
-</ul>
-</li>
-<li>
-<strong>Use Cases</strong>:
-<ul>
-<li><strong>Content Routing</strong>: Send text to the right translation or workflow.</li>
-<li><strong>Data Analysis</strong>: Analyze customer feedback in multiple languages.</li>
-<li><strong>Moderation</strong>: Filter content based on language.</li>
-<li><strong>Personalization</strong>: Adapt user experiences by detecting language preferences.</li>
-<li><strong>Compliance</strong>: Manage content to meet language-based regulations.</li>
-</ul>
-</li>
-<li>
-<strong>Getting Started</strong>:
-<ol>
-<li>Create an <a href="https://aws.amazon.com/" rel="nofollow noopener noreferrer" target="_blank">AWS</a> account and set up permissions.</li>
-<li>Use the AWS Console, SDK, or CLI to interact with the service.</li>
-<li>Input text (up to 5,000 characters) to detect its dominant language.</li>
-</ol>
-</li>
-<li>
-<strong>Processing Options</strong>:
-<ul>
-<li><strong>Real-Time Detection</strong>: For quick results on small text samples.</li>
-<li><strong>Batch Processing</strong>: For handling large datasets via S3 and Lambda integration.</li>
-</ul>
-</li>
-</ul>
-<figure><table>
-<thead>
-<tr>
-<th><strong>Factor</strong></th>
-<th><strong>Real-Time Detection</strong></th>
-<th><strong>Batch Processing</strong></th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><strong>Data Volume</strong></td>
-<td>Up to 5KB per request</td>
-<td>Up to 1MB per document</td>
-</tr>
-<tr>
-<td><strong>Response Time</strong></td>
-<td>Milliseconds</td>
-<td>Minutes to hours</td>
-</tr>
-<tr>
-<td><strong>Best Use</strong></td>
-<td>Small, live requests</td>
-<td>Large datasets</td>
-</tr>
-</tbody>
-</table></figure>
-<p>Amazon Comprehend simplifies working with multilingual text, whether you're routing content, analyzing data, or ensuring compliance. With its API and integration options, you can start detecting languages in just a few steps.</p>
-<h2 id="setup-requirements">Setup Requirements</h2>
-<p>Getting started with Amazon Comprehend for language detection involves setting up AWS resources and permissions. Here's a straightforward guide to help you get started.</p>
-<h3 id="initial-setup-steps">Initial Setup Steps</h3>
-<p>To use Amazon Comprehend's language detection features, follow these key steps:</p>
-<ol>
-<li>
-<strong>Set Up an AWS Account</strong>
-<ul>
-<li>Sign up for an AWS account if you don’t already have one.</li>
-<li>Enable billing and add your payment details.</li>
-<li>Choose an AWS Region where Amazon Comprehend is supported.</li>
-</ul>
-</li>
-<li>
-<strong>Configure IAM Permissions</strong>
-<ul>
-<li>Create an IAM user with the necessary permissions.</li>
-<li>Attach the <code>ComprehendFullAccess</code> managed policy to the user.</li>
-<li>Generate access keys for programmatic access.</li>
-</ul>
-</li>
-<li>
-<strong>Install <a href="https://aws.amazon.com/cli/" rel="nofollow noopener noreferrer" target="_blank">AWS CLI</a></strong>
-<ul>
-<li>Download and install the latest version of the AWS CLI.</li>
-<li>Configure the CLI with your access credentials.</li>
-<li>Test the setup with a simple command to ensure everything works.</li>
-</ul>
-</li>
-</ol>
-<p>For a more secure setup, you can create a dedicated IAM role with only the permissions needed for language detection:</p>
-<pre><code>{
-    "Version": "2012-10-17",
-    "Statement": [
-        {
-            "Effect": "Allow",
-            "Action": [
-                "comprehend:DetectDominantLanguage",
-                "comprehend:BatchDetectDominantLanguage"
-            ],
-            "Resource": "*"
-        }
-    ]
-}
-</code></pre>
-<h3 id="console-and-sdk-access">Console and SDK Access</h3>
-<p>Amazon Comprehend provides several ways to interact with its services, depending on your needs:</p>
-<figure><table>
-<thead>
-<tr>
-<th>Access Method</th>
-<th>Best For</th>
-<th>Requirements</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>AWS Console</td>
-<td>Quick testing and exploration</td>
-<td>A web browser and AWS account</td>
-</tr>
-<tr>
-<td>AWS SDK</td>
-<td>Building production apps</td>
-<td>Language-specific SDK and credentials</td>
-</tr>
-<tr>
-<td>AWS CLI</td>
-<td>Automation and scripting</td>
-<td>CLI tools and credentials</td>
-</tr>
-</tbody>
-</table></figure>
-<p>If you're using the SDK, you'll need to install the library for your preferred programming language. For example:</p>
-<pre><code># For Python
-pip install boto3
+<p>Amazon Comprehend can detect the dominant language in a text document and return a language code with a confidence score. The language-detection feature can identify 100 languages, but other Comprehend features support smaller language sets. Check the feature-specific <a href="https://docs.aws.amazon.com/comprehend/latest/dg/supported-languages.html" target="_blank" rel="noopener noreferrer">language support table</a> before using a detected code with another API.</p>
+<p>Detection returns the most likely language for each input document; it does not translate text or report the percentage of a document written in each language. For a long document that switches languages, split it into meaningful sections and aggregate the section results for your use case. See AWS's <a href="https://docs.aws.amazon.com/comprehend/latest/dg/how-languages.html" target="_blank" rel="noopener noreferrer">language detection guidance and limitations</a> for the current language list and model behavior.</p>
 
-# For Node.js
-npm install aws-sdk
-</code></pre>
-<p>Set up your development environment by configuring the required environment variables:</p>
-<pre><code>export AWS_ACCESS_KEY_ID=your_access_key
-export AWS_SECRET_ACCESS_KEY=your_secret_key
-export AWS_DEFAULT_REGION=your_region
-</code></pre>
-<p>With these steps, you're ready to start using Amazon Comprehend's language detection features.</p>
-<h2 id="language-detection-api-guide">Language Detection API Guide</h2>
-<p>Here's how to use the API to identify the primary language in text and handle responses effectively.</p>
-<h3 id="api-request-format">API Request Format</h3>
-<p>The <code>DetectDominantLanguage</code> API identifies the primary language in a given text. Below is the correct format for making a request:</p>
-<pre><code>response = comprehend.detect_dominant_language(
-    Text='Your text content here'
-)
-</code></pre>
-<p><strong>Key points for text input:</strong></p>
-<ul>
-<li>Maximum text length: 5,000 UTF-8 characters</li>
-<li>Text must be UTF-8 encoded</li>
-<li>Empty or null strings are not accepted</li>
-<li>Special characters and emojis may affect accuracy</li>
-</ul>
-<p>For processing multiple texts at once, use <code>BatchDetectDominantLanguage</code>:</p>
-<pre><code>response = comprehend.batch_detect_dominant_language(
-    TextList=[
-        'First text sample',
-        'Second text sample',
-        'Third text sample'
-    ]
-)
-</code></pre>
-<p>Once the request is sent, review the response as outlined below.</p>
-<h3 id="understanding-results">Understanding Results</h3>
-<p>The API provides a structured response with language codes and confidence scores. Here's an example:</p>
-<pre><code>{
-    "Languages": [
-        {
-            "LanguageCode": "en",
-            "Score": 0.9987
-        },
-        {
-            "LanguageCode": "es",
-            "Score": 0.0013
-        }
-    ]
-}
-</code></pre>
-<p><strong>Response fields explained:</strong></p>
-<figure><table>
-<thead>
-<tr>
-<th>Field</th>
-<th>Description</th>
-<th>Example Value</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>LanguageCode</td>
-<td>ISO 639-1 language code</td>
-<td>"en" for English</td>
-</tr>
-<tr>
-<td>Score</td>
-<td>Confidence score (range: 0-1)</td>
-<td>0.9987</td>
-</tr>
-<tr>
-<td>ResponseMetadata</td>
-<td>Details about the request process</td>
-<td>HTTP status, request ID</td>
-</tr>
-</tbody>
-</table></figure>
-<h3 id="error-resolution">Error Resolution</h3>
-<p>Here are common issues and how to address them:</p>
-<p>1. <strong>Text Length Exceeded</strong></p>
-<p>If the text exceeds 5,000 characters, the API returns a <code>TextSizeLimitExceededException</code>. Fix this by:</p>
-<ul>
-<li>Splitting the text into smaller pieces</li>
-<li>Processing each piece individually</li>
-<li>Merging results based on confidence scores</li>
-</ul>
-<p>2. <strong>Invalid Text Encoding</strong></p>
-<p>Improper UTF-8 encoding triggers an <code>InvalidRequestException</code>. Correct this with:</p>
-<pre><code>text = original_text.encode('utf-8').decode('utf-8')
-</code></pre>
-<p>3. <strong>Throttling Errors</strong></p>
-<p>Exceeding the API's rate limits (20 batch transactions per second) results in a <code>ThrottlingException</code>. To handle this:</p>
-<ul>
-<li>Use exponential backoff</li>
-<li>Limit the request rate</li>
-<li>Implement a queue for large workloads</li>
-</ul>
-<p>Here’s an example of a retry mechanism for better error handling:</p>
-<pre><code>def detect_language_with_retry(text, max_retries=3):
-    for attempt in range(max_retries):
-        try:
-            return comprehend.detect_dominant_language(Text=text)
-        except comprehend.exceptions.ThrottlingException:
-            if attempt == max_retries - 1:
-                raise
-            time.sleep(2 ** attempt)
-</code></pre>
+<h2 id="setup-requirements">Set up AWS access</h2>
+<p>Choose an <a href="https://docs.aws.amazon.com/comprehend/latest/dg/guidelines-and-limits.html" target="_blank" rel="noopener noreferrer">AWS Region where Amazon Comprehend is available</a>. For local development, Boto3 uses the standard AWS credential provider chain; in AWS, prefer the workload's IAM role over long-lived access keys. Keep the Region consistent when you use S3-based analysis jobs.</p>
 
-<h2 id="processing-multiple-documents">Processing Multiple Documents</h2>
-<p>Amazon Comprehend can handle large datasets efficiently, making it a great tool for processing multiple documents. When dealing with big data, streamlined processing is key.</p>
-<h3 id="s3-and-lambda-integration">S3 and Lambda Integration</h3>
-<p>You can use <a href="https://aws.amazon.com/s3/" rel="nofollow noopener noreferrer" target="_blank">Amazon S3</a> and <a href="https://aws.amazon.com/lambda/" rel="nofollow noopener noreferrer" target="_blank">AWS Lambda</a> together to manage large text datasets. By setting up your <a href="/blog/learn-aws-s3-fundamentals/">S3 bucket</a> to trigger a Lambda function whenever a new document is uploaded, you can automate the process. Here's an example:</p>
+<h3 id="initial-setup-steps">Install Boto3 and choose a Region</h3>
+<p>Install the AWS SDK for Python and create a Comprehend client in the Region where you plan to make requests:</p>
+<pre><code>python -m pip install boto3</code></pre>
 <pre><code>import boto3
-import json
 
-def process_s3_documents(event, context):
-    s3 = boto3.client('s3')
-    comprehend = boto3.client('comprehend')
+comprehend = boto3.client("comprehend", region_name="us-east-1")</code></pre>
+<p>Replace <code>us-east-1</code> with your Region. Boto3 obtains credentials from its configured provider chain, such as a named profile for local development or an IAM role attached to an AWS workload.</p>
 
-    bucket = event['Records'][0]['s3']['bucket']['name']
-    key = event['Records'][0]['s3']['object']['key']
+<h3 id="console-and-sdk-access">Choose an access method and grant permissions</h3>
+<p>You can try language detection in the AWS console or call it with the AWS CLI or an SDK. Grant the calling identity only the API actions its workflow needs. For the single-document and synchronous batch examples in this article, a minimal identity policy is:</p>
+<pre><code>{
+  "Version": "2012-10-17",
+  "Statement": [{
+    "Effect": "Allow",
+    "Action": [
+      "comprehend:DetectDominantLanguage",
+      "comprehend:BatchDetectDominantLanguage"
+    ],
+    "Resource": "*"
+  }]
+}</code></pre>
+<p>These detection actions do not support resource-level permissions, so their identity policy uses <code>"Resource": "*"</code>; confirm this in the AWS <a href="https://docs.aws.amazon.com/service-authorization/latest/reference/list_comprehend.html" target="_blank" rel="noopener noreferrer">Comprehend service authorization reference</a>. An asynchronous job also requires permission to start and describe that job and permission to pass its data-access role. The separate data-access role must trust <code>comprehend.amazonaws.com</code> and allow the service to read the input and write the results in Amazon S3. AWS documents the caller and service-role requirements in its <a href="https://docs.aws.amazon.com/comprehend/latest/dg/security_iam_id-based-policy-examples.html" target="_blank" rel="noopener noreferrer">Amazon Comprehend IAM guidance</a>.</p>
 
-    try:
-        response = s3.get_object(Bucket=bucket, Key=key)
-        text_content = response['Body'].read().decode('utf-8')
+<h2 id="language-detection-api-guide">Detect language in one document</h2>
+<p>Use <code>DetectDominantLanguage</code> when an application needs an immediate result for one document. Its input is a UTF-8 string with at least 20 characters and a maximum encoded size of 100 KB. The service measures the UTF-8 text size, so character count alone is not a safe limit for text with multibyte characters. See the <a href="https://docs.aws.amazon.com/comprehend/latest/APIReference/API_DetectDominantLanguage.html" target="_blank" rel="noopener noreferrer">DetectDominantLanguage API reference</a>.</p>
 
-        language_response = comprehend.detect_dominant_language(
-            Text=text_content
-        )
+<h3 id="api-request-format">Check the text and call the API</h3>
+<p>Boto3 accepts a Python string for <code>Text</code>. This example checks the character minimum and UTF-8 byte size before sending the request; its 100,000-byte ceiling is a conservative guard below the documented 100 KB limit:</p>
+<pre><code>text = "Amazon Comprehend can identify the main language in this message."
+utf8_size = len(text.encode("utf-8"))
 
-        # Store results back to S3
-        result_key = f"results/{key}_language.json"
-        s3.put_object(
-            Bucket=bucket,
-            Key=result_key,
-            Body=json.dumps(language_response)
-        )
+if len(text) &lt; 20:
+    raise ValueError("Provide at least 20 characters of text")
+if utf8_size &gt; 100_000:
+    raise ValueError("Text exceeds the 100 KB UTF-8 limit")
 
-    except Exception as e:
-        print(f"Error processing {key}: {str(e)}")
-</code></pre>
-<p>This setup works well for real-time processing of individual documents. For larger datasets, an asynchronous approach may be more effective.</p>
-<h3 id="immediate-vs-delayed-processing">Immediate vs. Delayed Processing</h3>
-<p>For quick, real-time processing, the <code>detect_dominant_language</code> API is ideal for single or small documents. However, when dealing with larger files or bulk datasets, the asynchronous <code>StartDominantLanguageDetectionJob</code> API is a better option.</p>
-<p>Here’s how you can start an asynchronous job for large datasets:</p>
-<pre><code>response = comprehend.start_dominant_language_detection_job(
-    InputDataConfig={
-        'S3Uri': 's3://input-bucket/documents/',
-        'InputFormat': 'ONE_DOC_PER_FILE'
-    },
-    OutputDataConfig={
-        'S3Uri': 's3://output-bucket/results/'
-    },
-    DataAccessRoleArn='arn:aws:iam::ACCOUNT_ID:role/ComprehendRole'
-)
-</code></pre>
-<p>While this method takes longer to complete, it’s well-suited for processing extensive datasets.</p>
-<h2 id="implementation-examples">Implementation Examples</h2>
-<p>Amazon Comprehend's language detection can be applied in various scenarios. Below are some practical examples to demonstrate its usage.</p>
-<h3 id="single-request-examples">Single-Request Examples</h3>
-<p>Single-request language detection is ideal for real-time tasks. Here's a Python example for routing customer support tickets based on the detected language:</p>
-<pre><code>def process_support_ticket(ticket_text):
-    comprehend = boto3.client('comprehend')
+response = comprehend.detect_dominant_language(Text=text)
+languages = response["Languages"]
+dominant = languages[0]
 
-    response = comprehend.detect_dominant_language(
-        Text=ticket_text
-    )
+print(dominant["LanguageCode"], dominant["Score"])</code></pre>
+<p>For best results, provide enough natural-language context. AWS notes that detection can struggle with short input, phonetic spellings, and closely related languages such as Indonesian and Malay. A Python string that cannot be encoded as UTF-8 should be corrected at the source; encoding and decoding it again does not repair invalid source data.</p>
 
-    language = response['Languages'][0]['LanguageCode']
+<h3 id="understanding-results">Read the language code and score</h3>
+<p>The response contains a <code>Languages</code> array ordered by descending score. Its first entry is the detected dominant language. For example, an abbreviated response might look like this:</p>
+<pre><code>{
+  "Languages": [
+    {"LanguageCode": "en", "Score": 0.98},
+    {"LanguageCode": "de", "Score": 0.01}
+  ]
+}</code></pre>
+<p><code>LanguageCode</code> follows RFC 5646. Common values include <code>en</code> for English, <code>es</code> for Spanish, and <code>zh-TW</code> for Traditional Chinese. <code>Score</code> is the model's confidence that a language is dominant. AWS says each score is independent: do not add the scores or interpret one as the percentage of the document written in that language.</p>
+<p>Use the score as one input to an application decision, not as a guarantee that the prediction is correct. Review representative examples and decide how to handle uncertain results before automatically routing or processing user content.</p>
 
-    # Route ticket based on detected language
-    if language == 'en':
-        return 'english_support_queue'
-    elif language == 'es':
-        return 'spanish_support_queue'
-    else:
-        return 'international_support_queue'
-</code></pre>
-<p>Here's another example for monitoring the language of chat messages:</p>
-<pre><code>def chat_language_monitor(message):
-    comprehend = boto3.client('comprehend')
+<h3 id="error-resolution">Handle rejected or uncertain input</h3>
+<p>If AWS rejects a request, catch Boto3's <code>botocore.exceptions.ClientError</code> and inspect <code>exc.response["Error"]["Code"]</code> to identify the cause. Common checks include IAM permission, the configured Region, non-empty text, the 20-character minimum, and the UTF-8 byte limit. AWS describes this pattern in its <a href="https://docs.aws.amazon.com/boto3/latest/guide/error-handling.html" target="_blank" rel="noopener noreferrer">Boto3 error-handling guide</a>. Do not retry an unchanged request that fails validation.</p>
+<p>For transient service or throttling errors, configure Boto3 retries for the error types your application needs and apply application-level rate limiting if needed. AWS applies dynamic throttling to synchronous requests rather than one fixed transactions-per-second limit for every account and Region; check current <a href="https://docs.aws.amazon.com/comprehend/latest/dg/guidelines-and-limits.html" target="_blank" rel="noopener noreferrer">Comprehend quotas</a> and Boto3's <a href="https://docs.aws.amazon.com/boto3/latest/guide/retries.html" target="_blank" rel="noopener noreferrer">retry options</a> for your workload.</p>
 
-    response = comprehend.detect_dominant_language(
-        Text=message
-    )
-
-    confidence = response['Languages'][0]['Score']
-    language = response['Languages'][0]['LanguageCode']
-
-    return {
-        'language': language,
-        'confidence': confidence,
-        'needs_translation': language != 'en'
-    }
-</code></pre>
-<h3 id="bulk-processing-examples">Bulk Processing Examples</h3>
-<p>For handling large datasets, batch processing is more efficient. Here's an example of processing multiple documents stored in an S3 bucket:</p>
-<pre><code>def batch_process_documents():
-    comprehend = boto3.client('comprehend')
-
-    response = comprehend.start_dominant_language_detection_job(
-        InputDataConfig={
-            'S3Uri': 's3://documents/input/',
-            'InputFormat': 'ONE_DOC_PER_LINE'
-        },
-        OutputDataConfig={
-            'S3Uri': 's3://documents/output/'
-        },
-        DataAccessRoleArn='arn:aws:iam::123456789012:role/ComprehendAccess'
-    )
-
-    return response['JobId']
-</code></pre>
-<p>This method can be expanded by integrating other AWS services to create workflows tailored to specific requirements.</p>
-<h3 id="custom-processing-flows">Custom Processing Flows</h3>
-<p>Custom workflows can combine language detection with other services like <a href="https://aws.amazon.com/translate/" rel="nofollow noopener noreferrer" target="_blank">Amazon Translate</a>. Here's an example:</p>
-<pre><code>def document_processor(event, context):
-    comprehend = boto3.client('comprehend')
-    translate = boto3.client('translate')
-
-    bucket = event['Records'][0]['s3']['bucket']['name']
-    key = event['Records'][0]['s3']['object']['key']
-
-    text_content = get_document_content(bucket, key)
-    language = comprehend.detect_dominant_language(
-        Text=text_content
-    )['Languages'][0]['LanguageCode']
-
-    if language != 'en':
-        translated = translate.translate_text(
-            Text=text_content,
-            SourceLanguageCode=language,
-            TargetLanguageCode='en'
-        )
-        store_translation(bucket, key, translated['TranslatedText'])
-</code></pre>
-<p>This workflow can be enhanced further by adding other processing steps based on the detected language. For detailed error handling strategies, refer to the Error Resolution section.</p>
-<h2 id="summary">Summary</h2>
-<p>Amazon Comprehend identifies the primary language in text using two processing options: real-time detection and batch processing.</p>
-<p>The <strong>detect_dominant_language</strong> API provides quick results, ideal for live, low-volume requests. For handling larger volumes more affordably, the <strong>start_dominant_language_detection_job</strong> is the better option.</p>
-<p>Here’s a quick comparison of the two methods:</p>
-<figure><table>
-<thead>
-<tr>
-<th>Factor</th>
-<th>Real-Time Detection</th>
-<th>Batch Processing</th>
-</tr>
-</thead>
+<h2 id="processing-multiple-documents">Choose a mode for multiple documents</h2>
+<p>Amazon Comprehend has two synchronous choices and an asynchronous S3 job for language detection. “Batch” can mean either a synchronous request containing a small group of documents or a large asynchronous job, so choose by both document size and when your application needs the result.</p>
+<table>
+<thead><tr><th>Operation</th><th>Input limit</th><th>Result handling</th></tr></thead>
 <tbody>
-<tr>
-<td><strong>Data Volume</strong></td>
-<td>Up to 5KB per request</td>
-<td>Up to 1MB per document</td>
-</tr>
-<tr>
-<td><strong>Response Time</strong></td>
-<td>Milliseconds</td>
-<td>Minutes to hours</td>
-</tr>
-<tr>
-<td><strong>Cost</strong></td>
-<td>Higher per request</td>
-<td>Lower per document</td>
-</tr>
+<tr><td><a href="https://docs.aws.amazon.com/comprehend/latest/APIReference/API_DetectDominantLanguage.html" target="_blank" rel="noopener noreferrer"><code>DetectDominantLanguage</code></a></td><td>One document, up to 100 KB of UTF-8 text; at least 20 characters.</td><td>Synchronous response for one document.</td></tr>
+<tr><td><a href="https://docs.aws.amazon.com/comprehend/latest/APIReference/API_BatchDetectDominantLanguage.html" target="_blank" rel="noopener noreferrer"><code>BatchDetectDominantLanguage</code></a></td><td>Up to 25 documents per request; each should contain at least 20 characters and be no larger than 5 KB.</td><td>Synchronous response with separate results and errors.</td></tr>
+<tr><td><a href="https://docs.aws.amazon.com/comprehend/latest/APIReference/API_StartDominantLanguageDetectionJob.html" target="_blank" rel="noopener noreferrer"><code>StartDominantLanguageDetectionJob</code></a></td><td>Documents in S3, up to 1 MB per document; async quotas also cap the input collection.</td><td>Asynchronous job writes results to S3; poll job status.</td></tr>
 </tbody>
-</table></figure>
-<p>These options provide flexibility for integrating language detection into multilingual applications. You can also enhance workflows by combining it with <a href="/blog/">AWS tools</a> like S3, Lambda, and Translate. With support for 55 languages, the service is a dependable choice for managing multilingual content.</p>
-<h2>Related posts</h2><ul><li><a href="/blog/custom-entity-recognition-in-aws-comprehend/">Custom Entity Recognition in AWS Comprehend</a></li><li><a href="/blog/aws-comprehend-api-key-phrase-extraction/">AWS Comprehend API: Key Phrase Extraction</a></li><li><a href="/blog/monitor-lambda-errors-with-cloudwatch/">Monitor Lambda Errors with CloudWatch</a></li><li><a href="/blog/enterprise-integration-patterns-with-aws-services/">Enterprise Integration Patterns with AWS Services</a></li></ul>
+</table>
+<p>The synchronous batch API handles up to 25 short documents in one request. It is still synchronous: the caller waits for a response. Use the S3 job for a larger collection or documents too large for the batch API. Current asynchronous quotas include a 5 GB total input limit and up to 1,000,000 input files or lines; see AWS's <a href="https://docs.aws.amazon.com/comprehend/latest/dg/guidelines-and-limits.html" target="_blank" rel="noopener noreferrer">guidelines and quotas</a> before submitting a large job. Quotas can change, and some are Region-specific.</p>
+
+<h3 id="s3-and-lambda-integration">Start an asynchronous job from S3</h3>
+<p>Upload UTF-8 documents to an S3 input location, then start a job. The input and output S3 locations must be in the same Region as the Comprehend endpoint. The service's data-access role needs <code>s3:ListBucket</code> and <code>s3:GetObject</code> for input, plus <code>s3:PutObject</code> for output. The identity starting the job needs the Comprehend start and describe actions and <code>iam:PassRole</code> for that role; the identity that uploads input or reads output also needs its own S3 permissions.</p>
+<pre><code>job = comprehend.start_dominant_language_detection_job(
+    InputDataConfig={
+        "S3Uri": "s3://example-bucket/input/",
+        "InputFormat": "ONE_DOC_PER_LINE",
+    },
+    OutputDataConfig={"S3Uri": "s3://example-bucket/output/"},
+    DataAccessRoleArn=(
+        "arn:aws:iam::123456789012:role/ComprehendDataAccessRole"
+    ),
+    JobName="language-detection-example",
+)
+
+print(job["JobId"], job["JobStatus"])</code></pre>
+<p>With <code>ONE_DOC_PER_LINE</code>, each line is a document; <code>ONE_DOC_PER_FILE</code> is another supported input format. Do not put generated output under an input prefix that the job will scan. This prevents a later job from treating its own results as new source documents.</p>
+
+<h3 id="immediate-vs-delayed-processing">Choose synchronous or asynchronous processing</h3>
+<p>For an asynchronous job, use its returned ID to check progress. The call below shows one status check; an application can poll with an interval and stop when the job reaches a terminal state:</p>
+<pre><code>status = comprehend.describe_dominant_language_detection_job(
+    JobId=job["JobId"]
+)
+properties = status["DominantLanguageDetectionJobProperties"]
+print(properties["JobStatus"])</code></pre>
+<p>When the job completes, read the output location from the job properties and retrieve the generated results from S3. A job may fail, so inspect its final status before consuming output. For more on the three processing modes, see AWS's guide to <a href="https://docs.aws.amazon.com/comprehend/latest/dg/concepts-processing-modes.html" target="_blank" rel="noopener noreferrer">single-document, synchronous batch, and asynchronous analysis</a>.</p>
+
+<h2 id="implementation-examples">Use detections in an application</h2>
+<p>Language detection is useful for choosing a later step, provided the detected language is supported by that step and the prediction is strong enough for your application's policy.</p>
+
+<h3 id="single-request-examples">Route a support message with a fallback</h3>
+<p>Do not assume every detected language has a dedicated queue. Review a low-confidence result or an unsupported language instead of silently sending it to the wrong destination:</p>
+<pre><code>def route_message(response, review_threshold):
+    languages = response.get("Languages", [])
+    if not languages:
+        return "manual-review"
+
+    dominant = languages[0]
+    if dominant["Score"] &lt; review_threshold:
+        return "manual-review"
+
+    queues = {"en": "english-support", "es": "spanish-support"}
+    return queues.get(dominant["LanguageCode"], "manual-review")</code></pre>
+<p>Set <code>review_threshold</code> from examples representative of your own messages. AWS does not prescribe one score that is safe for every routing task.</p>
+
+<h3 id="bulk-processing-examples">Keep batch results aligned with input</h3>
+<p>For multiple short messages, the batch response uses each result's <code>Index</code> to point to its input position. A successful HTTP response can still contain per-document errors, so handle both lists:</p>
+<pre><code>documents = [
+    "Please help me update the delivery address for this order.",
+    "Necesito cambiar la fecha de entrega de mi pedido.",
+]
+
+response = comprehend.batch_detect_dominant_language(TextList=documents)
+
+for result in response["ResultList"]:
+    source_text = documents[result["Index"]]
+    print(source_text, result["Languages"][0])
+
+for error in response["ErrorList"]:
+    source_text = documents[error["Index"]]
+    print("Could not analyze:", source_text, error["ErrorCode"])</code></pre>
+<p>Keep the original list until you have matched each result or error to its source. For larger S3 collections, use the asynchronous job described above instead of splitting the corpus into a stream of oversized real-time requests.</p>
+
+<h3 id="custom-processing-flows">Choose a Comprehend feature for the next step</h3>
+<p>Detection tells you which language is dominant; it does not identify names or extract key phrases. If the next step is key-phrase extraction, see our guide to <a href="/blog/aws-comprehend-api-key-phrase-extraction/">Amazon Comprehend key phrase extraction</a>. If you need domain-specific labels such as a part number or policy identifier, read <a href="/blog/custom-entity-recognition-in-aws-comprehend/">our guide to custom entity recognition</a>. Check each feature's supported languages before connecting it to a language-detection result.</p>
+
+<h2 id="summary">Next steps</h2>
+<p>Use <code>DetectDominantLanguage</code> for one document up to 100 KB of UTF-8 text, <code>BatchDetectDominantLanguage</code> for up to 25 documents of 5 KB each, or an S3 job for an asynchronous collection with documents up to 1 MB each. Measure encoded bytes, read the first language result as the dominant prediction, and send low-confidence or unsupported cases to an explicit fallback. Validate language detection with representative text before making it an automatic routing decision.</p>

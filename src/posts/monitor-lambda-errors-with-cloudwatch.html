@@ -3,155 +3,168 @@ layout: post.njk
 templateEngineOverride: html
 tags: posts
 title: "Monitor Lambda Errors with CloudWatch"
-description: "Learn how to monitor AWS Lambda errors effectively with CloudWatch, utilizing metrics, logs, and insights for optimal application performance."
+description: "Set up CloudWatch metrics, inspect Lambda logs with Logs Insights, and create a metric-math error-rate alarm with deliberate missing-data behavior."
 date: "2024-11-30"
 datePublished: "2024-11-30T21:48:57.147000+00:00"
 heroImage: "/assets/media/8874cb9725f36faa5b15.jpg"
 permalink: "/blog/monitor-lambda-errors-with-cloudwatch/"
 sourceUrl: "https://awsforengineers.com/blog/monitor-lambda-errors-with-cloudwatch/"
-dateModified: "2026-10-03"
-updateNote: "Added author attribution and profile information; corrected the article heading hierarchy and added article navigation."
+dateModified: "2026-10-04"
+updateNote: "Rebuilt the walkthrough around valid Lambda metrics, structured and plain-text Logs Insights queries, a runnable metric-math error-rate alarm, correct logging permissions, and deliberate missing-data handling."
 ---
-<p>To monitor <a href="https://aws.amazon.com/lambda/" rel="nofollow noopener noreferrer" target="_blank">AWS Lambda</a> errors effectively, use <strong><a href="https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/WhatIsCloudWatch.html" rel="nofollow noopener noreferrer" target="_blank">Amazon CloudWatch</a></strong>. It provides tools like <strong>Metrics</strong> and <strong>Logs</strong> to track errors, performance issues, and resource usage. Here's a quick rundown:</p>
-<ul>
-<li><strong><a href="/blog/custom-cloudwatch-metrics-setup-guide-2024/">CloudWatch Metrics</a></strong>: Automatically tracks error rates, invocation counts, execution duration, and throttles.</li>
-<li><strong>CloudWatch Logs</strong>: Offers detailed logs for troubleshooting, including stack traces and error patterns.</li>
-<li><strong><a href="https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/Lambda-Insights.html" rel="nofollow noopener noreferrer" target="_blank">Lambda Insights</a></strong>: Provides advanced monitoring with metrics like CPU usage, memory utilization, and runtime errors.</li>
-</ul>
-<h2 id="key-steps%3A">Key Steps:</h2>
-<ol>
-<li>Use <strong>CloudWatch Metrics</strong> to set up alarms for error thresholds.</li>
-<li>Analyze logs with <strong><a href="https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/AnalyzingLogData.html" rel="nofollow noopener noreferrer" target="_blank">CloudWatch Logs Insights</a></strong> using queries to find patterns.</li>
-<li>Enable <strong>Lambda Insights</strong> for deeper performance analysis.</li>
-</ol>
-<p>By combining these tools, you can set alerts, diagnose issues faster, and optimize your serverless applications' performance.</p>
-<h2 id="related-video-from-youtube">Related video from YouTube</h2>
-<iframe allowfullscreen="" frameborder="0" loading="lazy" src="https://www.youtube-nocookie.com/embed/m452gokXTME"></iframe><h2 id="how-to-set-up-cloudwatch-for-lambda-errors">How to Set Up CloudWatch for Lambda Errors</h2>
-<p>Monitoring Lambda errors with CloudWatch involves configuring metrics and setting up alarms. While CloudWatch metrics are automatically enabled for Lambda functions, you’ll need to customize settings to track errors effectively.</p>
-<h3 id="accessing-cloudwatch-metrics-for-lambda">Accessing CloudWatch Metrics for Lambda</h3>
-<p>To view Lambda metrics, go to the CloudWatch console and navigate to <strong>Metrics &gt; AWS Lambda namespace</strong>. Here are the key metrics to monitor:</p>
-<ul>
-<li><strong>Errors</strong>: Tracks the number of failed function executions.</li>
-<li><strong>Invocations</strong>: Shows the total number of times the function is called.</li>
-<li><strong>Duration</strong>: Measures how long each invocation takes to execute.</li>
-<li><strong>Throttles</strong>: Counts the number of rejected execution requests.</li>
-</ul>
-<p>Make sure the IAM role assigned to your Lambda function includes permissions for logging actions, such as <code>logs:CreateLogGroup</code> and <code>logs:PutLogEvents</code>.</p>
-<h3 id="setting-up-cloudwatch-alarms">Setting Up CloudWatch Alarms</h3>
-<p>Alarms help you respond quickly to critical issues by notifying you when metrics exceed set thresholds. Here’s how to set them up:</p>
-<ol>
-<li>In the CloudWatch console, create an alarm for the <strong>Errors</strong> metric or use log filters to detect specific error patterns. Define thresholds based on your application's tolerance, like an error rate greater than 1%.</li>
-<li>Set up notification channels such as email, SMS, or <a href="https://aws.amazon.com/sns/" rel="nofollow noopener noreferrer" target="_blank">AWS SNS</a>. You can also automate responses by triggering <a href="/blog/aws-lambda-getting-started-first-steps/">AWS Lambda functions</a> or other AWS services.</li>
-</ol>
-<h2 id="using-cloudwatch-logs-to-analyze-lambda-errors">Using CloudWatch Logs to Analyze Lambda Errors</h2>
-<p>CloudWatch Logs offers detailed information about how your Lambda functions are executed, helping you pinpoint and fix errors. To get started, head to the CloudWatch console, select "Logs" from the navigation menu, and locate your function's log group under <code>/aws/lambda/&lt;function name&gt;</code>.</p>
-<h3 id="how-to-access-and-interpret-cloudwatch-logs">How to Access and Interpret CloudWatch Logs</h3>
-<p>Each log entry includes key details like the timestamp, request ID, log level, and message content. You can use <strong>CloudWatch Logs Insights</strong> to run SQL-like queries for quick analysis. For instance, to find the latest errors, try this query:</p>
-<pre><code>fields @timestamp, @message
-| filter @message like /ERROR/
-| sort @timestamp desc
-| limit 20
-</code></pre>
-<p>This helps you quickly spot error patterns without manually sifting through logs.</p>
-<h3 id="tips-for-managing-logs-effectively">Tips for Managing Logs Effectively</h3>
-<p>To streamline error detection, set up log filters that track specific patterns such as runtime exceptions, timeouts, or custom error messages. Pair these filters with metrics for a more thorough approach to catching issues.</p>
-<p>When it comes to log retention, choose a period that aligns with your needs:</p>
-<ul>
-<li><strong>1 week</strong> for development environments</li>
-<li><strong>1 month</strong> for standard production setups</li>
-<li><strong>6 months</strong> for compliance requirements</li>
-<li><strong>Indefinite</strong> for critical systems</li>
-</ul>
-<p>Adopt clear naming conventions for log groups by including details like the environment and function type (e.g., <code>/aws/lambda/prod-payment-processing</code>). This makes it easier to organize and locate logs.</p>
-<p>Keep in mind that <strong>CloudWatch Logs charges are based on the volume of logs and retention periods</strong> <a href="https://docs.aws.amazon.com/lambda/latest/dg/monitoring-cloudwatchlogs.html" rel="nofollow noopener noreferrer" target="_blank"><sup>[2]</sup></a>. Regularly monitor your usage to balance cost efficiency with debugging needs.</p>
-<p>For deeper insights into performance and error trends, tools like <strong>Lambda Insights</strong> can complement your log analysis efforts, giving you a broader view of your system's behavior.</p>
+<p>CloudWatch can show whether a Lambda function is failing, throttled, slow, or building a backlog. Use the <code>AWS/Lambda</code> metrics to detect changes, then inspect the function's CloudWatch Logs to find the invocation or application message behind them. This walkthrough creates an error-rate alarm and runs focused Logs Insights queries.</p>
+<p>The examples use one function named <code>orders-api</code> in <code>us-east-1</code>. Replace the function, Region, and notification topic with values from your account. CloudWatch Lambda metrics are emitted automatically; the function's execution role needs logging permissions only if it sends logs to CloudWatch Logs.</p>
 
-<h2 id="advanced-monitoring-with-cloudwatch-lambda-insights">Advanced Monitoring with CloudWatch <a href="https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/Lambda-Insights.html" rel="nofollow noopener noreferrer" target="_blank">Lambda Insights</a></h2>
-<p><figure><img alt="Lambda Insights" loading="lazy" src="/assets/media/29e4c8aa4b8dd42a169d.jpg"/></figure></p>
-<p>CloudWatch Lambda Insights gives you a deeper look into the performance of your Lambda functions, providing detailed metrics to help you monitor and optimize them effectively.</p>
-<h3 id="how-to-enable-lambda-insights">How to Enable Lambda Insights</h3>
-<p>Here's how you can <a href="/blog/aws-lambda-insights-serverless-monitoring-guide/">enable Lambda Insights</a> using the Lambda Console:</p>
+<h2 id="key-steps%3A">Key steps: metrics, logs, and an alarm</h2>
 <ol>
-<li>Navigate to your Lambda function.</li>
-<li>Go to the <strong>Configuration</strong> tab.</li>
-<li>Locate the section labeled <strong>Monitoring and operations tools</strong>.</li>
-<li>Click on <strong>Edit</strong>.</li>
-<li>Turn on <strong>Enhanced monitoring</strong>.</li>
+<li>Open the CloudWatch metrics for the function and graph <code>Errors</code>, <code>Invocations</code>, and <code>Throttles</code> using the <code>Sum</code> statistic.</li>
+<li>Open <code>/aws/lambda/orders-api</code> in CloudWatch Logs and use Logs Insights to inspect recent error records.</li>
+<li>Create a metric-math alarm from <code>Errors</code> divided by <code>Invocations</code>, with a threshold and missing-data choice that fit the function's traffic.</li>
+<li>Check alarm history and a test notification so the configured action reaches its intended owner.</li>
 </ol>
-<p>Once enabled, you'll gain access to detailed metrics such as:</p>
-<figure><table>
-<thead>
-<tr>
-<th>Metric Category</th>
-<th>Details</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><strong>Performance</strong></td>
-<td>CPU usage, memory utilization, network I/O</td>
-</tr>
-<tr>
-<td><strong>Errors</strong></td>
-<td>Runtime errors, timeouts, cold starts</td>
-</tr>
-<tr>
-<td><strong>Concurrency</strong></td>
-<td>Active instances, throttling data</td>
-</tr>
-<tr>
-<td><strong>Duration</strong></td>
-<td>Initialization time, execution time</td>
-</tr>
-</tbody>
-</table></figure>
-<h3 id="monitoring-multiple-lambda-functions">Monitoring Multiple Lambda Functions</h3>
-<p>To monitor multiple functions at once, head to <strong>CloudWatch &gt; Insights &gt; Lambda Insights</strong> and select <strong>Multi-function</strong> <a href="https://aws.amazon.com/blogs/mt/monitoring-aws-lambda-errors-using-amazon-cloudwatch/" rel="nofollow noopener noreferrer" target="_blank"><sup>[1]</sup></a>. This dashboard provides:</p>
+<span id="related-video-from-youtube"></span>
+
+<h2 id="how-to-set-up-cloudwatch-for-lambda-errors">Set up Lambda metrics and permissions</h2>
+<h3 id="accessing-cloudwatch-metrics-for-lambda">Open the function's CloudWatch metrics</h3>
+<ol>
+<li>In the AWS console, select the Region where the Lambda function runs.</li>
+<li>Open <strong>CloudWatch</strong>, choose <strong>Metrics</strong>, then select the <code>AWS/Lambda</code> namespace and the view grouped by function name.</li>
+<li>Select <code>Errors</code>, <code>Invocations</code>, and <code>Throttles</code> for <code>orders-api</code>. Add <code>Duration</code> if execution time is part of the issue.</li>
+<li>Use <code>Sum</code> for counts. Compare errors and invocations over the same time range; use a period that gives enough datapoints for the traffic you have.</li>
+</ol>
+<p><code>Errors</code> counts invocations that returned a function or runtime error, including exceptions and timeouts. It does not count handled errors when the handler returns normally, and <code>Throttles</code> is a separate metric. Use <code>Invocations</code> as the denominator for an approximate function error rate. The two metrics are published at one-minute intervals, although a long invocation can take several minutes to appear. The <code>FunctionName</code> dimension aggregates versions and aliases; choose a resource or executed-version dimension when an alarm needs to isolate a rollout. See AWS's <a href="https://docs.aws.amazon.com/lambda/latest/dg/monitoring-metrics-types.html" target="_blank" rel="noopener noreferrer">Lambda metric definitions</a>, its guide to <a href="https://docs.aws.amazon.com/lambda/latest/dg/monitoring-metrics-view.html" target="_blank" rel="noopener noreferrer">viewing metrics by dimension</a>, or our <a href="/blog/aws-lambda-metrics-explained/">guide to Lambda metric dimensions and statistics</a>.</p>
+<p>Lambda publishes these standard service metrics without extra permissions on the function's execution role. To view them in the console, the IAM identity you use must have permission to read CloudWatch metrics and alarms.</p>
+
+<h3 id="setting-up-cloudwatch-alarms">Create an error-rate alarm</h3>
+<p>A single alarm on <code>Errors</code> is useful when any failed invocation deserves attention. A rate alarm is useful when the proportion of failed calls matters more than the raw count. The following AWS CLI command creates an example rate alarm for <code>orders-api</code>. It evaluates five-minute sums, requires two of the last three periods to reach five percent, and calculates a rate only when a period includes at least 20 invocations.</p>
+<pre><code>aws cloudwatch put-metric-alarm \
+  --region "us-east-1" \
+  --alarm-name "orders-api-error-rate" \
+  --evaluation-periods 3 \
+  --datapoints-to-alarm 2 \
+  --threshold 5 \
+  --comparison-operator GreaterThanOrEqualToThreshold \
+  --treat-missing-data notBreaching \
+  --alarm-actions "arn:aws:sns:us-east-1:123456789012:service-alerts" \
+  --metrics '[
+    {
+      "Id": "errors",
+      "MetricStat": {
+        "Metric": {
+          "Namespace": "AWS/Lambda",
+          "MetricName": "Errors",
+          "Dimensions": [{"Name": "FunctionName", "Value": "orders-api"}]
+        },
+        "Period": 300,
+        "Stat": "Sum"
+      },
+      "ReturnData": false
+    },
+    {
+      "Id": "invocations",
+      "MetricStat": {
+        "Metric": {
+          "Namespace": "AWS/Lambda",
+          "MetricName": "Invocations",
+          "Dimensions": [{"Name": "FunctionName", "Value": "orders-api"}]
+        },
+        "Period": 300,
+        "Stat": "Sum"
+      },
+      "ReturnData": false
+    },
+    {
+      "Id": "error_rate",
+      "Expression": "IF(invocations >= 20, 100 * errors / invocations)",
+      "Label": "Error rate (%)",
+      "ReturnData": true
+    }
+  ]'</code></pre>
+<p>Create an SNS topic and confirm its subscriptions before running the command, then replace the example topic ARN with that topic in the same Region and account. The <code>20</code>-invocation gate and five-percent threshold are illustrative settings, not recommended defaults. Choose them from the function's traffic and error budget. With fewer than 20 invocations, this expression has no rate datapoint; if any error at low traffic matters, add a separate <code>Errors</code> count alarm.</p>
+<p>This example treats missing rate data as not breaching, which avoids treating an idle period as an error-rate incident. It also means missing telemetry will not page through this alarm. If the function should be active, monitor expected invocations or a heartbeat separately. CloudWatch alarms can be in <code>OK</code>, <code>ALARM</code>, or <code>INSUFFICIENT_DATA</code>; check the graph and history after creation, and test the notification path. Learn more about <a href="https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/Create-alarm-on-metric-math-expression.html" target="_blank" rel="noopener noreferrer">metric-math alarms</a> and <a href="/blog/cloudwatch-alarms-best-practices-for-thresholds-and-conditions/">alarm periods and missing-data choices</a>.</p>
+
+<h2 id="using-cloudwatch-logs-to-analyze-lambda-errors">Find the invocation details in CloudWatch Logs</h2>
+<p>By default, Lambda sends function logs to a log group named <code>/aws/lambda/&lt;function-name&gt;</code>, such as <code>/aws/lambda/orders-api</code>. The group is created when the function first runs if it does not already exist. In CloudWatch, choose <strong>Logs</strong>, then <strong>Log groups</strong>, open the function's group, and select a recent stream. Use the same Region and a time range around the metric increase.</p>
+<p>The execution role needs CloudWatch Logs write permissions. The AWS managed policy <code>AWSLambdaBasicExecutionRole</code> includes the common permissions to create a log group and stream and put log events. If a policy is scoped to an existing custom log group, check that it still allows the required log-event writes. These role permissions control log delivery; they do not grant the signed-in operator permission to run Logs Insights queries. See AWS's guidance for <a href="https://docs.aws.amazon.com/lambda/latest/dg/monitoring-cloudwatchlogs.html" target="_blank" rel="noopener noreferrer">Lambda and CloudWatch Logs</a>.</p>
+
+<h3 id="how-to-access-and-interpret-cloudwatch-logs">Query errors and slow invocations</h3>
+<p>Lambda's default log format is plain text. To enable JSON, open the function in the Lambda console, choose <strong>Configuration</strong> &gt; <strong>Monitoring and operations tools</strong>, edit <strong>Logging configuration</strong>, set <strong>Log format</strong> to <strong>JSON</strong>, and save. This changes new system logs; application logs become structured when the runtime and logger support the format. For example, supported Node.js runtimes use the built-in <code>console</code> methods and add fields such as <code>level</code>, <code>message</code>, and <code>requestId</code>. This complete test handler logs and rethrows only when an input event sets <code>simulateFailure</code> to <code>true</code>; do not leave the test flag in a production request path. See AWS's <a href="https://docs.aws.amazon.com/lambda/latest/dg/monitoring-cloudwatchlogs-logformat.html" target="_blank" rel="noopener noreferrer">log-format and runtime requirements</a>.</p>
+<pre><code>export const handler = async (event) =&gt; {
+  try {
+    if (event.simulateFailure) {
+      throw new Error("Simulated dependency failure");
+    }
+    return { ok: true };
+  } catch (error) {
+    console.error("Dependency request failed", error);
+    throw error;
+  }
+};</code></pre>
+<p>Configure the function's log format as JSON, then invoke it once with <code>{"simulateFailure": true}</code> to see the error fields. A caught error that is handled and returned normally will not increment Lambda's <code>Errors</code> metric; rethrow only when the invocation should fail.</p>
+<p>Run this Logs Insights query against the function's log group to inspect recent structured Node.js error records:</p>
+<pre><code>fields @timestamp, requestId, level, message, errorType, errorMessage
+| filter level = "ERROR"
+| sort @timestamp desc
+| limit 50</code></pre>
+<p>For existing plain-text logs, start with a broader search and adjust the terms to the messages your runtime and application actually emit:</p>
+<pre><code>fields @timestamp, @logStream, @message
+| filter @message like /(?i)error|timed out/
+| sort @timestamp desc
+| limit 50</code></pre>
+<p>With JSON system logs enabled, Lambda writes report events as <code>platform.report</code> records with duration under <code>record.metrics.durationMs</code>. Run this query for a five-minute duration trend:</p>
+<pre><code>filter type = "platform.report"
+| stats count(*) as invocations,
+        avg(record.metrics.durationMs) as avgDurationMs,
+        max(record.metrics.durationMs) as maxDurationMs
+  by bin(5m) as period
+| sort period desc</code></pre>
+<p>If the function still uses plain-text system logs, query the standard discovered fields instead:</p>
+<pre><code>filter @type = "REPORT"
+| stats count(*) as invocations,
+        avg(@duration) as avgDurationMs,
+        max(@duration) as maxDurationMs
+  by bin(5m) as period
+| sort period desc</code></pre>
+<p>Both duration queries count completed invocation report records; they help analyze execution time but do not replace the <code>Errors</code> metric. Error text varies by runtime and handler. A log query that counts messages can overcount when one invocation writes several errors, and can miss failures that use different text. AWS documents <a href="https://docs.aws.amazon.com/lambda/latest/dg/runtimes-logs-api.html" target="_blank" rel="noopener noreferrer">the platform report event schema</a>, <a href="https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/CWL_QuerySyntax-examples.html" target="_blank" rel="noopener noreferrer">Lambda Logs Insights query examples</a>, and <a href="https://docs.aws.amazon.com/lambda/latest/dg/monitoring-cloudwatchlogs-logformat.html" target="_blank" rel="noopener noreferrer">structured logging</a>.</p>
+
+<h3 id="tips-for-managing-logs-effectively">Set retention and keep queries focused</h3>
+<p>CloudWatch Logs keeps events indefinitely by default unless a retention period is set. Choose retention for the function's troubleshooting, audit, and compliance needs rather than applying a fixed duration to every environment. Logs incur ingestion and storage charges, and Logs Insights charges can depend on the volume scanned. Limit the time range and selected log groups, and avoid logging secrets or full event payloads.</p>
+<p>Lambda uses <code>/aws/lambda/&lt;function-name&gt;</code> by default. Choose a custom log group only when it supports a real ownership or retention need, and update the execution-role policy if the function is restricted to that group. For current logging destinations and formats, use AWS's <a href="https://docs.aws.amazon.com/lambda/latest/dg/monitoring-logs.html" target="_blank" rel="noopener noreferrer">Lambda logging guide</a>.</p>
+
+<h2 id="advanced-monitoring-with-cloudwatch-lambda-insights">Add Lambda Insights for runtime details</h2>
+<p>Standard Lambda metrics show invocations, function errors, duration, and concurrency; they do not provide an actual-memory-use time series. CloudWatch Lambda Insights can add execution-environment and resource telemetry, including memory information. It is an optional extension with its own compatibility, IAM, log, and cost considerations. See our guide to <a href="/blog/aws-lambda-insights-serverless-monitoring-guide/">enabling Lambda Insights and interpreting its metrics</a>.</p>
+<figure><img alt="CloudWatch Lambda Insights adds runtime telemetry to Lambda monitoring." loading="lazy" src="/assets/media/29e4c8aa4b8dd42a169d.jpg"/></figure>
+
+<h3 id="how-to-enable-lambda-insights">Enable it for a function</h3>
+<ol>
+<li>Open the function in the Lambda console and choose <strong>Configuration</strong>.</li>
+<li>Under <strong>Monitoring and operations tools</strong>, edit the additional monitoring tools and enable <strong>CloudWatch Lambda Insights</strong>.</li>
+<li>Confirm the execution role has <code>CloudWatchLambdaInsightsExecutionRolePolicy</code>. The console can attach it if your IAM permissions allow.</li>
+<li>Invoke the function, then open CloudWatch <strong>Insights</strong> &gt; <strong>Lambda Insights</strong> in the same Region.</li>
+</ol>
+<p>Check AWS's current <a href="https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/Lambda-Insights.html" target="_blank" rel="noopener noreferrer">runtime, architecture, and extension requirements</a> before enabling it. A dashboard shows only functions that have the extension configured and have emitted telemetry.</p>
+
+<h3 id="monitoring-multiple-lambda-functions">Compare only enabled functions</h3>
+<p>The multi-function view helps compare telemetry across functions that have Lambda Insights enabled. Use a single-function view to inspect one function's runtime signals, then return to its application log group for error messages. Insights does not identify every business failure and does not replace the function's standard CloudWatch metrics.</p>
+
+<h2 id="best-practices-for-monitoring-lambda-functions">Use the signals in context</h2>
+<p>CloudWatch's <code>Errors</code>, <code>Invocations</code>, and <code>Throttles</code> answer different questions. A handler that catches an exception and returns normally can produce an error log without incrementing <code>Errors</code>. Conversely, a timeout can increment <code>Errors</code> even when the application did not write a final log line. For trigger-specific retries, destinations, and backlog signals, see <a href="/blog/lambda-error-monitoring-best-practices/">the operational Lambda monitoring guide</a>.</p>
+
+<h3 id="reviewing-logs-and-tracking-error-trends">Review trends and correlate request IDs</h3>
+<p>Compare the metric window with Logs Insights results for the same function, Region, and time range. Use <code>requestId</code> to follow one invocation through application messages and Lambda platform logs. For an event source mapping, also inspect the source queue or stream: a low function error count does not prove that messages are being delivered or processed on time.</p>
+<p>On a release, review the affected function version or alias rather than relying only on an aggregate function graph. Check alarm history before changing its threshold, and confirm whether a rise came from function errors, throttles, or source delivery behavior.</p>
+
+<h3 id="creating-custom-metrics-and-alerts">Measure handled business failures explicitly</h3>
+<p>If a handler catches an exception and intentionally returns success, Lambda's <code>Errors</code> metric will not count that outcome. Emit a custom metric for a business failure that needs an alarm, or log a structured field that you can query. Keep the metric's dimensions bounded, such as operation or error category; adding a unique request ID as a metric dimension creates a separate time series for each value.</p>
+<p>Use a rate alarm only when a rate expresses the service risk. Add a count alarm for important low-volume failures, and choose missing-data behavior based on whether idle periods are normal. Avoid fixed rules such as a universal one-percent error rate or memory threshold; set conditions from the function's traffic, service objective, and response plan.</p>
+
+<h2 id="additional-resources-from-aws-for-engineers">AWS documentation references</h2>
 <ul>
-<li>A consolidated view of performance metrics across all monitored functions</li>
-<li>Trends in error patterns</li>
-<li>Resource usage comparisons</li>
-<li>Data on concurrent executions</li>
+<li><a href="https://docs.aws.amazon.com/lambda/latest/dg/monitoring-metrics-types.html" target="_blank" rel="noopener noreferrer">Lambda CloudWatch metric definitions</a></li>
+<li><a href="https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/CWL_QuerySyntax-examples.html" target="_blank" rel="noopener noreferrer">CloudWatch Logs Insights sample queries</a></li>
+<li><a href="https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/alarms-and-missing-data.html" target="_blank" rel="noopener noreferrer">CloudWatch alarm missing-data behavior</a></li>
 </ul>
-<p>For a more complete picture, combine Lambda Insights with <strong><a href="https://docs.aws.amazon.com/xray/latest/devguide/aws-xray.html" rel="nofollow noopener noreferrer" target="_blank">AWS X-Ray</a></strong> and <strong>CloudWatch Logs</strong>. This setup allows you to trace performance data back to specific error events, giving you end-to-end visibility into your application's behavior.</p>
-<p>Keep in mind that using Lambda Insights can increase your CloudWatch costs. Regularly check your usage to ensure you're balancing expenses with the value of the insights provided <a href="https://docs.aws.amazon.com/lambda/latest/dg/lambda-monitoring.html" rel="nofollow noopener noreferrer" target="_blank"><sup>[3]</sup></a>.</p>
-<p>With these tools in place, you're ready to explore best practices for optimizing your monitoring strategy.</p>
-<h2 id="best-practices-for-monitoring-lambda-functions">Best Practices for Monitoring Lambda Functions</h2>
-<p>Building on the metrics and tools mentioned earlier, these tips can help improve your monitoring approach.</p>
-<h3 id="reviewing-logs-and-tracking-error-trends">Reviewing Logs and Tracking Error Trends</h3>
-<p>Regularly reviewing logs and tracking errors is key to keeping your Lambda functions running smoothly. Use <strong>custom log filters</strong> to spot error patterns and <strong>CloudWatch Logs Insights</strong> for focused queries - like identifying functions close to timeout limits - to address issues before they escalate.</p>
-<p>Here are a few essential components:</p>
-<ul>
-<li><strong>Log Filters</strong>: Group errors by type, such as timeouts, memory problems, or runtime failures.</li>
-<li><strong>Metrics Analysis</strong>: Keep an eye on invocation counts, error rates, and duration trends.</li>
-<li><strong>Alert Thresholds</strong>: Set up early warning systems for limits that are about to be reached.</li>
-</ul>
-<h3 id="creating-custom-metrics-and-alerts">Creating Custom Metrics and Alerts</h3>
-<p>Custom metrics give you a closer look at how your Lambda functions perform. For instance, you can monitor specific business-related errors or track the success rates of external APIs. Set alarms based on normal behavior patterns to catch anomalies early. Important metrics to watch include error rates, execution duration, and memory usage.</p>
-<p>For critical functions, implement <strong>multi-level alerts</strong>: set a warning at 70% memory usage and a critical alert at 90%. Use <strong>Lambda Insights</strong> to adjust thresholds and improve performance <a href="https://docs.aws.amazon.com/lambda/latest/dg/lambda-monitoring.html" rel="nofollow noopener noreferrer" target="_blank"><sup>[3]</sup></a>.</p>
-<p>For more complex setups, design dashboards that combine standard and custom metrics to get a clear picture of overall Lambda health.</p>
-<h2 id="additional-resources-from-aws-for-engineers">Additional Resources from AWS for Engineers</h2>
-<p>If you're looking to explore Lambda error monitoring in more detail, <strong><a href="/blog/">AWS for Engineers</a></strong> has you covered. Their tutorials, techniques, and examples are specifically designed for software engineers.</p>
-<p>The blog focuses on three main topics:</p>
-<ul>
-<li><strong>Error detection methods and implementation</strong></li>
-<li><strong>Setting up performance monitoring</strong></li>
-<li><strong>Configuring and fine-tuning alerts</strong></li>
-</ul>
-<p>These resources build on the <a href="/blog/cloudwatch-alarms-best-practices-for-thresholds-and-conditions/">CloudWatch monitoring strategies</a> mentioned earlier, offering detailed guidance on:</p>
-<ul>
-<li>Creating custom CloudWatch metrics for Lambda</li>
-<li>Identifying and addressing error trends</li>
-<li>Using Lambda Insights for deeper monitoring capabilities</li>
-</ul>
-<p>Each guide provides step-by-step instructions and real-world examples to help you apply advanced monitoring techniques. The blog also expands on AWS-recommended practices, making it easier to implement effective solutions.</p>
-<p>The Lambda monitoring section on AWS for Engineers closely ties into the CloudWatch strategies discussed here, giving you practical tools to enhance error tracking and performance monitoring. These materials are a great way to build more reliable and scalable systems.</p>
+
 <h2 id="conclusion">Conclusion</h2>
-<p>Keeping a close eye on Lambda errors using CloudWatch is key to running dependable serverless applications. By using a mix of metrics, logs, and insights, you can set up a monitoring system that cuts down on resolution time and keeps your application running smoothly.</p>
-<p>CloudWatch provides multiple layers of monitoring through its metrics, logs, and insights. Activating CloudWatch metrics, configuring specific alarms, and using Lambda Insights allows development teams to identify and address issues quickly. These tools work together to maintain consistent performance with detailed data and timely alerts.</p>
-<p>To improve your setup, refine custom metrics and automate error detection processes. Lambda Insights plays a crucial role by simplifying troubleshooting and offering in-depth metrics to pinpoint issues.</p>
-<p>Keep evolving your monitoring strategy and stay informed about new AWS features to meet changing application demands. These approaches, along with resources like AWS for Engineers, can help you build and maintain reliable serverless systems.</p>
-<h2>Related posts</h2>
-<ul>
-<li><a href="/blog/aws-lambda-insights-serverless-monitoring-guide/">AWS Lambda Insights: Serverless Monitoring Guide</a></li><li><a href="/blog/aws-devops-monitoring-metrics-tools-best-practices/">AWS DevOps Monitoring: Metrics, Tools, Best Practices</a></li><li><a href="/blog/aws-cloudwatch-grafana-setup-guide/">AWS CloudWatch + Grafana: Setup Guide</a></li><li><a href="/blog/lambda-error-monitoring-best-practices/">Lambda Error Monitoring: Best Practices</a></li>
-</ul>
+<p>Start with the function's standard metrics, use Logs Insights to inspect specific invocations, and add an error-rate alarm only when its denominator, threshold, evaluation window, and missing-data behavior match the workload. Keep throttles and source backlogs visible as separate signals, and measure handled application failures explicitly when they matter.</p>
+
