@@ -2,121 +2,151 @@
 layout: post.njk
 templateEngineOverride: html
 tags: posts
-title: "How to Reduce DynamoDB Throttling Issues"
-description: "Learn effective strategies to minimize DynamoDB throttling issues, optimize capacity, and enhance query performance for better application efficiency."
+title: "How to Reduce DynamoDB Throttling"
+description: "Diagnose DynamoDB throttling from its reason and resource ARN, then fix hot partitions, table or index capacity limits, on-demand scaling, retries, and batch writes."
 date: "2025-04-21"
 datePublished: "2025-04-21T01:40:13.229000+00:00"
 heroImage: "/assets/media/3e3fc73b05c1988696dc.jpg"
 permalink: "/blog/how-to-reduce-dynamodb-throttling-issues/"
 sourceUrl: "https://awsforengineers.com/blog/how-to-reduce-dynamodb-throttling-issues/"
-dateModified: "2026-10-03"
-updateNote: "Added author attribution and profile information."
+dateModified: "2026-10-04"
+updateNote: "Rewrote throttling diagnosis, capacity guidance, monitoring, pagination, batch handling, and retry examples using current DynamoDB behavior."
 ---
-<p>Throttling happens when your <a href="https://aws.amazon.com/dynamodb/" rel="nofollow noopener noreferrer" target="_blank">DynamoDB</a> table or index can't handle the number of requests being made. This leads to failed operations, slower responses, and a bad user experience. Here's how to fix it:</p>
+<p>DynamoDB throttles a request when it reaches a throughput or service limit. The fix depends on which resource and limit are involved: adding table capacity will not clear a hot key, an undersized global secondary index, or a configured on-demand maximum. Start with the throttling reason and affected resource, then change the matching part of the workload or table design.</p>
 <ul>
-<li><strong>Monitor Capacity Usage</strong>: Use <a href="https://aws.amazon.com/cloudwatch/" rel="nofollow noopener noreferrer" target="_blank">CloudWatch</a> to track <code>ThrottledRequests</code> and ensure your provisioned Read/Write Capacity Units (RCUs/WCUs) match your workload.</li>
-<li><strong>Balance Data Distribution</strong>: Avoid "hot partitions" by using high-cardinality partition keys and spreading traffic evenly.</li>
-<li><strong>Optimize Queries</strong>: Use targeted queries instead of full table scans and fetch only the data you need.</li>
-<li><strong>Enable Auto-Scaling</strong>: Dynamically adjust RCUs and WCUs to handle traffic spikes.</li>
-<li><strong>Retry with Backoff</strong>: Implement exponential backoff for retries to reduce pressure during throttling events.</li>
-<li><strong>Set Alerts</strong>: Configure <a href="/blog/cloudwatch-alarms-best-practices-for-thresholds-and-conditions/">CloudWatch alarms</a> to notify you of throttling issues before they escalate.</li>
+<li>Read the exception's <code>ThrottlingReasons</code> and resource ARN before changing capacity.</li>
+<li>Use CloudWatch to confirm whether throttling is at the table, index, or partition-key range.</li>
+<li>Use bounded SDK retries for transient throttling and explicitly retry unprocessed batch items.</li>
 </ul>
-<h2 id="common-causes-of-dynamodb-throttling">Common Causes of <a href="https://aws.amazon.com/dynamodb/" rel="nofollow noopener noreferrer" target="_blank">DynamoDB</a> Throttling</h2>
-<p><figure><img alt="DynamoDB" loading="lazy" src="/assets/media/03419d3a5d8976808f1f.jpg"/></figure></p>
-<p>Pinpointing the reasons behind throttling helps you address issues and improve monitoring.</p>
-<h3 id="high-traffic-and-limited-capacity">High Traffic and Limited Capacity</h3>
-<p>When requests exceed the provisioned Read Capacity Units (RCUs) or Write Capacity Units (WCUs), DynamoDB responds with throughput-exceeded errors. This often happens due to:</p>
-<ul>
-<li>Sudden traffic spikes during peak usage times or special events</li>
-<li>Provisioned RCUs or WCUs being set too low for the workload</li>
-</ul>
-<h3 id="uneven-data-distribution">Uneven Data Distribution</h3>
-<p>Imbalanced partition key usage can lead to "hot partitions", even if the overall capacity seems sufficient. This occurs when:</p>
-<ul>
-<li>Partition keys are sequential or monotonic, like timestamps</li>
-<li>There aren't enough unique partition keys</li>
-<li>Access patterns repeatedly target the same items</li>
-</ul>
-<h3 id="resource-heavy-queries">Resource-Heavy Queries</h3>
-<p>Poorly optimized queries can consume excessive capacity and cause throttling. Common culprits include:</p>
-<ul>
-<li>Performing full table scans instead of using key-condition queries or indexed lookups</li>
-<li>Retrieving large datasets in a single operation</li>
-<li>Relying on filter expressions instead of key conditions to narrow results</li>
-</ul>
-<p>To address these issues, consider using secondary indexes, breaking results into smaller pages, applying key conditions before filters, and keeping a close eye on query patterns.</p>
-<p>Once you understand these causes, use <a href="/blog/custom-cloudwatch-metrics-setup-guide-2024/">CloudWatch metrics</a> to measure throttling events and identify problem areas more precisely.</p>
-<h2 id="finding-and-measuring-throttling-issues">Finding and Measuring Throttling Issues</h2>
-<h3 id="key-cloudwatch-metrics-to-monitor">Key <a href="https://aws.amazon.com/cloudwatch/" rel="nofollow noopener noreferrer" target="_blank">CloudWatch</a> Metrics to Monitor</h3>
-<p><figure><img alt="CloudWatch" loading="lazy" src="/assets/media/33f42a068ed860e1cdf7.jpg"/></figure></p>
-<p>CloudWatch can help you identify throttling problems by tracking specific metrics. Focus on these:</p>
-<ul>
-<li><strong>ThrottledRequests</strong>: Alerts you to throttling events.</li>
-<li><strong>ConsumedReadCapacityUnits</strong> and <strong>ConsumedWriteCapacityUnits</strong>: Show how much capacity your application is using.</li>
-<li><strong>ProvisionedReadCapacityUnits</strong> and <strong>ProvisionedWriteCapacityUnits</strong>: Indicate the capacity you’ve allocated.</li>
-</ul>
-<p>Set up alerts for any non-zero <strong>ThrottledRequests</strong> or when consumption approaches the provisioned capacity. To pinpoint issues, dive deeper into partition-level metrics to find "hot" partitions.</p>
-<h3 id="identifying-partition-level-performance-issues">Identifying Partition-Level Performance Issues</h3>
-<p>Sometimes, table-level metrics look fine, but throttling may still occur due to uneven load distribution across partitions. To uncover these "hot" partitions, compare capacity usage per key:</p>
-<ul>
-<li>Check <strong>per-key ConsumedReadCapacityUnits</strong> and <strong>ConsumedWriteCapacityUnits</strong> for imbalances.</li>
-<li>Look for partition keys consuming much higher throughput than others.</li>
-</ul>
-<p>If you spot uneven usage, consider redistributing the load. This could involve redesigning your partition key or implementing sharding to spread the load more evenly.</p>
-<h3 id="distinguishing-database-vs-application-issues">Distinguishing Database vs. Application Issues</h3>
-<p>Not all throttling problems are database-related. Here's how to tell the difference:</p>
-<ul>
-<li><strong>Database Issues</strong>: If <strong>ConsumedCapacity</strong> consistently matches or exceeds <strong>ProvisionedCapacity</strong>, you may need to increase capacity, enable auto-scaling, or set up alarms for <strong>ThrottledRequests</strong> and high capacity usage.</li>
-<li><strong>Application Issues</strong>: Look for inefficiencies such as large batch operations, poorly optimized queries, or skewed access patterns. Adjust your application logic to reduce these bottlenecks.</li>
-</ul>
+<p>AWS's <a href="https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/TroubleshootingThrottling.html" target="_blank" rel="noopener noreferrer">DynamoDB throttling guide</a> groups the main causes into partition limits, provisioned capacity, account quotas, and configured on-demand maximums.</p>
 
-<h2 id="methods-to-reduce-throttling">Methods to Reduce Throttling</h2>
-<h3 id="error-handling-with-backoff">Error Handling with Backoff</h3>
-<p>Pair capacity and partition adjustments with retry mechanisms to handle temporary traffic spikes effectively.</p>
-<p>One approach is to use <strong>exponential backoff</strong> when retrying after a <code>ProvisionedThroughputExceededException</code>. Here's how:</p>
-<ul>
-<li>Adjust the base delay and maximum retries based on how often throttling occurs.</li>
-<li>Quickly stop retries for errors unrelated to throttling to identify and address issues promptly.</li>
-</ul>
-<pre><code>async function retryWithBackoff(call, maxRetries = 3, baseDelay = 100) {
-    let retryCount = 0;
-    while (retryCount &lt; maxRetries) {
-        try {
-            return await operation();
-        } catch (error) {
-            if (error.code === 'ProvisionedThroughputExceededException') {
-                retryCount++;
-                const delay = baseDelay * Math.pow(2, retryCount);
-                await new Promise(resolve =&gt; setTimeout(resolve, delay));
-            } else {
-                throw error;
-            }
-        }
+<h2 id="common-causes-of-dynamodb-throttling">Common causes of DynamoDB throttling</h2>
+<figure><img alt="DynamoDB" loading="lazy" src="/assets/media/03419d3a5d8976808f1f.jpg"/></figure>
+<p>Throttling is not a single signal that the whole table needs more capacity. It can be localized to one partition-key range or index, or arise because a table-level throughput limit has been reached.</p>
+<h3 id="high-traffic-and-limited-capacity">Traffic exceeds table or index capacity</h3>
+<p>In provisioned mode, the affected table or global secondary index (GSI) may not have enough read or write capacity for sustained demand. A GSI has its own provisioned read and write capacity. A busy table can therefore throttle on an index even when the table's own capacity looks sufficient. In on-demand mode, requests can still hit account-level throughput quotas or a maximum throughput configured for the table or index.</p>
+<h3 id="uneven-data-distribution">Uneven data distribution creates a hot key range</h3>
+<p>DynamoDB distributes data according to partition keys. If a large share of requests targets one partition key value, or a narrow range of values, that portion of the table or index can throttle while overall table capacity remains available. A monotonically increasing sort key under a shared partition key can concentrate writes in that key range. By contrast, distinct timestamp values used as partition keys are hashed and do not create a hotspot by themselves; the risk depends on how traffic is distributed across those keys. A popular user, product, or tenant can also concentrate reads or writes. Adaptive capacity can help with skew, but it does not remove the per-partition limits.</p>
+<h3 id="resource-heavy-queries">Scans and broad reads consume capacity</h3>
+<p>A table scan reads items across the table and can consume substantial read capacity. A <code>Query</code> is usually more selective when its key condition identifies the partition key and limits the sort-key range, but repeated queries against the same partition key can still create a hot key. A filter expression is applied after items have been read, so it does not reduce the read capacity consumed. A projection expression reduces the response payload, but DynamoDB calculates read capacity from the size of the items read, not just the attributes returned.</p>
+
+<h2 id="finding-and-measuring-throttling-issues">Find the throttling reason before changing capacity</h2>
+<p>DynamoDB includes one or more throttling reasons with supported throttling exceptions. Each reason combines the resource type (<code>Table</code> or <code>Index</code>), operation (<code>Read</code> or <code>Write</code>), and limit suffix. The exception also identifies the affected table or index by ARN. Record both fields with the operation and request ID so you can distinguish, for example, a GSI write limit from a base-table write limit.</p>
+<pre><code>{
+  "ThrottlingReasons": [
+    {
+      "reason": "IndexWriteProvisionedThroughputExceeded",
+      "resource": "arn:aws:dynamodb:us-west-2:123456789012:table/Orders/index/ByStatus"
     }
-}
-</code></pre>
-<p>This method ensures a balance between retrying enough to handle temporary issues and avoiding excessive delays for unrelated errors.</p>
-<h2 id="preventing-future-throttling">Preventing Future Throttling</h2>
-<p>Stay ahead of throttling issues by using monitoring tools, setting up alerts, and fine-tuning your access patterns.</p>
-<h3 id="regular-usage-reviews">Regular Usage Reviews</h3>
-<p>Keep an eye on <strong>CloudWatch metrics</strong> to track how your capacity usage compares to the provisioned limits. Pay special attention to metrics like <strong>ThrottledRequests</strong> and look for unusual spikes or gradual increases in load by comparing current usage with historical trends.</p>
-<h3 id="setting-up-alerts">Setting Up Alerts</h3>
-<p>Configure <strong>CloudWatch alarms</strong> to track ThrottledRequests. Set thresholds that align with your performance goals and ensure your team gets notified promptly through email or SMS when these thresholds are crossed.</p>
-<h3 id="improving-access-patterns">Improving Access Patterns</h3>
-<p>Refine your access patterns to balance the load and avoid bottlenecks:</p>
+  ]
+}</code></pre>
+<p>This is an illustrative exception fragment, not a complete response. AWS defines the <code>reason</code> and <code>resource</code> fields in its <a href="https://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_ThrottlingReason.html" target="_blank" rel="noopener noreferrer"><code>ThrottlingReason</code> API reference</a>. Match the suffix to the first diagnostic step:</p>
 <ul>
-<li>Request only the attributes you need.</li>
-<li>Design partition keys that spread traffic evenly.</li>
-<li>Replace full table scans with specific, targeted queries.</li>
+<li><code>KeyRangeThroughputExceeded</code>: traffic to a partition-key range is too concentrated. Investigate the table or index key distribution.</li>
+<li><code>ProvisionedThroughputExceeded</code>: the named table or index exceeded its provisioned read or write capacity.</li>
+<li><code>AccountLimitExceeded</code>: an on-demand table or index reached an applicable regional account service quota. Check Service Quotas for the account and Region.</li>
+<li><code>MaxOnDemandThroughputExceeded</code>: the table or index reached a maximum throughput limit configured for on-demand mode. Review that guardrail and the workload's cost bounds.</li>
 </ul>
-<p>These adjustments can help your system handle traffic more efficiently and reduce the chances of throttling.</p>
+<p>The full reason starts with the affected resource and operation, such as <code>TableReadKeyRangeThroughputExceeded</code> or <code>IndexWriteProvisionedThroughputExceeded</code>. See AWS's <a href="https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/throttling-diagnosing-workflow.html" target="_blank" rel="noopener noreferrer">throttling diagnosis workflow</a> for the complete reason list and resolution guidance.</p>
+
+<h3 id="key-cloudwatch-metrics-to-monitor">Use CloudWatch metrics to confirm the scope</h3>
+<figure><img alt="CloudWatch" loading="lazy" src="/assets/media/33f42a068ed860e1cdf7.jpg"/></figure>
+<p>Use DynamoDB's <code>AWS/DynamoDB</code> CloudWatch metrics to confirm the pattern and watch whether a change helps. These metrics are aggregated over time; they complement the exception detail rather than replacing it.</p>
+<ul>
+<li><strong><code>ThrottledRequests</code></strong> is a request-level signal for provisioned-throughput throttling. For batch operations, it increments only when all individual operations in the batch are throttled, so partial batch failures may not appear here.</li>
+<li><strong><code>ReadThrottleEvents</code> and <code>WriteThrottleEvents</code></strong> count item-level events that exceed provisioned capacity. Compare them with <code>ThrottledRequests</code> to understand the request impact.</li>
+<li><strong>Reason-specific throttle metrics</strong> include <code>ReadKeyRangeThroughputThrottleEvents</code>, <code>WriteKeyRangeThroughputThrottleEvents</code>, and the corresponding <code>*ProvisionedThroughputThrottleEvents</code>, <code>*AccountLimitThrottleEvents</code>, and <code>*MaxOnDemandThroughputThrottleEvents</code> metrics. Use the metric that matches the exception reason.</li>
+<li><strong><code>ConsumedReadCapacityUnits</code>, <code>ConsumedWriteCapacityUnits</code>, and provisioned-capacity metrics</strong> help assess provisioned workloads. Compare matching table or index dimensions over the same period; an average can hide a short spike.</li>
+</ul>
+<p>For a GSI, include both <code>TableName</code> and <code>GlobalSecondaryIndexName</code> when viewing metrics. A table-only dimension does not show the index's separate metric series. If the reason indicates a hot key, <a href="https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/contributorinsights_HowItWorks.html" target="_blank" rel="noopener noreferrer">CloudWatch Contributor Insights for DynamoDB</a> can identify frequently accessed or throttled keys in a table or index. Review its billing and the key data it exposes before enabling it. See AWS's <a href="https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/metrics-dimensions.html" target="_blank" rel="noopener noreferrer">DynamoDB metrics and dimensions</a> for metric definitions and dimensions.</p>
+
+<h3 id="identifying-partition-level-performance-issues">Identify a hot partition or key</h3>
+<p>DynamoDB designs each partition to support up to 3,000 read units per second and 1,000 write units per second. These are capacity units, not request counts: one read unit covers one strongly consistent read per second (or two eventually consistent reads) for an item up to 4 KB, and one write unit covers one write per second for an item up to 1 KB. Larger items consume more units. A table can therefore hit a key-range limit well before its aggregate capacity is used.</p>
+<p>Design partition keys to spread the workload, not only to create many distinct values. A high-cardinality key helps only when active traffic is distributed among those values. Where a workload must write to one logical entity at high volume, write sharding can distribute writes among shard keys, at the cost of reading from multiple shards and merging results. Apply the same scrutiny to a GSI's partition key. AWS's <a href="https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/bp-partition-key-design.html" target="_blank" rel="noopener noreferrer">partition-key design guide</a> covers distribution and sharding tradeoffs.</p>
+
+<h3 id="distinguishing-database-vs-application-issues">Separate the data-model issue from a capacity shortage</h3>
+<p>When a request is throttled, inspect its reason and ARN first. Then compare them with CloudWatch event metrics, table and index capacity, the affected operation, and the application's request rate. A sustained rise in demand may need a capacity change; a concentrated key needs a data-distribution or traffic-shaping change. A GSI reason points to that index even when the caller wrote to the base table. Avoid treating a healthy aggregate utilization graph as proof that no partition or index is constrained.</p>
+
+<h2 id="methods-to-reduce-throttling">Choose the fix that matches the limit</h2>
+<h3>Fix a hot key range</h3>
+<p>Spread reads and writes across partition-key values. For time-series data, consider a composite key or bounded time buckets rather than placing every write under one timestamp prefix. For an unavoidable hot logical key, write sharding can distribute writes; design reads to fan out over the relevant shards and combine results. Rate-limit concentrated producers when the data model cannot be changed immediately. Increasing total table capacity alone does not raise the maximum throughput for one hot partition-key range.</p>
+
+<h3>Right-size provisioned capacity and plan for scaling delay</h3>
+<p>If the reason identifies provisioned throughput, raise the capacity of the exact table or GSI that is short, or adjust its Application Auto Scaling policy and capacity bounds. Autoscaling is reactive: DynamoDB evaluates provisioned usage in one-minute periods, and AWS documents that alarms can take a few minutes to trigger and the capacity update can take several more minutes. Keep enough baseline capacity for traffic while scaling catches up. For a predictable launch or scheduled event, consider scheduled scaling or increasing capacity ahead of time. See AWS's guide to <a href="https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/AutoScaling.html" target="_blank" rel="noopener noreferrer">DynamoDB Auto Scaling</a>.</p>
+
+<h3>Check GSI write backpressure</h3>
+<p>Each base-table write that changes indexed data can require a write to one or more GSIs. If a GSI's provisioned write capacity is too low, the index can throttle the base-table write that triggered its update. Increase or autoscale that GSI's write capacity, reduce unnecessary index write work, or revisit the index design. Adding an index is useful when it supports a required access pattern, but it adds storage and write work and can create its own hot key range. AWS explains this behavior in its guide to <a href="https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/GSI.html" target="_blank" rel="noopener noreferrer">global secondary indexes</a>.</p>
+
+<h3>Choose and prepare on-demand throughput deliberately</h3>
+<p>On-demand mode removes the need to set provisioned read and write units, but it does not remove hot partition limits, regional service quotas, or a configured maximum throughput. DynamoDB instantly accommodates traffic up to twice a table's previous peak. A sudden rise beyond twice the previous peak within 30 minutes can throttle while capacity adjusts. For a known peak, check the table and GSI's current warm throughput and consider requesting higher warm throughput in advance; the operation can take time and proactive increases may incur charges. A warm-throughput value does not override partition, quota, or configured maximum limits. Review AWS's current guidance for <a href="https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/on-demand-capacity-mode.html" target="_blank" rel="noopener noreferrer">on-demand scaling</a> and <a href="https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/warm-throughput.html" target="_blank" rel="noopener noreferrer">warm throughput</a>.</p>
+
+<h3 id="improving-access-patterns">Reduce unnecessary or concentrated work</h3>
+<p>Prefer a key-selective <code>Query</code> to a full table scan when the access pattern supports it, and use a key condition to narrow the partition and sort-key range. A filter expression only removes items after they have been read. A projection expression can reduce network payload, but it does not reduce read capacity for the same items. DynamoDB returns up to 1 MB per <code>Query</code>; continue with the returned <code>LastEvaluatedKey</code> until it is empty. Pagination bounds each response, but does not by itself reduce total capacity used—pace bulk reads and writes to avoid bursts. See AWS's <a href="https://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_Query.html" target="_blank" rel="noopener noreferrer"><code>Query</code> API reference</a>.</p>
+<p>An index can make a selective query possible, but it has its own key distribution and, for a GSI, write capacity consumption. A cache can lower repeated reads when its hit rate and freshness rules fit the application, but it does not address write throttling, index backpressure, a configured limit, or traffic concentrated on cache misses. Avoid adding an index or cache until the throttling reason and access pattern show that it addresses the actual bottleneck.</p>
+
+<h2 id="error-handling-with-backoff">Use bounded retries and handle partial batch results</h2>
+<p>AWS SDK clients already retry many throttling and transient errors according to their retry policy. Check the policy and attempt limit for the SDK and version you use, and fit retries within the caller's deadline. Increasing the attempt count can help with short-lived throttling, but it does not add capacity; retries can extend latency and increase pressure during a sustained overload. Avoid wrapping an SDK client in a second unbounded retry loop. AWS's <a href="https://docs.aws.amazon.com/sdk-for-javascript/v3/developer-guide/programming-with-javascript.html" target="_blank" rel="noopener noreferrer">JavaScript SDK guide</a> describes the client's retry configuration and error handling.</p>
+<p>This Node.js example uses AWS SDK for JavaScript v3. It assumes the package is installed, AWS credentials and a Region are configured, and the table and key exist. <code>maxAttempts</code> includes the initial request; choose the value to fit the operation's deadline. The SDK performs its own retry handling, while the catch block records the reason and resource if retries are exhausted.</p>
+<pre><code>import { DynamoDBClient, GetItemCommand } from "@aws-sdk/client-dynamodb";
+
+const client = new DynamoDBClient({ maxAttempts: 5 });
+
+try {
+  await client.send(new GetItemCommand({
+    TableName: "Orders",
+    Key: { orderId: { S: "example-order" } }
+  }));
+} catch (error) {
+  const reasons = error?.ThrottlingReasons ?? [];
+  for (const reason of reasons) {
+    console.error({
+      reason: reason.reason,
+      resource: reason.resource,
+      requestId: error.$metadata?.requestId
+    });
+  }
+  throw error;
+}</code></pre>
+
+<p>Batch APIs can succeed while returning only some requested work as unprocessed. Retry just the entries in <code>UnprocessedItems</code> from <code>BatchWriteItem</code> or <code>UnprocessedKeys</code> from <code>BatchGetItem</code>, using exponential backoff with jitter. This example shows the write case. It assumes <code>writes</code> is an array of at most 25 items with distinct primary keys for the <code>Orders</code> table and uses the document client.</p>
+<pre><code>import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
+import { DynamoDBDocumentClient, BatchWriteCommand } from "@aws-sdk/lib-dynamodb";
+
+const client = DynamoDBDocumentClient.from(new DynamoDBClient({ maxAttempts: 3 }));
+const sleep = (ms) =&gt; new Promise((resolve) =&gt; setTimeout(resolve, ms));
+const hasUnprocessed = (items) =&gt;
+  Object.values(items).some((requests) =&gt; requests.length &gt; 0);
+
+let pending = {
+  Orders: writes.map((Item) =&gt; ({ PutRequest: { Item } }))
+};
+let retries = 0;
+const maxRetries = 8;
+
+while (hasUnprocessed(pending)) {
+  const response = await client.send(
+    new BatchWriteCommand({ RequestItems: pending })
+  );
+  pending = response.UnprocessedItems ?? {};
+  if (!hasUnprocessed(pending)) break;
+  if (retries &gt;= maxRetries) {
+    throw new Error("Batch write still has unprocessed items after retries");
+  }
+
+  const delayCapMs = Math.min(1000, 50 * 2 ** retries);
+  await sleep(Math.floor(Math.random() * delayCapMs));
+  retries += 1;
+}</code></pre>
+<p>The example makes one initial call plus up to eight follow-up calls for partial results; an SDK-level exception can still fail the operation after the SDK's configured attempts. In production, record or durably queue any items that remain before failing the job. DynamoDB accepts up to 25 write operations per <code>BatchWriteItem</code> call, and AWS recommends exponential backoff for unprocessed items. Do not resubmit the full original batch after a partial response, because some writes may already have succeeded. See the <a href="https://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_BatchWriteItem.html" target="_blank" rel="noopener noreferrer"><code>BatchWriteItem</code> API reference</a>.</p>
+
+<h2 id="preventing-future-throttling">Prevent future throttling</h2>
+<p>After addressing the cause, compare the same exception reasons and CloudWatch metrics before and after the change. Confirm that the affected table or index now meets the application's latency and completion goals under representative traffic.</p>
+<h3 id="regular-usage-reviews">Review capacity and access patterns</h3>
+<p>Track throttling alongside consumed and provisioned capacity, and review spikes against deployments, scheduled jobs, and traffic changes. Keep table and GSI metrics separate. For brief spikes, DynamoDB's <a href="/blog/dynamodb-burst-capacity-how-it-works/">burst-capacity guide</a> explains what unused provisioned throughput can and cannot absorb.</p>
+<h3 id="setting-up-alerts">Set alerts that lead to an action</h3>
+<p>Alarm on throttling that affects a service objective, or on a sustained condition that gives an operator time to act. Choose a threshold and evaluation window from the workload's tolerance and metric cadence; there is no universal utilization percentage that guarantees protection from throttling. See the site's guide to <a href="/blog/cloudwatch-alarms-best-practices-for-thresholds-and-conditions/">CloudWatch alarm thresholds and conditions</a> for choosing useful alarm behavior.</p>
+<h3>Test expected traffic changes</h3>
+<p>Exercise known peak patterns in a representative environment, including the busiest partition keys and index write paths. For a planned on-demand traffic increase, check warm throughput and configured maximums ahead of the event. Monitor the actual exception reasons, throttling events, latency, and batch leftovers during the test.</p>
+
 <h2 id="summary">Summary</h2>
-<p>Reduce DynamoDB throttling by focusing on monitoring, capacity management, and efficient design strategies.</p>
-<ul>
-<li><strong>Enable auto-scaling</strong> for Read and Write Capacity Units (RCUs and WCUs) to adjust capacity automatically.</li>
-<li><strong>Set up CloudWatch alarms</strong> to monitor metrics like <em>ConsumedCapacity</em> and <em>ThrottledRequests</em>.</li>
-<li><strong>Use high-cardinality partition keys</strong> to distribute data evenly and mitigate hot partitions.</li>
-<li><strong>Apply exponential backoff</strong> for retries to prevent overwhelming the system during throttling.</li>
-<li><strong>Review usage patterns regularly</strong> to identify and address inefficiencies.</li>
-</ul>
-<h2>Related posts</h2><ul><li><a href="/blog/aws-rds-blog-insights-performance-tuning/">AWS RDS Blog Insights: Performance Tuning</a></li><li><a href="/blog/aws-engineering-blog-autoscaling-for-high-availability/">AWS Engineering Blog: Autoscaling for High Availability</a></li><li><a href="/blog/dynamodb-burst-capacity-how-it-works/">DynamoDB Burst Capacity: How It Works</a></li><li><a href="/blog/rightsizing-rds-instances-step-by-step-guide/">Rightsizing RDS Instances: Step-by-Step Guide</a></li></ul>
+<p>To reduce DynamoDB throttling, diagnose the reason and resource ARN first. A hot partition needs a better distribution or controlled traffic; provisioned throughput throttling needs more capacity on the named table or index; on-demand quota and configured maximum errors need their respective limit reviewed. Account for GSI write backpressure, use SDK retries within a request deadline, and retry only unprocessed batch entries. Verify the fix with the same reason-specific CloudWatch metrics and workload pattern that exposed the problem.</p>

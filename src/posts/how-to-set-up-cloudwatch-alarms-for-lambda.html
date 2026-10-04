@@ -3,242 +3,120 @@ layout: post.njk
 templateEngineOverride: html
 tags: posts
 title: "How to Set Up CloudWatch Alarms for Lambda"
-description: "Learn how to effectively monitor AWS Lambda functions with CloudWatch alarms to ensure optimal performance and reliability."
+description: "Set up Amazon CloudWatch alarms for AWS Lambda errors, latency, throttles, and async delivery failures with accurate metric math and practical thresholds."
 date: "2025-02-27"
 datePublished: "2025-02-27T06:45:12.296000+00:00"
 heroImage: "/assets/media/90d049bd79ff5f352de9.jpg"
 permalink: "/blog/how-to-set-up-cloudwatch-alarms-for-lambda/"
 sourceUrl: "https://awsforengineers.com/blog/how-to-set-up-cloudwatch-alarms-for-lambda/"
-dateModified: "2026-10-03"
-updateNote: "Added author attribution and profile information."
+dateModified: "2026-10-04"
+updateNote: "Reworked Lambda metric definitions, alarm math and evaluation, notification setup, and async failure monitoring."
 ---
-<p><strong>Want to monitor your <a href="https://docs.aws.amazon.com/lambda/" rel="nofollow noopener noreferrer" target="_blank">AWS Lambda</a> functions effectively?</strong> Setting up <a href="https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/WhatIsCloudWatch.html" rel="nofollow noopener noreferrer" target="_blank">Amazon CloudWatch</a> alarms is the key. These alarms help you track critical metrics like errors, execution time, and throttling, ensuring your serverless applications run smoothly. Here's a quick overview of what you'll learn:</p>
+<p>CloudWatch alarms can notify you when an AWS Lambda function starts failing, slows down, or runs into a capacity limit. A useful alarm matches the metric to a service objective, uses the right statistic and dimensions, and has a clear response. This guide covers the standard Lambda metrics, threshold and missing-data choices, SNS notifications, and a concrete AWS CLI example.</p>
 <ul>
-<li><strong>Key Metrics to Monitor</strong>: Track invocations, errors, execution time, and concurrency to identify issues early.</li>
-<li><strong>Alarm Setup</strong>: Choose metrics, set thresholds, and configure notifications for real-time alerts.</li>
-<li><strong>Advanced Features</strong>: Use tools like anomaly detection and metric math for precise monitoring.</li>
+<li>Use <code>Sum</code> for invocation, error, and throttle counts; use <code>Maximum</code> for peak concurrency.</li>
+<li>Use a duration percentile such as <code>p95</code> when it matches a latency objective and there are enough invocations to make the statistic useful.</li>
+<li>Decide what quiet periods mean before choosing how an alarm treats missing data.</li>
+<li>Monitor asynchronous delivery and event-source backlogs with the metrics that apply to the trigger.</li>
 </ul>
-<h2 id="lambda-metrics-to-track">Lambda Metrics to Track</h2>
-<p>Amazon CloudWatch offers several metrics to help monitor the performance and stability of your Lambda functions. These metrics play a key role in setting up alarms to ensure your functions run efficiently.</p>
-<h3 id="function-calls">Function Calls</h3>
-<p>The <strong><code>Invocations</code></strong> metric tracks how many times your Lambda function is executed every minute. This is essential for understanding usage patterns and managing costs.</p>
-<p>To get an accurate total of function calls, use the <strong><code>Sum</code></strong> statistic when analyzing this metric.</p>
-<h3 id="error-rates">Error Rates</h3>
-<p>The <strong><code>Errors</code></strong> metric counts the number of failed function calls, whether caused by code issues or runtime problems. To assess the error rate, use this formula:</p>
-<p><strong>Error Rate = Errors / Invocations</strong></p>
-<p>Additionally, keep an eye on <strong>DeadLetterErrors</strong> and <strong>DestinationDeliveryFailures</strong> for more details on failed executions.</p>
-<h3 id="execution-time">Execution Time</h3>
-<p>The <strong><code>Duration</code></strong> metric measures how long your function takes to process an event. Since AWS charges based on milliseconds, reviewing the <strong>Average</strong> or <strong>Max</strong> values can help identify bottlenecks or inefficiencies. Note that exceeding the timeout limit will result in failures.</p>
-<h3 id="throttling-events">Throttling Events</h3>
-<p>The <strong><code>Throttles</code></strong> metric shows when invocations are rejected due to concurrency limits being hit. Set alarms if throttling events exceed your acceptable thresholds.</p>
-<h3 id="active-functions">Active Functions</h3>
-<p>The <strong><code>ConcurrentExecutions</code></strong> metric tracks how many function instances are running simultaneously to process events. Use the <strong>Max</strong> statistic to ensure concurrency stays within your configured limits.</p>
-<figure><table>
-<thead>
-<tr>
-<th>Metric Type</th>
-<th>Key Metric</th>
-<th>Recommended Statistic</th>
-<th>Purpose</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Invocation</td>
-<td>Invocations</td>
-<td>Sum</td>
-<td>Track usage</td>
-</tr>
-<tr>
-<td>Performance</td>
-<td>Duration</td>
-<td>Average/Max</td>
-<td>Analyze processing time</td>
-</tr>
-<tr>
-<td>Errors</td>
-<td>Errors</td>
-<td>Sum</td>
-<td>Monitor reliability</td>
-</tr>
-<tr>
-<td>Concurrency</td>
-<td>ConcurrentExecutions</td>
-<td>Max</td>
-<td>Evaluate resource usage</td>
-</tr>
-<tr>
-<td>Throttling</td>
-<td>Throttles</td>
-<td>Sum</td>
-<td>Plan for capacity needs</td>
-</tr>
-</tbody>
-</table></figure>
-<p>These metrics will help you fine-tune your alarm thresholds in the next steps.</p>
-<h2 id="setting-up-lambda-alarms">Setting Up Lambda Alarms</h2>
-<h3 id="opening-cloudwatch">Opening CloudWatch</h3>
-<p>Start by accessing the CloudWatch console through the AWS Management Console. Once inside, go to the "Alarms" section from the left-hand menu and click on "Create alarm." This will take you to the setup page where you can begin selecting the Lambda metrics you want to monitor.</p>
-<h3 id="choosing-metrics">Choosing Metrics</h3>
-<p>From the metrics namespace, select "Lambda" to see all the relevant metrics for your functions. Here are some key metrics to consider:</p>
-<figure><table>
-<thead>
-<tr>
-<th>Metric Category</th>
-<th>Recommended Alert Threshold</th>
-<th>Common Use Case</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Error Rate</td>
-<td>&gt; 1% of total invocations</td>
-<td>Production APIs</td>
-</tr>
-<tr>
-<td>Duration (p95)</td>
-<td>&gt; 3 seconds</td>
-<td>User-facing functions</td>
-</tr>
-<tr>
-<td>Concurrent Executions</td>
-<td>&gt; 80% of regional limit</td>
-<td>High-traffic services</td>
-</tr>
-<tr>
-<td>DLQ Errors</td>
-<td>&gt; 0</td>
-<td>Critical data processing</td>
-</tr>
-</tbody>
-</table></figure>
-<p>Choose the metrics that align with your service's needs to ensure you're monitoring the right performance indicators.</p>
-<h3 id="setting-thresholds">Setting Thresholds</h3>
-<p>Once you've picked your metrics, configure alarm conditions based on statistical measures:</p>
-<ul>
-<li><strong>Statistic</strong>: Choose Sum, Average, or Max based on the metric type.</li>
-<li><strong>Period</strong>: Set the time interval, typically 1-minute for Lambda metrics.</li>
-<li><strong>Condition Type</strong>: Options include Greater/Less than or Greater/Less than or equal to.</li>
-<li><strong>Threshold Value</strong>: Define a value that reflects your service's requirements.</li>
-</ul>
-<p>For instance, if you want to track errors, you can set the condition to "Greater than 0" for the Errors metric, using the Sum statistic over a 5-minute period.</p>
-<h3 id="adding-notifications">Adding Notifications</h3>
-<p>Set up notifications to receive alerts via <a href="https://aws.amazon.com/sns/" rel="nofollow noopener noreferrer" target="_blank">Amazon SNS</a>:</p>
-<ul>
-<li>Create a new SNS topic or use an existing one.</li>
-<li>Add subscription endpoints, such as email, SMS, or HTTP.</li>
-<li>Specify which alarm states (OK, ALARM, INSUFFICIENT_DATA) will trigger notifications.</li>
-</ul>
-<blockquote>
-<p>"CloudWatch Logs subscriptions let you match entries with a particular error pattern in your log and be notified with those error details. This saves you an extra step to parse through the logs and take necessary action." - AWS Cloud Operations Blog </p>
-</blockquote>
-<p>For more advanced notifications, you can create a metric filter to monitor specific error patterns in your Lambda logs. This lets you set up alerts based on log content instead of just metric values.</p>
 
-<h2 id="advanced-alarm-options">Advanced Alarm Options</h2>
-<p>Expanding beyond basic alarm setups, advanced options allow for more precise monitoring of complex Lambda functions.</p>
-<h3 id="metric-math-alarms">Metric Math Alarms</h3>
-<p>Metric math alarms help you track intricate relationships between multiple Lambda metrics. You can combine up to 10 metrics into a single formula to create detailed alarm conditions.</p>
-<p>Here’s how to set up a metric math alarm:</p>
+<h2 id="lambda-metrics-to-track">Lambda metrics to track</h2>
+<p>Lambda publishes standard function metrics in the <code>AWS/Lambda</code> CloudWatch namespace at one-minute intervals. These are aggregated service metrics, not per-invocation records. Long-running functions can take several minutes to report their metrics. In CloudWatch, select dimensions that match the scope you need: <code>FunctionName</code> aggregates a function's versions and aliases, while <code>Resource</code> and <code>ExecutedVersion</code> can help isolate a version or alias. See AWS's <a href="https://docs.aws.amazon.com/lambda/latest/dg/monitoring-metrics.html" target="_blank" rel="noopener noreferrer">Lambda metric overview</a>, <a href="https://docs.aws.amazon.com/lambda/latest/dg/monitoring-metrics-view.html" target="_blank" rel="noopener noreferrer">guide to viewing metric dimensions</a>, and our <a href="/blog/aws-lambda-metrics-explained/">overview of Lambda metrics and dimensions</a>.</p>
+
+<h3 id="function-calls">Function calls</h3>
+<p><code>Invocations</code> counts executions of your function code. It includes executions that succeed and those that return a function error. Requests rejected before the code runs, including throttled requests, are not included. Use <code>Sum</code> over the alarm period to count executions. This metric does not represent all requests to an application: for example, a Lambda handler can catch an error and return an HTTP 500 response while Lambda records a successful function execution.</p>
+
+<h3 id="error-rates">Errors and error rates</h3>
+<p><code>Errors</code> counts invocations that end with an error raised by your code or the Lambda runtime. It includes timeouts and runtime configuration errors, but not requests that Lambda rejects before invoking the function. Use <code>Sum</code> to count failed executions. For a rate, divide the sum of <code>Errors</code> by the sum of <code>Invocations</code> for the same period and dimensions; do not divide their averages. This measures Lambda execution errors, not every failed business request: a handler can catch a problem and return an HTTP 5xx response while Lambda records a successful execution. Track application outcomes with an application metric or the relevant API service metric.</p>
+<p>CloudWatch metric math drops a datapoint when an expression divides by zero. Guard a zero-valued denominator in a percentage expression, for example <code>IF(invocations &gt; 0, 100 * errors / invocations, 0)</code>, where <code>errors</code> and <code>invocations</code> are IDs for metric queries. When an <code>Invocations</code> datapoint has a value of zero, this expression returns zero percent; when the metric has no datapoint, <code>IF</code> drops that timestamp instead. Decide whether a quiet function is healthy: for a scheduled or continuously serving function, monitor an expected heartbeat or request signal separately.</p>
+
+<h3 id="execution-time">Execution time</h3>
+<p><code>Duration</code> is the time in milliseconds spent processing an event after initialization. It does not include cold-start time or time spent by a caller waiting outside the function. A timeout is counted by <code>Errors</code>; <code>Duration</code> is not a measure of end-to-end request latency. Use <code>Average</code> to see broad changes, <code>Maximum</code> to spot the slowest recorded value in a period, or a percentile such as <code>p95</code> to follow a latency objective without letting one outlier dominate. Set the threshold from your service objective and function timeout, and make sure the period has enough invocations for the percentile to be useful.</p>
+
+<h3 id="throttling-events">Throttling events</h3>
+<p><code>Throttles</code> counts requests Lambda rejects when execution capacity is unavailable. A throttled request does not count as an <code>Invocation</code> or an <code>Error</code>. Use <code>Sum</code> to count rejections, then inspect concurrency limits, scaling behavior, and the event source's retry policy before changing capacity.</p>
+
+<h3 id="active-functions">Concurrent executions</h3>
+<p><code>ConcurrentExecutions</code> measures function instances processing events at the same time. Use <code>Maximum</code> to compare peak concurrency with the function's reserved concurrency or the account's regional quota. There is no universal percentage that is safe for every workload; set a warning level from the capacity needed to absorb expected bursts and the time available to respond.</p>
+
+<h3 id="async-failure-metrics">Asynchronous failures and delivery</h3>
+<p>For asynchronous invocations, <code>AsyncEventAge</code> can show how long queued events wait before execution, and <code>AsyncEventsDropped</code> counts events dropped without successful execution after expiry or retry exhaustion, among other causes. If you configure an on-failure destination or dead-letter queue, monitor <code>DestinationDeliveryFailures</code> or <code>DeadLetterErrors</code> for failed delivery to that destination. These delivery metrics do not replace <code>Errors</code>, which shows function failures. Asynchronous invocation settings and event-source mappings have different retry and destination behavior; for SQS triggers, also monitor queue age and the queue's own redrive policy. Check AWS's <a href="https://docs.aws.amazon.com/lambda/latest/dg/monitoring-metrics-types.html" target="_blank" rel="noopener noreferrer">Lambda metric definitions</a> and <a href="https://docs.aws.amazon.com/lambda/latest/dg/invocation-async-configuring.html" target="_blank" rel="noopener noreferrer">asynchronous error-handling settings</a> for the trigger you use.</p>
+
+<h3 id="memory-and-cold-starts">Memory use and cold starts</h3>
+<p>Memory usage and cold-start details are not standard metrics in the <code>AWS/Lambda</code> namespace. The function's CloudWatch <code>REPORT</code> logs include fields such as <code>Max Memory Used</code> and <code>Init Duration</code>; see AWS's <a href="https://docs.aws.amazon.com/lambda/latest/dg/monitoring-cloudwatchlogs-view.html" target="_blank" rel="noopener noreferrer">Lambda log reference</a>. <a href="https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/Lambda-Insights.html" target="_blank" rel="noopener noreferrer">CloudWatch Lambda Insights</a> adds a separate <code>LambdaInsights</code> namespace with metrics such as <code>memory_utilization</code> and <code>init_duration</code>, and its performance events include a <code>cold_start</code> field. Enable the Insights extension before creating alarms on those metrics. See our <a href="/blog/aws-lambda-insights-serverless-monitoring-guide/">Lambda Insights guide</a> for its metrics and setup requirements.</p>
+
+<h2 id="setting-up-lambda-alarms">Set up Lambda alarms</h2>
+<p>Choose an alarm only after deciding what a responder should do when it fires. Start with a customer-facing service objective, an accepted failure condition, or a tested capacity boundary. Historical CloudWatch data helps you understand normal traffic and variation, but it does not set an acceptable threshold on its own.</p>
+
+<h3 id="opening-cloudwatch">Select the metric and dimensions</h3>
+<ol>
+<li>Open CloudWatch in the AWS Region where the function runs, then choose <strong>Alarms</strong> and <strong>Create alarm</strong>.</li>
+<li>Choose <strong>Select metric</strong>, open <strong>AWS/Lambda</strong>, and select the dimension that matches your scope, such as <code>FunctionName</code> for all versions or <code>Resource</code> for a particular alias or version.</li>
+<li>Select the metric. Confirm the function, namespace, and dimensions in the graph before continuing; a different dimension set identifies a different metric.</li>
+</ol>
+
+<h3 id="choosing-metrics">Match the alarm to the service condition</h3>
 <ul>
-<li>Select the base metrics you want to monitor.</li>
-<li>In the CloudWatch console, click <strong>"Add a math expression"</strong>.</li>
-<li>Define your mathematical formula.</li>
-<li>Assign clear IDs to each metric for easy reference.</li>
-<li>Choose the final math expression as the basis for your alarm.</li>
+<li><p><strong>Function execution failures:</strong> Use <code>Errors</code> with <code>Sum</code>. Set the allowed failure count from the service's tolerance; any failure may matter for a critical job.</p></li>
+<li><p><strong>Failure rate at meaningful traffic:</strong> Use metric math over <code>Errors</code> and <code>Invocations</code>. Choose the threshold from the error budget or service objective, with explicit zero-traffic behavior.</p></li>
+<li><p><strong>Slow function processing:</strong> Use <code>Duration</code>, often <code>p95</code>, in milliseconds. Choose the threshold from the latency objective and function timeout.</p></li>
+<li><p><strong>Rejected requests or capacity pressure:</strong> Use <code>Throttles</code> with <code>Sum</code>, or <code>ConcurrentExecutions</code> with <code>Maximum</code>. Choose the threshold from trigger behavior, concurrency limits, and the capacity needed for bursts.</p></li>
+<li><p><strong>Events lost or unable to reach a failure handler:</strong> Use <code>AsyncEventsDropped</code>, <code>DestinationDeliveryFailures</code>, or <code>DeadLetterErrors</code> with <code>Sum</code>, as appropriate for the invocation source. Choose the threshold from its delivery and recovery requirements.</p></li>
 </ul>
-<figure><table>
-<thead>
-<tr>
-<th>Component</th>
-<th>Expression</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Metric 1 (m1)</td>
-<td>Errors</td>
-<td>Number of function errors</td>
-</tr>
-<tr>
-<td>Metric 2 (m2)</td>
-<td>Invocations</td>
-<td>Total function calls</td>
-</tr>
-<tr>
-<td>Math Expression</td>
-<td>(m1/m2) * 100</td>
-<td>Error rate as a percentage</td>
-</tr>
-</tbody>
-</table></figure>
-<p>In addition to math expressions, CloudWatch offers statistical tools to detect unusual trends in metrics.</p>
-<h3 id="anomaly-detection">Anomaly Detection</h3>
-<p>CloudWatch anomaly detection uses historical data to create a statistical model of expected Lambda metric values. It identifies normal patterns by analyzing hourly, daily, and weekly trends.</p>
-<p><strong>Key settings to configure:</strong></p>
-<figure><table>
-<thead>
-<tr>
-<th>Setting</th>
-<th>Description</th>
-<th>Suggested Configuration</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Threshold Band</td>
-<td>Range of normal values</td>
-<td>Set to 2 standard deviations</td>
-</tr>
-<tr>
-<td>Training Period</td>
-<td>Time for model learning</td>
-<td>At least 2 weeks for accuracy</td>
-</tr>
-<tr>
-<td>Evaluation Period</td>
-<td>How often checks occur</td>
-<td>Use 1-minute intervals</td>
-</tr>
-</tbody>
-</table></figure>
-<p>This method helps you spot deviations from typical behavior effectively.</p>
-<h3 id="multi-metric-alarms">Multi-Metric Alarms</h3>
-<p>Multi-metric alarms combine multiple conditions for a more comprehensive monitoring approach. Metrics like error rates, execution times, and concurrency levels can be grouped to trigger alerts only when specific combinations of abnormal conditions occur.</p>
-<p>When setting up multi-metric alarms, focus on combinations that align with your application's real-world failure scenarios. This strategy offers a broader view of system health by monitoring key metrics together rather than in isolation.</p>
-<h2 id="tips-and-common-issues">Tips and Common Issues</h2>
-<h3 id="threshold-guidelines">Threshold Guidelines</h3>
-<p>Set alarm thresholds using <strong>Lambda performance data</strong> as a baseline. Leverage CloudWatch's suggestions  and adjust thresholds as needed to handle fluctuating workloads. Keep an eye on key metrics like error rates, execution duration, and throttling events to ensure your alarms stay relevant.</p>
-<h3 id="troubleshooting-steps">Troubleshooting Steps</h3>
-<p>Once you've set up thresholds, confirm your alarms are working correctly by following these steps:</p>
+<p>These are starting points, not fixed thresholds. For more on choosing a useful threshold, period, and missing-data behavior, see our guide to <a href="/blog/cloudwatch-alarms-best-practices-for-thresholds-and-conditions/">CloudWatch alarm conditions and evaluation</a>.</p>
+
+<h3 id="setting-thresholds">Set the period and evaluation condition</h3>
+<p>Choose a period that matches Lambda's one-minute metric cadence and the time in which you need to respond. The period groups metric data into one datapoint. <code>EvaluationPeriods</code> is N, the number of recent datapoints CloudWatch evaluates; <code>DatapointsToAlarm</code> is M, the number that must breach. A 2-of-3 condition with one-minute periods triggers when two of the three datapoints breach; they do not have to be consecutive. It reduces reactions to a single brief spike but can take longer to alert than a 1-of-1 condition. Long-running invocations can also delay metric publication, so an alarm is not a real-time execution trace.</p>
+<p>Choose a missing-data policy that reflects how the metric is emitted. For an error-count alarm, <code>notBreaching</code> is often appropriate when no datapoint means no errors; if the function is expected to run, use a separate heartbeat or canary to detect silence. A metric alarm's default is <code>missing</code>, which can lead to <code>INSUFFICIENT_DATA</code> when there are no usable datapoints. CloudWatch can also use older real datapoints in its evaluation range before applying the configured missing-data policy. See AWS's <a href="https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/alarms-and-missing-data.html" target="_blank" rel="noopener noreferrer">missing-data evaluation guide</a>.</p>
+
+<h3 id="adding-notifications">Send alarm notifications with SNS</h3>
+<p>Choose an Amazon SNS topic as the alarm action for the states that need attention, usually <code>ALARM</code> and sometimes <code>OK</code> for recovery. Subscribe an email address, SMS endpoint, or application to the topic. An email subscription must be confirmed before it can receive notifications. The topic's resource policy must allow CloudWatch to publish; when writing a policy, restrict the service principal with the alarm's source ARN and account. CloudWatch can create and configure a topic during alarm creation when you have the required permissions. The alarm and its Lambda metric are regional, and the SNS action is an ARN that includes a Region; this example uses <code>us-east-1</code> for both. For workloads in multiple Regions, create and review alarm and notification routing in each Region. See AWS's <a href="https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/Notify_Users_Alarm_Changes.html" target="_blank" rel="noopener noreferrer">SNS alarm notification instructions and topic policy example</a>.</p>
+
+<h3 id="cli-example">Create an alarm with the AWS CLI</h3>
+<p>This command creates or updates a function-wide alarm for errors. Before running it, configure the AWS CLI for the function's Region, use credentials allowed to create or update CloudWatch alarms, and replace the example function, account ID, topic, and Region with resources you own. The SNS topic must already exist and permit CloudWatch to publish; confirm the subscription if it uses email. The command uses a one-minute period and a 2-of-3 rule: two one-minute error counts greater than zero trigger the alarm.</p>
+<pre><code>aws cloudwatch put-metric-alarm \
+  --region us-east-1 \
+  --alarm-name "demo-orders-handler-errors" \
+  --namespace "AWS/Lambda" \
+  --metric-name "Errors" \
+  --dimensions "Name=FunctionName,Value=orders-handler" \
+  --statistic "Sum" \
+  --period 60 \
+  --evaluation-periods 3 \
+  --datapoints-to-alarm 2 \
+  --threshold 0 \
+  --comparison-operator "GreaterThanThreshold" \
+  --treat-missing-data "notBreaching" \
+  --alarm-actions "arn:aws:sns:us-east-1:123456789012:ops-alerts"</code></pre>
+<p>The dimension selects the aggregate function metric. Change it if the alarm should follow one alias or version instead. The example omits <code>--unit</code>, following AWS's recommendation to avoid filtering on a unit that the metric does not publish. A unit selection filters the datapoints evaluated; it does not convert their values. Review the alarm graph and its state history after creation, and confirm the SNS subscription and topic policy if a state-change notification does not arrive. See the AWS CLI <a href="https://docs.aws.amazon.com/cli/latest/reference/cloudwatch/put-metric-alarm.html" target="_blank" rel="noopener noreferrer"><code>put-metric-alarm</code> reference</a> and CloudWatch <a href="https://docs.aws.amazon.com/AmazonCloudWatch/latest/APIReference/API_PutMetricAlarm.html" target="_blank" rel="noopener noreferrer"><code>PutMetricAlarm</code> unit guidance</a>.</p>
+
+<h2 id="advanced-alarm-options">Use metric math and anomaly detection carefully</h2>
+
+<h3 id="metric-math-alarms">Metric math for ratios</h3>
+<p>Metric math lets one alarm evaluate a derived time series, such as an error percentage. Give each metric query a short ID, use the same period and dimensions, and guard against a zero denominator. For example, <code>IF(invocations &gt; 0, 100 * errors / invocations, 0)</code> yields a percentage from 0 to 100. Set a threshold such as <code>2</code> only if it represents the service's chosen 2% objective; it is not a general Lambda recommendation. The expression cannot tell whether a quiet period is healthy or whether expected traffic or telemetry stopped, so monitor expected activity separately when that distinction matters. See AWS's <a href="https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/using-metric-math.html" target="_blank" rel="noopener noreferrer">CloudWatch metric math reference</a>.</p>
+
+<h3 id="anomaly-detection">Anomaly detection for changing traffic</h3>
+<p>CloudWatch anomaly detection models historical behavior and draws a band around an expected metric value. It can help with metrics whose normal level changes predictably by hour or day. Review the band against the service objective before paging on a deviation: historical behavior can include unhealthy periods, and an unusual value is not automatically customer impact. See AWS's <a href="https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/CloudWatch_Anomaly_Detection.html" target="_blank" rel="noopener noreferrer">anomaly detection guide</a>.</p>
+
+<h3 id="multi-metric-alarms">Combine signals at the right layer</h3>
+<p>Use metric math to combine metric values into one time series, such as the guarded percentage described above. A CloudWatch composite alarm combines the states of existing alarms with Boolean logic. For example, it can notify only when a Lambda error alarm and a downstream-service alarm are both in <code>ALARM</code>. Keep each underlying alarm useful on its own and choose a composite only when the combination changes the response. See AWS's <a href="https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/Create_Composite_Alarm.html" target="_blank" rel="noopener noreferrer">composite alarm guide</a>.</p>
+
+<h2 id="tips-and-common-issues">Review and troubleshoot alarms</h2>
+
+<h3 id="threshold-guidelines">Set thresholds from evidence</h3>
+<p>Review metric graphs alongside service objectives and representative traffic. A function's acceptable error rate, tail latency, or concurrency headroom depends on its callers, retry behavior, and failure impact. Do not copy a percentage or regional quota fraction across functions without checking those conditions.</p>
+
+<h3 id="troubleshooting-steps">Check the alarm inputs and action</h3>
 <ul>
-<li>Check <strong>Lambda metrics</strong> in CloudWatch Logs.</li>
-<li>Review <strong>SNS notification settings</strong> in your SNS Topics.</li>
-<li>Make sure the alarm's evaluation period aligns with your Lambda's execution patterns.</li>
+<li>Confirm the namespace, metric name, dimensions, statistic, period, and unit describe the intended time series.</li>
+<li>Compare the datapoints with the threshold and M-of-N setting; check whether long-running invocations delayed metric publication.</li>
+<li>Review the missing-data choice, especially when a function receives traffic intermittently.</li>
+<li>Check that an email subscriber confirmed the SNS subscription, the topic policy permits publication, and the action is configured for the state transition you expect.</li>
+<li>Use Lambda logs or Insights performance events to investigate a metric change; aggregate alarm metrics do not explain an individual invocation.</li>
 </ul>
-<p>For more precise error tracking, consider setting up <strong>custom metrics</strong> to capture specific error behaviors.</p>
-<h3 id="alarm-testing">Alarm Testing</h3>
-<p>Test alarms by simulating different scenarios. For example:</p>
-<ul>
-<li>Trigger forced errors to evaluate how alarms handle <strong>5XX responses</strong> and ensure SNS notifications are sent.</li>
-<li>Simulate <strong>4XX responses</strong> to test <a href="https://docs.aws.amazon.com/apigateway/latest/developerguide/welcome.html" rel="nofollow noopener noreferrer" target="_blank">API Gateway</a> alarms.</li>
-</ul>
-<p>Use evaluation periods that reflect your Lambda traffic patterns, and choose appropriate statistics, like <strong>Sum</strong> for error tracking.</p>
-<blockquote>
-<p>"CloudWatch Logs subscriptions let you match entries with a particular error pattern in your log and be notified with those error details. This saves you an extra step to parse through the logs and take necessary action." - AWS Cloud Operations Blog </p>
-</blockquote>
+
+<h3 id="alarm-testing">Validate in a non-production setup</h3>
+<p>Check notification delivery with a test SNS message and verify the alarm configuration against a test function or test metric before relying on it for production response. Avoid forcing failures in a production function just to test an alarm. Confirm the threshold, state action, recipient, and recovery behavior with the team that owns the service.</p>
+
 <h2 id="summary">Summary</h2>
-<p>Setting up <strong><a href="/blog/cloudwatch-alarms-best-practices-for-thresholds-and-conditions/">CloudWatch alarms</a></strong> for Lambda functions is a key step in maintaining reliable serverless operations. CloudWatch keeps an eye on critical metrics like errors, function duration, throttling events, and invocation counts. By configuring thresholds and notifications, you can address potential issues before they escalate.</p>
-<p>Key areas to monitor include:</p>
-<ul>
-<li><strong>Concurrent executions</strong>: Aim to stay around 80% of the regional limit.</li>
-<li><strong>Dead-letter queue errors</strong>: Set a zero-tolerance policy for these errors.</li>
-<li><strong>Function durations</strong>: Ensure these align with your SLA requirements.</li>
-<li><strong>Custom metric filters</strong>: Use these to detect specific error patterns.</li>
-</ul>
-<p>For added functionality, integrate with <strong>SNS</strong> to receive alerts on state changes. Features like <strong>metric math</strong> and <strong>anomaly detection</strong> allow for more advanced monitoring setups.</p>
-<p>As Taavi Rehemägi notes:</p>
-<blockquote>
-<p>"Although you can't fully understand what's happening just with CloudWatch alone, it is a great place to start and have it as the first line of defense for ensuring service availability and performance." - Taavi Rehemägi </p>
-</blockquote>
-<h2>Related Blog Posts</h2><ul><li><a href="/blog/cloudwatch-alarms-automate-ec2-recovery/">CloudWatch Alarms: Automate EC2 Recovery</a></li><li><a href="/blog/cloudwatch-alarms-best-practices-for-thresholds-and-conditions/">CloudWatch Alarms: Best Practices for Thresholds &amp; Conditions</a></li><li><a href="/blog/lambda-error-monitoring-best-practices/">Lambda Error Monitoring: Best Practices</a></li><li><a href="/blog/monitor-lambda-errors-with-cloudwatch/">Monitor Lambda Errors with CloudWatch</a></li></ul>
+<p>Start with the metric that represents the failure you need to catch: <code>Errors</code> for failed executions, <code>Throttles</code> for rejected requests, <code>Duration</code> for function processing time, concurrency metrics for capacity, and async delivery or event-source metrics for backlogs and lost events. Use <code>Sum</code> for counts, <code>Maximum</code> for peak concurrency, and a latency percentile only when its sample volume supports the decision. Set periods, missing-data behavior, and thresholds from the workload, then route state changes to an owner who can act.</p>

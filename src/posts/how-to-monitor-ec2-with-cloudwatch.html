@@ -3,359 +3,147 @@ layout: post.njk
 templateEngineOverride: html
 tags: posts
 title: "How to Monitor EC2 with CloudWatch"
-description: "Learn how to effectively monitor EC2 instances using CloudWatch, including setup, alarms, and dashboards for optimal performance."
+description: "Monitor EC2 with CloudWatch: understand metric intervals, collect memory and filesystem data with the agent, create useful alarms, and build dashboards."
 date: "2025-03-06"
 datePublished: "2025-03-06T00:51:08.170000+00:00"
 heroImage: "/assets/media/cd0e8b249b487f75e85f.jpg"
 permalink: "/blog/how-to-monitor-ec2-with-cloudwatch/"
 sourceUrl: "https://awsforengineers.com/blog/how-to-monitor-ec2-with-cloudwatch/"
-dateModified: "2026-10-03"
-updateNote: "Added author attribution and profile information."
+dateModified: "2026-10-04"
+updateNote: "Corrected EC2 metric intervals and permissions, and added current agent, alarm, and status-check guidance."
 ---
-<p><strong>Want to keep your <a href="/blog/aws-ec2-basics-core-concepts-explained/">EC2 instances</a> running smoothly?</strong> <a href="https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/WhatIsCloudWatch.html" rel="nofollow noopener noreferrer" target="_blank">Amazon CloudWatch</a> makes it easy to monitor performance, detect issues, and automate responses. Here's what you'll learn in this guide:</p>
-<ul>
-<li><strong>Key Metrics</strong>: Track CPU, memory, disk, and network usage.</li>
-<li><strong>Setup Steps</strong>: Enable detailed monitoring, configure IAM roles, and install the CloudWatch agent.</li>
-<li><strong>Alerts</strong>: Create alarms for early issue detection and automated responses.</li>
-<li><strong>Dashboards</strong>: Build visual dashboards to monitor performance trends.</li>
-</ul>
-<p><strong>Quick Start</strong>: Enable detailed monitoring for 1-minute intervals, set up alarms for high CPU usage, and use dashboards to track metrics in real-time. This ensures your EC2 instances stay reliable and efficient.</p>
-<p>Let’s dive into how you can set this up step-by-step.</p>
-<h2 id="cloudwatch-setup-for-ec2">CloudWatch Setup for EC2</h2>
-<p>To set up CloudWatch for your EC2 instance, you'll need to enable detailed metrics, configure IAM roles, and install the CloudWatch agent. Here's how to do it:</p>
-<h3 id="enable-detailed-metrics">Enable Detailed Metrics</h3>
-<p>Detailed monitoring offers EC2 metrics at 1-minute intervals instead of the default 5-minute intervals. Here's how you can enable it:</p>
-<ul>
-<li>
-<strong>Using the <a href="https://aws.amazon.com/" rel="nofollow noopener noreferrer" target="_blank">AWS</a> Console</strong>: Go to the EC2 Dashboard, select your instance, and navigate to <strong>Actions &gt; Monitoring &gt; Manage Detailed Monitoring</strong>.
-</li>
-<li>
-<strong>Using the AWS CLI</strong>: Run the following command:
-<pre><code>aws ec2 monitor-instances --instance-ids i-1234567890abcdef0
-</code></pre>
-</li>
-</ul>
-<p>Keep in mind that enabling detailed monitoring may incur additional costs. Check the AWS pricing page for details.</p>
-<h3 id="set-up-iam-access">Set Up IAM Access</h3>
-<p>To allow CloudWatch to function properly, create and attach an IAM role with the necessary permissions. Below are the required policies and their purposes:</p>
+<p>Amazon EC2 sends built-in instance metrics to Amazon CloudWatch, including CPU, network traffic, and status checks. Basic monitoring is on by default: most EC2 metrics arrive every five minutes, while status-check metrics arrive every minute. Enable detailed monitoring when you need one-minute data for supported EC2 metrics.</p>
+<p>EC2 does not report the guest operating system's memory use or filesystem space by default. Install the CloudWatch agent for those signals. Then match alarm periods to each metric's publishing interval, and use the correct response for the kind of failure an alarm detects.</p>
+
+<h2 id="cloudwatch-setup-for-ec2">Understand the EC2 metrics CloudWatch receives</h2>
+<p>EC2 publishes its built-in metrics in the <code>AWS/EC2</code> namespace. For an individual instance, select the <code>InstanceId</code> dimension. A metric's name alone is not enough: namespace, metric name, dimensions, statistic, period, account, and Region all affect what CloudWatch displays or evaluates.</p>
+<p>Built-in EC2 metrics are not operating-system measurements. For example, <code>CPUUtilization</code> is the percentage of physical CPU time EC2 uses for the instance, including guest and EC2 code; it can differ from a value shown by an operating-system tool. The EC2 metric reference documents each metric's meaning, unit, dimensions, and availability: <a href="https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/viewing_metrics_with_cloudwatch.html" target="_blank" rel="noopener noreferrer">CloudWatch metrics available for EC2 instances</a>.</p>
+
+<h3 id="enable-detailed-metrics">Enable detailed monitoring when one-minute EC2 data matters</h3>
+<p>Basic monitoring is the EC2 default. Most supported instance metrics use five-minute periods; detailed monitoring changes supported metrics to one-minute periods and is charged per metric EC2 sends. The setting does not change EBS volume monitoring or collect guest memory and filesystem metrics.</p>
 <figure><table>
-<thead>
-<tr>
-<th><strong>Permission Policy</strong></th>
-<th><strong>Purpose</strong></th>
-<th><strong>Required Actions</strong></th>
-</tr>
-</thead>
+<thead><tr><th scope="col">Metric or source</th><th scope="col">What to expect</th></tr></thead>
 <tbody>
-<tr>
-<td>CloudWatchAgentServerPolicy</td>
-<td>Enables sending metrics</td>
-<td><code>cloudwatch:PutMetricData</code></td>
-</tr>
-<tr>
-<td>AmazonSSMManagedInstanceCore</td>
-<td>Allows agent management</td>
-<td><code>ssm:GetParameter</code>, <code>ssm:PutParameter</code></td>
-</tr>
-<tr>
-<td>CloudWatchAgentAdminPolicy</td>
-<td>Supports configuration retrieval</td>
-<td><code>cloudwatch:GetMetricStatistics</code></td>
-</tr>
+<tr><td>Most supported <code>AWS/EC2</code> instance metrics</td><td>Five minutes with basic monitoring; one minute for supported metrics with detailed monitoring.</td></tr>
+<tr><td>EC2 status checks</td><td>One minute by default, at no charge; detailed monitoring is not needed.</td></tr>
+<tr><td>CPU credit metrics</td><td>Five minutes only, including when detailed monitoring is enabled.</td></tr>
+<tr><td>Network packet metrics</td><td>Available for basic monitoring at five-minute periods; they do not provide one-minute datapoints with detailed monitoring.</td></tr>
+<tr><td>EBS volume metrics</td><td>Published per volume in <code>AWS/EBS</code>; EC2 detailed monitoring does not change their schedule.</td></tr>
 </tbody>
 </table></figure>
-<p>Steps to attach the role to an EC2 instance:</p>
-<ol>
-<li>Open the <strong>IAM Console</strong>.</li>
-<li>Create a new role for EC2.</li>
-<li>Attach the required policies listed above.</li>
-<li>Assign the role to your EC2 instance.</li>
-</ol>
-<p>Once the role is in place, you're ready to install the CloudWatch agent.</p>
-<h3 id="install-cloudwatch-agent">Install CloudWatch Agent</h3>
-<p>The CloudWatch agent collects additional system-level metrics like memory and disk usage. Follow these steps to install it on an <a href="https://aws.amazon.com/amazon-linux-2/" rel="nofollow noopener noreferrer" target="_blank">Amazon Linux</a> instance:</p>
-<ol>
-<li>
-<strong>Download and install the agent</strong>:
-<pre><code>wget https://s3.amazonaws.com/amazoncloudwatch-agent/amazon_linux/amd64/latest/amazon-cloudwatch-agent.rpm
-sudo rpm -U amazon-cloudwatch-agent.rpm
-</code></pre>
-</li>
-<li>
-<strong>Configure the agent</strong>: Create a configuration file (e.g., <code>/opt/aws/amazon-cloudwatch-agent/bin/config.json</code>) with content like this:
+<p>Enable detailed monitoring from the EC2 console by selecting an instance and choosing <strong>Actions &gt; Monitor and troubleshoot &gt; Manage detailed monitoring</strong>. You can also enable it for an existing instance with the AWS CLI:</p>
+<pre><code>aws ec2 monitor-instances --instance-ids i-0123456789abcdef0 --region us-east-1</code></pre>
+<p>Replace the example instance ID and Region with your own. The identity running the command needs the EC2 <code>MonitorInstances</code> permission. Use <code>UnmonitorInstances</code> to turn detailed monitoring off. If a one-minute CPU or network signal matters for an alarm or scaling decision, this setting can shorten the wait for an EC2 datapoint; it does not guarantee an end-to-end response within one minute. AWS lists the intervals, exceptions, permissions, and current pricing link in its <a href="https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/manage-detailed-monitoring.html" target="_blank" rel="noopener noreferrer">detailed monitoring guide</a>. For a closer comparison, see our <a href="/blog/cloudwatch-standard-vs-detailed-monitoring-key-differences/">EC2 basic and detailed monitoring guide</a>.</p>
+
+<h3 id="set-up-iam-access">Give the CloudWatch agent an EC2 role</h3>
+<p>For guest operating-system metrics, attach an instance role trusted by the EC2 service through an instance profile. AWS's <code>CloudWatchAgentServerPolicy</code> is its documented starting policy for sending agent metrics and, when configured, logs. Review its current permissions against the telemetry you enable, and avoid putting long-lived access keys on the server.</p>
+<p>Managing the agent through Systems Manager is a separate choice. The instance must also have the permissions and connectivity required for Systems Manager; these are not substitutes for the agent's publishing permissions. Likewise, the user or automation that enables detailed EC2 monitoring needs <code>ec2:MonitorInstances</code>, not an agent policy. See AWS's <a href="https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/prerequisites.html" target="_blank" rel="noopener noreferrer">CloudWatch agent IAM and network prerequisites</a> and <a href="https://docs.aws.amazon.com/aws-managed-policy/latest/reference/CloudWatchAgentServerPolicy.html" target="_blank" rel="noopener noreferrer">CloudWatchAgentServerPolicy reference</a>.</p>
+
+<h3 id="install-cloudwatch-agent">Install the CloudWatch agent for memory and filesystem metrics</h3>
+<p>The following example targets a Linux EC2 instance running Amazon Linux 2023. Install the agent package with DNF:</p>
+<pre><code>sudo dnf install amazon-cloudwatch-agent</code></pre>
+<p>The package is available for Amazon Linux 2023 in AWS's <a href="https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/download-CloudWatch-Agent-on-EC2-Instance-commandline-first.html" target="_blank" rel="noopener noreferrer">CloudWatch agent download guide</a>; Amazon Linux 2023 uses <a href="https://docs.aws.amazon.com/linux/al2023/ug/package-management.html" target="_blank" rel="noopener noreferrer">DNF as its package manager</a>.</p>
+<p>Save this configuration as <code>/opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json</code>. It collects memory usage and the used-space percentage for the root filesystem once a minute:</p>
 <pre><code>{
+  "agent": {
+    "metrics_collection_interval": 60
+  },
   "metrics": {
+    "namespace": "CWAgent",
+    "append_dimensions": {
+      "InstanceId": "${aws:InstanceId}"
+    },
     "metrics_collected": {
       "mem": {
-        "measurement": ["mem_used_percent"]
+        "measurement": ["used_percent"]
       },
       "disk": {
-        "measurement": ["disk_used_percent"]
+        "resources": ["/"],
+        "measurement": ["used_percent"]
       }
     }
   }
-}
-</code></pre>
-</li>
-<li>
-<strong>Start the agent</strong>:
-<pre><code>sudo /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl -a fetch-config -m ec2 -s -c file:/opt/aws/amazon-cloudwatch-agent/bin/config.json
-</code></pre>
-</li>
-</ol>
-<p>To ensure the agent is running correctly, check its status with:</p>
-<pre><code>sudo /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl -m ec2 -a status
-</code></pre>
-<h2 id="ec2-cloudwatch-alarms">EC2 CloudWatch Alarms</h2>
-<p>Once you've set up CloudWatch for your EC2 instances, creating alarms can help you automatically monitor and address performance issues. Here's a guide to setting up effective <a href="/blog/cloudwatch-alarms-best-practices-for-thresholds-and-conditions/">CloudWatch alarms</a> for your EC2 instances.</p>
-<h3 id="select-alarm-metrics">Select Alarm Metrics</h3>
-<p>Pick metrics that directly affect your application's performance and stability. Key EC2 metrics to monitor include:</p>
-<figure><table>
-<thead>
-<tr>
-<th>Metric Category</th>
-<th>Key Metrics</th>
-<th>Recommended Threshold</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>CPU</td>
-<td>CPUUtilization</td>
-<td>80% sustained for 5 minutes</td>
-</tr>
-<tr>
-<td>Memory</td>
-<td>MemoryUtilization</td>
-<td>85% sustained for 5 minutes</td>
-</tr>
-<tr>
-<td>Disk</td>
-<td>DiskSpaceUtilization</td>
-<td>90% of available space</td>
-</tr>
-<tr>
-<td>Status</td>
-<td>StatusCheckFailed</td>
-<td>Any failure for 2 minutes</td>
-</tr>
-</tbody>
-</table></figure>
-<p>Tailor these thresholds to your application's demands. For instance, if you're running a CPU-heavy app, you might need a stricter CPU threshold than for a memory-focused one.</p>
-<h3 id="configure-alarm-rules">Configure Alarm Rules</h3>
-<p>Set up alarm rules to ensure a balance between quick responses and avoiding false alarms. Focus on these parameters:</p>
-<p>1. <strong>Evaluation Period</strong></p>
-<p>Choose an evaluation period that minimizes false positives. For example, to trigger an alarm when CPU usage exceeds 80% for 5 minutes, use this configuration:</p>
-<pre><code>{
-  "MetricName": "CPUUtilization",
-  "Period": 300,
-  "EvaluationPeriods": 1,
-  "Threshold": 80,
-  "ComparisonOperator": "GreaterThanThreshold"
-}
-</code></pre>
-<p>This setup ensures the alarm activates only if CPU utilization remains above 80% for a full 5-minute period.</p>
-<p>2. <strong>Threshold Actions</strong></p>
-<p>Define automated actions for when thresholds are breached. These might include:</p>
-<ul>
-<li>Scaling instances up or down with Auto Scaling policies</li>
-<li>Running <a href="https://aws.amazon.com/lambda/" rel="nofollow noopener noreferrer" target="_blank">AWS Lambda</a> functions</li>
-<li>Starting or stopping EC2 instances</li>
-<li>Sending notifications to your team</li>
-</ul>
-<p>3. <strong>Recovery Actions</strong></p>
-<p>Prepare for hardware issues by configuring instance recovery. For example, to automatically recover an instance failing a system status check, use this setup:</p>
-<pre><code>{
-  "MetricName": "StatusCheckFailed_System",
-  "AlarmActions": [
-    "arn:aws:automate:us-east-1:ec2:recover"
-  ]
-}
-</code></pre>
-<h3 id="set-up-sns-alerts">Set Up SNS Alerts</h3>
-<p>To stay informed about alarms, use <a href="https://aws.amazon.com/sns/" rel="nofollow noopener noreferrer" target="_blank">Amazon SNS</a> for notifications via email, SMS, or other channels. Here's how:</p>
-<ul>
-<li><strong>Create an SNS Topic</strong>:</li>
-</ul>
-<pre><code>aws sns create-topic --name EC2-Alerts
-</code></pre>
-<ul>
-<li><strong>Add Subscribers</strong>:</li>
-</ul>
-<pre><code>aws sns subscribe \
-  --topic-arn arn:aws:sns:us-east-1:123456789012:EC2-Alerts \
-  --protocol email \
-  --notification-endpoint team@example.com
-</code></pre>
-<ul>
-<li><strong>Link the Alarm to SNS</strong>:</li>
-</ul>
-<pre><code>aws cloudwatch put-metric-alarm \
-  --alarm-name CPU-Critical \
-  --alarm-actions arn:aws:sns:us-east-1:123456789012:EC2-Alerts
-</code></pre>
-<p>For critical systems, consider adding multiple notification methods or integrating with incident management tools to ensure alerts reach your team promptly.</p>
+}</code></pre>
+<p>Start the agent with the saved file, then check that it is running:</p>
+<pre><code>sudo /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl -a fetch-config -m ec2 -c file:/opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json -s</code></pre>
+<pre><code>sudo /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl -m ec2 -a status</code></pre>
+<p>The agent publishes these metrics in <code>CWAgent</code> by default, separate from EC2's <code>AWS/EC2</code> namespace. In the example, the measurements appear as <code>mem_used_percent</code> and <code>disk_used_percent</code>. In CloudWatch, check for the expected metric names, instance ID, and filesystem path. Disk metrics describe the selected operating-system mount point; add other paths only when you need them. The agent's filesystem dimensions can distinguish paths and filesystems, so select the exact dimensions shown in CloudWatch when creating an alarm. This is not the same as per-volume EBS performance monitoring. For application-specific signals beyond EC2 and operating-system metrics, see our <a href="/blog/custom-cloudwatch-metrics-setup-guide-2024/">CloudWatch custom metrics guide</a>.</p>
+<p>An EC2 instance also needs network access to the CloudWatch endpoint in its Region. For private subnets, provide the required VPC endpoints or another supported network route. AWS documents supported installation methods, agent configuration, and metric names in the <a href="https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/install-CloudWatch-Agent-on-EC2-Instance.html" target="_blank" rel="noopener noreferrer">CloudWatch agent installation guide</a>, <a href="https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/create-cloudwatch-agent-configuration-file-examples.html" target="_blank" rel="noopener noreferrer">configuration examples</a>, and <a href="https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/metrics-collected-by-CloudWatch-agent.html" target="_blank" rel="noopener noreferrer">collected metrics reference</a>.</p>
 
-<h2 id="ec2-monitoring-dashboards">EC2 Monitoring Dashboards</h2>
-<p><a href="/blog/aws-health-dashboards-monitoring-and-debugging-guide/">CloudWatch dashboards</a> offer a centralized way to keep track of your EC2 metrics, helping you oversee EC2 performance efficiently.</p>
-<h3 id="build-basic-dashboards">Build Basic Dashboards</h3>
-<p>You can create a dashboard using the <a href="/blog/">AWS Console</a> or the AWS CLI. Here's an example using the CLI:</p>
-<pre><code>aws cloudwatch put-dashboard \
-  --dashboard-name "EC2-Production" \
-  --dashboard-body file://dashboard.json
-</code></pre>
-<p>Define the layout of your dashboard in a JSON file, like this:</p>
+<h2 id="ec2-cloudwatch-alarms">Create alarms for conditions that need a response</h2>
+<p>Choose a metric that signals a customer impact, a capacity limit, or a failure mode. Set the threshold from a service objective, tested limit, or operational requirement; there is no universal safe CPU, memory, or disk percentage for every workload.</p>
+
+<h3 id="select-alarm-metrics">Choose the metric and its meaning</h3>
+<ul>
+<li><p><strong>CPU</strong> (<code>AWS/EC2</code> / <code>CPUUtilization</code>). Percent of physical CPU used by the instance. Use <code>Average</code> to see sustained load or <code>Maximum</code> to react to high datapoints; choose based on the workload and response.</p></li>
+<li><p><strong>Memory</strong> (<code>CWAgent</code> / <code>mem_used_percent</code>). Guest operating-system memory usage. Check the agent's <code>InstanceId</code> dimension and consider available memory and workload behavior when setting a threshold.</p></li>
+<li><p><strong>Filesystem space</strong> (<code>CWAgent</code> / <code>disk_used_percent</code>). Used space for an operating-system filesystem, separated by the configured path and other filesystem dimensions. This is capacity, not disk throughput.</p></li>
+<li><p><strong>Network bytes</strong> (<code>AWS/EC2</code> / <code>NetworkIn</code>, <code>NetworkOut</code>). Bytes received or sent across all instance network interfaces during the period. <code>Sum</code> gives bytes in that interval; divide by period seconds for average bytes per second. Packet metrics count packets and are available at five-minute periods under basic monitoring.</p></li>
+<li><p><strong>Disk I/O</strong> (<code>AWS/EC2</code> / <code>DiskReadBytes</code>, <code>DiskWriteBytes</code>, <code>DiskReadOps</code>, <code>DiskWriteOps</code>). These instance-store metrics report bytes or operation counts during the period; divide their <code>Sum</code> by period seconds for average throughput or IOPS. They do not report filesystem free space or attached EBS activity. EBS has per-volume metrics in <code>AWS/EBS</code>; supported Nitro instances also provide EC2-level EBS aggregates.</p></li>
+</ul>
+<p>For every alarm, confirm the namespace, metric name, full dimension set, statistic, and unit in the CloudWatch metric selector. For example, <code>NetworkIn</code> and <code>NetworkOut</code> use <code>Bytes</code>, while <code>CPUUtilization</code> is a <code>Percent</code>. Treating a per-period total as a rate, or choosing an alarm dimension that does not match the published series, can produce misleading graphs or no data.</p>
+
+<h3 id="status-check-metrics">Use the right status-check response</h3>
+<p>EC2 status checks run automatically and publish binary <code>Count</code> metrics in <code>AWS/EC2</code>: <code>0</code> means passed and <code>1</code> means failed. Supported status-check metrics are available every minute at no charge. The attached-EBS check is limited to Nitro instances. The failure type matters:</p>
+<ul>
+<li><p><strong><code>StatusCheckFailed_System</code></strong>: Underlying host or AWS infrastructure issue. Review AWS Health and the instance status. A CloudWatch <strong>recover</strong> action may be suitable for an eligible instance.</p></li>
+<li><p><strong><code>StatusCheckFailed_Instance</code></strong>: Guest operating system, startup, or networking issue. A system failure can also cause an instance check to fail. Inspect system logs and guest configuration; reboot or replace only when appropriate. A recover action is not supported for this metric.</p></li>
+<li><p><strong><code>StatusCheckFailed_AttachedEBS</code></strong>: An attached EBS volume cannot be reached or complete I/O. This check is available only on Nitro instances. Check the affected EBS volume and workload. Depending on the impact, wait for AWS. If the workload is not driving I/O to attached EBS volumes, a stop/start may move the instance to another host. If recovery requires replacing a volume or instance, use a tested restore or failover procedure and recover data from a known-good snapshot, backup, or replica.</p></li>
+</ul>
+<p>Do not attach automatic recovery to a generic CPU, memory, or instance-status alarm. EC2's recovery action applies to <code>StatusCheckFailed_System</code> for supported instances; it does not repair an operating-system or application fault. AWS recommends treating missing data as missing for alarms with EC2 stop, reboot, terminate, or recover actions, because a telemetry gap must not trigger an unsafe response. See the AWS <a href="https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/monitoring-system-instance-status-check.html" target="_blank" rel="noopener noreferrer">status-check guide</a> and <a href="https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/UsingAlarmActions.html" target="_blank" rel="noopener noreferrer">EC2 alarm-action guidance</a>. For recovery eligibility and a complete alarm example, see our <a href="/blog/cloudwatch-alarms-automate-ec2-recovery/">EC2 recovery alarm guide</a>.</p>
+
+<h3 id="configure-alarm-rules">Match alarm periods and missing-data behavior to the metric</h3>
+<p><code>Period</code> is the duration represented by each alarm datapoint. On basic monitoring, use a period of at least 300 seconds for most EC2 instance metrics; supported detailed metrics can use 60 seconds. Status-check metrics support 60-second periods with basic monitoring, and CPU credit metrics remain at 300 seconds. A shorter alarm period cannot create data that EC2 or the agent has not published.</p>
+<p><code>EvaluationPeriods</code> is the number of recent datapoints CloudWatch considers (N); <code>DatapointsToAlarm</code> is how many must breach (M). For example, 2 of 3 datapoints at a 300-second period means two breaching datapoints among the last three five-minute periods. They need not be consecutive, and the full evaluation window is 15 minutes. Choose M and N to balance detection time against normal variation; do not describe a five-minute period as an exact five-minute response guarantee.</p>
+<p>Missing data can mean a quiet event metric, an agent that stopped, an instance that is initializing, or a CloudWatch reporting gap. CloudWatch's default treatment is <code>missing</code>; decide whether each signal should enter <code>INSUFFICIENT_DATA</code>, retain its current state, or treat silence as healthy or breaching. For status-check alarms with stop, reboot, terminate, or recover actions, use AWS's missing-data recommendation so a reporting gap does not count as a failed check. CloudWatch can also evaluate available real datapoints without applying the configured missing-data treatment when enough data exists. See AWS's <a href="https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/alarm-evaluation.html" target="_blank" rel="noopener noreferrer">alarm evaluation guide</a> and <a href="https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/alarms-and-missing-data.html" target="_blank" rel="noopener noreferrer">missing-data behavior</a>, and our guide to <a href="/blog/cloudwatch-alarms-best-practices-for-thresholds-and-conditions/">CloudWatch alarm thresholds and conditions</a>.</p>
+
+<h3 id="set-up-sns-alerts">Route alarm notifications to an owner</h3>
+<p>When creating an alarm in the CloudWatch console, choose an SNS topic for the alarm state that needs attention. Create the topic first, add the intended subscribers, and confirm email subscriptions before relying on delivery. Give every alert an owner and a response; use automatic EC2 actions only for failure modes the action can safely address.</p>
+
+<h2 id="ec2-monitoring-dashboards">Build a dashboard around useful signals</h2>
+<p>A CloudWatch dashboard can show metrics from the same account or other configured accounts and Regions. Start with signals that support an operational decision, such as instance CPU alongside application errors, request rate, and saturation. Keep the scope visible: a widget with one <code>InstanceId</code> answers a different question from a fleet aggregate.</p>
+
+<h3 id="build-basic-dashboards">Create a basic metric widget</h3>
+<p>You can create a dashboard in the CloudWatch console or with the AWS CLI. This example shows CPU for one instance using a 300-second period, suitable for basic monitoring:</p>
 <pre><code>{
   "widgets": [
     {
       "type": "metric",
+      "x": 0,
+      "y": 0,
       "width": 12,
       "height": 6,
       "properties": {
-        "metrics": [
-          ["AWS/EC2", "CPUUtilization", "InstanceId", "i-1234567890abcdef0"]
-        ],
+        "view": "timeSeries",
+        "region": "us-east-1",
         "period": 300,
         "stat": "Average",
-        "region": "us-east-1",
-        "title": "CPU Utilization"
+        "title": "EC2 CPU utilization",
+        "metrics": [
+          ["AWS/EC2", "CPUUtilization", "InstanceId", "i-0123456789abcdef0"]
+        ]
       }
     }
   ]
-}
-</code></pre>
-<h3 id="add-metric-widgets">Add Metric Widgets</h3>
-<p>Widgets let you visualize key metrics in different formats. Here are some common widget types and their uses:</p>
-<figure><table>
-<thead>
-<tr>
-<th>Widget Type</th>
-<th>Best Use Case</th>
-<th>Recommended Metrics</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Line Graph</td>
-<td>Time-series data</td>
-<td>CPU, Memory, Network</td>
-</tr>
-<tr>
-<td>Number</td>
-<td>Current status</td>
-<td>Instance count, Error rate</td>
-</tr>
-<tr>
-<td>Gauge</td>
-<td>Resource usage</td>
-<td>Disk usage, CPU %</td>
-</tr>
-<tr>
-<td>Text</td>
-<td>Notes or alerts</td>
-<td>Instance details, alerts</td>
-</tr>
-</tbody>
-</table></figure>
-<p>For example, you can include multiple metrics in a widget to monitor your EC2 instances more effectively:</p>
-<pre><code>{
-  "metrics": [
-    ["AWS/EC2", "CPUUtilization"],
-    ["AWS/EC2", "NetworkIn"],
-    ["AWS/EC2", "NetworkOut"],
-    ["AWS/EC2", "DiskReadOps"],
-    ["AWS/EC2", "DiskWriteOps"]
-  ]
-}
-</code></pre>
-<h3 id="manage-multiple-instances">Manage Multiple Instances</h3>
-<p>When monitoring multiple instances, use these strategies to keep your dashboards organized and effective:</p>
-<p>1. <strong>Dynamic Instance Selection</strong></p>
-<p>Use wildcards to create widget groups that automatically include new instances:</p>
-<pre><code>{
-  "metrics": [
-    ["AWS/EC2", "CPUUtilization", "AutoScalingGroupName", "prod-web-*"]
-  ]
-}
-</code></pre>
-<p>2. <strong>Group by Resource Tags</strong></p>
-<p>Assign tags to your instances based on their role or environment, then build dashboard sections based on those tags:</p>
-<pre><code>{
-  "metrics": [
-    ["AWS/EC2", "CPUUtilization", 
-     {"tag:Environment": "Production", "tag:Role": "WebServer"}]
-  ]
-}
-</code></pre>
-<p>3. <strong>Organize by Priority</strong></p>
-<p>Break down metrics into categories by importance:</p>
-<ul>
-<li><strong>Critical Metrics</strong>: CPU, Memory, Status Checks</li>
-<li><strong>Performance Metrics</strong>: Network I/O, Disk Operations</li>
-<li><strong>Cost Metrics</strong>: EBS IOPS, Network Transfer</li>
-</ul>
-<p>These approaches help you streamline monitoring across multiple EC2 instances.</p>
-<h2 id="ec2-monitoring-guidelines">EC2 Monitoring Guidelines</h2>
-<p>Fine-tune your monitoring approach by incorporating these tips alongside your <a href="/blog/custom-cloudwatch-metrics-setup-guide-2024/">CloudWatch setup</a>.</p>
-<h3 id="key-metrics-to-track">Key Metrics to Track</h3>
-<p>Monitor EC2 metrics that provide insights into system health and performance. Use historical data and workload specifics to set thresholds effectively. Here are some key metrics to focus on:</p>
-<figure><table>
-<thead>
-<tr>
-<th><strong>Metric Category</strong></th>
-<th><strong>Example Metrics</strong></th>
-<th><strong>Threshold Strategy</strong></th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>System Health</td>
-<td>CPU Utilization, Memory Usage, Status Checks</td>
-<td>Base thresholds on historical performance data</td>
-</tr>
-<tr>
-<td>Performance</td>
-<td>Disk I/O, Network Throughput, Disk Queue Length</td>
-<td>Set limits according to instance capacity and demand</td>
-</tr>
-</tbody>
-</table></figure>
-<p>To improve alert accuracy, use composite alarms that combine multiple metrics. This ensures more dependable notifications and better alarm configurations.</p>
-<h3 id="minimize-false-alarms">Minimize False Alarms</h3>
-<p>Keep alerts relevant by reducing false alarms. Use dynamic thresholds informed by historical patterns, and require multiple consecutive breaches before triggering an alarm. This approach helps filter out short-term spikes that don't point to real issues.</p>
-<h3 id="control-monitoring-costs">Control Monitoring Costs</h3>
-<p>Strike a balance between detailed monitoring and cost efficiency. Apply basic monitoring for less critical instances and reserve detailed monitoring for key ones. Save costs by filtering out non-essential metrics and using metric math to aggregate data. These practices can help you optimize your alarms and dashboards without overspending.</p>
-<h2 id="conclusion">Conclusion</h2>
-<h3 id="summary">Summary</h3>
-<p>Monitoring EC2 instances with CloudWatch requires attention to detailed metrics, timely alarms, and well-designed dashboards. Success hinges on proper setup and following best practices. By keeping an eye on key metrics like <strong>CPU utilization</strong>, <strong>memory usage</strong>, and <strong>disk I/O</strong>, you can fine-tune performance while keeping costs under control.</p>
-<p>CloudWatch alarms are essential for detecting performance issues early, helping to prevent system slowdowns and downtime. A centralized dashboard makes it easy to spot trends across instances and address bottlenecks quickly.</p>
-<h3 id="additional-resources">Additional Resources</h3>
-<p>Looking to improve your monitoring strategy? Check out these resources tailored to software engineers. <a href="/">AWS for Engineers</a> offers in-depth guides, tutorials, and tools to help you master CloudWatch setup, alarm creation, and dashboard customization. Their content is updated regularly to ensure you're always using the latest techniques.</p>
-<figure><table>
-<thead>
-<tr>
-<th>Resource Type</th>
-<th>Description</th>
-<th>Focus Area</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Blog Posts</td>
-<td>Technical guides and tutorials</td>
-<td>CloudWatch setup and configuration</td>
-</tr>
-<tr>
-<td>Video Courses</td>
-<td>Step-by-step instruction</td>
-<td><a href="/blog/aws-devops-monitoring-metrics-tools-best-practices/">EC2 monitoring</a> and optimization</td>
-</tr>
-<tr>
-<td>Practice Guides</td>
-<td>Hands-on exercises</td>
-<td>Performance tuning and cost control</td>
-</tr>
-</tbody>
-</table></figure>
-<p>Visit <a href="/">AWS for Engineers</a> for more resources on building cloud solutions and optimizing AWS infrastructure. Their developer-focused content offers practical tips for solving common monitoring challenges and growing your AWS expertise.</p>
-<h2>Related Blog Posts</h2><ul><li><a href="/blog/cloudwatch-alarms-automate-ec2-recovery/">CloudWatch Alarms: Automate EC2 Recovery</a></li><li><a href="/blog/monitor-lambda-errors-with-cloudwatch/">Monitor Lambda Errors with CloudWatch</a></li><li><a href="/blog/best-practices-for-hpc-monitoring-on-aws/">Best Practices for HPC Monitoring on AWS</a></li><li><a href="/blog/how-to-set-up-cloudwatch-alarms-for-lambda/">How to Set Up CloudWatch Alarms for Lambda</a></li></ul>
+}</code></pre>
+<p>Save the JSON as <code>dashboard.json</code>, replace the example Region and instance ID, then create or update the dashboard:</p>
+<pre><code>aws cloudwatch put-dashboard --dashboard-name EC2-Overview --dashboard-body file://dashboard.json --region us-east-1</code></pre>
+
+<h3 id="add-metric-widgets">Choose a statistic that matches the metric</h3>
+<p>For network bytes, add a separate widget with <code>Sum</code> to see bytes per period; divide by the period in seconds to estimate average bytes per second. CPU is a percentage, so an <code>Average</code> or <code>Maximum</code> view is usually more interpretable than <code>Sum</code>. For filesystem alarms, graph the intended mount point and the exact agent dimensions. For EBS saturation or latency, use per-volume metrics with the relevant <code>VolumeId</code>, as described in the <a href="https://docs.aws.amazon.com/ebs/latest/userguide/using_cloudwatch_ebs.html" target="_blank" rel="noopener noreferrer">Amazon EBS CloudWatch metrics reference</a>, rather than instance-store disk metrics.</p>
+
+<h3 id="manage-multiple-instances">Organize views for multiple instances</h3>
+<p>For an Auto Scaling group, EC2 metrics can use the <code>AutoScalingGroupName</code> dimension. EC2 detailed monitoring also makes the <code>InstanceType</code> and <code>ImageId</code> dimensions available for supported metrics; these group data across similar instances and do not identify one machine. For tag-based resource exploration, use CloudWatch Metrics Explorer where supported. Do not use a tag map or wildcard as though it were an <code>AWS/EC2</code> metric dimension. Review AWS's <a href="https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/CloudWatch-Metrics-Explorer.html" target="_blank" rel="noopener noreferrer">Metrics Explorer guide</a> and the <a href="https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/viewing_metrics_with_cloudwatch.html" target="_blank" rel="noopener noreferrer">EC2 dimension reference</a> before designing fleet widgets.</p>
+
+<h2 id="ec2-monitoring-guidelines">Keep monitoring actionable and affordable</h2>
+<h3 id="key-metrics-to-track">Start with signals tied to workload behavior</h3>
+<p>Use EC2 metrics to understand instance capacity and status, agent metrics for guest operating-system resources, and application metrics for user-visible health. No single CPU, memory, disk, or network threshold is a universal failure condition. Set alarm limits from historical workload data, service objectives, tested capacity, and the time operators or automation need to respond.</p>
+
+<h3 id="minimize-false-alarms">Reduce noise without hiding a real failure</h3>
+<p>Review alarm history and graphs before changing a threshold. Check for a mismatched namespace or dimension, a period shorter than the publishing interval, an unsuitable statistic, or a missing-data assumption that treats a quiet signal as failure. Use multiple breaching datapoints when brief spikes are harmless; use a faster condition only when the metric can support it and the response needs it.</p>
+
+<h3 id="control-monitoring-costs">Review monitoring costs before expanding collection</h3>
+<p>Detailed EC2 monitoring is charged per metric sent. CloudWatch agent metrics are custom metrics; collecting more measurements, mount points, or distinct dimension combinations can increase the number of metric series. Alarms, logs, dashboards, and high-resolution data can have separate charges. Estimate the metrics and dimensions you plan to publish, then check the current <a href="https://aws.amazon.com/cloudwatch/pricing/" target="_blank" rel="noopener noreferrer">CloudWatch pricing page</a> for your Region and usage. AWS pricing and free usage terms can change, so a fixed per-instance price is not reliable.</p>
+
+<h2 id="conclusion">Summary</h2>
+<p id="summary">Start with the metrics EC2 already publishes, enable detailed monitoring only when one-minute EC2 data changes a decision, and install the CloudWatch agent for memory and filesystem signals. Build alarms from the metric's actual namespace, dimensions, unit, and publishing interval. Use status-check alarms for the failure type they measure, route notifications to an owner, and keep dashboards focused on workload decisions.</p>
