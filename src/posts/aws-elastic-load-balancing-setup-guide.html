@@ -2,540 +2,128 @@
 layout: post.njk
 templateEngineOverride: html
 tags: posts
-title: "AWS Elastic Load Balancing Setup Guide"
-description: "Learn how to set up AWS Elastic Load Balancing (ELB) for high availability, fault tolerance, and scalability. Follow the guide to create a load balancer, configure settings, and monitor performance."
+title: "AWS Application Load Balancer Setup: HTTPS, Target Groups, and Health Checks"
+description: "Configure an internet-facing AWS Application Load Balancer across Availability Zones, route HTTPS to EC2 targets, verify health checks, and connect Auto Scaling."
 date: "2024-05-30"
 datePublished: "2024-05-30T19:09:23.277000+00:00"
 heroImage: "/assets/media/8ee5c4fdcbc31a0b8d93.jpg"
 permalink: "/blog/aws-elastic-load-balancing-setup-guide/"
 sourceUrl: "https://awsforengineers.com/blog/aws-elastic-load-balancing-setup-guide/"
-dateModified: "2026-10-03"
-updateNote: "Added author attribution and profile information."
+dateModified: "2026-10-04"
+updateNote: "Rebuilt the guide as a multi-AZ Application Load Balancer setup, correcting network, TLS, health-check, Auto Scaling, and cost guidance."
 ---
-<p><a href="https://docs.aws.amazon.com/elasticloadbalancing/latest/userguide/what-is-load-balancing.html" target="_blank">Elastic Load Balancing</a> (ELB) is an <a href="https://aws.amazon.com/" target="_blank">AWS</a> service that automatically distributes incoming traffic across multiple resources, ensuring high availability, fault tolerance, and scalability. This guide covers setting up an ELB in <a href="https://aws.amazon.com/" target="_blank">AWS</a>:</p>
-<p><strong>Key Points:</strong></p>
-<ul>
-<li>
-<p>AWS offers 4 load balancer types:</p>
-<ul>
-<li><a href="https://docs.aws.amazon.com/elasticloadbalancing/latest/application/introduction.html" target="_blank">Application Load Balancer</a> (ALB) for HTTP/HTTPS traffic</li>
-<li><a href="https://en.wikipedia.org/wiki/Network_Load_Balancing_Services" target="_blank">Network Load Balancer</a> (NLB) for millions of requests per second with low latency</li>
-<li><a href="https://aws.amazon.com/elasticloadbalancing/gateway-load-balancer/" target="_blank">Gateway Load Balancer</a> (GLB) for managing virtual appliances</li>
-<li><a href="https://docs.aws.amazon.com/elasticloadbalancing/latest/classic/introduction.html" target="_blank">Classic Load Balancer</a> (CLB) for simple load balancing across <a href="https://en.wikipedia.org/wiki/Amazon_Elastic_Compute_Cloud" target="_blank">EC2</a> instances</li>
-</ul>
-</li>
-<li>
-<p>The setup process involves:</p>
-<ol>
-<li>Creating a target group</li>
-<li>Configuring the load balancer</li>
-<li>Registering targets</li>
-<li>Testing the load balancer</li>
-<li>Setting up auto scaling (optional)</li>
-<li>Monitoring and managing the load balancer</li>
-</ol>
-</li>
-</ul>
-<p><strong>Load Balancer Configuration:</strong></p>
+<p>Elastic Load Balancing (ELB) distributes client traffic across registered targets, but a load balancer alone does not make an application highly available. This guide shows how to configure an Application Load Balancer (ALB) for an EC2 web service, terminate HTTPS at the load balancer, and verify the path to healthy targets. It assumes you already have an AWS account, a VPC, and an application that can run on replaceable EC2 instances.</p>
+<p>If you need a refresher on EC2 instances, VPCs, and security groups, start with our <a href="/blog/aws-ec2-basics-core-concepts-explained/">EC2 basics guide</a>. For a broader explanation of how load balancing and Auto Scaling support availability, see <a href="/blog/aws-engineering-blog-autoscaling-for-high-availability/">EC2 Auto Scaling and high availability</a>.</p>
+<span id="related-video-from-youtube" aria-hidden="true"></span>
+<h2 id="getting-started">Before you begin</h2>
+<span id="aws-account-setup" aria-hidden="true"></span>
+<p>Choose the AWS Region where the application runs. You need permissions to create Elastic Load Balancing resources, security groups, and (if used) an Auto Scaling group. Check account quotas and estimate costs before a hands-on lab: an ALB has hourly and capacity-unit charges, while EC2 instances, public IPv4 addresses, and data transfer can add separate charges.</p>
+<span id="understanding-aws-services" aria-hidden="true"></span>
+<h3 id="understanding-aws-services-vpc">Prepare the VPC and application</h3>
+<p>Use a VPC with subnets in at least two Availability Zones. Each ALB subnet should have an IPv4 CIDR of at least <code>/27</code> and at least eight free IPv4 addresses so the load balancer can scale and perform maintenance. For an internet-facing ALB, select public subnets whose route tables send internet-bound IPv4 traffic to an attached internet gateway. The ALB's <em>internet-facing</em> setting does not create that route for you. Targets can stay in private subnets with no public IP addresses; the ALB reaches them over the VPC network. An internal ALB instead serves clients with network access to its VPC.</p>
+<p>Confirm the application is listening on a known port and has a readiness endpoint such as <code>/health</code>. The path shown here is illustrative: use a URL and success response your application actually provides.</p>
+<span id="choosing-a-load-balancer-type" aria-hidden="true"></span>
+<h3>Choose the right load balancer</h3>
+<p>AWS offers four load balancer types. This walkthrough uses an ALB because it handles HTTP and HTTPS and supports application-layer routing.</p>
 <figure><table>
-<thead>
-<tr>
-<th>Setting</th>
-<th>Details</th>
-</tr>
-</thead>
+<thead><tr><th>Type</th><th>Use it for</th><th>Important distinction</th></tr></thead>
 <tbody>
-<tr>
-<td>Name</td>
-<td>Unique name for the load balancer</td>
-</tr>
-<tr>
-<td>Type</td>
-<td>Internet-facing or internal</td>
-</tr>
-<tr>
-<td>IP Address Type</td>
-<td>IPv4 or IPv6</td>
-</tr>
-<tr>
-<td><a href="https://en.wikipedia.org/wiki/Amazon_Virtual_Private_Cloud" target="_blank">VPC</a></td>
-<td>Virtual Private Cloud to deploy in</td>
-</tr>
-<tr>
-<td>Subnets</td>
-<td>Subnets within the VPC</td>
-</tr>
-<tr>
-<td>Security Groups</td>
-<td>Virtual firewalls controlling traffic</td>
-</tr>
-<tr>
-<td>Listeners</td>
-<td>Protocols and ports to accept traffic on</td>
-</tr>
-<tr>
-<td>Target Groups</td>
-<td>Groups of resources to route traffic to</td>
-</tr>
+<tr><td>Application Load Balancer (ALB)</td><td>HTTP and HTTPS applications, including host- or path-based routing.</td><td>Uses listeners and target groups; cross-zone balancing is always enabled at the load balancer level, though it can be disabled for a target group.</td></tr>
+<tr><td>Network Load Balancer (NLB)</td><td>Layer 4 traffic, including TCP, TLS, UDP, TCP_UDP, QUIC, and TCP_QUIC listeners.</td><td>Cross-zone balancing is off by default. NLBs support security groups if one is associated at creation; you cannot add one later if the NLB was created without any. QUIC and TCP_QUIC listeners are incompatible with security-group-enabled or dual-stack NLBs and with NLBs that have UDP or TCP_UDP listeners.</td></tr>
+<tr><td>Gateway Load Balancer (GWLB)</td><td>Scaling and routing traffic through virtual network appliances, such as firewalls.</td><td>Uses GENEVE to connect to appliance targets; cross-zone balancing is off by default.</td></tr>
+<tr><td>Classic Load Balancer (CLB)</td><td>Existing applications that still depend on the earlier load balancer generation.</td><td>Legacy option; new designs generally use ALB or NLB. Its cross-zone default depends on whether it was created through the console or API/CLI.</td></tr>
 </tbody>
 </table></figure>
-<p><strong>Benefits of Load Balancing:</strong></p>
+<p>Do not assume every load balancer type has the same protocol features, security-group behavior, or cross-zone default. See AWS's current <a href="https://docs.aws.amazon.com/elasticloadbalancing/latest/userguide/load-balancer-getting-started.html" target="_blank" rel="noopener noreferrer">load balancer getting-started guide</a>, <a href="https://docs.aws.amazon.com/elasticloadbalancing/latest/network/load-balancer-listeners.html" target="_blank" rel="noopener noreferrer">NLB listener protocols</a>, <a href="https://docs.aws.amazon.com/elasticloadbalancing/latest/network/load-balancer-security-groups.html" target="_blank" rel="noopener noreferrer">NLB security-group requirements</a>, and <a href="https://docs.aws.amazon.com/elasticloadbalancing/latest/userguide/how-elastic-load-balancing-works.html" target="_blank" rel="noopener noreferrer">cross-zone balancing behavior</a>.</p>
+
+<h2 id="1.-create-a-target-group">1. Create an EC2 target group</h2>
+<span id="what-is-a-target-group%3F" aria-hidden="true"></span>
+<p>A target group identifies where a listener sends traffic and how it checks target health. For this EC2 example, create an <strong>instance</strong> target group in the same VPC as the ALB. Choose the application's protocol and port, such as HTTP on port 8080 if that is what the app listens on. You can use IP targets for supported VPC addresses, or Lambda targets for an ALB integration, but those are different configurations. See AWS's <a href="https://docs.aws.amazon.com/elasticloadbalancing/latest/application/create-target-group.html" target="_blank" rel="noopener noreferrer">ALB target-group steps</a> for the full console options.</p>
+<span id="creating-a-target-group" aria-hidden="true"></span>
+<ol>
+<li>In the EC2 console, choose <strong>Target Groups</strong> under <strong>Load Balancing</strong>, then choose <strong>Create target group</strong>.</li>
+<li>Choose <strong>Instances</strong> as the target type, select the VPC, and enter the target protocol and port.</li>
+<li>Set a health-check protocol, port, and path that the application can answer without login or a redirect.</li>
+<li>Create the target group. Register a fixed test instance or attach the Auto Scaling group in step 3; check target health after the group is attached to an ALB listener and its Availability Zone is enabled.</li>
+</ol>
+<span id="setting-up-health-checks" aria-hidden="true"></span>
+<p>A health check is a signal that this target can receive the target group's traffic; it is not a full proof that every dependency or user journey works. Keep the endpoint fast and meaningful. If it tests a shared dependency that is failing for every instance, the result can cause the whole fleet to be considered unhealthy.</p>
+
+<h2 id="2.-configure-the-load-balancer">2. Create the ALB and configure its network</h2>
+<span id="basic-setup" aria-hidden="true"></span>
+<ol>
+<li>In the same Region as the VPC and targets, open <strong>Load Balancers</strong> in the EC2 console and choose <strong>Create load balancer</strong> &gt; <strong>Application Load Balancer</strong>.</li>
+<li>Choose a name and select <strong>Internet-facing</strong> for a public website or <strong>Internal</strong> for clients that reach the service through the VPC or connected networks.</li>
+<li>Select the prepared VPC. Enable the public subnets with a route to the internet gateway in at least two Availability Zones, and enable the same Availability Zones in which you run targets.</li>
+<li>Choose an ALB security group that allows only the intended client sources to reach the listener. For a public HTTPS endpoint, that is commonly TCP 443; allow TCP 80 only if you will redirect HTTP to HTTPS.</li>
+<li>Before adding HTTPS, request or import and validate an ACM certificate in the ALB's Region. Then create an HTTPS listener on port 443 and select the target group as its default forward action. Add an HTTP listener on port 80 with a redirect action to HTTPS if plain HTTP requests should be upgraded.</li>
+</ol>
+<p>A listener accepts traffic on a protocol and port, then forwards matching requests to a target group. An HTTPS listener terminates client TLS at the ALB. If the ALB-to-target connection must also be encrypted, configure an HTTPS target group and the application to serve TLS on that port; this is a separate connection.</p>
+<span id="network-configuration" aria-hidden="true"></span>
+<h3>Check the network path, not just the ALB scheme</h3>
+<p>For public access, the internet gateway route belongs on the ALB's public subnets. Private target subnets do not need a route to the internet for ALB traffic. An internal ALB needs reachable client networks and suitable route tables, such as within the VPC, through peering, Transit Gateway, or VPN.</p>
+<p>The ALB and its target group must use the intended VPC and compatible address types. Enable at least two Availability Zones on the ALB and keep targets available in each enabled zone. For application-level availability, the targets and their required databases, storage, and other dependencies also need enough capacity to handle a zone loss.</p>
+<span id="security-groups" aria-hidden="true"></span>
+<h3>Allow the security-group path</h3>
+<p>Security groups are stateful firewalls. Set the ALB security group's inbound rule for the client listener, and its outbound rules for the target and health-check ports. On each target's security group, allow those ports <em>from the ALB security group</em>; avoid opening the target port directly to the internet. When the health-check port differs from the application port, allow that port too. Return traffic is allowed for established connections because security groups are stateful.</p>
+<p>AWS describes the recommended <a href="https://docs.aws.amazon.com/elasticloadbalancing/latest/application/load-balancer-update-security-groups.html" target="_blank" rel="noopener noreferrer">ALB and target security-group rules</a> and the <a href="https://docs.aws.amazon.com/elasticloadbalancing/latest/application/application-load-balancers.html" target="_blank" rel="noopener noreferrer">ALB subnet requirements</a>.</p>
+<span id="listeners-and-routing" aria-hidden="true"></span>
+<h3>Configure HTTPS, DNS, and HTTP redirect</h3>
+<p>Request or import the certificate in AWS Certificate Manager (ACM) in the <strong>same Region as the ALB</strong>, and validate the domain name the site will use. Select that certificate on the HTTPS listener and retain an AWS-recommended TLS security policy. <a href="https://docs.aws.amazon.com/acm/latest/userguide/service-options.html" target="_blank" rel="noopener noreferrer">ACM certificates are regional resources</a>; a certificate in another Region will not appear for this ALB.</p>
+<p>If the domain uses Route 53, create an Alias record that points the hostname to the ALB after the listener is ready. For another DNS provider, create the provider's supported alias or CNAME record to the ALB DNS name. Check the resolved name and the certificate's host name before directing production traffic.</p>
+<p>For HTTP-to-HTTPS behavior, the port 80 listener should issue a redirect to HTTPS on port 443, preserving the hostname and request path. Do not forward both listeners to the app if the goal is to require HTTPS. See AWS's guides for an <a href="https://docs.aws.amazon.com/elasticloadbalancing/latest/application/create-https-listener.html" target="_blank" rel="noopener noreferrer">ALB HTTPS listener</a>, <a href="https://docs.aws.amazon.com/elasticloadbalancing/latest/application/rule-action-types.html" target="_blank" rel="noopener noreferrer">redirect actions</a>, and <a href="https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/routing-to-elb-load-balancer.html" target="_blank" rel="noopener noreferrer">Route 53 records for a load balancer</a>.</p>
+
+<span id="registering-targets" aria-hidden="true"></span>
+<h2 id="3.-register-targets">3. Connect targets or an Auto Scaling group</h2>
+<span id="using-target-groups" aria-hidden="true"></span>
+<p>For a fixed test, register a running EC2 instance in the target group and make sure its application process and security-group rules match the target port. If you use an Auto Scaling group, attach the target group to the group; EC2 Auto Scaling then registers launched instances and deregisters instances it removes. Avoid treating a manually registered instance as the group's durable capacity.</p>
+<span id="registering-instances-directly" aria-hidden="true"></span>
+<p>With ALB, NLB, and GWLB, traffic reaches targets through target groups. CLB is the exception: it registers instances directly with the load balancer. This guide does not give a new CLB setup path because it is a legacy choice.</p>
+<span id="5.-set-up-auto-scaling-(optional)" aria-hidden="true"></span>
+<h3 id="attach-to-auto-scaling-group">Attach the target group to EC2 Auto Scaling</h3>
+<p>When you create or edit the Auto Scaling group, choose the ALB target group under load balancing. Place instances in private subnets across multiple Availability Zones and set a tested minimum, desired, and maximum capacity. The ALB normally routes around targets that fail health checks, but it can fail open when every target is unhealthy. The Auto Scaling group replaces unhealthy targets only when you enable ELB health checks for the group in addition to EC2 status checks.</p>
+<span id="how-auto-scaling-works" aria-hidden="true"></span>
+<p>New instances need time to boot, start the application, and pass target health checks. Set the group's health-check grace period to cover the app's startup time, then set default instance warmup based on when a new instance is ready and its metrics have stabilized. These settings solve different problems. For step-by-step group setup, see our <a href="/blog/aws-auto-scaling-setup-best-practices-tips/">EC2 Auto Scaling setup and health-check guide</a>.</p>
+<p>Auto Scaling and ELB improve recovery only when the application can run on additional instances, enough capacity is available in other zones, and state lives in a suitable shared or replicated service. They do not promise zero downtime for deployments, dependency failures, exhausted quotas, or sudden bursts that exceed ready capacity. See AWS's <a href="https://docs.aws.amazon.com/autoscaling/ec2/userguide/autoscaling-load-balancer.html" target="_blank" rel="noopener noreferrer">Auto Scaling load-balancer integration</a>.</p>
+
+<span id="4.-test-the-load-balancer" aria-hidden="true"></span>
+<h2>4. Test the full request path</h2>
+<span id="check-target-health" aria-hidden="true"></span>
+<h3>Start with target health</h3>
+<p>In the target group's <strong>Targets</strong> tab, confirm each expected instance is registered and healthy. A target that stays unhealthy may have the wrong port, path, protocol, response code, or security-group rule. Check the failure reason before loosening the health check or security group.</p>
+<span id="access-the-load-balancer" aria-hidden="true"></span>
+<h3>Test redirect, TLS, and application response</h3>
+<p>After the custom domain resolves to the ALB, send a GET request to that hostname and verify that HTTP redirects to the same host and path over HTTPS, the certificate covers the requested name, and HTTPS returns the expected application response. For a pre-DNS test, replace the example hostname and <code>ALB_DNS_NAME</code> with your domain and the ALB DNS name. <code>--connect-to</code> changes the network destination while preserving the URL hostname used for the Host header and TLS SNI:</p>
+<pre><code>curl -i --connect-to app.example.com:80:ALB_DNS_NAME:80 http://app.example.com/health
+curl -i --connect-to app.example.com:443:ALB_DNS_NAME:443 https://app.example.com/health</code></pre>
+<span id="verify-traffic-distribution" aria-hidden="true"></span>
+<h3>Confirm requests reach more than one target</h3>
+<p>Repeatedly refreshing a browser is not proof of even distribution: DNS answers, client connections, cookies, and target-group stickiness can affect what you observe. Send representative requests and correlate application logs or a temporary response header with the target that handled each request. Check the ALB access logs or the target-group metrics if you need evidence from the load balancer.</p>
+<p>There is an important health-check edge case: if <strong>all targets in all enabled Availability Zones are unhealthy</strong>, an ALB fails open and can route requests to those unhealthy targets. Health checks therefore do not guarantee that failed targets are isolated. Watch target health, test the actual failure mode, and size remaining zones to handle displaced traffic. AWS documents this <a href="https://docs.aws.amazon.com/elasticloadbalancing/latest/application/target-group-health-checks.html" target="_blank" rel="noopener noreferrer">ALB fail-open behavior</a>.</p>
+
+<span id="faqs" aria-hidden="true"></span>
+<span id="how-do-i-create-an-application-load-balancer-(alb)-in-aws%3F" aria-hidden="true"></span>
+<span id="how-do-i-set-up-a-network-load-balancer-(nlb)-on-aws%3F" aria-hidden="true"></span>
+<span id="how-do-i-set-up-network-load-balancing%3F" aria-hidden="true"></span>
+<span id="how-do-i-configure-a-load-balancer-on-aws%3F" aria-hidden="true"></span>
+<span id="how-do-i-create-an-elastic-load-balancer-in-aws%3F" aria-hidden="true"></span>
+<h2>5. Monitor health and review cost</h2>
+<span id="6.-monitor-and-manage" aria-hidden="true"></span>
+<span id="cloudwatch-monitoring" aria-hidden="true"></span>
+<p>Use CloudWatch metrics and alarms to monitor <code>HealthyHostCount</code>, <code>UnHealthyHostCount</code>, target-generated 5xx responses, and <code>TargetResponseTime</code>. AWS recommends monitoring nonzero minimum <code>UnHealthyHostCount</code> for more than one data point to detect when targets are unhealthy across load-balancer nodes and zones; also investigate nonzero average or maximum values. Some ALB metrics have no data when there is no traffic, so configure alarm treatment for missing data deliberately.</p>
+<p>For each alarm, choose an evaluation period and threshold from the service's normal traffic and availability objective. An alarm can notify an on-call operator; it does not by itself repair a broken deployment or dependency. The <a href="https://docs.aws.amazon.com/elasticloadbalancing/latest/application/load-balancer-cloudwatch-metrics.html" target="_blank" rel="noopener noreferrer">ALB CloudWatch metrics reference</a> explains metric names and reporting conditions.</p>
+<span id="managing-the-load-balancer" aria-hidden="true"></span>
+<p>Review listener rules, certificates, target health, and subnet IP capacity as the service changes. Estimate the Region-specific ALB hourly and LCU charges, plus compute, public IPv4, data transfer, and any network services the design uses, with the current <a href="https://aws.amazon.com/elasticloadbalancing/pricing/" target="_blank" rel="noopener noreferrer">ELB pricing</a> and <a href="https://aws.amazon.com/vpc/pricing/" target="_blank" rel="noopener noreferrer">VPC pricing</a> pages. For a disposable lab, terminate or delete the test instances and Auto Scaling group, then remove the ALB, unused target group, and security groups that are no longer attached. Verify the bill after cleanup.</p>
+
+<span id="summary" aria-hidden="true"></span>
+<h2>Checklist</h2>
+<span id="key-points" aria-hidden="true"></span>
 <ul>
-<li>High availability by routing traffic to healthy targets</li>
-<li>Fault tolerance by detecting and avoiding unhealthy targets</li>
-<li>Scalability to handle changes in traffic</li>
+<li>Use an ALB for HTTP/HTTPS application routing; choose NLB, GWLB, or a legacy CLB only when their behavior fits.</li>
+<li>Enable at least two Availability Zones, and distinguish an internet-facing ALB from the subnet routes that make it reachable.</li>
+<li>Use an HTTPS listener with an ACM certificate from the ALB's Region, an HTTP redirect when needed, and a target group in the application VPC.</li>
+<li>Restrict traffic through security-group references, verify a meaningful readiness check, and enable ELB health checks on the Auto Scaling group if it should replace unhealthy targets.</li>
+<li>Test DNS, TLS, redirect, response, target distribution, and the all-unhealthy fail-open case. Monitor both target health and application outcomes.</li>
 </ul>
-<p><strong>Monitoring and Management:</strong></p>
-<ul>
-<li>Use AWS CloudWatch for metrics and alarms</li>
-<li>Update settings, add/remove targets, manage listeners</li>
-</ul>
-<h2 id="related-video-from-youtube">Related video from YouTube</h2>
-<iframe allowfullscreen="" frameborder="0" loading="lazy" src="https://www.youtube.com/embed/ZGGpEwThhrM"></iframe><h2 id="getting-started">Getting Started</h2>
-<h3 id="aws-account-setup"><a href="https://aws.amazon.com/" target="_blank">AWS</a> Account Setup</h3>
-<p><figure><img alt="AWS" loading="lazy" src="/assets/media/2d135ce4df17cc4bb773.jpg"/></figure></p>
-<p>To set up an Elastic Load Balancer (ELB), you need an active AWS account with the right permissions to create and manage ELB resources. Make sure you have an AWS account ready before proceeding.</p>
-<h3 id="understanding-aws-services">Understanding AWS Services</h3>
-<p>Before setting up an ELB, it's helpful to understand these AWS services:</p>
-<ul>
-<li><strong>EC2 (Elastic Compute Cloud)</strong>: Provides virtual servers for computing and storage.</li>
-<li><strong>VPC (Virtual Private Cloud)</strong>: A virtual network dedicated to your AWS account.</li>
-<li><strong>Security Groups</strong>: Act as virtual firewalls to control traffic to your instances.</li>
-</ul>
-<h3 id="choosing-a-load-balancer-type">Choosing a Load Balancer Type</h3>
-<p>AWS offers four load balancer types:</p>
-<figure><table>
-<thead>
-<tr>
-<th>Load Balancer Type</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Application Load Balancer (ALB)</td>
-<td>For load balancing HTTP and HTTPS traffic, with advanced routing for modern applications.</td>
-</tr>
-<tr>
-<td>Network Load Balancer (NLB)</td>
-<td>Handles millions of requests per second with ultra-low latencies.</td>
-</tr>
-<tr>
-<td>Gateway Load Balancer (GLB)</td>
-<td>Deploys, scales, and manages virtual appliances like firewalls and intrusion detection/prevention systems.</td>
-</tr>
-<tr>
-<td>Classic Load Balancer (CLB)</td>
-<td>Simple load balancing of traffic across multiple <a href="/blog/aws-ec2-basics-core-concepts-explained/">EC2 instances</a>.</td>
-</tr>
-</tbody>
-</table></figure>
-<p>Choose the type that best fits your use case, considering:</p>
-<ul>
-<li><strong>Traffic type</strong>: HTTP, HTTPS, TCP, or UDP</li>
-<li><strong>Scalability</strong>: The number of requests per second your application needs</li>
-<li><strong>Latency</strong>: The acceptable delay between requests and responses</li>
-<li><strong>Security</strong>: The level of security required for your application</li>
-</ul>
-<h2 id="1.-create-a-target-group">1. Create a Target Group</h2>
-<h3 id="what-is-a-target-group%3F">What is a Target Group?</h3>
-<p>A target group is a set of resources (like EC2 instances, IP addresses, or Lambda functions) that a load balancer sends traffic to. It acts as the destination for traffic from the load balancer's listener. Each target group has settings for the protocol, port, and health checks. You can make multiple target groups to route different types of traffic to different resources.</p>
-<h3 id="creating-a-target-group">Creating a Target Group</h3>
-<p>To create a target group in the AWS Management Console:</p>
-<ol>
-<li>Open the Amazon EC2 console and go to <strong>Target Groups</strong> under <strong>Load Balancing</strong>.</li>
-<li>Click <strong>Create target group</strong>.</li>
-<li>Select the <strong>Target type</strong> (instances, IP addresses, or Lambda functions).</li>
-<li>Enter a <strong>Target group name</strong>.</li>
-<li>Choose the <strong>Protocol</strong> and <strong>Port</strong> for the targets.</li>
-<li>Select the <strong>IP address type</strong> (IPv4 or IPv6) and the <strong>VPC</strong> for the targets.</li>
-<li>(Optional) Change the <strong>Protocol version</strong> and <strong>Health check</strong> settings if needed.</li>
-<li>(Optional) Add tags for the target group.</li>
-<li>Click <strong>Next</strong> to register targets.</li>
-</ol>
-<h3 id="setting-up-health-checks">Setting Up Health Checks</h3>
-<p>Health checks monitor the health of your targets and ensure traffic only goes to healthy ones. When creating a target group, you can set:</p>
-<figure><table>
-<thead>
-<tr>
-<th>Health Check Setting</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><strong>Health check protocol</strong></td>
-<td>The protocol for health checks (HTTP, HTTPS, TCP, etc.).</td>
-</tr>
-<tr>
-<td><strong>Health check path</strong></td>
-<td>The destination path for HTTP/HTTPS health checks.</td>
-</tr>
-<tr>
-<td><strong>Health check port</strong></td>
-<td>The port used for health checks.</td>
-</tr>
-<tr>
-<td><strong>Healthy/Unhealthy thresholds</strong></td>
-<td>The number of successful/failed health checks before a target is considered healthy or unhealthy.</td>
-</tr>
-<tr>
-<td><strong>Timeout</strong></td>
-<td>The time to wait for a response before marking a health check as failed.</td>
-</tr>
-<tr>
-<td><strong>Interval</strong></td>
-<td>The approximate time between health checks for a target.</td>
-</tr>
-</tbody>
-</table></figure>
-<p>Adjust these settings based on your application's needs for accurate health monitoring.</p>
-<h3 id="registering-targets">Registering Targets</h3>
-<p>After creating the target group, register targets to it. The process varies by target type:</p>
-<ul>
-<li><strong>EC2 instances</strong>: Select the instances from the list and specify the ports.</li>
-<li><strong>IP addresses</strong>: Enter the IP addresses manually or select them from the VPC, and specify the ports.</li>
-<li><strong>Lambda functions</strong>: Select the Lambda function to register.</li>
-</ul>
-<p>Once you've registered the targets, click <strong>Create target group</strong> to finish.</p>
-<h2 id="2.-configure-the-load-balancer">2. Configure the Load Balancer</h2>
-<h3 id="basic-setup">Basic Setup</h3>
-<p>First, give your load balancer a name and choose whether it should be <strong>internet-facing</strong> (accessible from the internet) or <strong>internal</strong> (only accessible within your VPC). The choice depends on whether your application needs to be publicly available or not.</p>
-<p>Next, select the <strong>IP address type</strong> (IPv4 or IPv6) and the <strong>VPC</strong> where your load balancer will operate.</p>
-<h3 id="network-configuration">Network Configuration</h3>
-<p>Choose the <strong>subnets</strong> within your VPC where you want to deploy the load balancer. These subnets determine which resources the load balancer can access and route traffic to.</p>
-<h3 id="security-groups">Security Groups</h3>
-<p><strong>Security groups</strong> act as virtual firewalls, controlling traffic to your load balancer. You'll need to configure security groups to allow necessary traffic, such as HTTP or HTTPS for web applications.</p>
-<figure><table>
-<thead>
-<tr>
-<th>Security Group Setting</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><strong>Inbound Rules</strong></td>
-<td>Specify which traffic is allowed to reach the load balancer.</td>
-</tr>
-<tr>
-<td><strong>Outbound Rules</strong></td>
-<td>Specify which traffic the load balancer can send out.</td>
-</tr>
-</tbody>
-</table></figure>
-<p>You can create a new security group or use an existing one that meets your requirements.</p>
-<h3 id="listeners-and-routing">Listeners and Routing</h3>
-<p><strong>Listeners</strong> determine how traffic is routed to your target groups. You can configure multiple listeners for different types of traffic (e.g., HTTP and HTTPS).</p>
-<p>For HTTPS traffic, you'll need to set up <strong>SSL/TLS</strong> settings to encrypt traffic between the load balancer and your targets.</p>
-<figure><table>
-<thead>
-<tr>
-<th>Listener Setting</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><strong>Protocol</strong></td>
-<td>The protocol for the listener (e.g., HTTP, HTTPS).</td>
-</tr>
-<tr>
-<td><strong>Port</strong></td>
-<td>The port on which the listener will accept traffic.</td>
-</tr>
-<tr>
-<td><strong>Target Group</strong></td>
-<td>The target group to which the listener will route traffic.</td>
-</tr>
-</tbody>
-</table></figure>
-<h2 id="3.-register-targets">3. Register Targets</h2>
-<p>Adding targets to your load balancer is a key step. This allows the load balancer to distribute traffic to the right resources.</p>
-<h3 id="using-target-groups">Using Target Groups</h3>
-<p>For Application, Network, and Gateway Load Balancers, you need to register targets through target groups. A target group is a set of targets that receive traffic from the load balancer. Here's how to register targets with a target group:</p>
-<ol>
-<li>Open the Amazon EC2 console and go to the <strong>Target Groups</strong> page.</li>
-<li>Select the target group you created earlier.</li>
-<li>Click <strong>Register targets</strong> and choose the instances, IP addresses, or Lambda functions to add.</li>
-<li>Specify the port and protocol for each target.</li>
-<li>Click <strong>Include as pending</strong> to add the targets to the target group.</li>
-</ol>
-<h3 id="registering-instances-directly">Registering Instances Directly</h3>
-<p>For Classic Load Balancers, you can register instances directly with the load balancer:</p>
-<ol>
-<li>Open the Amazon EC2 console and go to the <strong>Load Balancers</strong> page.</li>
-<li>Select the Classic Load Balancer you created.</li>
-<li>Click <strong>Instances</strong> and choose the instances to add.</li>
-<li>Specify the port and protocol for each instance.</li>
-<li>Click <strong>Save</strong> to add the instances to the load balancer.</li>
-</ol>
-<figure><table>
-<thead>
-<tr>
-<th>Target Registration</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><strong>Target Groups</strong></td>
-<td>For Application, Network, and Gateway Load Balancers, register targets through target groups.</td>
-</tr>
-<tr>
-<td><strong>Direct Registration</strong></td>
-<td>For Classic Load Balancers, register instances directly with the load balancer.</td>
-</tr>
-</tbody>
-</table></figure>
-<p>Follow these steps to ensure your load balancer can distribute traffic to the right resources.</p>
-<h2 id="4.-test-the-load-balancer">4. Test the Load Balancer</h2>
-<h3 id="check-target-health">Check Target Health</h3>
-<p>Before testing, check if your registered targets are healthy. On the <strong>Target groups</strong> page, look at the <strong>Target health</strong> column. If at least one target shows <strong>In-service</strong>, you can proceed with testing.</p>
-<h3 id="access-the-load-balancer">Access the Load Balancer</h3>
-<p>To test your load balancer:</p>
-<ol>
-<li>Find the load balancer's DNS name in the <strong>Description</strong> section.</li>
-<li>Copy the DNS name and paste it into a new browser tab.</li>
-</ol>
-<p>If everything works correctly, your server's default page should display.</p>
-<h3 id="verify-traffic-distribution">Verify Traffic Distribution</h3>
-<p>To ensure traffic distributes evenly across targets:</p>
-<ol>
-<li>Refresh the page multiple times.</li>
-<li>Check if the host IP address changes with each refresh.</li>
-</ol>
-<p>If the IP address changes, your load balancer is distributing traffic correctly.</p>
-<figure><table>
-<thead>
-<tr>
-<th>Step</th>
-<th>Action</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>1</td>
-<td>Check target health status</td>
-</tr>
-<tr>
-<td>2</td>
-<td>Access the load balancer using its DNS name</td>
-</tr>
-<tr>
-<td>3</td>
-<td>Refresh the page and check for changing IP addresses</td>
-</tr>
-</tbody>
-</table></figure>
-<h2 id="5.-set-up-auto-scaling-(optional)">5. Set Up Auto Scaling (Optional)</h2>
-<h3 id="attach-to-auto-scaling-group">Attach to Auto Scaling Group</h3>
-<p>To automatically adjust the number of instances based on demand, you can attach your Elastic Load Balancer to an Auto Scaling group. Here's how:</p>
-<ol>
-<li>Go to the Auto Scaling console and select the Auto Scaling group.</li>
-<li>Click <strong>Edit</strong>, then <strong>Next</strong> to go to the <strong>Configure advanced options</strong> page.</li>
-<li>Under <strong>Load balancing</strong>, select <strong>Attach to an existing load balancer</strong> and choose your load balancer.</li>
-<li>Choose the target group you created earlier and click <strong>Next</strong>.</li>
-<li>Review the changes and click <strong>Update</strong> to attach the load balancer.</li>
-</ol>
-<h3 id="how-auto-scaling-works">How Auto Scaling Works</h3>
-<p>Once attached, Auto Scaling will manage instance registration with the load balancer:</p>
-<ol>
-<li>Auto Scaling launches new instances based on your scaling policy.</li>
-<li>The load balancer automatically registers the new instances as targets.</li>
-<li>The load balancer distributes incoming traffic across all registered targets.</li>
-<li>If an instance becomes unhealthy or is terminated, Auto Scaling replaces it.</li>
-<li>The load balancer updates its target list accordingly.</li>
-</ol>
-<figure><table>
-<thead>
-<tr>
-<th>Step</th>
-<th>Action</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>1</td>
-<td>Auto Scaling launches new instances</td>
-</tr>
-<tr>
-<td>2</td>
-<td>Load balancer registers new instances as targets</td>
-</tr>
-<tr>
-<td>3</td>
-<td>Load balancer distributes traffic across targets</td>
-</tr>
-<tr>
-<td>4</td>
-<td>Auto Scaling replaces unhealthy or terminated instances</td>
-</tr>
-<tr>
-<td>5</td>
-<td>Load balancer updates target list</td>
-</tr>
-</tbody>
-</table></figure>
-<h2 id="6.-monitor-and-manage">6. Monitor and Manage</h2>
-<h3 id="cloudwatch-monitoring"><a href="https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/WhatIsCloudWatch.html" target="_blank">CloudWatch</a> Monitoring</h3>
-<p><figure><img alt="CloudWatch" loading="lazy" src="/assets/media/a959351eed02a04dccda.jpg"/></figure></p>
-<p>AWS CloudWatch provides metrics and logs to monitor your Elastic Load Balancer's performance and troubleshoot issues. You can view metrics like:</p>
-<ul>
-<li><strong>RequestCount</strong>: The number of requests or connections made in a given time.</li>
-<li><strong>Latency</strong>: The time taken for the load balancer to send a request to an instance and receive the response headers.</li>
-<li><strong>UnHealthyHostCount</strong>: The number of unhealthy instances registered with your load balancer.</li>
-</ul>
-<p>You can set up CloudWatch alarms to notify you when a metric exceeds a threshold.</p>
-<figure><table>
-<thead>
-<tr>
-<th>To Set Up a CloudWatch Alarm</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>1. Open the CloudWatch console and go to Alarms.</td>
-</tr>
-<tr>
-<td>2. Click Create Alarm and choose the metric to monitor.</td>
-</tr>
-<tr>
-<td>3. Set the threshold value and evaluation period.</td>
-</tr>
-<tr>
-<td>4. Choose notification options (email, Lambda function, etc.).</td>
-</tr>
-<tr>
-<td>5. Click Create Alarm.</td>
-</tr>
-</tbody>
-</table></figure>
-<h3 id="managing-the-load-balancer">Managing the Load Balancer</h3>
-<p>You can update settings, add or remove targets, and manage listeners for your Elastic Load Balancer.</p>
-<figure><table>
-<thead>
-<tr>
-<th>Management Tasks</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><strong>Update settings</strong>: Change the load balancer's configuration, like idle timeout or cross-zone load balancing.</td>
-</tr>
-<tr>
-<td><strong>Add or remove targets</strong>: Add or remove instances from the target group to ensure only healthy instances are registered.</td>
-</tr>
-<tr>
-<td><strong>Manage listeners</strong>: Add or remove listeners, modify the listener protocol, or update the SSL/TLS certificate.</td>
-</tr>
-</tbody>
-</table></figure>
-<p>You can use the AWS CLI or SDKs to automate these tasks.</p>
-<h2 id="summary">Summary</h2>
-<h3 id="key-points">Key Points</h3>
-<p>This guide covered the steps to set up an Elastic Load Balancer (ELB) in AWS. Load balancing helps ensure your applications are highly available, fault-tolerant, and scalable by efficiently routing traffic to healthy resources.</p>
-<p>AWS offers four load balancer types:</p>
-<figure><table>
-<thead>
-<tr>
-<th>Load Balancer Type</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Application Load Balancer (ALB)</td>
-<td>For HTTP and HTTPS traffic, with advanced routing for modern applications.</td>
-</tr>
-<tr>
-<td>Network Load Balancer (NLB)</td>
-<td>Handles millions of requests per second with low latency.</td>
-</tr>
-<tr>
-<td>Gateway Load Balancer (GLB)</td>
-<td>Manages virtual appliances like firewalls and intrusion detection/prevention systems.</td>
-</tr>
-<tr>
-<td>Classic Load Balancer (CLB)</td>
-<td>Simple load balancing across multiple EC2 instances.</td>
-</tr>
-</tbody>
-</table></figure>
-<p>The guide covered:</p>
-<ul>
-<li>Creating a target group</li>
-<li>Configuring the load balancer</li>
-<li>Registering targets</li>
-<li>Testing the load balancer</li>
-<li>Setting up auto scaling (optional)</li>
-<li>Monitoring and managing the load balancer</li>
-</ul>
-<h3 id="further-reading">Further Reading</h3>
-<p>For more details, refer to these resources:</p>
-<ul>
-<li><a href="https://docs.aws.amazon.com/elasticloadbalancing/latest/userguide/what-is-load-balancer.html" target="_blank">AWS Elastic Load Balancing Documentation</a></li>
-<li><a href="https://docs.aws.amazon.com/elasticloadbalancing/latest/userguide/how-elastic-load-balancer-works.html" target="_blank">AWS Load Balancer Types</a></li>
-<li><a href="https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/WhatIsCloudWatch.html" target="_blank">AWS CloudWatch Monitoring</a></li>
-</ul>
-<h2 id="faqs">FAQs</h2>
-<h3 id="how-do-i-create-an-application-load-balancer-(alb)-in-aws%3F">How do I create an <a href="https://docs.aws.amazon.com/elasticloadbalancing/latest/application/introduction.html" target="_blank">Application Load Balancer</a> (ALB) in AWS?</h3>
-<p><figure><img alt="Application Load Balancer" loading="lazy" src="/assets/media/3706dfcd6865d052df42.jpg"/></figure></p>
-<p>To create an Application Load Balancer (ALB) in AWS, follow these simple steps:</p>
-<ol>
-<li>Open the Amazon EC2 console at https://console.aws.amazon.com/ec2/.</li>
-<li>In the navigation pane, select <strong>Load Balancers</strong>.</li>
-<li>Click <strong>Create Load Balancer</strong>.</li>
-<li>Under <strong>Application Load Balancer</strong>, click <strong>Create</strong>.</li>
-<li>Enter a name for your load balancer, select a VPC, and choose the Availability Zones.</li>
-<li>Select the subnets for your load balancer.</li>
-<li>For <strong>Security groups</strong>, select an existing security group or create a new one.</li>
-</ol>
-<h3 id="how-do-i-set-up-a-network-load-balancer-(nlb)-on-aws%3F">How do I set up a <a href="https://en.wikipedia.org/wiki/Network_Load_Balancing_Services" target="_blank">Network Load Balancer</a> (NLB) on AWS?</h3>
-<p><figure><img alt="Network Load Balancer" loading="lazy" src="/assets/media/28dcf52e85ba1f30c9d1.jpg"/></figure></p>
-<p>To set up a Network Load Balancer (NLB) on AWS:</p>
-<ol>
-<li>Open the Amazon EC2 console at https://console.aws.amazon.com/ec2/.</li>
-<li>In the navigation pane, select <strong>Load Balancers</strong>.</li>
-<li>Click <strong>Create load balancer</strong>.</li>
-<li>Under <strong>Network Load Balancer</strong>, click <strong>Create</strong>.</li>
-<li>Enter a name for your load balancer, select a VPC, and choose the Availability Zones.</li>
-<li>Select the subnets for your load balancer.</li>
-<li>For <strong>Security groups</strong>, AWS preselects the default security group for your VPC.</li>
-</ol>
-<h3 id="how-do-i-set-up-network-load-balancing%3F">How do I set up network load balancing?</h3>
-<p>To set up network load balancing, follow these steps:</p>
-<ol>
-<li><strong>Configure your target group</strong>: Create a target group, which is used in request routing.</li>
-<li><strong>Choose a load balancer type</strong>: Select the appropriate load balancer type for your needs.</li>
-<li><strong>Configure your load balancer and listener</strong>: Set up your load balancer and configure the listener.</li>
-<li><strong>Test your load balancer</strong>: Verify that your load balancer is working correctly.</li>
-<li><strong>(Optional) Delete your load balancer</strong>: If needed, you can delete your load balancer.</li>
-</ol>
-<h3 id="how-do-i-configure-a-load-balancer-on-aws%3F">How do I configure a load balancer on AWS?</h3>
-<p>To configure a load balancer on AWS:</p>
-<ol>
-<li>Open the Amazon EC2 console at https://console.aws.amazon.com/ec2/.</li>
-<li>On the navigation bar, choose a Region for your load balancer.</li>
-<li>On the navigation pane, under <strong>Load Balancing</strong>, select <strong>Load Balancers</strong>.</li>
-<li>Click <strong>Create Load Balancer</strong>.</li>
-<li>Expand the <strong>Classic Load Balancer</strong> section, then click <strong>Create</strong>.</li>
-<li>Enter a name for your load balancer, select a VPC, and choose the Availability Zones.</li>
-</ol>
-<h3 id="how-do-i-create-an-elastic-load-balancer-in-aws%3F">How do I create an Elastic Load Balancer in AWS?</h3>
-<p>To create an Elastic Load Balancer in AWS, follow these steps:</p>
-<ol>
-<li>Open the Amazon EC2 console at https://console.aws.amazon.com/ec2/.</li>
-<li>In the navigation pane, select <strong>Load Balancers</strong>.</li>
-<li>Click <strong>Create Load Balancer</strong>.</li>
-<li>Under <strong>Application Load Balancer</strong>, click <strong>Create</strong>.</li>
-<li>Enter a name for your load balancer, select a VPC, and choose the Availability Zones.</li>
-<li>Select the subnets for your load balancer.</li>
-<li>For <strong>Security groups</strong>, select an existing security group or create a new one.</li>
-</ol>
-<p>
-<h2>Related posts</h2>
-<ul>
-<li><a href="/blog/aws-ec2-basics-core-concepts-explained/">AWS EC2 Basics: Core Concepts Explained</a></li><li><a href="/blog/aws-content-migration-best-practices/">AWS Content Migration Best Practices</a></li><li><a href="/blog/aws-engineering-blog-autoscaling-for-high-availability/">AWS Engineering Blog: Autoscaling for High Availability</a></li><li><a href="/blog/aws-ec2-and-s3-for-beginners/">AWS EC2 and S3 for Beginners</a></li>
-</ul>
-</p>
+<span id="further-reading" aria-hidden="true"></span>
+<p>Continue with our <a href="/blog/aws-auto-scaling-setup-best-practices-tips/">EC2 Auto Scaling setup guide</a> for group sizing and policy choices, or read <a href="/blog/aws-engineering-blog-autoscaling-for-high-availability/">how Auto Scaling fits into an availability design</a>.</p>
