@@ -3,304 +3,127 @@ layout: post.njk
 templateEngineOverride: html
 tags: posts
 title: "Enterprise Integration Patterns with AWS Services"
-description: "Explore how AWS services streamline enterprise integration patterns, enhancing communication and reliability across distributed systems."
+description: "Learn how enterprise integration patterns map to AWS services for request-reply, queues, pub/sub, event routing, transformation, and workflow orchestration."
 date: "2025-02-24"
 datePublished: "2025-02-24T06:24:31.367000+00:00"
 heroImage: "/assets/media/d483feafcb6d450d46bd.jpg"
 permalink: "/blog/enterprise-integration-patterns-with-aws-services/"
 sourceUrl: "https://awsforengineers.com/blog/enterprise-integration-patterns-with-aws-services/"
-dateModified: "2026-10-03"
-updateNote: "Added author attribution and profile information; corrected the article heading hierarchy and added article navigation."
+dateModified: "2026-10-04"
+updateNote: "Rewrote the guide to distinguish integration patterns from AWS service features, clarify delivery and workflow failure semantics, and add current AWS documentation."
 ---
-<p><strong>Enterprise Integration Patterns (EIPs)</strong> help connect distributed systems by solving challenges like asynchronous communication, system failures, and data mismatches. <a href="/blog/">AWS services</a> align with these patterns, offering scalable, managed solutions for integration.</p>
-<h2 id="key-aws-services-and-patterns">Key AWS Services and Patterns:</h2>
-<ul>
-<li><strong><a href="https://docs.aws.amazon.com/sqs/" rel="nofollow noopener noreferrer" target="_blank">Amazon SQS</a></strong>: Point-to-Point Messaging for decoupling services.</li>
-<li><strong><a href="https://aws.amazon.com/sns/" rel="nofollow noopener noreferrer" target="_blank">Amazon SNS</a></strong>: Publish-Subscribe for event broadcasting.</li>
-<li><strong>API Gateway</strong>: Request-Reply for synchronous communication.</li>
-<li><strong><a href="https://docs.aws.amazon.com/lambda/" rel="nofollow noopener noreferrer" target="_blank">AWS Lambda</a></strong>: Message Transformation for serverless processing.</li>
-<li><strong><a href="https://aws.amazon.com/step-functions/" rel="nofollow noopener noreferrer" target="_blank">AWS Step Functions</a></strong>: Orchestration for managing workflows.</li>
-</ul>
-<h2 id="quick-comparison-of-aws-tools">Quick Comparison of AWS Tools:</h2>
-<figure><table>
-<thead>
-<tr>
-<th><strong>AWS Service</strong></th>
-<th><strong>Pattern</strong></th>
-<th><strong>Key Features</strong></th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><strong>SQS</strong></td>
-<td>Point-to-Point</td>
-<td>Asynchronous messaging, at-least-once delivery</td>
-</tr>
-<tr>
-<td><strong>SNS</strong></td>
-<td>Publish-Subscribe</td>
-<td>Event broadcasting, message filtering</td>
-</tr>
-<tr>
-<td><strong>API Gateway</strong></td>
-<td>Request-Reply</td>
-<td>HTTP APIs, secure endpoints</td>
-</tr>
-<tr>
-<td><strong>Lambda</strong></td>
-<td>Message Transformation</td>
-<td>Serverless, event-driven processing</td>
-</tr>
-<tr>
-<td><strong>Step Functions</strong></td>
-<td>Orchestration</td>
-<td>Workflow automation, fault tolerance</td>
-</tr>
-</tbody>
-</table></figure>
-<p>AWS makes integration easier by reducing custom code, scaling automatically, and ensuring high availability. Dive in to see how these services simplify system communication while supporting enterprise-grade reliability.</p>
-<h2 id="common-integration-patterns-in-aws">Common Integration Patterns in AWS</h2>
-<p>AWS offers several ways to integrate services, each tailored to specific patterns and use cases. Here's how some of the core integration patterns are implemented using AWS services.</p>
-<h3 id="building-pubsub-systems-with-sns">Building Pub/Sub Systems with SNS</h3>
-<p>Amazon SNS is a messaging service designed for pub/sub systems, allowing messages to be sent to multiple subscribers. It supports various subscription types, including SQS, Lambda, HTTP, email, and mobile devices .</p>
-<p>SNS also includes message filtering, which helps reduce unnecessary processing for related events .</p>
-<figure><table>
-<thead>
-<tr>
-<th>Feature</th>
-<th>Implementation Detail</th>
-<th>Benefit</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><strong>Message Filtering</strong></td>
-<td>SNS Filter Policy</td>
-<td>Cuts down on redundant processing</td>
-</tr>
-<tr>
-<td><strong>Delivery Protocols</strong></td>
-<td>HTTP/S, Email, SMS</td>
-<td>Supports communication across channels</td>
-</tr>
-<tr>
-<td><strong>Subscriber Types</strong></td>
-<td>SQS, Lambda, HTTP</td>
-<td>Enables different integration methods</td>
-</tr>
-</tbody>
-</table></figure>
-<h3 id="message-queuing-with-sqs">Message Queuing with SQS</h3>
-<p>Amazon SQS is a service designed for message queuing, helping to decouple system components and enable asynchronous processing. It ensures at-least-once message delivery and offers message retention for up to 14 days .</p>
-<p>SQS provides two types of queues:</p>
-<figure><table>
-<thead>
-<tr>
-<th>Queue Type</th>
-<th>Use Case</th>
-<th>Key Features</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><strong>Standard</strong></td>
-<td>High-throughput workloads</td>
-<td>At-least-once delivery with best-effort ordering</td>
-</tr>
-<tr>
-<td><strong>FIFO</strong></td>
-<td>Strict ordering needs</td>
-<td>Exactly-once processing with ordered delivery</td>
-</tr>
-</tbody>
-</table></figure>
-<p>By decoupling components, SQS allows for smoother and more reliable asynchronous workflows.</p>
-<h3 id="request-reply-using-api-gateway-and-lambda">Request-Reply Using API Gateway and Lambda</h3>
-<p>For synchronous communication, AWS supports request-reply patterns using API Gateway and Lambda. API Gateway handles HTTP requests and routes them to Lambda functions .</p>
-<p>To get the best performance, consider these practices :</p>
-<ul>
-<li>Initialize SDK clients outside the handler function</li>
-<li>Cache static assets to speed up responses</li>
-<li>Implement timeout handling for reliability</li>
-<li>Use environment variables for configuration</li>
-</ul>
-<p>API Gateway offers two API types, each suited to different requirements:</p>
-<figure><table>
-<thead>
-<tr>
-<th>Feature</th>
-<th>HTTP API</th>
-<th>REST API</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><strong>Integration Types</strong></td>
-<td>Lambda, HTTP</td>
-<td>Lambda, HTTP, Mock, AWS Service</td>
-</tr>
-<tr>
-<td><strong>Authorization</strong></td>
-<td>OIDC, OAuth 2.0, IAM</td>
-<td>IAM, Lambda, Cognito</td>
-</tr>
-<tr>
-<td><strong>Cost</strong></td>
-<td>Lower pricing</td>
-<td>Higher pricing with more features</td>
-</tr>
-<tr>
-<td><strong>Performance</strong></td>
-<td>Lower latency</td>
-<td>Standard latency with additional options</td>
-</tr>
-</tbody>
-</table></figure>
-<p>These tools work together to create scalable, secure APIs that deliver strong performance and reliability.</p>
-<h2 id="aws-services-for-integration">AWS Services for Integration</h2>
-<p>AWS offers a range of services that work together to simplify communication between systems, making it easier to implement enterprise integration patterns. Below, we break down the key integration-specific features of these services.</p>
-<h3 id="api-gateway-features-and-uses">API Gateway Features and Uses</h3>
-<p>API Gateway serves as the main entry point for APIs in AWS integration setups. It helps with creating, publishing, and securing APIs. Security options include <strong>IAM</strong>, <strong>Lambda authorizers</strong>, or <strong>Cognito user pools</strong>, while integration with <strong>CloudWatch</strong> enables performance monitoring.</p>
-<figure><table>
-<thead>
-<tr>
-<th>Feature</th>
-<th>Description</th>
-<th>Benefits</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Authentication</td>
-<td>Supports IAM, Lambda authorizers, and Cognito user pools</td>
-<td>Ensures secure API access</td>
-</tr>
-<tr>
-<td>Monitoring</td>
-<td>Integrates with CloudWatch</td>
-<td>Tracks performance in real-time</td>
-</tr>
-</tbody>
-</table></figure>
-<p>Now, let’s explore how SQS helps manage message queues in this ecosystem.</p>
-<h3 id="sqs-message-queue-management">SQS Message Queue Management</h3>
-<p>SQS plays a crucial role in managing message queues. It ensures messages are reliably handled between services, keeping communication smooth and consistent across integrated systems.</p>
-<h3 id="lambda-function-integration">Lambda Function Integration</h3>
-<p>Lambda functions act as the compute layer for serverless tasks, tying together different services in the integration framework. They handle events from multiple sources and perform tasks like:</p>
-<ul>
-<li>Processing messages from SQS queues</li>
-<li>Responding to API Gateway requests</li>
-<li>Managing notifications from SNS</li>
-<li>Running scheduled tasks via EventBridge</li>
-</ul>
-<h3 id="sns-topic-management">SNS Topic Management</h3>
-<p>SNS is all about managing topics and distributing messages efficiently. It supports various subscription protocols and allows for advanced message filtering, ensuring messages reach the right recipients.</p>
-<blockquote>
-<p>"We now have an agile, scalable foundation on which to do all kinds of amazing things. Much like with the exploration of space, we're just starting to imagine all that we can do with it." - Bryan Walls, Imagery Experts Deputy Program Manager, NASA </p>
-</blockquote>
-<p>Together, these AWS services provide a secure, scalable, and reliable integration platform. For example, <a href="http://www.alphaapp.com/" rel="nofollow noopener noreferrer" target="_blank">Alpha Apps</a> cut content delivery costs by 80% by using AWS Step Functions alongside these services .</p>
+<p>Enterprise Integration Patterns describe recurring ways that independent systems exchange requests, messages, and events. AWS services provide building blocks for those patterns, but a service name is not a guarantee about the behavior of the whole workflow. A queue can buffer work without making a handler safe to retry; a router can deliver an event without proving that a business operation completed.</p>
+<p>Start with the communication need and the failure boundary. Decide whether a caller must wait for a response, whether one message has one worker or many subscribers, whether work needs a durable backlog, and whether a workflow must coordinate several steps. Then select the AWS features that fit those requirements.</p>
 
-<h2 id="integration-pattern-examples">Integration Pattern Examples</h2>
-<p>Here’s how AWS services come together to create complete enterprise integration solutions.</p>
-<h3 id="order-processing-system">Order Processing System</h3>
-<p>A distributed order management system (OMS) shows how AWS services handle everything from order entry to fulfillment, all while ensuring data consistency and fault tolerance.</p>
+<h2 id="common-integration-patterns-in-aws">Common Integration Patterns in AWS</h2>
+<p>The same service can participate in more than one pattern, and a pattern often uses several services. This map describes common roles rather than fixed architecture recipes.</p>
 <figure><table>
 <thead>
 <tr>
-<th><strong>Layer</strong></th>
-<th><strong>AWS Services</strong></th>
-<th><strong>Function</strong></th>
+<th>Integration need</th>
+<th>Pattern</th>
+<th>Common AWS building blocks</th>
+<th>What the pattern provides</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td>Integration</td>
-<td>API Gateway, EventBridge</td>
-<td>Handles file transfers, APIs, and event patterns</td>
+<td>A client needs an answer during the call</td>
+<td>Request-reply</td>
+<td>Amazon API Gateway and an HTTP service or synchronous AWS Lambda integration</td>
+<td>A request path that returns a response to the caller</td>
 </tr>
 <tr>
-<td>Processing</td>
-<td>Lambda, Step Functions</td>
-<td>Executes order allocation and processing logic</td>
+<td>Work should wait until a worker can process it</td>
+<td>Work queue / competing consumers</td>
+<td>Amazon SQS</td>
+<td>A retained backlog that separates the producer from workers</td>
 </tr>
 <tr>
-<td>Data Storage</td>
-<td>Aurora, DynamoDB</td>
-<td>Manages transactional and low-latency data storage</td>
+<td>Several independent consumers need a notification</td>
+<td>Publish-subscribe / fanout</td>
+<td>Amazon SNS, or an EventBridge event bus for content-routed events</td>
+<td>One publication can reach multiple subscriptions or targets</td>
 </tr>
 <tr>
-<td>Analytics</td>
-<td>Redshift</td>
-<td>Provides business insights</td>
+<td>Different events need different destinations</td>
+<td>Content-based router</td>
+<td>EventBridge event patterns; SNS subscription filter policies</td>
+<td>Matching events are sent to the destinations that selected them</td>
+</tr>
+<tr>
+<td>A destination expects a different payload shape</td>
+<td>Message translator</td>
+<td>EventBridge input transformer, EventBridge Pipes, or application code</td>
+<td>Fields are selected, renamed, or reshaped for the next integration</td>
+</tr>
+<tr>
+<td>Processing needs data from another system</td>
+<td>Content enricher</td>
+<td>EventBridge Pipes enrichment or application code</td>
+<td>Additional context is looked up and added before delivery</td>
+</tr>
+<tr>
+<td>Several dependent actions need explicit coordination</td>
+<td>Orchestration; sometimes a saga</td>
+<td>AWS Step Functions with service integrations or task code</td>
+<td>Sequencing, branching, error handling, and any business-defined compensation</td>
+</tr>
+<tr>
+<td>Many records need continuous processing or independent readers</td>
+<td>Event stream</td>
+<td>Amazon Kinesis Data Streams</td>
+<td>A retained stream that multiple processing applications can consume independently</td>
 </tr>
 </tbody>
 </table></figure>
-<p>ETL tasks use Lambda to push data into Kinesis Data Streams and EventBridge, with AWS Glue managing batch transactions . This example lays the groundwork for exploring another integration model designed for high data throughput.</p>
+<p>Filtering, transformation, and enrichment solve different problems. Filtering decides whether a message proceeds along a route. Transformation changes the payload sent onward. Enrichment obtains additional information, often by calling another service. Keeping those jobs distinct makes it clearer which component owns a decision, data contract, and failure.</p>
+
+<h2 id="aws-services-for-integration">AWS Services for Integration</h2>
+<h3 id="request-reply-using-api-gateway-and-lambda"><span id="api-gateway-features-and-uses"></span>Request-Reply with API Gateway and Lambda</h3>
+<p>Request-reply fits operations where the caller needs a result or acceptance response before it can continue. With an API Gateway Lambda proxy integration, API Gateway sends the HTTP request to Lambda and returns the function's response to the client. API Gateway can also proxy a request and response to a publicly routable HTTP endpoint. See the <a href="https://docs.aws.amazon.com/apigateway/latest/developerguide/http-api-develop-integrations-lambda.html" target="_blank" rel="noopener noreferrer">API Gateway HTTP API and Lambda integration guide</a> and the guide to <a href="https://docs.aws.amazon.com/apigateway/latest/developerguide/http-api-develop-integrations-http.html" target="_blank" rel="noopener noreferrer">HTTP proxy integrations</a>.</p>
+<p>This path is synchronous from the caller's perspective; it does not make a multi-service business transaction atomic. Set timeouts for the request and its downstream calls. If the response is lost after a state change, a client may retry without knowing whether the first attempt committed. Use an idempotency key for operations that must not create duplicate effects, and return a stable result for repeated requests where the application can do so. AWS explains this approach in its <a href="https://aws.amazon.com/builders-library/making-retries-safe-with-idempotent-APIs/" target="_blank" rel="noopener noreferrer">guidance on safe retries with idempotent APIs</a>.</p>
+
+<h3 id="building-pubsub-systems-with-sns"><span id="sns-topic-management"></span>Publish-Subscribe with SNS</h3>
+<p>Amazon SNS topics implement a push-based fanout pattern: a publisher sends a notification to a topic and SNS delivers it to the topic's subscribers. This works when several recipients need an event or notification without the producer calling each one. SNS supports subscriptions such as SQS queues, Lambda functions, and HTTP/S endpoints; see the <a href="https://docs.aws.amazon.com/sns/latest/dg/sns-create-subscribe-endpoint-to-topic.html" target="_blank" rel="noopener noreferrer">SNS subscription guide</a>. For asynchronous workers that need their own backlog, subscribe one SQS queue per consumer; SNS fans out the notification, while each queue lets its worker poll and process at its own pace. AWS describes this combination in its guide to <a href="https://docs.aws.amazon.com/sns/latest/dg/sns-sqs-as-subscriber.html" target="_blank" rel="noopener noreferrer">SNS fanout to SQS for asynchronous processing</a>.</p>
+<p>An SNS subscription filter policy can limit which messages that subscriber receives. Policies can match message attributes or, when configured for it, properties in a JSON message body. A filter decides delivery; it does not rewrite or enrich the message. A message rejected by one subscription can still be delivered to other subscriptions whose policies match. See <a href="https://docs.aws.amazon.com/sns/latest/dg/sns-message-filtering.html" target="_blank" rel="noopener noreferrer">SNS message filtering</a>.</p>
+
+<h3 id="message-queuing-with-sqs"><span id="sqs-message-queue-management"></span>Durable Work Queues with SQS</h3>
+<p>Amazon SQS is a durable queue for decoupling producers from workers. A consumer receives a message, which remains in the queue but becomes temporarily invisible while the consumer processes it. The consumer deletes it after successful processing. If it is not deleted before the visibility timeout expires, it can become available for another attempt. Queue retention, visibility timeout, and dead-letter queue settings govern different parts of that lifecycle; configure them for the work rather than assuming a queue completes or repairs failed work. See the <a href="https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/welcome.html" target="_blank" rel="noopener noreferrer">SQS message lifecycle</a> and <a href="https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/sqs-visibility-timeout.html" target="_blank" rel="noopener noreferrer">visibility timeout guidance</a>.</p>
+<p>Standard queues provide at-least-once delivery, so a message can be received more than once. Make a worker's side effects idempotent, especially when it calls a database or external API. </p>
+<p>FIFO queues add ordering within each message group and deduplication for repeated sends within a defined interval. The group key is the unit of ordering: one group is processed sequentially, while different groups can make progress independently, so a single busy group limits parallel work. FIFO queues also have separate throughput quotas and a high-throughput mode; check current quotas for the queue and Region before sizing them. </p>
+<p>AWS describes FIFO queue processing as exactly-once, but that does not make a payment, database update, or other external effect an atomic exactly-once business transaction. If a consumer performs an effect and fails before deleting the message, the message can be received again after its visibility timeout. Use FIFO when its ordering and deduplication behavior fits the workflow, and still make effects safe to repeat. See AWS documentation for <a href="https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/standard-queues-at-least-once-delivery.html" target="_blank" rel="noopener noreferrer">standard queue delivery</a>, <a href="https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/sqs-fifo-queues.html" target="_blank" rel="noopener noreferrer">FIFO ordering and throughput guidance</a>, and <a href="https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/FIFO-key-terms.html" target="_blank" rel="noopener noreferrer">FIFO message groups and deduplication</a>.</p>
+
+<h3 id="content-based-routing-with-eventbridge">Content-Based Routing with EventBridge</h3>
+<p>EventBridge event buses route events by matching event patterns. An event can match multiple rules or subscribers, so a bus can support one-to-many routing as well as content-based routing. The default event bus and Custom Event Bus - Classic use rules and targets. For example, a Classic rule can select events from an order service whose <code>detail-type</code> is <code>OrderPlaced</code> and send matching events to a queue or function.</p>
+<p>EventBridge's models have changed. The enhanced <a href="https://docs.aws.amazon.com/eventbridge/latest/userguide/eb-custom-bus.html" target="_blank" rel="noopener noreferrer">Custom Event Bus</a>, announced on September 24, 2026, uses consumer-created subscribers with their own filters and optional transformations, and retains events for replay. Custom Event Bus - Classic remains available with its rules-and-targets model. Do not apply a Classic bus limitation or configuration description to the newer bus without checking the documentation for that model. The <a href="https://aws.amazon.com/about-aws/whats-new/2026/09/eventbridge-relaunches-custom-event-buses/" target="_blank" rel="noopener noreferrer">AWS launch announcement</a> summarizes the change.</p>
+<p>Failure handling is also bus-specific. A Classic rule can retry target delivery and use an SQS dead-letter queue for events that could not be delivered. The enhanced Custom Event Bus writes failure details and event identifiers to its SQS failure queue, not a copy of each original event; recovery replays the event from the bus while it is still retained. In either model, delivery to a target and successful processing by that target are separate outcomes. See AWS guidance for <a href="https://docs.aws.amazon.com/eventbridge/latest/userguide/eb-rule-retry-policy.html" target="_blank" rel="noopener noreferrer">Classic target retries</a>, <a href="https://docs.aws.amazon.com/eventbridge/latest/userguide/eb-rule-dlq.html" target="_blank" rel="noopener noreferrer">Classic target dead-letter queues</a>, and <a href="https://docs.aws.amazon.com/eventbridge/latest/userguide/eb-custom-bus-retry.html" target="_blank" rel="noopener noreferrer">Custom Event Bus retries and failure recovery</a>.</p>
+<p>EventBridge Pipes serve a different shape of integration: a point-to-point connection from one supported source to one target, with optional filtering, enrichment, and transformation. A pipe is useful when a direct source-to-target flow needs those steps without a general event bus. See the <a href="https://docs.aws.amazon.com/eventbridge/latest/userguide/eb-pipes.html" target="_blank" rel="noopener noreferrer">EventBridge Pipes guide</a>.</p>
+
+<p>For a closer comparison of routing, retained events, competing workers, and the two DLQ boundaries, read our <a href="/blog/eventbridge-vs-sqs-choosing-the-right-event-router/">EventBridge vs. SQS guide</a>.</p>
+
+<h3 id="message-transformation-and-enrichment">Transformation Is Different from Enrichment</h3>
+<p>A transformer maps data that already exists. For a Classic EventBridge rule, an input transformer can select values from the original event and build a target-specific payload. A translator function can do more complex schema conversion when a template is insufficient. Neither operation necessarily adds new business facts.</p>
+<p>An enricher obtains data that was not present in the original message—for example, looking up a customer's shipping address before starting fulfillment. EventBridge Pipes can call a supported enrichment service and then send the enriched result to its target. That lookup introduces a new dependency with its own latency, permissions, error handling, and freshness. Keep it explicit in the flow. See AWS documentation for <a href="https://docs.aws.amazon.com/eventbridge/latest/userguide/eb-transform-target-input.html" target="_blank" rel="noopener noreferrer">EventBridge input transformation</a> and <a href="https://docs.aws.amazon.com/eventbridge/latest/userguide/eb-pipes.html" target="_blank" rel="noopener noreferrer">Pipes enrichment</a>.</p>
+
+<h3 id="workflow-orchestration-with-step-functions">Workflow Orchestration with Step Functions</h3>
+<p>AWS Step Functions provides a state machine to coordinate tasks, branches, waits, and service integrations. Task states can define <code>Retry</code> and <code>Catch</code> behavior. A retry runs the task again, so the task must tolerate repeated execution or use an idempotency mechanism when it changes state. Step Functions coordinates the workflow; it does not supply a universal transaction across the systems called by each task. See <a href="https://docs.aws.amazon.com/step-functions/latest/dg/concepts-error-handling.html" target="_blank" rel="noopener noreferrer">Step Functions error handling</a>.</p>
+<p>A saga is a distributed workflow made of local transactions. If a later step cannot continue, the workflow may issue compensating business actions for earlier completed steps—for example, release a stock reservation or refund an authorized payment. Those actions must be designed and implemented; they are not automatic rollback. Compensation can itself fail, and a refund does not erase the original charge. AWS's <a href="https://docs.aws.amazon.com/prescriptive-guidance/latest/cloud-design-patterns/saga-patterns.html" target="_blank" rel="noopener noreferrer">saga guidance</a> explains orchestration and choreography tradeoffs.</p>
+
 <h3 id="event-stream-processing">Event Stream Processing</h3>
-<p>AWS event stream processing systems are built to handle massive data volumes with minimal latency. Kinesis Data Streams plays a central role, capable of capturing gigabytes of data per second from hundreds of thousands of sources .</p>
-<p>Enhanced Fan-Out (EFO) reduces latency to as little as 70 milliseconds, a 65% improvement over standard delivery . Here are three key elements to consider:</p>
-<ul>
-<li>
-<strong>Stream Processing Configuration</strong>: Dedicated throughput allocation provides 2 MB/second of reads per shard, ensuring consistent performance even under heavy loads.
-</li>
-<li>
-<strong>Performance Optimization</strong>: Lambda processes stream data with parallelization, handling up to 10 batches per shard simultaneously . This setup boosts throughput and lowers latency.
-</li>
-<li>
-<strong>Monitoring and Error Handling</strong>: <a href="/blog/custom-cloudwatch-metrics-setup-guide-2024/">CloudWatch metrics</a>, particularly the <code>IteratorAge</code> metric, monitor performance to prevent data loss. Retry behaviors and dead-letter queues manage poison messages effectively .
-</li>
-</ul>
-<p>These examples highlight how AWS services can be combined to build scalable, reliable solutions that meet demanding business needs while maintaining performance and data consistency.</p>
-<h2 id="conclusion">Conclusion</h2>
-<h3 id="summary">Summary</h3>
-<p>AWS services provide a strong base for Enterprise Integration Patterns (EIPs), surpassing older integration methods. Tools like <strong>API Gateway</strong>, <strong>Lambda</strong>, <strong>SQS</strong>, and <strong>SNS</strong> support both synchronous and asynchronous communication needs . Meanwhile, <strong>AWS Step Functions</strong> helps manage complex workflows while keeping different components separate, making it easier to create scalable and maintainable solutions .</p>
-<p>Here’s a quick comparison of <strong>key advantages</strong>:</p>
-<figure><table>
-<thead>
-<tr>
-<th>Aspect</th>
-<th>Traditional</th>
-<th>AWS</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Infrastructure Management</td>
-<td>Manual scaling and maintenance</td>
-<td>Fully managed services with automatic scaling</td>
-</tr>
-<tr>
-<td>Development Focus</td>
-<td>Heavy operational overhead</td>
-<td>Focus on business logic</td>
-</tr>
-<tr>
-<td>Cost Model</td>
-<td>Upfront investment required</td>
-<td>Usage-based pricing</td>
-</tr>
-<tr>
-<td>Integration Complexity</td>
-<td>Custom code for each pattern</td>
-<td>Native service compatibility</td>
-</tr>
-</tbody>
-</table></figure>
-<blockquote>
-<p>"AWS AppFabric works like magic. We simply connect to the service, put in our credentials, and the data starts flowing."</p>
-<ul>
-<li>Dudi Levi, Head of Data, Cyber Division at <a href="https://www.leumi.co.il/en" rel="nofollow noopener noreferrer" target="_blank">Bank Leumi</a> </li>
-</ul>
-</blockquote>
-<p>For more detailed technical insights, explore the resources below.</p>
-<h3 id="additional-resources">Additional Resources</h3>
-<p>These benefits open up practical ways to design integrations worth exploring. <strong>AWS for Engineers</strong> (https://awsforengineers.com) offers detailed tutorials and best practices for AWS integration services. The site includes examples like using <strong>EventBridge</strong> for a Content-Based Router and <strong>Lambda</strong> for a Message Translator .</p>
-<p>Key <a href="/blog/aws-s3-cloudtrail-integration-guide-2024/">AWS services for integration</a> patterns:</p>
-<ul>
-<li><strong>EventBridge</strong> for routing</li>
-<li><strong>Step Functions</strong> for orchestration</li>
-<li><strong>CloudWatch</strong> for monitoring</li>
-<li><strong>X-Ray</strong> for tracing</li>
-</ul>
-<p>These tools empower teams to create reliable integration solutions while keeping system performance visible. By leveraging serverless and managed services, organizations can minimize operational work while gaining enterprise-level scalability and security .</p>
-<h2>Related Blog Posts</h2><ul><li><a href="/blog/aws-services-overview-core-components/">AWS Services Overview: Core Components</a></li><li><a href="/blog/aws-cross-service-resilience-patterns/">AWS Cross-Service Resilience Patterns</a></li><li><a href="/blog/aws-step-functions-saga-pattern-implementation/">AWS Step Functions: Saga Pattern Implementation</a></li><li><a href="/blog/eventbridge-vs-sqs-choosing-the-right-event-router/">EventBridge vs. SQS: Choosing the Right Event Router</a></li></ul>
+<p>A queue holds work for a consumer to take. A stream is useful when records form a continuous feed that multiple processing applications may read independently, such as application logs, clickstream records, or operational metrics. Amazon Kinesis Data Streams supports multiple applications consuming the same stream, allowing separate processing and archiving paths. Choose a stream when retained records and independent readers are part of the requirement; use queue or event-bus delivery semantics when the problem is dispatching work or routing business events. See <a href="https://docs.aws.amazon.com/streams/latest/dev/introduction.html" target="_blank" rel="noopener noreferrer">What is Amazon Kinesis Data Streams?</a>.</p>
+
+<h2 id="integration-pattern-examples">Integration Pattern Example: Order Processing</h2>
+<p>An order workflow can combine request-reply, routing, a work queue, and orchestration without making them interchangeable:</p>
+<ol>
+<li><strong>Accept the request.</strong> An API service validates the order and returns an appropriate response to the client. If fulfillment continues asynchronously, the API can acknowledge acceptance without keeping the client connected for every later step.</li>
+<li><strong>Publish a business event.</strong> Once the application has accepted the order, it emits an <code>OrderPlaced</code> event with a stable identifier and documented fields. EventBridge can route that event by its type and contents; SNS can fan out a notification to known subscribers.</li>
+<li><strong>Buffer independent work.</strong> A fulfillment queue can hold work while workers are busy or unavailable. Consumers delete messages after success, handle duplicate delivery safely, and send persistent failures to a configured dead-letter queue for investigation.</li>
+<li><strong>Coordinate dependent actions.</strong> If inventory reservation must precede payment, a Step Functions workflow can make that sequence and its retry policy explicit. The business defines what happens if payment fails after reservation, such as releasing the reservation. That compensation is a new action with its own failure handling.</li>
+<li><strong>Adapt data at boundaries.</strong> A target input transformer can pass only the fields a notification target needs. If fulfillment requires a current address lookup, an enrichment step fetches it; filtering the event would not perform that lookup.</li>
+</ol>
+<p>If saving an order and publishing its event are separate writes, a crash between them can leave an accepted order with no event, or an event without the expected committed record. A <a href="https://docs.aws.amazon.com/prescriptive-guidance/latest/cloud-design-patterns/transactional-outbox.html" target="_blank" rel="noopener noreferrer">transactional outbox</a> can record the order and a pending event in one local transaction, then publish asynchronously. Its relay can still retry, so consumers need idempotency.</p>
+<p>The example does not imply that every order system needs all of these services. It shows how to assign each responsibility to a boundary and reason about what happens when a call times out, a target is unavailable, or a message is delivered again.</p>
+
+<h2 id="conclusion">Design Around the Failure Boundary</h2>
+<p>Choose a pattern by the communication and recovery behavior the application needs: a waiting response, a durable work queue, fanout, content-based routing, payload adaptation, enrichment, or explicit workflow coordination. Then verify the delivery, ordering, retention, retry, and replay behavior for the exact AWS feature in use. In particular, distinguish a successful delivery from successful business processing and make retried side effects safe. For a focused guide to retries, queues, idempotency, and failure recovery across service boundaries, see <a href="/blog/aws-cross-service-resilience-patterns/">AWS Cross-Service Resilience: Retries, Queues, and Disaster Recovery</a>.</p>
