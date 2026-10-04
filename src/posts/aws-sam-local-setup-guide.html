@@ -7,7 +7,7 @@ description: "Install AWS SAM CLI and Docker, then run a Python Lambda and API l
 date: "2024-11-11"
 datePublished: "2024-11-11T17:15:35.196000+00:00"
 dateModified: "2026-10-04"
-updateNote: "Updated current installation and authentication guidance, added a local Hello World walkthrough, and clarified the limits of SAM local testing."
+updateNote: "Updated installation and authentication guidance, added a local Python Hello World walkthrough, and clarified preview-runtime and local-testing limits."
 heroImage: "/assets/media/bce60d2e2ebfdfdda1a2.jpg"
 permalink: "/blog/aws-sam-local-setup-guide/"
 sourceUrl: "https://awsforengineers.com/blog/aws-sam-local-setup-guide/"
@@ -22,7 +22,7 @@ sourceUrl: "https://awsforengineers.com/blog/aws-sam-local-setup-guide/"
 <li>The AWS SAM CLI, which provides the <code>sam</code> command.</li>
 <li>Docker Desktop or another Docker-compatible runtime that is running and available from your terminal. SAM uses containers to run Lambda locally.</li>
 </ul>
-<p>The example uses a Python Lambda runtime. As of October 4, 2026, AWS lists Python 3.14 as a supported Lambda runtime and Python 3.15 as a preview runtime. Choose a supported runtime that fits your application and check the <a href="https://docs.aws.amazon.com/lambda/latest/dg/lambda-runtimes.html" rel="noopener noreferrer" target="_blank">current Lambda runtime table</a> before starting a new project. You can install that Python version on your computer for a normal local build, or use <code>sam build --use-container</code> to build in a container with the matching runtime.</p>
+<p>The example uses a Python Lambda runtime. As of October 4, 2026, AWS lists Python 3.14 as generally available and Python 3.15 as a public preview. AWS says preview runtimes are not covered by the Lambda SLA or technical support and should not be used in production. Choose a generally available runtime for production, and check the <a href="https://docs.aws.amazon.com/lambda/latest/dg/lambda-runtimes.html" rel="noopener noreferrer" target="_blank">current Lambda runtime table</a> before starting a new project. You can install the matching Python version on your computer for a normal local build, or use <code>sam build --use-container</code> to build in a container with the matching runtime.</p>
 <p>An AWS account, AWS CLI, and credentials are unnecessary for a function that only processes its input and returns a result. You will need authorized AWS access if the function itself calls an AWS service, or when you deploy or invoke a function in AWS.</p>
 
 <h2 id="installing-required-software">Install the required software</h2>
