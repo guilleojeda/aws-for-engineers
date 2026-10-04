@@ -2,441 +2,95 @@
 layout: post.njk
 templateEngineOverride: html
 tags: posts
-title: "Fargate vs. EC2: Launch Type Comparison"
-description: "Explore the differences between AWS Fargate and EC2 to determine which container deployment option best suits your workload needs."
+title: "Amazon ECS Fargate vs. EC2: How to Choose a Capacity Model"
+description: "Compare Amazon ECS on Fargate and customer-managed EC2 capacity by operations, scaling, task features, isolation, and cost to choose the right fit."
 date: "2025-03-27"
 datePublished: "2025-03-27T01:27:03.541000+00:00"
 heroImage: "/assets/media/f830e19d68d808f36e50.jpg"
 permalink: "/blog/fargate-vs-ec2-launch-type-comparison/"
 sourceUrl: "https://awsforengineers.com/blog/fargate-vs-ec2-launch-type-comparison/"
-dateModified: "2026-10-03"
-updateNote: "Added author attribution and profile information."
+dateModified: "2026-10-04"
+updateNote: "Reframed the choice around ECS capacity providers, corrected scaling and task-feature claims, and updated billing and purchase options."
 ---
-<p><strong>Choosing between <a href="https://aws.amazon.com/fargate/" rel="nofollow noopener noreferrer" target="_blank">AWS Fargate</a> and EC2 for your containerized applications boils down to control vs. simplicity.</strong></p>
-<ul>
-<li><strong>Fargate</strong>: Fully managed, serverless. Ideal for quick deployments, automatic scaling, and minimal infrastructure management. Best for microservices, batch jobs, and dev/test environments.</li>
-<li><strong>EC2</strong>: User-managed infrastructure. Offers full control, customizable hardware, and cost-saving options like <a href="https://aws.amazon.com/ec2/pricing/reserved-instances/" rel="nofollow noopener noreferrer" target="_blank">Reserved Instances</a>. Best for GPU workloads, large-scale apps, and custom configurations.</li>
-</ul>
-<p><strong>Key Differences at a Glance</strong>:</p>
-<figure><table>
-<thead>
-<tr>
-<th>Feature</th>
-<th>Fargate</th>
-<th>EC2</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><strong>Management</strong></td>
-<td><a href="/blog/">Fully managed by AWS</a></td>
-<td>User-managed</td>
-</tr>
-<tr>
-<td><strong>Billing</strong></td>
-<td>Per second, task-based</td>
-<td>Per instance hour</td>
-</tr>
-<tr>
-<td><strong>Scaling</strong></td>
-<td>Automatic at task level</td>
-<td>Manual, instance-level</td>
-</tr>
-<tr>
-<td><strong>Control</strong></td>
-<td>Task-level only</td>
-<td>Full instance control</td>
-</tr>
-<tr>
-<td><strong>Best For</strong></td>
-<td>Microservices, sporadic tasks</td>
-<td>GPUs, custom infrastructure</td>
-</tr>
-</tbody>
-</table></figure>
-<p><strong>Quick Tip</strong>: Use Fargate for simplicity and EC2 for control. Your choice depends on workload needs, cost considerations, and technical priorities.</p>
-<h2 id="aws-fargate-overview"><a href="https://aws.amazon.com/fargate/" rel="nofollow noopener noreferrer" target="_blank">AWS Fargate</a> Overview</h2>
-<p><figure><img alt="AWS Fargate" loading="lazy" src="/assets/media/6ebe9634f1357caf6d2d.jpg"/></figure></p>
-<p>AWS Fargate makes deploying containers easier by eliminating the need to manage infrastructure. This serverless compute engine works with <a href="https://aws.amazon.com/ecs/" rel="nofollow noopener noreferrer" target="_blank">Amazon ECS</a> and EKS, allowing you to run containers without worrying about servers. Below, we’ll break down Fargate's main functions, advantages, and limitations.</p>
-<h3 id="fargate-core-functions">Fargate Core Functions</h3>
-<p>Fargate automates critical container infrastructure tasks, including:</p>
-<ul>
-<li><strong>Resource Provisioning</strong>: Automatically allocates CPU and memory based on your container’s requirements.</li>
-<li><strong>Cluster Management</strong>: Handles container placement and scaling without manual intervention.</li>
-<li><strong>Infrastructure Updates</strong>: Takes care of security patches and system maintenance.</li>
-<li><strong>Load Distribution</strong>: Efficiently spreads workloads across available resources.</li>
-</ul>
-<h3 id="fargate-benefits">Fargate Benefits</h3>
-<p>Here’s a quick look at what Fargate offers:</p>
-<figure><table>
-<thead>
-<tr>
-<th>Benefit</th>
-<th>Description</th>
-<th>Impact</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>No Infrastructure Management</td>
-<td>No need to manage or provision servers</td>
-<td>Reduces operational effort</td>
-</tr>
-<tr>
-<td>Automatic Scaling</td>
-<td>Adjusts resources to match application demands</td>
-<td>Improves resource efficiency</td>
-</tr>
-<tr>
-<td>Pay-As-You-Go Pricing</td>
-<td>Charges only for what you use</td>
-<td>Helps control costs</td>
-</tr>
-<tr>
-<td>Enhanced Security</td>
-<td>Isolates each task in its own runtime environment</td>
-<td>Adds an extra layer of protection</td>
-</tr>
-</tbody>
-</table></figure>
-<h3 id="fargate-constraints">Fargate Constraints</h3>
-<p>1. <strong>Resource and Platform Limitations</strong></p>
-<p>Fargate supports only fixed CPU and memory configurations and is limited to Linux containers. It doesn’t support GPUs or provide direct host-level access.</p>
-<p>2. <strong>Cost Challenges</strong></p>
-<p>While convenient, Fargate can be more expensive than EC2 at high usage levels. Additionally, there are no reserved instance or savings plan options to lower costs.</p>
-<p>3. <strong>Network Performance Issues</strong></p>
-<p>Network performance can be less consistent compared to EC2 since you don’t control the underlying network setup.</p>
-<p>These limitations mean Fargate is best suited for standard containerized applications that don’t require custom infrastructure or direct access to the host environment.</p>
-<h2 id="ec2-container-deployment">EC2 Container Deployment</h2>
-<p><a href="https://aws.amazon.com/ec2/" rel="nofollow noopener noreferrer" target="_blank">Amazon EC2</a> allows you to deploy containers while giving you full control over compute resources and the underlying infrastructure.</p>
-<h3 id="ec2-main-features">EC2 Main Features</h3>
-<p>Here’s what EC2 offers for container deployment:</p>
-<figure><table>
-<thead>
-<tr>
-<th>Feature</th>
-<th>Description</th>
-<th>Benefit</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><strong>Instance Control</strong></td>
-<td>Full access to EC2 instance configuration</td>
-<td>Lets you optimize for specific needs</td>
-</tr>
-<tr>
-<td><strong>Resource Flexibility</strong></td>
-<td>Support for various instance types and sizes</td>
-<td>Matches the exact requirements of workloads</td>
-</tr>
-<tr>
-<td><strong>OS Selection</strong></td>
-<td>Choose and customize your operating system</td>
-<td>Tailors to application needs</td>
-</tr>
-<tr>
-<td><strong>Network Control</strong></td>
-<td>Manage network interfaces directly</td>
-<td>Enables advanced networking setups</td>
-</tr>
-</tbody>
-</table></figure>
-<h3 id="ec2-benefits">EC2 Benefits</h3>
-<p>EC2 provides several advantages for deploying containers:</p>
-<ul>
-<li><strong>Cost Options</strong>: EC2 offers flexible pricing models like Reserved Instances and <a href="https://aws.amazon.com/ec2/spot/" rel="nofollow noopener noreferrer" target="_blank">Spot Instances</a>. Reserved Instances can help you save significantly compared to On-Demand pricing.</li>
-<li><strong>Full Infrastructure Control</strong>: You have complete authority over instance types, operating systems, network configurations, security groups, storage, and even CPU and memory allocations. This level of control ensures you can fine-tune performance as needed.</li>
-</ul>
-<h3 id="ec2-challenges">EC2 Challenges</h3>
-<p>While EC2 offers flexibility, it also comes with some challenges:</p>
-<ul>
-<li><strong>Management Overhead</strong>: You’ll need to handle tasks like OS updates, security patches, capacity planning, and scaling operations yourself.</li>
-<li><strong>Complex Setup</strong>: Setting up the container runtime, orchestration tools, monitoring systems, and load balancers can be time-consuming.</li>
-<li><strong>Resource Sizing</strong>: Properly sizing EC2 instances is critical to avoid wasting resources or running into performance issues.</li>
-</ul>
-<p>Choosing EC2 means balancing its high level of control and flexibility with the added responsibility of managing infrastructure. For organizations with specific infrastructure needs or existing expertise in EC2, this trade-off often makes sense. These considerations become even more apparent when comparing EC2 with Fargate.</p>
+<p><strong>For Amazon ECS, choose Fargate when you want AWS to manage the compute capacity for each task; choose EC2 when your tasks need instance-level control or features such as GPUs.</strong> Either option can scale the number of service tasks. With EC2, you also plan and operate the instance fleet, although an Auto Scaling group capacity provider can manage much of its scaling.</p>
+<p>This guide compares Fargate with customer-managed EC2 capacity for ECS. ECS also offers <a href="https://docs.aws.amazon.com/AmazonECS/latest/developerguide/managed-instances-capacity-providers-concept.html" target="_blank" rel="noopener noreferrer">Amazon ECS Managed Instances</a>, a separate EC2-based capacity option where AWS manages more of the instance operations.</p>
 
-<h2 id="comparing-fargate-and-ec2">Comparing Fargate and EC2</h2>
-<p>This section breaks down differences in launch speed, scaling, cost, management, and security.</p>
-<h3 id="speed-and-scale-comparison">Speed and Scale Comparison</h3>
+<h2 id="comparing-fargate-and-ec2">Fargate and EC2 at a glance</h2>
+<span id="management-requirements"></span>
 <figure><table>
-<thead>
-<tr>
-<th>Metric</th>
-<th>Fargate</th>
-<th>EC2</th>
-</tr>
-</thead>
+<thead><tr><th>Decision area</th><th>Fargate</th><th>Customer-managed EC2</th></tr></thead>
 <tbody>
-<tr>
-<td>Container Launch Time</td>
-<td>30-45 seconds</td>
-<td>2-3 minutes startup time</td>
-</tr>
-<tr>
-<td>Auto Scaling Response</td>
-<td>Immediate container-level scaling</td>
-<td>Instance-level scaling with potential delay</td>
-</tr>
-<tr>
-<td>Resource Granularity</td>
-<td>Per-task resource allocation</td>
-<td>Instance-level resource allocation</td>
-</tr>
-<tr>
-<td>Cold Start Impact</td>
-<td>Minimal impact</td>
-<td>May require instance warm-up</td>
-</tr>
+<tr><td><strong>Compute operations</strong></td><td>AWS manages the infrastructure that runs each task.</td><td>You select, configure, patch, and maintain the ECS container instances.</td></tr>
+<tr><td><strong>Task scaling</strong></td><td>ECS service auto scaling changes the desired task count; Fargate supplies task capacity.</td><td>ECS service auto scaling changes the desired task count. An EC2 capacity provider can also scale its Auto Scaling group.</td></tr>
+<tr><td><strong>Host and placement control</strong></td><td>Task-level CPU and memory choices from supported configurations; no host access or EC2 placement rules.</td><td>Choose instance types and operating system, and configure host-level settings and task placement.</td></tr>
+<tr><td><strong>Special hardware</strong></td><td>GPU task requirements are not supported.</td><td>ECS can place GPU tasks on supported EC2 GPU instances.</td></tr>
+<tr><td><strong>Billing basis</strong></td><td>Task vCPU, memory, operating system, architecture, and extra ephemeral storage; other services are billed separately.</td><td>EC2 instances and associated resources, including capacity that is running but not filled by tasks.</td></tr>
+<tr><td><strong>Typical fit</strong></td><td>Teams prioritizing less host work and task-sized capacity.</td><td>Teams needing host or hardware control, or willing to manage a fleet to improve workload fit and utilization.</td></tr>
 </tbody>
 </table></figure>
-<h3 id="price-comparison">Price Comparison</h3>
-<p>Pricing models directly influence overall expenses.</p>
-<figure><table>
-<thead>
-<tr>
-<th>Cost Factor</th>
-<th>Fargate</th>
-<th>EC2</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Billing Unit</td>
-<td>Per second for vCPU and memory</td>
-<td>Per instance hour</td>
-</tr>
-<tr>
-<td>Minimum Billing</td>
-<td>1-minute minimum</td>
-<td>60-minute minimum</td>
-</tr>
-<tr>
-<td>Resource Utilization</td>
-<td>Pay for exact container resources</td>
-<td>Pay for entire instance capacity</td>
-</tr>
-<tr>
-<td>Additional Costs</td>
-<td>No extra management fees</td>
-<td>Instance management overhead</td>
-</tr>
-</tbody>
-</table></figure>
-<h3 id="management-requirements">Management Requirements</h3>
-<figure><table>
-<thead>
-<tr>
-<th>Aspect</th>
-<th>Fargate</th>
-<th>EC2</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Infrastructure Management</td>
-<td>Fully <a href="/">managed by AWS</a></td>
-<td>Customer managed</td>
-</tr>
-<tr>
-<td>Patching Responsibility</td>
-<td>AWS handled</td>
-<td>Customer responsibility</td>
-</tr>
-<tr>
-<td>Capacity Planning</td>
-<td>Automated</td>
-<td>Manual planning required</td>
-</tr>
-<tr>
-<td>Monitoring Setup</td>
-<td>Built-in container insights</td>
-<td>Requires manual configuration</td>
-</tr>
-</tbody>
-</table></figure>
-<h3 id="security-features">Security Features</h3>
-<figure><table>
-<thead>
-<tr>
-<th>Security Feature</th>
-<th>Fargate</th>
-<th>EC2</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Task Isolation</td>
-<td>Automatic task-level isolation</td>
-<td>Manual security group configuration</td>
-</tr>
-<tr>
-<td>Patch Management</td>
-<td>Automated security updates</td>
-<td>Manual security updates</td>
-</tr>
-<tr>
-<td>Compliance</td>
-<td>Built-in compliance features</td>
-<td>Custom compliance implementation</td>
-</tr>
-<tr>
-<td>Network Security</td>
-<td>Task-level networking</td>
-<td>Instance-level networking</td>
-</tr>
-</tbody>
-</table></figure>
-<p>These comparisons highlight key factors to consider when choosing the best launch type for your specific workload needs.</p>
-<h2 id="selecting-a-launch-type">Selecting a Launch Type</h2>
-<h3 id="best-uses-for-fargate">Best Uses for Fargate</h3>
-<p>Fargate is ideal for workloads where managing infrastructure isn't a priority. Here's how it stacks up:</p>
-<figure><table>
-<thead>
-<tr>
-<th>Workload Type</th>
-<th>Advantages</th>
-<th>Examples</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Microservices</td>
-<td>Scales automatically, isolates resources</td>
-<td>API services, web apps</td>
-</tr>
-<tr>
-<td>Batch Processing</td>
-<td>Billed per task, starts quickly</td>
-<td>Data processing, ETL jobs</td>
-</tr>
-<tr>
-<td>Dev/Test Environments</td>
-<td>No infrastructure management required</td>
-<td>CI/CD pipelines</td>
-</tr>
-<tr>
-<td>Sporadic Workloads</td>
-<td>Pay only for what you use</td>
-<td>Scheduled tasks, periodic jobs</td>
-</tr>
-</tbody>
-</table></figure>
-<h3 id="best-uses-for-ec2">Best Uses for EC2</h3>
-<p>EC2 shines in scenarios that demand more control and customization. Take a look:</p>
-<figure><table>
-<thead>
-<tr>
-<th>Use Case</th>
-<th>Advantage</th>
-<th>Example Applications</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>GPU Workloads</td>
-<td>Direct access to hardware</td>
-<td>Machine learning model training</td>
-</tr>
-<tr>
-<td>Large-Scale Applications</td>
-<td>Cost-efficient for steady usage</td>
-<td>High-traffic web services</td>
-</tr>
-<tr>
-<td>Custom Infrastructure</td>
-<td>Full control over instances</td>
-<td>Integrating with legacy systems</td>
-</tr>
-<tr>
-<td>Specialized Configurations</td>
-<td>OS-level customization</td>
-<td>Meeting strict security requirements</td>
-</tr>
-</tbody>
-</table></figure>
-<p>These examples highlight when each option might be the better fit.</p>
-<h3 id="decision-criteria">Decision Criteria</h3>
-<p>When choosing between Fargate and EC2, consider these factors:</p>
-<ol>
-<li>
-<strong>Operational Needs</strong><br/>
-Align your choice with your technical and operational requirements. Fargate is great for automated isolation, while EC2 offers full control for custom setups.
-</li>
-<li>
-<strong>Cost Considerations</strong>
+<p>There is no universal cost winner. Compare the same application workload, required availability, task sizes, idle capacity, data transfer, storage, and operating effort before committing to either model.</p>
+
+<h2 id="aws-fargate-overview">Amazon ECS on AWS Fargate</h2>
+<figure><img alt="AWS Fargate" loading="lazy" src="/assets/media/6ebe9634f1357caf6d2d.jpg"/></figure>
+<p>Fargate is a serverless compute engine for Amazon ECS. You define each task's CPU and memory in the task definition, and AWS provisions the infrastructure that runs it. You still manage the application, task definition, IAM permissions, VPC networking, logs, and service scaling.</p>
+
+<h3 id="best-uses-for-fargate">When Fargate fits</h3>
 <ul>
-<li><strong>Consistent Workloads</strong>: EC2 is often more cost-effective for steady-state applications.</li>
-<li><strong>Variable Workloads</strong>: Fargate's per-second billing is better for workloads with fluctuating demand.</li>
+<li>You want to run ECS tasks without provisioning or maintaining EC2 hosts.</li>
+<li>Your workload fits Fargate's supported CPU and memory combinations and platform features.</li>
+<li>Task-level capacity is convenient for services that change size or for standalone and scheduled tasks.</li>
+<li>You prefer AWS-managed compute isolation and do not need access to the host operating system.</li>
 </ul>
-</li>
-<li>
-<strong>Technical Priorities</strong>
+<p>Fargate supports Linux on x86-64 and Arm64, as well as specified Windows Server versions on x86-64. It is not limited to Linux. Check AWS's current <a href="https://docs.aws.amazon.com/AmazonECS/latest/developerguide/fargate-tasks-services.html" target="_blank" rel="noopener noreferrer">Fargate task-definition requirements</a> for valid CPU and memory combinations and platform details.</p>
+
+<h3 id="fargate-constraints">Fargate constraints</h3>
+<p>Fargate supports a defined set of task configurations. ECS tasks on Fargate always use <code>awsvpc</code> networking and do not support GPU requirements, privileged containers, host networking, task placement constraints, or the daemon service scheduling strategy. If your workload depends on one of those features or on host-level agents or configuration, check the task-definition limits before choosing Fargate.</p>
+<p>Task count does not automatically change just because Fargate is serverless. To add or remove ECS service tasks in response to demand, configure <a href="https://docs.aws.amazon.com/AmazonECS/latest/developerguide/service-auto-scaling.html" target="_blank" rel="noopener noreferrer">ECS service auto scaling</a> through Application Auto Scaling. The same service-level scaling feature works with EC2 capacity.</p>
+
+<h2 id="ec2-container-deployment">Amazon ECS tasks on EC2</h2>
+<p>With EC2 capacity, tasks run on EC2 container instances registered to your ECS cluster. Your team controls the instance types, AMIs, host configuration, and fleet lifecycle. You are responsible for maintaining and securing the container instances and ECS agent. AWS documents this responsibility in its guide to <a href="https://docs.aws.amazon.com/AmazonECS/latest/developerguide/create-capacity.html" target="_blank" rel="noopener noreferrer">EC2 container instances for ECS</a>.</p>
+
+<h3 id="ec2-main-features">What EC2 adds</h3>
 <ul>
-<li><strong>Container Isolation</strong>: Fargate provides task-level isolation for added security.</li>
-<li><strong>Infrastructure Control</strong>: EC2 allows for greater flexibility and customization.</li>
-<li><strong>Resource Management</strong>: EC2 offers fine-tuned control over instance resources.</li>
+<li><strong>Hardware and host choice:</strong> Select instance families and operating systems that match CPU, memory, storage, network, or GPU requirements.</li>
+<li><strong>Placement control:</strong> Use task placement strategies and constraints to distribute or pack tasks and target eligible instances.</li>
+<li><strong>More task-definition options:</strong> EC2 supports features that Fargate excludes, including GPU requirements, privileged containers, host networking, and daemon services, subject to ECS and instance requirements.</li>
+<li><strong>Pricing options:</strong> Compare On-Demand with Spot, and consider Savings Plans or eligible Reserved Instances for covered EC2 usage.</li>
 </ul>
-</li>
-</ol>
-<p>For most modern containerized applications that prioritize ease of use, Fargate is a straightforward choice. However, if your focus is on specific infrastructure needs or optimizing costs at scale, EC2 may be the better option.</p>
-<h2 id="summary">Summary</h2>
-<h3 id="main-points">Main Points</h3>
-<p>Fargate and EC2 differ in how they handle management, costs, resource control, and scaling. Here's a quick breakdown of the key differences:</p>
-<figure><table>
-<thead>
-<tr>
-<th>Aspect</th>
-<th>Fargate</th>
-<th>EC2</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Infrastructure</td>
-<td>Managed by AWS</td>
-<td>Managed by the user</td>
-</tr>
-<tr>
-<td>Cost</td>
-<td>Per-second, task-based</td>
-<td>Instance-based</td>
-</tr>
-<tr>
-<td>Control</td>
-<td>Task-level</td>
-<td>Full instance control</td>
-</tr>
-<tr>
-<td>Use Cases</td>
-<td>Microservices, batch jobs</td>
-<td>GPU, large-scale apps</td>
-</tr>
-<tr>
-<td>Scaling</td>
-<td>Automatic at task level</td>
-<td>Instance-level scaling</td>
-</tr>
-</tbody>
-</table></figure>
-<p>These distinctions tie back to the detailed analysis covered earlier.</p>
-<p>Key considerations to keep in mind:</p>
+<p>For GPU tasks, AWS documents supported instance types and setup in its <a href="https://docs.aws.amazon.com/AmazonECS/latest/developerguide/ecs-gpu.html" target="_blank" rel="noopener noreferrer">ECS GPU task guide</a>. For custom placement, see <a href="https://docs.aws.amazon.com/AmazonECS/latest/developerguide/task-placement.html" target="_blank" rel="noopener noreferrer">how ECS places tasks</a>.</p>
+
+<h3 id="ec2-challenges">EC2 operating responsibilities</h3>
+<p>EC2 gives you more control, but the team must keep enough compatible instances available and handle host updates, security, monitoring, and replacement. An ECS Auto Scaling group capacity provider can add instances when tasks need capacity and scale the group in when capacity is underused. Its <a href="https://docs.aws.amazon.com/AmazonECS/latest/developerguide/managed-scaling-behavior.html" target="_blank" rel="noopener noreferrer">managed scaling behavior</a> reduces fleet-sizing work; it does not transfer host maintenance to AWS.</p>
+<h3 id="security-features">Security and isolation</h3>
+<p>Each Fargate task runs in an isolated, hardware-virtualized environment, and AWS manages and patches its compute infrastructure. On EC2, multiple tasks can share an instance's operating system and kernel, so your team manages host security. In either model, you manage task IAM permissions, application security, network rules, and data protection. ECS supports task-level security groups with <code>awsvpc</code> networking on both Fargate and EC2; see AWS's <a href="https://docs.aws.amazon.com/AmazonECS/latest/developerguide/security-shared-model.html" target="_blank" rel="noopener noreferrer">shared-responsibility guidance</a> and <a href="https://docs.aws.amazon.com/AmazonECS/latest/developerguide/security-network.html" target="_blank" rel="noopener noreferrer">network security guidance</a>.</p>
+
+<h2 id="launch-types-and-capacity-providers">Launch types and capacity providers</h2>
+<p>ECS still supports the <code>EC2</code> and <code>FARGATE</code> launch types. AWS recommends using launch type compatibility in a task definition to state where it can run, then using a capacity provider strategy to select capacity for tasks and services. The built-in Fargate providers are <code>FARGATE</code> and <code>FARGATE_SPOT</code>; EC2 capacity providers are associated with Auto Scaling groups. Read AWS's <a href="https://docs.aws.amazon.com/AmazonECS/latest/developerguide/capacity-launch-type-comparison.html" target="_blank" rel="noopener noreferrer">launch type and capacity provider comparison</a> before configuring a new service.</p>
+<p>Fargate Spot uses spare Fargate capacity for interruption-tolerant Linux tasks and can interrupt tasks with a two-minute warning, as described in AWS's <a href="https://docs.aws.amazon.com/AmazonECS/latest/developerguide/fargate-capacity-providers.html" target="_blank" rel="noopener noreferrer">Fargate capacity-provider guide</a>. An EC2 Spot capacity provider is a separate option with EC2 instance capacity and its own <a href="https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/spot-instance-termination-notices.html" target="_blank" rel="noopener noreferrer">interruption behavior</a>. Neither Spot option is appropriate for tasks that cannot tolerate interruption.</p>
+
+<h2 id="speed-and-scale-comparison">Scaling and task placement</h2>
+<p>Fixed launch-time claims such as “Fargate starts in 30 seconds” or “EC2 takes three minutes” do not apply to every task. Image size, initialization, platform, capacity availability, and configuration affect startup. Measure startup for the actual service if it is a decision factor.</p>
+<p>For both compute choices, ECS service auto scaling adjusts the service's desired task count based on a metric and policy you configure. With Fargate, you do not operate an instance fleet. With an EC2 Auto Scaling group capacity provider, ECS can also manage scaling of the instance group so it has capacity for tasks. EC2 exposes placement strategies and constraints; Fargate chooses placement across accessible Availability Zones without those custom placement controls.</p>
+
+<h2 id="price-comparison">Cost comparison</h2>
+<p>Fargate charges for the task vCPU, memory, operating system, CPU architecture, and any configured extra ephemeral storage, for the time the task runs. Billing is per second with a one-minute minimum for Linux and a five-minute minimum for Windows. The charge starts when the task begins downloading its image. Review the current <a href="https://aws.amazon.com/fargate/pricing/" target="_blank" rel="noopener noreferrer">AWS Fargate pricing details</a> for the supported configuration and current regional rates.</p>
+<p>With EC2, you pay for each running instance, whether all of its CPU and memory are occupied by ECS tasks or not, plus relevant storage, networking, and other service charges. On-Demand EC2 has a 60-second minimum and then per-second billing for many operating systems; check the current <a href="https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-on-demand-instances.html" target="_blank" rel="noopener noreferrer">EC2 On-Demand billing rules</a>. Instance packing and a stable workload can make EC2 economics attractive, while unused capacity and host operations add to its total cost. Measure utilization instead of assuming a break-even point.</p>
+<p>Compute Savings Plans can apply to both EC2 and Fargate usage. EC2 also has EC2 Instance Savings Plans and Reserved Instances; Fargate does not use Reserved Instances. Fargate Spot is another option for interruptible Linux ECS tasks. Compare eligible purchase options against expected usage in the current <a href="https://docs.aws.amazon.com/savingsplans/latest/userguide/sp-ris.html" target="_blank" rel="noopener noreferrer">AWS Savings Plans guidance</a>.</p>
+
+<h2 id="selecting-a-launch-type">Which compute model should you choose?</h2>
+<h3 id="best-uses-for-ec2">Consider EC2 capacity when</h3>
 <ul>
-<li>
-<strong>Operational Needs</strong>: Fargate is ideal for quick deployments with minimal management, while EC2 is better suited for applications requiring custom hardware or operating system configurations.
-</li>
-<li>
-<strong>Resource Usage</strong>: EC2 is cost-effective for steady, predictable workloads. Fargate shines when dealing with workloads that fluctuate.
-</li>
-<li>
-<strong>Technical Factors</strong>:
+<li>The task needs GPUs, custom host settings, host-based agents, daemon services, or placement controls unavailable on Fargate.</li>
+<li>You need to select particular instance families or tune the fleet for specific hardware and storage needs.</li>
+<li>Your workload uses enough steady capacity that instance utilization and purchase options merit operating the fleet.</li>
+<li>Your team can own host patching, security, capacity planning, and ECS agent maintenance.</li>
+</ul>
+
+<h3 id="decision-criteria">Consider Fargate when</h3>
 <ul>
-<li>Fargate excels in task-level security isolation.</li>
-<li>EC2 provides direct access to instance resources.</li>
-<li>EC2 supports GPUs and custom networking setups.</li>
+<li>You want ECS to run tasks without your team maintaining EC2 hosts.</li>
+<li>Tasks fit Fargate's supported configurations and do not need host-specific features.</li>
+<li>You value task-sized compute for variable demand, short-lived tasks, or services with different resource needs.</li>
+<li>You want AWS to manage the infrastructure isolation and patching for task compute.</li>
 </ul>
-</li>
-</ul>
-<p>Ultimately, your choice should align with your workload demands and your ability to manage infrastructure. Fargate offers simplicity for standard containerized applications, while EC2 is better for those needing detailed control over their environment.</p>
-<h2>Related posts</h2><ul><li><a href="/blog/aws-ec2-basics-core-concepts-explained/">AWS EC2 Basics: Core Concepts Explained</a></li><li><a href="/blog/aws-services-overview-core-components/">AWS Services Overview: Core Components</a></li><li><a href="/blog/ec2-instance-families-comparison/">EC2 Instance Families Comparison</a></li><li><a href="/blog/aws-vs-on-premises-cost-analysis-for-modernization/">AWS vs On-Premises: Cost Analysis for Modernization</a></li></ul>
+<p>For either choice, estimate the full monthly bill with the same workload pattern, include task or instance idle time, and test service performance at expected peaks. Track service CPU and memory before and after the decision; our <a href="/blog/aws-fargate-metrics-with-cloudwatch/">guide to ECS Fargate metrics in CloudWatch</a> explains the service metrics and task-level detail available. If you choose EC2, our <a href="/blog/aws-ec2-right-sizing-cost-performance-optimization/">EC2 right-sizing guide</a> covers workload-based capacity and cost measurement.</p>

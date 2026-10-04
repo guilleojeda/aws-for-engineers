@@ -2,297 +2,112 @@
 layout: post.njk
 templateEngineOverride: html
 tags: posts
-title: "How Automation Rules Work in AWS Security Hub"
-description: "Learn how AWS Security Hub automation rules enhance security responses by automating actions based on findings, improving efficiency and consistency."
+title: "AWS Security Hub Automation Rules: How They Work"
+description: "See what Security Hub CSPM automation rules can change, how ASFF rules differ from OCSF-based Security Hub rules, and when to use EventBridge."
 date: "2025-03-10"
 datePublished: "2025-03-10T04:15:08.012000+00:00"
 heroImage: "/assets/media/eba60d046eae65a00b87.jpg"
 permalink: "/blog/how-automation-rules-work-in-aws-security-hub/"
 sourceUrl: "https://awsforengineers.com/blog/how-automation-rules-work-in-aws-security-hub/"
-dateModified: "2026-10-03"
-updateNote: "Added author attribution and profile information; corrected the article heading hierarchy and added article navigation."
+dateModified: "2026-10-04"
+updateNote: "Rewrote outdated rule actions and ordering, separated Security Hub CSPM and ASFF rules from OCSF-based Security Hub automations, and added a supported CLI example with EventBridge response guidance."
 ---
-<p><strong><a href="https://aws.amazon.com/security-hub/" rel="nofollow noopener noreferrer" target="_blank">AWS Security Hub</a> automation rules simplify handling security findings by automatically triggering actions based on specific conditions.</strong> Here's how they work:</p>
-<ul>
-<li><strong>Rule Criteria</strong>: Define conditions like severity, resource type, or compliance status to activate the rule.</li>
-<li><strong>Actions</strong>: Automate responses such as updating statuses, sending alerts, or initiating remediation workflows.</li>
-</ul>
-<h2 id="key-benefits">Key Benefits:</h2>
-<ul>
-<li><strong>Faster Responses</strong>: Automates routine tasks, reducing delays.</li>
-<li><strong>Consistency</strong>: Ensures uniform handling of similar issues.</li>
-<li><strong>Efficiency</strong>: Frees up security teams to focus on complex problems.</li>
-</ul>
-<h2 id="how-to-set-up">How to Set Up:</h2>
-<ol>
-<li><strong>Access the Automation Rules Console</strong> in AWS Security Hub.</li>
-<li><strong>Define Criteria</strong>: Use fields like severity, account ID, or resource type.</li>
-<li><strong>Configure Actions</strong>: Choose actions like updating statuses, sending notifications, or triggering Lambda functions.</li>
-</ol>
-<p>For example, you can configure a rule to mark critical S3 bucket findings as "IN_PROGRESS" and automatically start remediation. Learn how to prioritize rules, integrate with services like EventBridge and Lambda, and monitor performance for effective security operations.</p>
-<h2 id="setting-up-automation-rules">Setting Up Automation Rules</h2>
-<p>Configuring automation rules in AWS Security Hub requires careful selection of criteria and actions to ensure effective operation.</p>
-<h3 id="finding-the-rules-console">Finding the Rules Console</h3>
-<p>To access the automation rules console:</p>
-<ul>
-<li>Log in to the <a href="https://docs.aws.amazon.com/signin/latest/userguide/how-to-sign-in.html" rel="nofollow noopener noreferrer" target="_blank">AWS Management Console</a>.</li>
-<li>Navigate to <strong>Security Hub</strong>.</li>
-<li>Select <strong>Automation rules</strong> from the left-hand menu.</li>
-<li>Click on <strong>Create automation rule</strong>.</li>
-</ul>
-<p>This console is your hub for managing security automation. It displays key details about your rules, such as their status, last modification date, and current state.</p>
-<h3 id="rule-criteria-setup">Rule Criteria Setup</h3>
-<p>Automation rules rely on criteria based on AWS Security Finding Format (ASFF) fields.</p>
-<p>1. <strong>Select Trigger Type</strong></p>
-<p>Decide whether the rule will activate when a security finding is updated or newly created. This determines when findings are evaluated.</p>
-<p>2. <strong>Define Filtering Criteria</strong></p>
-<p>Use ASFF fields to set specific conditions. Examples include:</p>
-<ul>
-<li>Severity levels (e.g., CRITICAL)</li>
-<li>Resource types (e.g., AwsS3Bucket)</li>
-<li>AWS account IDs</li>
-<li>Finding types</li>
-<li>Compliance status (e.g., FAILED)</li>
-</ul>
-<p>For instance, to address critical S3 vulnerabilities automatically, you might configure the following:</p>
-<ul>
-<li><strong>Severity</strong>: CRITICAL</li>
-<li><strong>ResourceType</strong>: AwsS3Bucket</li>
-<li><strong>ComplianceStatus</strong>: FAILED</li>
-</ul>
-<p>Once your criteria are defined, move on to setting up the actions.</p>
-<h3 id="action-configuration">Action Configuration</h3>
-<p>After defining criteria, choose and configure the actions your rule will perform.</p>
-<p>1. <strong>Choose Action Type</strong></p>
-<p>Select from the following options:</p>
-<ul>
-<li>Send to EventBridge</li>
-<li>Update finding status</li>
-<li>Update finding workflow status</li>
-<li>Send notification</li>
-</ul>
-<p>2. <strong>Set Action Parameters</strong></p>
-<p>Provide details for the chosen action. For example, if updating workflow status, specify:</p>
-<ul>
-<li>The new status value</li>
-<li>Any notes or comments</li>
-<li>Optional tags for additional context</li>
-</ul>
-<p>3. <strong>Action Validation</strong></p>
-<p>Double-check your setup by reviewing criteria and actions, confirming IAM permissions, and testing with sample findings.</p>
-<p>To keep things efficient, ensure your criteria are targeted. Avoid overly broad rules that could trigger unnecessary actions or flood your team with alerts.</p>
-<h2 id="using-rules-effectively">Using Rules Effectively</h2>
-<p>Once you've set up your automation rules, it's crucial to apply them properly for consistent and timely responses to security findings. Here's how to make the most of your rules.</p>
-<h3 id="rule-execution-order">Rule Execution Order</h3>
-<p>AWS Security Hub processes automation rules one at a time, following their assigned priority. This ensures your security operations run smoothly.</p>
-<p>When multiple rules match a finding, Security Hub follows this sequence:</p>
-<ul>
-<li><strong>Priority Level</strong>: Rules with a higher priority (lower numerical value) are executed first.</li>
-<li><strong>Creation Time</strong>: If two rules have the same priority, the older rule takes precedence.</li>
-</ul>
-<p>To avoid conflicts, assign clear and distinct priority levels to your most important rules.</p>
-<h3 id="choosing-the-right-actions">Choosing the Right Actions</h3>
-<p>Pick automation actions that align with your security goals. Here’s how you can approach different scenarios:</p>
-<ul>
-<li>
-<strong>High-Priority Security Issues</strong>
-<ul>
-<li>Route critical findings to EventBridge for remediation.</li>
-<li>Change workflow status to "IN_PROGRESS."</li>
-<li>Notify security teams using SNS.</li>
-</ul>
-</li>
-<li>
-<strong>Compliance Monitoring</strong>
-<ul>
-<li>Forward compliance-related findings to specific EventBridge rules.</li>
-<li>Update finding statuses based on compliance checks.</li>
-<li>Use Lambda functions to create compliance reports.</li>
-</ul>
-</li>
-<li>
-<strong>Resource Protection</strong>
-<ul>
-<li>Trigger Lambda functions to adjust security groups.</li>
-<li>Automatically update IAM policies.</li>
-<li>Isolate compromised resources.</li>
-</ul>
-</li>
-</ul>
-<h3 id="verifying-rule-effectiveness">Verifying Rule Effectiveness</h3>
-<p>Make sure your rules are working as intended by following these steps:</p>
-<ul>
-<li>
-<strong>Testing Environment</strong>
-<ul>
-<li>Set up a controlled environment with sample findings that match your rule criteria.</li>
-<li>Test EventBridge rules and mock Lambda functions to validate actions.</li>
-</ul>
-</li>
-<li>
-<strong><a href="/blog/aws-devops-monitoring-metrics-tools-best-practices/">Monitoring Metrics</a></strong>
-<ul>
-<li>Track how often rules execute successfully.</li>
-<li>Measure average response times.</li>
-<li>Monitor false positive rates.</li>
-<li>Check the completion status of automated actions.</li>
-</ul>
-</li>
-<li>
-<strong>Validation Process</strong>
-<ul>
-<li>Generate test findings to match your rules.</li>
-<li>Use <a href="https://aws.amazon.com/cloudwatch/" rel="nofollow noopener noreferrer" target="_blank">CloudWatch</a> logs to confirm actions were executed.</li>
-<li>Ensure notifications are delivered properly.</li>
-<li>Verify that finding statuses are updated as expected.</li>
-</ul>
-</li>
-</ul>
+<p><strong>AWS Security Hub CSPM automation rules match finding fields and update selected fields; they do not execute remediation against AWS resources.</strong> Use them to normalize severity, add context, change workflow status, or suppress findings. For CSPM, use EventBridge when a finding must trigger a notification or an external response workflow.</p>
+<p>AWS now documents two automation rule models. This guide focuses on Security Hub Cloud Security Posture Management (Security Hub CSPM), whose findings use the AWS Security Finding Format (ASFF). The newer AWS Security Hub experience has a separate rule model based on Open Cybersecurity Schema Framework (OCSF) findings. The criteria, actions, APIs, and Region behavior differ, so use the guide for the service and finding format you operate.</p>
 
-<h2 id="connecting-with-aws-services">Connecting with AWS Services</h2>
-<h3 id="eventbridge-integration">EventBridge Integration</h3>
-<p>Automation rules work seamlessly with <a href="https://docs.aws.amazon.com/eventbridge/" rel="nofollow noopener noreferrer" target="_blank">Amazon EventBridge</a> to build advanced security workflows. EventBridge processes findings that align with your automation rule criteria and directs them to designated target services.</p>
-<p>To integrate with EventBridge:</p>
-<ul>
-<li><strong>Set up an EventBridge rule</strong> that matches Security Hub finding patterns.</li>
-<li><strong>Configure the rule's targets</strong>, such as Lambda functions or SNS topics.</li>
-<li><strong>Ensure IAM roles grant necessary permissions</strong> for cross-service access.</li>
-</ul>
-<p>Here's an example of an EventBridge rule for detecting unauthorized API calls:</p>
+<h2 id="key-benefits">What Security Hub CSPM automation rules do</h2>
+<p>A CSPM rule compares incoming findings with one or more criteria, such as account ID, resource type, severity, resource tags, or control status. For matching findings, it can update supported ASFF fields, including <code>Severity</code>, <code>Note</code>, and <code>Workflow</code>. Rules are useful for applying consistent triage context across accounts or products.</p>
+<p>Setting <code>Workflow.Status</code> to <code>SUPPRESSED</code> changes how the finding is handled; it does not fix the affected resource or stop a security control from running. If you want Security Hub CSPM to stop generating findings for a control, disable that control instead. See AWS's guide to <a href="https://docs.aws.amazon.com/securityhub/latest/userguide/automation-rules.html" target="_blank" rel="noopener noreferrer">automation rule behavior and supported ASFF fields</a>.</p>
+
+<h2 id="security-hub-rule-models">Choose the rule model that matches your findings</h2>
+<figure><table>
+<thead>
+<tr><th scope="col">Rule model</th><th scope="col">Finding format and API</th><th scope="col">What it can do</th></tr>
+</thead>
+<tbody>
+<tr><td><strong>Security Hub CSPM ASFF rules</strong></td><td>ASFF; <code>CreateAutomationRule</code></td><td>Update supported finding fields such as severity, note, confidence, and workflow status. Suppression is a workflow status.</td></tr>
+<tr><td><strong>AWS Security Hub OCSF rules</strong></td><td>OCSF; <code>CreateAutomationRuleV2</code></td><td>Update supported OCSF fields such as <code>Comment</code>, <code>SeverityId</code>, and <code>StatusId</code>, or create tickets through supported Jira Cloud and ServiceNow ITSM integrations.</td></tr>
+</tbody>
+</table></figure>
+<p>These are separate rule models, not interchangeable payload versions. For the newer OCSF model, see AWS's documentation for <a href="https://docs.aws.amazon.com/securityhub/latest/userguide/securityhub-v2-automation-rules.html" target="_blank" rel="noopener noreferrer">automation rules in AWS Security Hub</a> and <a href="https://docs.aws.amazon.com/securityhub/latest/userguide/securityhub-v2-automations.html" target="_blank" rel="noopener noreferrer">Security Hub automations</a>.</p>
+<p>Their deployment scope also differs. A CSPM rule applies only in the Region where it was created; the CSPM administrator can apply it to matching findings from member accounts in that Region. With Region aggregation in the newer Security Hub, rules created in the home Region apply to linked Regions. Create rules for Regions outside that linked set separately. Follow the appropriate AWS guide when planning account and Region coverage.</p>
+
+<h2 id="setting-up-automation-rules"><span id="how-to-set-up"></span>Create a Security Hub CSPM automation rule</h2>
+<p>Create and manage CSPM rules from the Security Hub CSPM administrator account. Create a rule in each Region where it should apply. You can use the console or the <code>CreateAutomationRule</code> API and AWS CLI.</p>
+<h3 id="finding-the-rules-console">Create the rule in the console</h3>
+<p>In the Security Hub CSPM console, choose <strong>Automations</strong>, then <strong>Create rule</strong> and <strong>Create custom rule</strong>. Give the rule a name, define at least one criterion, and select at least one automated action. Choose whether it starts enabled or disabled. Where supported, review the matching-findings preview before enabling the rule. The <a href="https://docs.aws.amazon.com/securityhub/latest/userguide/create-automation-rules.html" target="_blank" rel="noopener noreferrer">AWS creation guide</a> covers the current console and API steps.</p>
+
+<h3 id="rule-criteria-setup">Choose finding criteria</h3>
+<p>Criteria refer to ASFF finding fields. For example, a rule can match a particular <code>AwsAccountId</code>, the <code>AwsS3Bucket</code> resource type, a <code>HIGH</code> severity label, and a <code>FAILED</code> compliance status. The compliance status criterion applies to findings generated by controls. For control findings, AWS recommends using a stable control ID instead of a title or description that can change; see its <a href="https://docs.aws.amazon.com/securityhub/latest/userguide/automations.html" target="_blank" rel="noopener noreferrer">Security Hub CSPM automation guidance</a>.</p>
+
+<h3 id="action-configuration">Choose finding-field updates</h3>
+<p>CSPM automation rule actions update finding fields. AWS currently supports <code>Confidence</code>, <code>Criticality</code>, <code>Note</code>, <code>RelatedFindings</code>, <code>Severity</code>, <code>Types</code>, <code>UserDefinedFields</code>, <code>VerificationState</code>, and <code>Workflow</code>. They are not direct EventBridge targets: selecting an SNS topic, invoking Lambda, and changing an S3 policy are not CSPM automation rule actions.</p>
+
+<h3 id="example-cspm-rule">Example: add context and raise production findings</h3>
+<p>This AWS CLI example matches high-severity, failed control findings from the account whose ID you provide, then changes their severity and note. Run it with CSPM administrator credentials in the target Region. Replace the example account ID and Region, and set <code>--rule-order</code> to a distinct value among rules that can match the same finding.</p>
+<pre><code>aws securityhub create-automation-rule \
+  --rule-name "Escalate high severity in production" \
+  --description "Add triage context to high severity failed control findings" \
+  --rule-order 1 \
+  --rule-status ENABLED \
+  --no-is-terminal \
+  --criteria '{
+    "AwsAccountId": [{"Value": "123456789012", "Comparison": "EQUALS"}],
+    "SeverityLabel": [{"Value": "HIGH", "Comparison": "EQUALS"}],
+    "ComplianceStatus": [{"Value": "FAILED", "Comparison": "EQUALS"}]
+  }' \
+  --actions '[{
+    "Type": "FINDING_FIELDS_UPDATE",
+    "FindingFieldsUpdate": {
+      "Severity": {"Label": "CRITICAL"},
+      "Note": {
+        "Text": "Production finding promoted by automation policy.",
+        "UpdatedBy": "security-automation"
+      }
+    }
+  }]' \
+  --region us-east-1</code></pre>
+<p>This changes the finding's displayed severity and note. It does not change the affected AWS resource or control result. If a later rule also updates severity, its action may determine the final value.</p>
+
+<h2 id="using-rules-effectively">Order rules and understand when they run</h2>
+<h3 id="rule-execution-order">Rule order and overlapping actions</h3>
+<p>Security Hub CSPM applies rules in ascending numerical <code>RuleOrder</code>. When multiple rules update the same field, the rule applied last wins; a larger order value therefore takes effect later. The console assigns order automatically, while API and CLI requests set it explicitly. Give overlapping rules distinct order values and check the actual order rather than assuming an older rule takes precedence. If a matching rule should end further evaluation, use the terminal-rule option (<code>IsTerminal</code> in the API).</p>
+
+<h3 id="verifying-rule-effectiveness">Verify matching findings and results</h3>
+<p>Use the console preview when it is available, then inspect matching findings to confirm their fields changed as intended. Automation rules evaluate new and provider-updated findings after rule creation. A manual finding-field update through <code>BatchUpdateFindings</code> does not trigger another automation-rule evaluation. If the expected action does not appear, check the rule's enabled state, account and Region, criteria values, and whether the finding was updated by its provider.</p>
+
+<h2 id="connecting-with-aws-services">Use EventBridge for notifications and response workflows</h2>
+<h3 id="eventbridge-integration">Route Security Hub CSPM findings with EventBridge</h3>
+<p>Security Hub CSPM also sends new and updated findings to EventBridge. Automation rules update a finding before EventBridge rules evaluate it, so an EventBridge pattern can match the updated values. For example, this CSPM pattern matches critical findings whose workflow status is <code>NEW</code>:</p>
 <pre><code>{
   "source": ["aws.securityhub"],
   "detail-type": ["Security Hub Findings - Imported"],
   "detail": {
     "findings": {
-      "Type": ["TTPs/Initial Access/UnauthorizedAPICall"]
+      "Severity": {"Label": ["CRITICAL"]},
+      "Workflow": {"Status": ["NEW"]}
     }
   }
-}
-</code></pre>
-<p>This setup enables additional automation, like triggering Lambda functions for specific actions.</p>
-<h3 id="lambda-functions">Lambda Functions</h3>
-<p>Lambda functions allow you to run custom code in response to findings. They can handle tasks like automated remediation, sending custom notifications, integrating third-party tools, or enriching data.</p>
-<p>Key points for implementing Lambda functions:</p>
-<p>1. <strong>Error Handling</strong></p>
-<p>Prepare for issues like API throttling, timeouts, or service failures. Your function should log errors and recover gracefully.</p>
-<p>2. <strong>Performance Optimization</strong></p>
-<p>Keep functions streamlined and efficient. Aim for execution times of 3-5 seconds to avoid timeouts.</p>
-<p>3. <strong>Security Context</strong></p>
-<p>Use IAM roles with the least-privilege principle. Grant only the permissions necessary for the specific task.</p>
-<h3 id="custom-action-setup">Custom Action Setup</h3>
-<p>Custom actions let you create tailored responses beyond the default options.</p>
-<p>1. <strong>Define Action Parameters</strong></p>
-<p>Here’s an example of a custom action to isolate a compromised instance:</p>
-<pre><code>{
-  "Description": "Isolate compromised instance",
-  "Id": "IsolateInstance",
-  "Name": "Isolate EC2 Instance",
-  "Parameters": {
-    "InstanceId": {
-      "Label": "EC2 Instance ID",
-      "Required": true,
-      "Type": "String"
-    }
-  }
-}
-</code></pre>
-<p>2. <strong>Create Response Logic</strong></p>
-<p>Use Lambda functions to execute the custom action. These functions should:</p>
+}</code></pre>
+<p>Configure a target such as an SNS topic, Lambda function, Step Functions state machine, or SQS queue. EventBridge routes the matching event; an SNS topic can deliver a notification, while a function or runbook must implement investigation or a resource change. Provider updates can emit another event, and EventBridge can retry target delivery; make state-changing handlers safe to repeat and configure a dead-letter queue for events that exhaust retries. See AWS guidance for <a href="https://docs.aws.amazon.com/securityhub/latest/userguide/securityhub-cloudwatch-events.html" target="_blank" rel="noopener noreferrer">Security Hub CSPM response workflows</a>, <a href="https://docs.aws.amazon.com/securityhub/latest/userguide/securityhub-cwe-all-findings.html" target="_blank" rel="noopener noreferrer">finding event patterns</a>, <a href="https://docs.aws.amazon.com/eventbridge/latest/userguide/eb-rule-retry-policy.html" target="_blank" rel="noopener noreferrer">EventBridge retries and dead-letter queues</a>, and <a href="https://docs.aws.amazon.com/eventbridge/latest/userguide/eb-troubleshooting.html" target="_blank" rel="noopener noreferrer">duplicate target invocations</a>. For retry, delivery, and target design, see our guide to <a href="/blog/10-eventbridge-best-practices-for-optimal-performance/">EventBridge best practices</a>.</p>
+
+<h3 id="lambda-functions">Make resource remediation explicit</h3>
+<p>If a finding should change a resource, route it to a deliberately designed response workflow. A Lambda function or Systems Manager Automation runbook can make that change, subject to its IAM permissions and input validation. Test the target on representative findings and verify that the resource itself changed. Updating a finding to <code>RESOLVED</code> or <code>SUPPRESSED</code> alone is not remediation. Our guide to <a href="/blog/automate-cross-account-security-scans-amazon-inspector-aws-security-hub/">Amazon Inspector and Security Hub CSPM</a> shows the same distinction for vulnerability findings.</p>
+
+<h3 id="custom-action-setup">Use custom actions for a person-triggered workflow</h3>
+<p>A Security Hub CSPM custom action lets an analyst select findings and send them to EventBridge for processing. It is a user-triggered path, separate from an automation rule that runs when provider findings match criteria. The emitted event uses the <code>Security Hub Findings - Custom Action</code> detail type; create the EventBridge rule and target that handle the response. See AWS's guide to <a href="https://docs.aws.amazon.com/securityhub/latest/userguide/findings-custom-action.html" target="_blank" rel="noopener noreferrer">sending findings to a custom action</a>.</p>
+
+<h2 id="rule-maintenance">Maintain and troubleshoot rules</h2>
+<h3 id="common-problems">Common reasons a rule does not have the expected effect</h3>
 <ul>
-<li>Validate input parameters.</li>
-<li>Perform the necessary security actions.</li>
-<li>Update the finding's status.</li>
-<li>Log the results of the action.</li>
+<li><strong>Wrong model:</strong> CSPM criteria use ASFF fields. The newer Security Hub model uses OCSF; a field or API payload from one model is not valid for the other.</li>
+<li><strong>Wrong Region or account scope:</strong> CSPM rules are Regional and are managed by the CSPM administrator. Confirm the finding is visible in that Region and account scope.</li>
+<li><strong>Wrong update source:</strong> CSPM rules evaluate new and provider-updated findings; they do not run again because a user called <code>BatchUpdateFindings</code>.</li>
+<li><strong>Overlapping rules:</strong> a later rule can overwrite a field changed by an earlier rule. Review order and terminal settings.</li>
+<li><strong>Expected a resource change:</strong> rule actions edit finding fields. Check that the separate EventBridge target was invoked and that its role allows the required resource operation.</li>
 </ul>
-<p>3. <strong>Test Integration</strong></p>
-<p>Run tests in a controlled setup to ensure the custom action works as intended. Test with sample findings to confirm proper execution and error handling.</p>
-<p>For ongoing monitoring, maintain detailed logs in CloudWatch. Track execution times and success rates to fine-tune performance and ensure compliance.</p>
-<h2 id="rule-maintenance">Rule Maintenance</h2>
-<h3 id="rule-updates">Rule Updates</h3>
-<p>It's important to keep automation rules aligned with changing security needs. Update your rules when:</p>
-<ul>
-<li>New threat patterns are identified</li>
-<li>Security policies are revised</li>
-<li>AWS rolls out new services or features</li>
-<li>Compliance standards are updated</li>
-</ul>
-<p><strong>Best practices for updates</strong>:</p>
-<ul>
-<li>Use a test environment that mirrors production to verify changes.</li>
-<li>Record all modifications in a change management system.</li>
-<li>Test updated rules with sample data to ensure triggers, actions, and integrations behave as expected.</li>
-</ul>
-<h3 id="common-problems">Common Problems</h3>
-<p><strong>Rate Limiting</strong></p>
-<ul>
-<li>Frequent triggers can hit AWS service quotas.</li>
-<li>Keep an eye on <a href="/blog/custom-cloudwatch-metrics-setup-guide-2024/">CloudWatch metrics</a> for throttling events.</li>
-<li>Use exponential backoff in custom actions to manage retries.</li>
-</ul>
-<p><strong>Integration Failures</strong></p>
-<ul>
-<li>These might happen due to expired IAM credentials, network disruptions, or service outages.</li>
-<li>Set up <a href="/blog/cloudwatch-alarms-best-practices-for-thresholds-and-conditions/">CloudWatch alarms</a> to catch failures quickly.</li>
-<li>For critical rules, configure fallback actions to maintain functionality.</li>
-</ul>
-<p><strong>Rule Conflicts</strong></p>
-<ul>
-<li>Conflicts between rules can cause unexpected outcomes. Use a priority matrix and document dependencies to keep things organized.</li>
-</ul>
-<p>CloudWatch metrics are your go-to tool for spotting and addressing these issues, ensuring smooth operation.</p>
-<h3 id="performance-tracking">Performance Tracking</h3>
-<p>Use CloudWatch and Security Hub dashboards to monitor key metrics like:</p>
-<ul>
-<li>Rule execution time</li>
-<li>Success rates</li>
-<li>False positives</li>
-<li>Action completion rates</li>
-</ul>
-<p><strong>Steps to track performance</strong>:</p>
-<ul>
-<li>Configure CloudWatch to monitor:
-<ul>
-<li>How often rules are triggered</li>
-<li>Completion rates for actions</li>
-<li>Integration response times</li>
-<li>Error trends</li>
-</ul>
-</li>
-<li>Conduct regular audits:
-<ul>
-<li>Evaluate how effective your rules are and check security coverage.</li>
-<li>Use <a href="https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/AnalyzingLogData.html" rel="nofollow noopener noreferrer" target="_blank">CloudWatch Logs Insights</a> to analyze execution details.</li>
-<li>Set up automated alerts for any performance concerns.</li>
-</ul>
-</li>
-</ul>
+<p>For a control finding, use its control ID when a filter should survive title or description edits. Avoid broad suppressions unless the criteria describe a finding you intend to remove from active triage.</p>
+
 <h2 id="conclusion">Conclusion</h2>
 <h3 id="summary">Summary</h3>
-<p>Automation rules make security responses easier by automatically triggering actions for specific findings. This reduces the need for manual work and ensures security standards are applied consistently.</p>
-<p>Here’s what they offer:</p>
-<ul>
-<li><strong>Automated Response</strong>: Automatically addresses security findings, speeding up incident handling.</li>
-<li><strong>Integration</strong>: Works seamlessly with EventBridge and Lambda to simplify workflows.</li>
-<li><strong>Customization</strong>: Lets you set tailored criteria to meet your security needs.</li>
-<li><strong>Monitoring</strong>: Tracks performance using CloudWatch.</li>
-</ul>
-<p>Use these features to refine and strengthen your security processes.</p>
-<h3 id="next-steps">Next Steps</h3>
-<p>Follow these steps to enhance your automation strategy:</p>
-<ol>
-<li>
-<strong>Documentation and Training</strong>
-<ul>
-<li>Explore <a href="/blog/automate-cross-account-security-scans-amazon-inspector-aws-security-hub/">AWS Security Hub documentation</a> and tutorials on <a href="/">AWS for Engineers</a> to fine-tune your setup and train your team.</li>
-<li>Stay informed by subscribing to AWS Security Hub release notes.</li>
-</ul>
-</li>
-<li>
-<strong>Optimization</strong>
-<ul>
-<li>Evaluate rule performance through CloudWatch metrics and adjust custom actions using Lambda functions.</li>
-</ul>
-</li>
-</ol>
-<p>For more resources and hands-on guides, check out <a href="/">AWS for Engineers</a>. Their developer-focused content offers practical advice on AWS security and automation.</p>
-<h2>Related Blog Posts</h2><ul><li><a href="/blog/automate-cross-account-security-scans-amazon-inspector-aws-security-hub/">Automate Cross-Account Security Scans: Amazon Inspector + AWS Security Hub</a></li><li><a href="/blog/aws-operational-excellence-pillar-key-concepts/">AWS Operational Excellence Pillar: Key Concepts</a></li><li><a href="/blog/5-best-practices-for-aws-operational-excellence/">5 Best Practices for AWS Operational Excellence</a></li><li><a href="/blog/eventbridge-security-best-practices/">EventBridge Security Best Practices</a></li></ul>
+<p>Security Hub CSPM automation rules help standardize finding triage by matching ASFF fields and updating supported finding fields. Keep them distinct from the newer OCSF-based Security Hub rule model. Use EventBridge and an explicit target workflow for notifications or resource remediation, then verify both the finding update and the target's result.</p>

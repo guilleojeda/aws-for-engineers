@@ -2,325 +2,111 @@
 layout: post.njk
 templateEngineOverride: html
 tags: posts
-title: "How to Analyze Lambda Metrics in CloudWatch"
-description: "Learn how to effectively monitor AWS Lambda performance with CloudWatch metrics, identify issues, and optimize serverless applications."
+title: "How to Analyze AWS Lambda Metrics in CloudWatch"
+description: "Use CloudWatch Lambda metrics, dimensions, percentiles, and logs to investigate errors, throttles, latency, concurrency, and event lag."
 date: "2025-05-08"
 datePublished: "2025-05-08T02:46:38.580000+00:00"
 heroImage: "/assets/media/9020bb2e1c38c3a6abab.jpg"
 permalink: "/blog/how-to-analyze-lambda-metrics-in-cloudwatch/"
 sourceUrl: "https://awsforengineers.com/blog/how-to-analyze-lambda-metrics-in-cloudwatch/"
-dateModified: "2026-10-03"
-updateNote: "Added author attribution and profile information."
+dateModified: "2026-10-04"
+updateNote: "Rewrote the guide around CloudWatch dimensions, statistics, metric math, and diagnostic patterns; corrected Lambda error, duration, cold-start, memory, and billing distinctions."
 ---
-<p>Monitoring your <a href="https://aws.amazon.com/lambda/" rel="nofollow noopener noreferrer" target="_blank">AWS Lambda</a> functions is critical to maintaining performance and reliability. CloudWatch provides key metrics like <strong>Duration</strong>, <strong>Errors</strong>, <strong>Invocations</strong>, and <strong>Throttles</strong> to help you track and optimize your serverless applications. Here's a quick breakdown:</p>
-<ul>
-<li><strong>Duration</strong>: Tracks execution time to optimize costs and performance.</li>
-<li><strong>Errors</strong>: Identifies failed executions for troubleshooting.</li>
-<li><strong>Invocations</strong>: Monitors usage trends and related costs.</li>
-<li><strong>Throttles</strong>: Flags requests denied due to concurrency limits.</li>
-</ul>
-<p><strong>Key Actions:</strong></p>
-<ul>
-<li>Use <a href="/blog/cloudwatch-alarms-best-practices-for-thresholds-and-conditions/">CloudWatch alarms</a> to detect spikes in errors or throttling.</li>
-<li>Analyze logs alongside metrics to identify and resolve issues.</li>
-<li>Create custom dashboards to visualize performance in real time.</li>
-</ul>
-<p>For advanced use cases, monitor metrics like <strong>IteratorAge</strong> (stream processing delays) and <strong>InitDuration</strong> (cold start times). These insights help you fine-tune memory settings, adjust concurrency, and improve overall efficiency. Keep reading for step-by-step instructions on accessing metrics, building dashboards, and troubleshooting common issues.</p>
-<h2 id="main-lambda-metrics-to-track">Main Lambda Metrics to Track</h2>
-<p><a href="https://aws.amazon.com/cloudwatch/" rel="nofollow noopener noreferrer" target="_blank">Amazon CloudWatch</a> offers key metrics to help you monitor and manage Lambda performance effectively.</p>
-<h3 id="basic-performance-metrics">Basic Performance Metrics</h3>
-<p>Here are the four main metrics to keep an eye on:</p>
+<p>Amazon CloudWatch gives you aggregate metrics for AWS Lambda, such as how many invocations ran, how many returned errors, how long function code took, and how many requests were throttled. Choose the function version and statistic that match the question, then use invocation logs or traces when an aggregate metric cannot explain an individual request.</p>
+<p>Lambda publishes standard function metrics in the <code>AWS/Lambda</code> namespace at one-minute intervals. You do not need to add permissions to the function role for these metrics, and Lambda does not charge extra for them. Lambda invocation metrics are aggregates, not per-invocation records. For these metrics, the timestamp reflects when the invocation started, while CloudWatch may not show the data until the invocation finishes. Allow for that reporting delay when looking at the latest data. See AWS's <a href="https://docs.aws.amazon.com/lambda/latest/dg/monitoring-metrics.html" target="_blank" rel="noopener noreferrer">Lambda metrics overview</a> and <a href="https://docs.aws.amazon.com/lambda/latest/dg/monitoring-metrics-view.html" target="_blank" rel="noopener noreferrer">metric viewing guide</a>.</p>
+
+<h2 id="main-lambda-metrics-to-track">Choose metrics and statistics that answer the question</h2>
+<p>Open CloudWatch Metrics and select the <code>AWS/Lambda</code> namespace. For a broader metric reference, see our guide to <a href="/blog/aws-lambda-metrics-explained/">AWS Lambda metrics</a>.</p>
+<h3 id="basic-performance-metrics">Core invocation, latency, and concurrency metrics</h3>
 <figure><table>
 <thead>
 <tr>
 <th>Metric</th>
-<th>Description</th>
-<th>Why It Matters</th>
+<th>What it measures</th>
+<th>Useful statistic</th>
+<th>Important limit</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><strong>Invocations</strong></td>
-<td>Number of times a function is executed</td>
-<td>Helps track usage trends and related costs</td>
+<td><code>Invocations</code></td>
+<td>Calls that reached and ran your function code, including calls that returned a function error</td>
+<td><code>Sum</code> for the count in a period</td>
+<td>Throttled requests and other rejected invocations are not counted.</td>
 </tr>
-<tr>
-<td><strong>Errors</strong></td>
-<td>Count of failed executions</td>
-<td>Highlights potential reliability problems</td>
-</tr>
-<tr>
-<td><strong>Duration</strong></td>
-<td>Time taken to execute the function</td>
-<td>Directly impacts costs and user experience</td>
-</tr>
-<tr>
-<td><strong>Throttles</strong></td>
-<td>Requests denied due to concurrency limits</td>
-<td>Indicates resource limitations</td>
-</tr>
-</tbody>
-</table></figure>
-<p>Pay close attention to <strong>Duration</strong>, as longer execution times can drive up costs and slow down performance. If your function nears its timeout limit, consider optimizing the code or increasing memory allocation.</p>
-<p>To stay ahead of potential issues, set up CloudWatch alarms for <strong>Errors</strong>. A sudden spike in Errors might point to problems like:</p>
-<ul>
-<li>Database connection failures</li>
-<li>Issues with third-party APIs</li>
-<li>Memory leaks</li>
-<li>Poor input validation</li>
-</ul>
-<p>For Lambda functions with specialized use cases, additional metrics can provide more in-depth insights.</p>
-<h3 id="specialized-monitoring-metrics">Specialized Monitoring Metrics</h3>
-<p>Some metrics are tailored for specific environments or use cases:</p>
-<ul>
-<li><strong>IteratorAge</strong>: Tracks the time gap between when a record is added to a stream and when it’s processed. Useful for stream-based functions.</li>
-<li><strong>PostRuntimeExtensionsDuration</strong>: Measures the time taken by extensions for tasks outside the runtime. Monitor this if you’re using Lambda extensions.</li>
-<li><strong>OffsetLag</strong>: Indicates delays in processing stream records when using <a href="https://kafka.apache.org/" rel="nofollow noopener noreferrer" target="_blank">Apache Kafka</a> as an event source.</li>
-</ul>
-<p>For stream-based functions, <strong>combine IteratorAge with Duration</strong> to assess processing efficiency. High values in both metrics may signal the need for adjustments, such as:</p>
-<ul>
-<li>Allocating more memory to speed up processing</li>
-<li>Reducing the batch size for stream records</li>
-<li>Implementing parallel processing to handle workloads more efficiently</li>
-</ul>
-<h2 id="finding-lambda-metrics-in-cloudwatch">Finding Lambda Metrics in CloudWatch</h2>
-<p>CloudWatch offers several ways to view and analyze Lambda metrics, whether through its web interface or programmatically.</p>
-<h3 id="cloudwatch-console-navigation">CloudWatch Console Navigation</h3>
-<p>Here’s how to find Lambda metrics in the CloudWatch console:</p>
-<p>1. <strong>Access <a href="/blog/custom-cloudwatch-metrics-setup-guide-2024/">CloudWatch Metrics</a></strong></p>
-<p>Open the CloudWatch console and click on "Metrics" in the left-hand menu. Under "AWS Namespaces", select "AWS/Lambda" to see all metrics related to Lambda functions.</p>
-<p>2. <strong>Use Filters</strong></p>
-<p>The search bar lets you narrow down metrics by:</p>
-<ul>
-<li>Function name</li>
-<li>Version number</li>
-<li>Alias</li>
-<li>Resource tags</li>
-</ul>
-<p>For example, to find metrics for a specific function version, you can search using its name, such as <code>api-endpoint-prod</code>.</p>
-<p>3. <strong>Build Custom Dashboards</strong></p>
-<p>You can create dashboards to monitor your Lambda functions by selecting relevant metrics and organizing them into widgets. A useful Lambda monitoring dashboard might include:</p>
-<figure><table>
-<thead>
-<tr>
-<th>Widget Type</th>
-<th>Metrics to Display</th>
-<th>Recommended Time Range</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Line graph</td>
-<td>Invocations, Duration</td>
-<td>24 hours</td>
-</tr>
-<tr>
-<td>Number</td>
-<td>Error count, Throttles</td>
-<td>Current value</td>
-</tr>
-<tr>
-<td>Bar chart</td>
-<td>Memory utilization</td>
-<td>1 hour</td>
-</tr>
-<tr>
-<td>Heat map</td>
-<td>Concurrent executions</td>
-<td>7 days</td>
-</tr>
-</tbody>
-</table></figure>
-<p>For automation or long-term analysis, you can also retrieve metrics programmatically.</p>
-<h3 id="getting-metrics-through-code">Getting Metrics Through Code</h3>
-<p>You can use the AWS CLI or SDKs to fetch Lambda metrics programmatically.</p>
-<p><strong>Using AWS CLI</strong>:</p>
-<pre><code>aws cloudwatch get-metric-statistics \
-  --namespace AWS/Lambda \
-  --metric-name Duration \
-  --dimensions Name=FunctionName,Value=your-function-name \
-  --start-time 2025-05-07T00:00:00 \
-  --end-time 2025-05-08T00:00:00 \
-  --period 3600 \
-  --statistics Average
-</code></pre>
-<p><strong>Using <a href="https://docs.aws.amazon.com/pythonsdk/" rel="nofollow noopener noreferrer" target="_blank">Boto3</a></strong>:</p>
-<pre><code>import boto3
-
-cloudwatch = boto3.client('cloudwatch')
-response = cloudwatch.get_metric_data(
-    MetricDataQueries=[
-        {
-            'Id': 'invocations',
-            'MetricStat': {
-                'Metric': {
-                    'Namespace': 'AWS/Lambda',
-                    'MetricName': 'Invocations',
-                    'Dimensions': [
-                        {
-                            'Name': 'FunctionName',
-                            'Value': 'your-function-name'
-                        }
-                    ]
-                },
-                'Period': 300,
-                'Stat': 'Sum'
-            }
-        }
-    ],
-    StartTime='2025-05-07T00:00:00',
-    EndTime='2025-05-08T00:00:00'
-)
-</code></pre>
-<p>You can store these results in a time-series database to track trends and set up automated alerts. These programmatic methods make it easier to scale your monitoring efforts and dive deeper into performance insights.</p>
-<h2 id="finding-lambda-performance-problems">Finding Lambda Performance Problems</h2>
-<p>CloudWatch metrics are a key tool for spotting performance issues in your Lambda functions. By focusing on specific metrics, you can identify bottlenecks and make adjustments to improve response times, manage memory usage, and control costs.</p>
-<h3 id="response-time-analysis">Response Time Analysis</h3>
-<p>To identify slow-performing Lambda functions, keep an eye on duration metrics. Here’s a breakdown of what to monitor:</p>
-<figure><table>
-<thead>
-<tr>
-<th>Metric Type</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><strong>p95 Duration</strong></td>
-<td>95th percentile response time</td>
-</tr>
-<tr>
-<td><strong>p99 Duration</strong></td>
-<td>99th percentile response time</td>
-</tr>
-<tr>
-<td><strong>InitDuration</strong></td>
-<td>Time taken for cold starts</td>
-</tr>
-</tbody>
-</table></figure>
-<p>Here’s how to approach your analysis:</p>
-<ul>
-<li>Look at <strong>p95</strong> and <strong>p99</strong> metrics to detect performance outliers that could indicate issues.</li>
-<li>Pay attention to <strong>InitDuration</strong> separately to spot cold start delays and compare them to the performance of warm functions.</li>
-</ul>
-
-<h2 id="tracking-errors-and-throttling">Tracking Errors and Throttling</h2>
-<p>Use CloudWatch metrics and logs to spot and fix Lambda errors and throttling issues.</p>
-<h3 id="connecting-metrics-to-logs">Connecting Metrics to Logs</h3>
-<p>The <code>Errors</code> metric in CloudWatch is your go-to for tracking function failures. If you see error rate spikes, link them to CloudWatch Logs to find the problem. Focus on these key metrics:</p>
-<figure><table>
-<thead>
-<tr>
-<th>Metric</th>
-<th>Purpose</th>
-<th>Investigation Method</th>
-</tr>
-</thead>
-<tbody>
 <tr>
 <td><code>Errors</code></td>
-<td>Tracks function failures</td>
-<td>Look at log entries for stack traces</td>
+<td>Invocations that returned a function or runtime error, including timeouts</td>
+<td><code>Sum</code>; compare with <code>Invocations</code> for the function error rate</td>
+<td>It does not count every unsuccessful business result. A handler that returns a normal response containing an error status is a successful Lambda invocation.</td>
 </tr>
 <tr>
-<td><code>DeadLetterErrors</code></td>
-<td>Highlights event processing issues</td>
-<td>Check dead letter queue messages for patterns</td>
+<td><code>Throttles</code></td>
+<td>Invocation requests rejected because Lambda could not provide concurrency</td>
+<td><code>Sum</code></td>
+<td>Throttled requests are counted in neither <code>Invocations</code> nor <code>Errors</code>.</td>
 </tr>
 <tr>
 <td><code>Duration</code></td>
-<td>Flags performance problems</td>
-<td>Review logs for signs of timeouts</td>
+<td>Milliseconds spent processing an event after initialization</td>
+<td><code>Average</code> for the mean; <code>p50</code> for the median; <code>p95</code> or <code>p99</code> for the slow tail</td>
+<td>Excludes cold-start initialization and is not end-to-end client latency.</td>
+</tr>
+<tr>
+<td><code>ConcurrentExecutions</code></td>
+<td>Function instances currently processing events</td>
+<td><code>Maximum</code> over the period to see peak concurrency</td>
+<td>A high peak by itself does not show that requests were throttled; check <code>Throttles</code> too.</td>
 </tr>
 </tbody>
 </table></figure>
-<p>Here’s how to connect metrics with logs:</p>
+<p><code>Average</code> is the mean and can be pulled upward by unusually long invocations; <code>p50</code> is the median. Compare these with <code>p95</code> or <code>p99</code> to see whether a slowdown affects the middle of the distribution or is concentrated in the slower tail. AWS documents the supported <a href="https://docs.aws.amazon.com/lambda/latest/dg/monitoring-metrics-types.html" target="_blank" rel="noopener noreferrer">Lambda metrics and statistics</a>.</p>
+<h3 id="specialized-monitoring-metrics">Add event-source metrics when they apply</h3>
+<p>Some metrics appear only for particular invocation modes or event sources:</p>
 <ul>
-<li><strong>Step 1</strong>: Identify the timestamps of error spikes in your metrics.</li>
-<li><strong>Step 2</strong>: Go to CloudWatch Logs for the same time period.</li>
-<li><strong>Step 3</strong>: Use error-related keywords to filter log entries.</li>
-<li><strong>Step 4</strong>: Analyze stack traces and error messages to find the root cause.</li>
+<li><code>IteratorAge</code> applies to DynamoDB, Kinesis, and Amazon DocumentDB streams. It measures the age of the last record in an event when the event source mapping sends the event to the function.</li>
+<li><code>OffsetLag</code> applies to self-managed Apache Kafka and Amazon MSK. It measures the offset difference between records written to the topic and those processed by the consumer group.</li>
+<li><code>AsyncEventAge</code> measures how long an asynchronous event waits before Lambda invokes the function.</li>
 </ul>
-<p>Once you've addressed errors, shift your focus to throttling metrics to ensure your Lambda function runs smoothly.</p>
-<h3 id="fixing-throttling-issues">Fixing Throttling Issues</h3>
-<p>Throttling happens when your Lambda function hits concurrency limits. Keep an eye on the <code>ConcurrentExecutions</code> and <code>Throttles</code> metrics to detect these bottlenecks. Here's what to look for:</p>
-<figure><table>
-<thead>
-<tr>
-<th>Throttling Indicator</th>
-<th>Suggested Fix</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>High <code>Throttles</code></td>
-<td>Increase your account concurrency limit</td>
-</tr>
-<tr>
-<td>Sporadic throttling</td>
-<td>Use Reserved Concurrency</td>
-</tr>
-<tr>
-<td>Consistent throttling</td>
-<td>Set up Provisioned Concurrency</td>
-</tr>
-</tbody>
-</table></figure>
-<p>Here’s how to tackle throttling:</p>
-<ol>
-<li>
-<strong>Monitor Current Usage</strong><br/>
-Check the <code>ConcurrentExecutions</code> metric to see if you're nearing your concurrency limits. This gives you a clear picture of your baseline usage.
-</li>
-<li>
-<strong>Use Reserved Concurrency</strong><br/>
-Reserve a specific amount of concurrency for critical functions. Start with a value slightly above your highest observed concurrent executions.
-</li>
-<li>
-<strong>Enable Provisioned Concurrency</strong><br/>
-For functions that need steady performance and reduced cold starts, configure Provisioned Concurrency to keep them ready to execute.
-</li>
-</ol>
-<h2 id="summary-and-further-reading">Summary and Further Reading</h2>
-<p>We've gone over key Lambda metrics and troubleshooting techniques, helping you better understand how to monitor and maintain performance. Keep an eye on critical metrics, interpret them correctly, and regularly review your setup to keep your Lambda functions running smoothly.</p>
-<p>For more detailed information about Lambda metrics and <a href="/blog/aws-devops-monitoring-metrics-tools-best-practices/">CloudWatch monitoring</a>, check out <a href="/">AWS for Engineers</a>. Their resources include:</p>
+<p>Use <code>Maximum</code> to find the highest age or lag in a period. If it rises, inspect the event source mapping, processing rate, function errors, and retry behavior. These metrics do not apply to every trigger, so first confirm which source is invoking the function.</p>
+<h3 id="error-rate-calculation">Calculate the function error rate</h3>
+<p>In a CloudWatch graph, add <code>Errors</code> and <code>Invocations</code> for the same function dimensions and period, using <code>Sum</code> for both. Add this metric math expression, replacing the IDs with the IDs shown in your graph:</p>
+<pre><code>IF(invocations &gt; 0, 100 * errors / invocations)</code></pre>
+<p>This gives the percentage of invocations that returned function errors. A period with no invocations has no error-rate value. The rate excludes throttles by definition, so review <code>Throttles</code> separately. CloudWatch supports this kind of <a href="https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/using-metric-math.html" target="_blank" rel="noopener noreferrer">metric math expression</a>.</p>
+
+<h2 id="finding-lambda-metrics-in-cloudwatch">Choose the right function scope in CloudWatch</h2>
+<h3 id="cloudwatch-console-navigation">Select dimensions before comparing metrics</h3>
+<p>In the <code>AWS/Lambda</code> namespace, the dimensions determine which invocations are combined:</p>
 <ul>
-<li><strong>Performance Optimization</strong>: Insights on custom metrics, setting up alarms, and creating dashboards.</li>
-<li><strong>Cost Management</strong>: Tips on managing resource usage, adjusting concurrency settings, and optimizing memory allocation.</li>
-<li><strong>Error Handling</strong>: Guidance on log analysis, identifying error patterns, and implementing automated solutions.</li>
+<li><code>FunctionName</code> aggregates metrics across all versions and aliases of a function.</li>
+<li><code>Resource</code> selects a particular version or alias.</li>
+<li><code>ExecutedVersion</code> separates the version that actually handled an invocation, which is useful when a weighted alias sends traffic to more than one version.</li>
+<li><code>EventSourceMappingUUID</code> isolates a particular event source mapping.</li>
 </ul>
-<p>To improve your Lambda monitoring, focus on these key steps:</p>
-<ul>
-<li>Monitor essential metrics.</li>
-<li>Utilize custom metrics for specific needs.</li>
-<li>Set up alerts to stay ahead of issues.</li>
-</ul>
-<p>Consistently applying these practices will help you maintain top-notch Lambda performance.</p>
-<h2 id="faqs">FAQs</h2>
-<h3 id="how-can-i-use-cloudwatch-alarms-to-monitor-and-reduce-lambda-function-errors">How can I use CloudWatch alarms to monitor and reduce Lambda function errors?</h3>
-<p>To effectively monitor and reduce Lambda function errors using CloudWatch alarms, start by identifying key metrics such as <strong><code>Errors</code></strong>, <strong><code>Throttles</code></strong>, and <strong><code>Duration</code></strong>. These metrics provide insights into the frequency of errors, throttling occurrences, and execution performance.</p>
-<p>Set up alarms in CloudWatch to notify you when these metrics exceed predefined thresholds. For example, you can create an alarm to trigger if the error count surpasses a certain value within a specified time period. Configure notifications to send alerts via email, SMS, or other channels using <a href="https://aws.amazon.com/sns/" rel="nofollow noopener noreferrer" target="_blank">Amazon SNS</a>, so you can respond quickly.</p>
-<p>By continuously monitoring these alarms, you can proactively address issues such as misconfigurations, resource limitations, or unexpected spikes in traffic. This helps ensure your Lambda functions perform efficiently and reliably.</p>
-<h3 id="how-can-i-optimize-aws-lambda-performance-to-reduce-execution-time-and-costs">How can I optimize AWS Lambda performance to reduce execution time and costs?</h3>
-<p>To optimize the performance of your <a href="/blog/aws-lambda-getting-started-first-steps/">AWS Lambda functions</a> and reduce costs, consider these strategies:</p>
-<ul>
-<li><strong>Minimize cold starts</strong>: Use provisioned concurrency to keep your functions warm, especially for latency-sensitive applications.</li>
-<li><strong>Optimize memory allocation</strong>: Allocate just enough memory to balance execution speed and cost. Test different memory settings to find the optimal configuration for your workload.</li>
-<li><strong>Streamline code</strong>: Write efficient, lightweight code and avoid unnecessary dependencies. Smaller deployment packages lead to faster initialization.</li>
-<li><strong>Use efficient data handling</strong>: Reduce payload sizes and leverage efficient data formats like JSON or <a href="https://protobuf.dev/" rel="nofollow noopener noreferrer" target="_blank">Protocol Buffers</a>. Minimize network calls by batching or caching data where possible.</li>
-<li><strong>Leverage monitoring tools</strong>: Use Amazon CloudWatch to analyze metrics like invocation duration, error rates, and concurrency levels. Identify bottlenecks and adjust your function accordingly.</li>
-</ul>
-<p>By implementing these practices, you can enhance your Lambda functions' efficiency while keeping costs under control.</p>
-<h3 id="how-can-i-analyze-and-address-high-values-in-lambda-metrics-like-iteratorage-and-initduration">How can I analyze and address high values in Lambda metrics like IteratorAge and InitDuration?</h3>
-<p>High values in <strong>IteratorAge</strong> and <strong>InitDuration</strong> can indicate potential performance issues with your AWS Lambda functions. Here's how to interpret and address them:</p>
-<ul>
-<li>
-<strong>IteratorAge</strong> measures the age of the oldest record in the event source queue before it's processed by Lambda. High values typically mean your function isn't keeping up with the incoming data. To resolve this, consider increasing the function's concurrency or optimizing its execution time.
-</li>
-<li>
-<strong>InitDuration</strong> represents the time taken to initialize your Lambda function during a cold start. High values here may suggest a need to reduce initialization overhead, such as by minimizing dependencies, using smaller deployment packages, or leveraging AWS Lambda's provisioned concurrency.
-</li>
-</ul>
-<p>By regularly monitoring these metrics in CloudWatch and making adjustments, you can ensure your Lambda functions perform optimally and meet your application's requirements.</p>
-<h2>Related posts</h2><ul><li><a href="/blog/lambda-error-monitoring-best-practices/">Lambda Error Monitoring: Best Practices</a></li><li><a href="/blog/monitor-lambda-errors-with-cloudwatch/">Monitor Lambda Errors with CloudWatch</a></li><li><a href="/blog/how-to-set-up-cloudwatch-alarms-for-lambda/">How to Set Up CloudWatch Alarms for Lambda</a></li><li><a href="/blog/aws-lambda-metrics-explained/">AWS Lambda Metrics Explained</a></li></ul><script type="application/ld+json">{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"How can I use CloudWatch alarms to monitor and reduce Lambda function errors?","acceptedAnswer":{"@type":"Answer","text":"<p>To effectively monitor and reduce Lambda function errors using CloudWatch alarms, start by identifying key metrics such as <strong><code>Errors</code></strong>, <strong><code>Throttles</code></strong>, and <strong><code>Duration</code></strong>. These metrics provide insights into the frequency of errors, throttling occurrences, and execution performance.</p> <p>Set up alarms in CloudWatch to notify you when these metrics exceed predefined thresholds. For example, you can create an alarm to trigger if the error count surpasses a certain value within a specified time period. Configure notifications to send alerts via email, SMS, or other channels using <a href=\"https://aws.amazon.com/sns/\" target=\"_blank\" rel=\"nofollow noopener noreferrer\">Amazon SNS</a>, so you can respond quickly.</p> <p>By continuously monitoring these alarms, you can proactively address issues such as misconfigurations, resource limitations, or unexpected spikes in traffic. This helps ensure your Lambda functions perform efficiently and reliably.</p>"}},{"@type":"Question","name":"How can I optimize AWS Lambda performance to reduce execution time and costs?","acceptedAnswer":{"@type":"Answer","text":"<p>To optimize the performance of your <a href=\"https://awsforengineers.com/blog/aws-lambda-getting-started-first-steps/\">AWS Lambda functions</a> and reduce costs, consider these strategies:</p> <ul> <li><strong>Minimize cold starts</strong>: Use provisioned concurrency to keep your functions warm, especially for latency-sensitive applications.</li> <li><strong>Optimize memory allocation</strong>: Allocate just enough memory to balance execution speed and cost. Test different memory settings to find the optimal configuration for your workload.</li> <li><strong>Streamline code</strong>: Write efficient, lightweight code and avoid unnecessary dependencies. Smaller deployment packages lead to faster initialization.</li> <li><strong>Use efficient data handling</strong>: Reduce payload sizes and leverage efficient data formats like JSON or <a href=\"https://protobuf.dev/\" target=\"_blank\" rel=\"nofollow noopener noreferrer\">Protocol Buffers</a>. Minimize network calls by batching or caching data where possible.</li> <li><strong>Leverage monitoring tools</strong>: Use Amazon CloudWatch to analyze metrics like invocation duration, error rates, and concurrency levels. Identify bottlenecks and adjust your function accordingly.</li> </ul> <p>By implementing these practices, you can enhance your Lambda functions' efficiency while keeping costs under control.</p>"}},{"@type":"Question","name":"How can I analyze and address high values in Lambda metrics like IteratorAge and InitDuration?","acceptedAnswer":{"@type":"Answer","text":"<p>High values in <strong>IteratorAge</strong> and <strong>InitDuration</strong> can indicate potential performance issues with your AWS Lambda functions. Here's how to interpret and address them:</p> <ul> <li> <strong>IteratorAge</strong> measures the age of the oldest record in the event source queue before it's processed by Lambda. High values typically mean your function isn't keeping up with the incoming data. To resolve this, consider increasing the function's concurrency or optimizing its execution time. </li> <li> <strong>InitDuration</strong> represents the time taken to initialize your Lambda function during a cold start. High values here may suggest a need to reduce initialization overhead, such as by minimizing dependencies, using smaller deployment packages, or leveraging AWS Lambda's provisioned concurrency. </li> </ul> <p>By regularly monitoring these metrics in CloudWatch and making adjustments, you can ensure your Lambda functions perform optimally and meet your application's requirements.</p>"}}]}</script>
+<p>These metrics are also Region-scoped. If a deployment affects only one version, an aggregate function graph can hide the change; compare the executed versions over the same time range. AWS's <a href="https://docs.aws.amazon.com/lambda/latest/dg/monitoring-metrics-view.html" target="_blank" rel="noopener noreferrer">CloudWatch navigation instructions</a> describe each dimension. The page also notes that long-running invocations can take several minutes to appear because metrics are emitted after processing finishes.</p>
+
+<h2 id="finding-lambda-performance-problems">Read metric patterns, then investigate the cause</h2>
+<h3 id="response-time-analysis">Separate function duration from cold starts and request latency</h3>
+<p><code>Duration</code> measures function-code processing; it excludes the initialization phase. It also does not include the full time a caller may wait for API Gateway, a queue, or another downstream service. Use the metric to see whether function processing is slower, then check logs or traces to locate time spent in initialization, the handler, or dependencies.</p>
+<p><code>InitDuration</code> is not a standard <code>AWS/Lambda</code> CloudWatch metric. For ordinary execution environments, look for <code>Init Duration</code> in the invocation's <code>REPORT</code> log. For SnapStart, initialization details appear in <code>INIT_REPORT</code>, and restore time has its own fields. See AWS's <a href="https://docs.aws.amazon.com/lambda/latest/dg/monitoring-cloudwatchlogs-view.html" target="_blank" rel="noopener noreferrer">Lambda log field reference</a> and <a href="https://docs.aws.amazon.com/lambda/latest/dg/snapstart-monitoring.html" target="_blank" rel="noopener noreferrer">SnapStart monitoring guide</a>.</p>
+<h3 id="tracking-errors-and-throttling">Compare errors, throttles, and concurrency</h3>
+<p>When <code>Errors</code> rise, compare the error rate with the same-period invocation count and inspect the matching function logs. Lambda records the error metric at invocation start, so account for the function's runtime when lining up timestamps. A <code>DeadLetterErrors</code> increase means Lambda failed to deliver an asynchronous invocation to its configured dead-letter queue; it is not a general count of function failures. See AWS's <a href="https://docs.aws.amazon.com/lambda/latest/dg/monitoring-metrics-types.html" target="_blank" rel="noopener noreferrer">definition of asynchronous invocation metrics</a>.</p>
+<h3 id="connecting-metrics-to-logs">Use invocation logs for per-request details</h3>
+<p>CloudWatch Logs contains a <code>REPORT</code> record for an invocation. It includes <code>Duration</code>, <code>Billed Duration</code>, allocated <code>Memory Size</code>, and <code>Max Memory Used</code>; standard Lambda metrics do not provide a memory-use time series. These are log fields, separate from the standard metrics. CloudWatch Logs has its own ingestion and storage pricing, separate from the included standard metrics; check current <a href="https://aws.amazon.com/cloudwatch/pricing/" target="_blank" rel="noopener noreferrer">CloudWatch pricing</a>.</p>
+<p>Interpret <code>Max Memory Used</code> as an observed value, not always the isolated peak for that request. When invocations share an execution environment, Lambda can report the maximum across those invocations, which may be higher than the current invocation's usage. AWS describes this behavior in its <a href="https://docs.aws.amazon.com/lambda/latest/dg/python-logging.html" target="_blank" rel="noopener noreferrer">Python runtime logging reference</a>.</p>
+<p>Do not use <code>Duration</code> alone to estimate Lambda compute charges. <code>Billed Duration</code> applies billing rounding and, since August 1, 2025, includes initialization time across Lambda configurations. A cold-start invocation can therefore have a longer billed duration than the standard <code>Duration</code> metric. Charges also depend on request count, allocated memory, architecture, and the function's configuration; use the report fields and current <a href="https://aws.amazon.com/lambda/pricing/" target="_blank" rel="noopener noreferrer">Lambda pricing</a> when estimating cost. AWS explains the initialization change in its <a href="https://aws.amazon.com/blogs/compute/aws-lambda-standardizes-billing-for-init-phase/" target="_blank" rel="noopener noreferrer">INIT billing announcement</a>.</p>
+<p>This Logs Insights query summarizes the duration recorded on Lambda <code>REPORT</code> entries and the highest reported memory field in each five-minute interval:</p>
+<pre><code>filter @type = "REPORT"
+| stats avg(@duration) as avgDurationMs,
+        pct(@duration, 95) as p95DurationMs,
+        max(@maxMemoryUsed / 1024 / 1024) as maxMemoryMiB
+  by bin(5m)</code></pre>
+<p>The query uses standard Lambda log fields and the <code>avg</code>, <code>pct</code>, <code>max</code>, and <code>bin()</code> syntax documented in AWS's <a href="https://docs.aws.amazon.com/lambda/latest/dg/monitoring-cloudwatchlogs-view.html" target="_blank" rel="noopener noreferrer">CloudWatch Logs guide</a> and <a href="https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/CWL_QuerySyntax-Stats.html" target="_blank" rel="noopener noreferrer">Logs Insights stats reference</a>. To investigate a specific failure, filter to its time range and request ID, then inspect the function's own messages and exception details.</p>
+<h3 id="fixing-throttling-issues">Investigate throttling before changing concurrency</h3>
+<p>If <code>Throttles</code> rises, compare its timing with peak <code>ConcurrentExecutions</code>, the function's reserved concurrency, and the Region's concurrency quota. Then check how the invoking service handles rejected requests, retries, or queued work. A rising concurrent execution count without throttles can be normal growth; throttles confirm requests were rejected. Use these signals to identify which limit or event-source behavior needs attention before adjusting capacity.</p>
+<h3 id="using-tracing-with-metrics">Use traces to follow a request across services</h3>
+<p>Metrics summarize many invocations; a distributed trace can show the path of a sampled request through Lambda and downstream services. Tracing is configured separately from standard Lambda metrics. AWS describes <a href="https://docs.aws.amazon.com/lambda/latest/dg/services-xray.html" target="_blank" rel="noopener noreferrer">Lambda tracing with X-Ray</a> and the trace data you can inspect.</p>
+
+<h2 id="standard-metrics-and-enhanced-monitoring">Know when to use Lambda Insights</h2>
+<p>CloudWatch Lambda Insights is an optional extension that adds runtime telemetry, including CPU and memory measurements, in the separate <code>LambdaInsights</code> namespace. Enable it when standard metrics and invocation logs do not provide the resource detail you need. Insights sends performance data to CloudWatch, so its metrics and logs can add charges; check current <a href="https://aws.amazon.com/cloudwatch/pricing/" target="_blank" rel="noopener noreferrer">CloudWatch pricing</a> for your Region and usage. See AWS's <a href="https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/Lambda-Insights-metrics-lambda-functions.html" target="_blank" rel="noopener noreferrer">Lambda Insights metric reference</a> and our guide to <a href="/blog/aws-lambda-insights-serverless-monitoring-guide/">Lambda Insights metrics, setup, and costs</a>.</p>
+
