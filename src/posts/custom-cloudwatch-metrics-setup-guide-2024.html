@@ -2,572 +2,146 @@
 layout: post.njk
 templateEngineOverride: html
 tags: posts
-title: "Custom CloudWatch Metrics: Setup Guide 2024"
-description: "Learn how to set up and use custom CloudWatch metrics in AWS. Track app-specific data, create alarms, and optimize costs with this comprehensive guide."
+title: "Amazon CloudWatch Custom Metrics: A Practical Setup Guide"
+description: "Publish, query, and alarm on CloudWatch custom metrics with AWS SDKs, OpenTelemetry, and embedded metrics. Learn about IAM, dimensions, resolution, and cost."
 date: "2024-07-08"
 datePublished: "2024-07-08T00:31:31.388000+00:00"
+dateModified: "2026-10-04"
+updateNote: "Replaced stale pricing and limits, corrected metric identity and alarm guidance, and added current OpenTelemetry, IAM, resolution, and troubleshooting details."
 heroImage: "/assets/media/9fce78ac07f0f01550d8.jpg"
 permalink: "/blog/custom-cloudwatch-metrics-setup-guide-2024/"
 sourceUrl: "https://awsforengineers.com/blog/custom-cloudwatch-metrics-setup-guide-2024/"
-dateModified: "2026-10-03"
-updateNote: "Added author attribution and profile information."
 ---
-<p>Custom CloudWatch metrics let you track specific aspects of your <a href="https://aws.amazon.com/" target="_blank">AWS</a> resources and apps that standard metrics don't cover. Here's what you need to know:</p>
+<p>Custom metrics let you monitor application behavior that AWS service metrics do not describe, such as completed checkouts or jobs waiting for processing. Before publishing one, decide what action the measurement will support and who will use it.</p>
+<p>AWS now recommends OpenTelemetry for new custom-metric implementations. CloudWatch also supports the established Metrics (Classic) model, including <code>PutMetricData</code>, the AWS SDKs and CLI, and metrics extracted from CloudWatch Logs. This guide explains the classic setup because it is useful for existing integrations and simple direct publishing; see <a href="https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/metrics-otel-overview.html" target="_blank" rel="noopener noreferrer">CloudWatch OpenTelemetry metrics</a> when choosing an approach for new instrumentation. The models have different querying and pricing, so estimate the path you plan to use with the <a href="https://aws.amazon.com/cloudwatch/pricing/" target="_blank" rel="noopener noreferrer">current CloudWatch pricing page</a>.</p>
 <ul>
-<li><strong>Purpose</strong>: Monitor app-specific data, create graphs, and set alerts</li>
-<li><strong>Benefits</strong>: Deeper insights, better decision-making, proactive monitoring</li>
-<li><strong>Setup methods</strong>: CloudWatch agent, AWS SDKs, AWS CLI, API calls</li>
-<li><strong>Key features</strong>: High-resolution metrics, dimensions, metric math</li>
-<li><strong>Cost management</strong>: Free tier available, pricing based on usage</li>
+<li>Classic metrics are identified by namespace, metric name, and the complete set of dimensions.</li>
+<li>Use stable, low-cardinality dimensions such as service and environment; do not use request or customer IDs.</li>
+<li>Choose standard or high resolution based on the response time your use case needs.</li>
+<li>Give the publisher only the permissions it needs, and check the metric in the same AWS account and Region where it was sent.</li>
 </ul>
-<figure><table>
-<thead>
-<tr>
-<th>Feature</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Creation</td>
-<td>Use AWS tools to send custom data points</td>
-</tr>
-<tr>
-<td>Alerting</td>
-<td>Set up alarms for specific thresholds</td>
-</tr>
-<tr>
-<td>Integration</td>
-<td>Works with <a href="/blog/aws-engineering-blog-autoscaling-for-high-availability/">EC2 Auto Scaling</a>, Lambda, Systems Manager</td>
-</tr>
-<tr>
-<td>Debugging</td>
-<td>Check logs, use CLI/SDKs for troubleshooting</td>
-</tr>
-</tbody>
-</table></figure>
-<p>This guide covers setup, advanced techniques, cost management, and problem-solving for custom CloudWatch metrics.</p>
-<h2 id="related-video-from-youtube">Related video from YouTube</h2>
-<iframe allowfullscreen="" frameborder="0" loading="lazy" src="https://www.youtube.com/embed/PeHRGzlL2mo"></iframe><h2 id="before-you-start">Before You Start</h2>
-<p>Here's what you need to do before using custom CloudWatch metrics:</p>
-<h3 id="setting-up-your-aws-account">Setting Up Your <a href="https://aws.amazon.com/" target="_blank">AWS</a> Account</h3>
-<p><figure><img alt="AWS" loading="lazy" src="/assets/media/2d135ce4df17cc4bb773.jpg"/></figure></p>
-<ol>
-<li>Create an <a href="/blog/">AWS account</a> if you don't have one</li>
-<li>Go to the AWS website to sign up</li>
-</ol>
-<h3 id="cloudwatch-basics">CloudWatch Basics</h3>
-<p>Learn the main parts of CloudWatch:</p>
-<figure><table>
-<thead>
-<tr>
-<th>Feature</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Metrics</td>
-<td>Numbers that track your AWS resources</td>
-</tr>
-<tr>
-<td>Logs</td>
-<td>Records of what's happening in your system</td>
-</tr>
-<tr>
-<td>Alarms</td>
-<td>Alerts when something needs attention</td>
-</tr>
-</tbody>
-</table></figure>
-<h3 id="required-permissions-and-iam-roles">Required Permissions and IAM Roles</h3>
-<p>Set up the right permissions:</p>
-<ol>
-<li>Create IAM roles and users</li>
-<li>Give them permission to:
-<ul>
-<li>Write metrics to CloudWatch</li>
-<li>Talk to <a href="https://aws.amazon.com/ec2/" target="_blank">Amazon EC2</a></li>
-<li>Use <a href="https://aws.amazon.com/systems-manager/" target="_blank">AWS Systems Manager</a></li>
-</ul>
-</li>
-</ol>
-<p>This lets you make and manage custom metrics safely.</p>
-<h2 id="what-are-custom-metrics%3F">What Are Custom Metrics?</h2>
-<p>Custom metrics in <a href="https://aws.amazon.com/cloudwatch/" target="_blank">Amazon CloudWatch</a> are data points you create and send to CloudWatch. They let you track specific parts of your apps that regular metrics don't cover. With custom metrics, you can measure things like how many new users join your app each day.</p>
-<h3 id="standard-vs.-custom-metrics">Standard vs. Custom Metrics</h3>
-<figure><table>
-<thead>
-<tr>
-<th>Metric Type</th>
-<th>Description</th>
-<th>Use Case</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Standard</td>
-<td>Pre-made by AWS</td>
-<td>General monitoring</td>
-</tr>
-<tr>
-<td>Custom</td>
-<td>Made by you</td>
-<td>Specific app needs</td>
-</tr>
-</tbody>
-</table></figure>
-<p>Standard metrics work for basic checks, but custom metrics let you dig deeper into your app's performance.</p>
-<h3 id="when-to-use-custom-metrics">When to Use Custom Metrics</h3>
-<p>Use custom metrics when:</p>
-<ul>
-<li>You need to track something specific to your business</li>
-<li>You want to collect data more often</li>
-<li>You need more detailed information than standard metrics provide</li>
-</ul>
-<h3 id="limits-and-key-points">Limits and Key Points</h3>
-<p>Keep these things in mind when using custom metrics:</p>
-<figure><table>
-<thead>
-<tr>
-<th>Aspect</th>
-<th>Limit/Note</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Max definitions per destination</td>
-<td>2000</td>
-</tr>
-<tr>
-<td>Dimension name + value</td>
-<td>Counts as one extended metric</td>
-</tr>
-<tr>
-<td>Cost</td>
-<td>Charged as CloudWatch custom metrics</td>
-</tr>
-</tbody>
-</table></figure>
-<p>Be careful about how many custom metrics you use, as they can affect your bill.</p>
-<h2 id="creating-custom-metrics">Creating Custom Metrics</h2>
-<p>This guide shows you how to set up custom metrics in CloudWatch to track specific parts of your app.</p>
-<h3 id="ways-to-set-up-custom-metrics">Ways to Set Up Custom Metrics</h3>
-<p>You can set up custom metrics using:</p>
-<ul>
-<li>CloudWatch agent</li>
-<li>AWS SDKs</li>
-<li>AWS CLI</li>
-<li>API calls</li>
-</ul>
-<p>Choose the method that fits your needs best.</p>
-<h3 id="cloudwatch-agent-setup">CloudWatch Agent Setup</h3>
-<p>To use the CloudWatch agent:</p>
-<ol>
-<li>Install it on your EC2 instance or server</li>
-<li>Set it up to collect your chosen metrics</li>
-<li>Send the metrics to CloudWatch</li>
-</ol>
-<h3 id="using-aws-sdks">Using AWS SDKs</h3>
-<p>AWS SDKs let you send custom metrics from your app code. Here's an example using Python:</p>
-<pre><code>import boto3
 
-cloudwatch = boto3.client('cloudwatch')
+<h2 id="what-are-custom-metrics%3F">What are CloudWatch custom metrics?</h2>
+<p>A CloudWatch metric is a time series of timestamped values. In the classic model, its identity is a namespace, metric name, and zero or more dimensions. For example, <code>Acme/Checkout</code> / <code>CheckoutSuccess</code> with <code>Environment=production</code> is a different time series from the same name with <code>Environment=staging</code>. Metrics are regional; publish and query them in the same Region.</p>
+<p>AWS services publish their own metrics, while your application can publish a custom metric for a business or operational signal that those metrics do not cover. Keep its meaning and unit consistent: for example, publish successful checkout events as <code>Count</code> values and use the <code>Sum</code> statistic to see how many occurred during a period.</p>
+
+<h2 id="creating-custom-metrics">Choose how to publish</h2>
+<p>Use the path that fits how your application already produces telemetry:</p>
+<ul>
+<li><strong>OpenTelemetry (recommended by AWS for new implementations):</strong> instrument with an OpenTelemetry SDK or collector and send metrics over OTLP. CloudWatch's native OpenTelemetry metrics use PromQL and a separate pricing model. Follow the <a href="https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/metrics-otel-send.html" target="_blank" rel="noopener noreferrer">AWS publishing guide</a> for regional endpoints, authentication, and setup.</li>
+<li><strong><code>PutMetricData</code> through an SDK or the AWS CLI:</strong> use this classic path when an integration already expects CloudWatch metric names and dimensions or when direct API publishing is the right fit.</li>
+<li><strong>Embedded Metric Format (EMF):</strong> if an application already sends structured logs to CloudWatch Logs, it can include metric values in those log events for CloudWatch to extract. EMF needs <code>logs:PutLogEvents</code>; charges can include log ingestion, log storage, and generated classic metrics. AWS notes that extraction can occasionally produce duplicate values, so account for that in the metric's meaning.</li>
+</ul>
+<p>For operating-system metrics, files, or supported host telemetry, configure the <a href="https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/Install-CloudWatch-Agent.html" target="_blank" rel="noopener noreferrer">CloudWatch agent</a>. It is a collection agent, not a requirement for applications that publish through an SDK or OpenTelemetry.</p>
+
+<h3 id="using-aws-sdks">Publish a classic metric with the AWS SDK for Python</h3>
+<p>This example publishes one successful checkout. The SDK uses the normal AWS credential provider chain, so run it with an IAM role or configured AWS credentials that can publish to this namespace. The default storage resolution is 60 seconds.</p>
+<pre><code>from datetime import datetime, timezone
+
+import boto3
+
+cloudwatch = boto3.client("cloudwatch", region_name="us-east-1")
+
 cloudwatch.put_metric_data(
-    Namespace='MyApp/Metrics',
+    Namespace="Acme/Checkout",
     MetricData=[
         {
-            'MetricName': 'MyCustomMetric',
-            'Dimensions': [
-                {
-                    'Name': 'InstanceId',
-                    'Value': 'i-1234567890abcdef'
-                }
-            ],
-            'Value': 100,
-            'Unit': 'Count'
-        }
-    ]
-)
-</code></pre>
-<h3 id="aws-cli-method">AWS CLI Method</h3>
-<p>You can also use the AWS CLI. Here's an example:</p>
-<pre><code>aws cloudwatch put-metric-data --metric-name MyCustomMetric --namespace MyApp/Metrics --value 100 --dimensions InstanceId=i-1234567890abcdef
-</code></pre>
-<h3 id="api-setup">API Setup</h3>
-<p>To use the CloudWatch API, send a POST request like this:</p>
-<pre><code>POST / HTTP/1.1
-Host: monitoring.amazonaws.com
-Content-Type: application/x-amz-json-1.1
-
-{
-    "Namespace": "MyApp/Metrics",
-    "MetricData": [
-        {
-            "MetricName": "MyCustomMetric",
+            "MetricName": "CheckoutSuccess",
             "Dimensions": [
-                {
-                    "Name": "InstanceId",
-                    "Value": "i-1234567890abcdef"
-                }
+                {"Name": "Service", "Value": "checkout"},
+                {"Name": "Environment", "Value": "production"},
             ],
-            "Value": 100,
-            "Unit": "Count"
+            "Timestamp": datetime.now(timezone.utc),
+            "Value": 1,
+            "Unit": "Count",
         }
-    ]
-}
-</code></pre>
-<h2 id="advanced-custom-metric-methods">Advanced Custom Metric Methods</h2>
-<p>Learn about more complex ways to use custom metrics.</p>
-<h3 id="high-resolution-metrics-explained">High-Resolution Metrics Explained</h3>
-<p>High-resolution metrics in CloudWatch let you:</p>
-<ul>
-<li>Publish metrics every second</li>
-<li>Monitor in real-time</li>
-<li>Trigger alarms faster</li>
-</ul>
-<p>This is useful for apps that need quick feedback, like those using Auto Scaling or Lambda functions.</p>
-<p>To set up high-resolution metrics:</p>
-<ol>
-<li>Use the <code>StorageResolution</code> parameter when creating a metric</li>
-<li>Be aware of higher costs compared to standard metrics</li>
-</ol>
-<h3 id="working-with-dimensions">Working with Dimensions</h3>
-<p>Dimensions are key-value pairs that add context to your custom metrics. They help you:</p>
-<ul>
-<li>Filter metrics</li>
-<li>Group metrics</li>
-<li>Aggregate metrics</li>
-</ul>
+    ],
+)</code></pre>
+<p>Use a namespace that identifies your application and does not begin with the reserved <code>AWS/</code> prefix. Keep the unit consistent across data points. When publishing many events, batch data points where appropriate; every API request and every distinct classic metric series can affect cost.</p>
+
+<h3 id="required-permissions-and-iam-roles">Limit the publisher's IAM permission</h3>
+<p>Attach a publishing permission to the application role that sends the metric. For classic metric publication, AWS shows <code>Resource: "*"</code> and the <code>cloudwatch:namespace</code> condition key to limit which namespace the identity can write to:</p>
+<pre><code>{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Action": "cloudwatch:PutMetricData",
+      "Resource": "*",
+      "Condition": {
+        "StringEquals": {
+          "cloudwatch:namespace": "Acme/Checkout"
+        }
+      }
+    }
+  ]
+}</code></pre>
+<p>Use a workload role where available rather than placing long-lived access keys in application code. If the application publishes through EMF, grant the required CloudWatch Logs permissions instead and do not add <code>PutMetricData</code> unless the application also calls that API.</p>
+
+<h3 id="aws-cli-method">Publish and query with the AWS CLI</h3>
+<p>The CLI uses the same signed AWS API and your configured AWS credentials:</p>
+<pre><code>aws cloudwatch put-metric-data \
+  --namespace Acme/Checkout \
+  --metric-name CheckoutSuccess \
+  --dimensions Service=checkout,Environment=production \
+  --value 1 \
+  --unit Count \
+  --region us-east-1</code></pre>
+<p>After publishing a point, query it with the exact namespace, name, dimension set, account, and Region. Replace the example UTC interval with one that includes your published data:</p>
+<pre><code>aws cloudwatch get-metric-statistics \
+  --namespace Acme/Checkout \
+  --metric-name CheckoutSuccess \
+  --dimensions Name=Service,Value=checkout Name=Environment,Value=production \
+  --start-time 2026-10-04T12:00:00Z \
+  --end-time 2026-10-04T13:00:00Z \
+  --period 60 \
+  --statistics Sum \
+  --region us-east-1</code></pre>
+<p>For a counter that publishes one value per event, <code>Sum</code> reports the number of events in each period. For rates, latency, or gauges, select a statistic that matches the metric's meaning. CloudWatch can take up to two minutes to return statistics for a new metric, and up to 15 minutes to show it in <code>ListMetrics</code>.</p>
+
+<h2 id="working-with-dimensions">Dimensions, resolution, and metric math</h2>
+<h3 id="working-with-dimensions-details">Keep dimensions bounded</h3>
+<p>A dimension is a name-and-value pair that distinguishes one metric series from another. A classic metric can have up to 30 dimensions. Each distinct combination creates a separate series, so dimensions are not free-form tags that can be added later to filter one shared series.</p>
+<p>Prefer a small set of stable values such as <code>Service</code>, <code>Environment</code>, or a bounded <code>Operation</code> name. Avoid request IDs, user IDs, timestamps, or other values that change for each event: those create a large number of unique series and make data harder to aggregate. When retrieving a metric, specify the complete dimension set used when it was published.</p>
+
+<h3 id="high-resolution-metrics-explained">Choose standard or high resolution</h3>
+<p>Classic metrics use standard resolution by default, with one-minute granularity. Set <code>StorageResolution</code> to <code>1</code> only when you need high-resolution data at one-second granularity. You can retrieve high-resolution data with periods of 1, 5, 10, or 30 seconds, or a multiple of 60 seconds. High-resolution alarms support periods of 10, 20, or 30 seconds; standard alarms use periods that are multiples of 60 seconds. More frequent <code>PutMetricData</code> calls can increase API request charges, and high-resolution alarms cost more than standard alarms. Use them when the shorter feedback loop changes an operational decision; see the <a href="https://docs.aws.amazon.com/AmazonCloudWatch/latest/APIReference/API_PutMetricAlarm.html" target="_blank" rel="noopener noreferrer">PutMetricAlarm period requirements</a>.</p>
+<p>Retention depends on the period: sub-minute high-resolution data is available for 3 hours; one-minute data for 15 days; five-minute data for 63 days; and one-hour data for 455 days. CloudWatch aggregates older data to coarser periods as it ages.</p>
+
+<h3 id="using-metric-math">Calculate from existing metrics</h3>
+<p>Metric math can combine existing time series into an expression that you can graph or use in an alarm. For example, if a graph contains error count <code>m1</code> and request count <code>m2</code>, an expression such as <code>100 * m1 / m2</code> can show an error percentage. Choose compatible periods and statistics, and handle periods with no requests deliberately. Metric math calculates a view from existing metrics; it does not require publishing another custom metric.</p>
+
+<h2 id="setting-up-alerts">Alarm on a custom metric</h2>
+<p>Once CloudWatch has received data, create a metric alarm from the metric's namespace, name, and exact dimensions. Choose a statistic that matches the measure (<code>Sum</code> for event counts, for example), a period, a threshold, and how many of the recent evaluation periods must breach it. Decide how the alarm should treat missing data: missing values can mean the application is quiet, or that a continuously reporting publisher has stopped.</p>
+<p>Test the alarm against real data before relying on it. Configure a supported action, such as an SNS notification or a Lambda invocation. For Lambda, add a resource-based permission that authorizes CloudWatch to invoke the function; you can also route alarm state changes through EventBridge. For threshold selection, evaluation periods, and alarm behavior, see the site's <a href="/blog/cloudwatch-alarms-best-practices-for-thresholds-and-conditions/">CloudWatch alarm guide</a>.</p>
+<p>EC2 Auto Scaling can use a custom metric in a configured target-tracking policy, but the metric must suit the policy and reflect load or utilization in a way that responds to capacity. Follow the <a href="https://docs.aws.amazon.com/autoscaling/ec2/userguide/as-scaling-target-tracking.html" target="_blank" rel="noopener noreferrer">target-tracking metric requirements</a> before using an application metric to scale a group.</p>
+
+<h2 id="managing-costs">Control custom metric costs</h2>
+<p>For classic metrics, cost depends in part on the number of distinct metric series active, not just the number of metric names. A new dimension combination creates a new series. Publication requests, high-resolution metrics, alarms, dashboards, and queries can also contribute to the bill. EMF adds log ingestion and storage costs as well as charges for the generated classic metrics. OpenTelemetry metrics use a separate CloudWatch pricing model.</p>
+<p>Estimate cost from the dimensions your application can actually emit, keep high-cardinality values out of classic metric dimensions, and batch classic publication where practical. Review usage by service and Region in your AWS bill, and check the <a href="https://aws.amazon.com/cloudwatch/pricing/" target="_blank" rel="noopener noreferrer">CloudWatch pricing page</a> before rollout. AWS changes pricing and free usage terms; a fixed price table in a setup guide can go stale quickly.</p>
+
+<h2 id="fixing-common-problems">Troubleshoot missing metrics</h2>
 <figure><table>
-<thead>
-<tr>
-<th>Dimension Limits</th>
-<th>Details</th>
-</tr>
-</thead>
+<thead><tr><th>Symptom</th><th>What to check</th></tr></thead>
 <tbody>
-<tr>
-<td>Max per metric</td>
-<td>30</td>
-</tr>
-<tr>
-<td>Character limit</td>
-<td>256</td>
-</tr>
+<tr><td>The publish call returns access denied</td><td>Confirm the caller's role permits <code>cloudwatch:PutMetricData</code> for the namespace in the policy condition. For EMF, verify the CloudWatch Logs permissions instead.</td></tr>
+<tr><td>The metric is not in the console yet</td><td>Confirm the account and Region, then check the exact namespace, name, and dimensions with <code>GetMetricData</code> or <code>GetMetricStatistics</code>. New statistics can take up to two minutes to appear; <code>ListMetrics</code> can take up to 15 minutes.</td></tr>
+<tr><td>A metric disappears from browsing</td><td>Metrics with no new data for two weeks are omitted from console browsing and <code>ListMetrics</code>. This does not mean retained data was deleted; query it by its exact identity within the retention period.</td></tr>
+<tr><td>A query or alarm has no data</td><td>Check that every dimension name and value exactly matches publication, the query uses the correct Region and period, and timestamps are current. Then review the alarm's missing-data setting.</td></tr>
 </tbody>
 </table></figure>
-<p>Tips for using dimensions:</p>
+<p>For definitions, retention, and publication limits, use the current AWS <a href="https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/publishingMetrics.html" target="_blank" rel="noopener noreferrer">custom metric publishing guide</a> and <a href="https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/cloudwatch_concepts.html" target="_blank" rel="noopener noreferrer">metric concepts reference</a>.</p>
+
+<h2 id="faqs">Frequently asked questions</h2>
+<h3 id="do-custom-metrics-need-to-be-created-in-advance">Do I need to create a custom metric before publishing?</h3>
+<p>No. Publishing a data point for a namespace, metric name, and dimension set creates that metric series. Continue publishing data when you need fresh points; CloudWatch does not pull custom metrics from your application.</p>
+<h3 id="why-can-i-not-find-a-metric-in-the-cloudwatch-console">Why can I not find a metric in the CloudWatch console?</h3>
+<p>Check the account, Region, namespace, name, and every dimension value. A new metric can take up to 15 minutes to appear in metric browsing, and a metric with no new points for two weeks is omitted from browsing. Query a known metric identity directly to look for retained data.</p>
+<h3 id="can-a-custom-metric-trigger-an-aws-lambda-function">Can a custom metric trigger an AWS Lambda function?</h3>
+<p>A custom metric can be evaluated by a CloudWatch metric alarm. You can configure the alarm's action to invoke a Lambda function directly; the function needs a resource-based permission that allows CloudWatch to invoke it. Alarm state changes are also sent to EventBridge, where a rule can route them to other targets. Metric publication alone does not invoke a function. See AWS's guides to <a href="https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/alarms-and-actions-Lambda.html" target="_blank" rel="noopener noreferrer">invoking Lambda from an alarm</a> and <a href="https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/Acting_Alarm_Changes.html" target="_blank" rel="noopener noreferrer">acting on alarm changes</a>.</p>
+
+<h2 id="related-posts">Related articles</h2>
 <ul>
-<li>Use clear names</li>
-<li>Avoid duplicates</li>
-<li>Keep them the same across your app</li>
+<li><a href="/blog/aws-devops-monitoring-metrics-tools-best-practices/">AWS DevOps monitoring: metrics, tools, and best practices</a></li>
+<li><a href="/blog/cloudwatch-alarms-best-practices-for-thresholds-and-conditions/">CloudWatch alarms: best practices for thresholds and conditions</a></li>
 </ul>
-<h3 id="using-metric-math">Using Metric Math</h3>
-<p>Metric Math lets you make new metrics from existing ones using math functions. You can:</p>
-<ul>
-<li>Do calculations (sum, average, percentage)</li>
-<li>Create new metrics (like error rates or response times)</li>
-</ul>
-<p>Example of Metric Math:</p>
-<pre><code>AVG(m1, m2, m3)
-</code></pre>
-<p>This calculates the average of metrics m1, m2, and m3.</p>
-<figure><table>
-<thead>
-<tr>
-<th>Metric Math Uses</th>
-<th>Examples</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Error rates</td>
-<td>(Errors / Total Requests) * 100</td>
-</tr>
-<tr>
-<td>Response times</td>
-<td>AVG(Instance1Time, Instance2Time)</td>
-</tr>
-<tr>
-<td>Resource usage</td>
-<td>SUM(CPU1, CPU2, CPU3)</td>
-</tr>
-</tbody>
-</table></figure>
-<p>Using Metric Math helps you understand your app's performance better without creating extra custom metrics.</p>
-<h2 id="setting-up-alerts">Setting Up Alerts</h2>
-<p>Alerts help you quickly respond to changes in your app's performance. Here's how to set them up for your custom CloudWatch metrics.</p>
-<h3 id="making-alarms-for-custom-metrics">Making Alarms for Custom Metrics</h3>
-<p>To create an alarm:</p>
-<ol>
-<li>Go to the CloudWatch console and click <strong>Alarms</strong>.</li>
-<li>Choose <strong>Create Alarm</strong> then <strong>Select metric</strong>.</li>
-<li>Find your custom metric in the search box.</li>
-<li>Set up the alarm:
-<ul>
-<li>Choose when it should go off (e.g., when a value is too high)</li>
-<li>Pick how often to check (e.g., every 5 minutes)</li>
-<li>Decide what should happen when the alarm goes off</li>
-</ul>
-</li>
-</ol>
-<h3 id="setting-up-notifications">Setting Up Notifications</h3>
-<p>To get alerts:</p>
-<ol>
-<li>Make a new <a href="https://aws.amazon.com/sns/" target="_blank">Amazon SNS</a> topic.</li>
-<li>In CloudWatch, go to your alarm.</li>
-<li>Add an action to send a message to your SNS topic.</li>
-</ol>
-<h3 id="connecting-with-other-aws-services">Connecting with Other AWS Services</h3>
-<p>You can use your custom metrics with other AWS tools. For example, you can make your app grow or shrink based on these metrics:</p>
-<ol>
-<li>Go to Amazon EC2 Auto Scaling.</li>
-<li>Make or change an Auto Scaling group.</li>
-<li>Add a new scaling rule.</li>
-<li>Pick your custom metric to control the scaling.</li>
-<li>Set up when to add or remove servers based on the metric.</li>
-</ol>
-<figure><table>
-<thead>
-<tr>
-<th>Service</th>
-<th>Use with Custom Metrics</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>EC2 Auto Scaling</td>
-<td>Grow or shrink your app</td>
-</tr>
-<tr>
-<td>Lambda</td>
-<td>Trigger functions</td>
-</tr>
-<tr>
-<td>Systems Manager</td>
-<td>Run tasks on your servers</td>
-</tr>
-</tbody>
-</table></figure>
-<h2 id="managing-costs">Managing Costs</h2>
-<p>Custom CloudWatch metrics can help you track your app's performance, but they can cost money. Here's how to use them wisely.</p>
-<h3 id="custom-metric-pricing">Custom Metric Pricing</h3>
-<p>CloudWatch charges for custom metrics based on:</p>
-<ul>
-<li>How many you create</li>
-<li>How often you update them</li>
-<li>How many times you ask for data</li>
-</ul>
-<figure><table>
-<thead>
-<tr>
-<th>Metric Count</th>
-<th>Price per Month</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>First 10,000</td>
-<td>Free</td>
-</tr>
-<tr>
-<td>Up to 100,000</td>
-<td>$0.30 per metric</td>
-</tr>
-<tr>
-<td>Over 100,000</td>
-<td>Price goes down</td>
-</tr>
-</tbody>
-</table></figure>
-<h3 id="ways-to-save-money">Ways to Save Money</h3>
-<p>To keep costs down:</p>
-<ul>
-<li>Use the free 10,000 metrics each month</li>
-<li>Keep track of how many metrics you're using</li>
-<li>Update metrics less often if you can</li>
-<li>Combine similar metrics</li>
-</ul>
-<h3 id="checking-and-fixing-metric-usage">Checking and Fixing Metric Usage</h3>
-<p>To make sure you're not spending too much:</p>
-<ul>
-<li>Use CloudWatch to watch your metric use</li>
-<li>Set up alerts for when you use too many metrics</li>
-<li>Look at your logs to see where you can cut back</li>
-</ul>
-<figure><table>
-<thead>
-<tr>
-<th>Method</th>
-<th>How It Helps</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Use CloudWatch</td>
-<td>See how many metrics you're using</td>
-</tr>
-<tr>
-<td>Set up alerts</td>
-<td>Get warned if you use too many</td>
-</tr>
-<tr>
-<td>Check your logs</td>
-<td>Find ways to use fewer metrics</td>
-</tr>
-</tbody>
-</table></figure>
-<h2 id="fixing-common-problems">Fixing Common Problems</h2>
-<p>When using custom metrics in Amazon CloudWatch, you might run into some issues. Here's how to spot and fix them, along with where to get help.</p>
-<h3 id="typical-custom-metric-issues">Typical Custom Metric Issues</h3>
-<figure><table>
-<thead>
-<tr>
-<th>Issue</th>
-<th>Cause</th>
-<th>Solution</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Metric not showing up</td>
-<td>Takes up to 15 minutes to appear</td>
-<td>Wait and check again</td>
-</tr>
-<tr>
-<td>Metric missing from search</td>
-<td>No new data in 2 weeks</td>
-<td>Add new data points</td>
-</tr>
-<tr>
-<td>Delayed metrics</td>
-<td>Recent creation or update</td>
-<td>Give it time, test with sample data</td>
-</tr>
-</tbody>
-</table></figure>
-<h3 id="how-to-debug">How to Debug</h3>
-<p>To find and fix problems:</p>
-<ol>
-<li>Check CloudWatch logs for errors</li>
-<li>Use AWS CLI or SDKs to get metric data</li>
-<li>Test your Lambda function with a sample event</li>
-</ol>
-<h3 id="where-to-get-aws-help">Where to Get AWS Help</h3>
-<p>If you're stuck, try these AWS resources:</p>
-<figure><table>
-<thead>
-<tr>
-<th>Resource</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>CloudWatch docs</td>
-<td>Full guide to features and fixes</td>
-</tr>
-<tr>
-<td>AWS Support</td>
-<td>Create a ticket for expert help</td>
-</tr>
-<tr>
-<td>AWS Forums</td>
-<td>Ask questions, get community answers</td>
-</tr>
-<tr>
-<td>SDK and CLI docs</td>
-<td>Guides for using AWS tools</td>
-</tr>
-</tbody>
-</table></figure>
-<h2 id="wrap-up">Wrap-Up</h2>
-<p>This guide has covered the key aspects of custom CloudWatch metrics, including:</p>
-<ul>
-<li>Setting up your AWS account</li>
-<li>Creating and managing custom metrics</li>
-<li>Setting up alarms and notifications</li>
-<li>Using advanced methods like high-resolution metrics and metric math</li>
-<li>Reducing costs</li>
-<li>Fixing common problems</li>
-</ul>
-<p>Now you have the knowledge to use custom CloudWatch metrics in your AWS setup. Here are some tips to help you use them well:</p>
-<figure><table>
-<thead>
-<tr>
-<th>Tip</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Use metrics wisely</td>
-<td>Only create metrics you really need</td>
-</tr>
-<tr>
-<td>Watch your costs</td>
-<td>Keep track of how many metrics you use</td>
-</tr>
-<tr>
-<td>Set up alerts</td>
-<td>Get notified when issues come up</td>
-</tr>
-<tr>
-<td>Review regularly</td>
-<td>Make sure your metrics still fit your needs</td>
-</tr>
-</tbody>
-</table></figure>
-<p>Remember to:</p>
-<ul>
-<li>Only use custom metrics when standard ones don't work</li>
-<li>Look for ways to save money on metrics</li>
-<li>Set up alarms to catch problems quickly</li>
-<li>Check and update your metrics as your needs change</li>
-</ul>
-<h2 id="faqs">FAQs</h2>
-<h3 id="can-i-add-my-own-metrics-to-cloudwatch%3F">Can I add my own metrics to CloudWatch?</h3>
-<p>Yes, you can add your own metrics to CloudWatch. While AWS services automatically send data to CloudWatch, you might need to track metrics that AWS doesn't cover. You can send custom metrics to CloudWatch using:</p>
-<ul>
-<li>The CloudWatch agent</li>
-<li>AWS API</li>
-</ul>
-<h3 id="how-do-i-create-a-custom-metric-in-cloudwatch%3F">How do I create a custom metric in CloudWatch?</h3>
-<p>To create a custom metric using the AWS Command Line Interface:</p>
-<ol>
-<li>Open your command line tool</li>
-<li>Use the <code>cloudwatch</code> command</li>
-<li>Add the <code>put-metric-data</code> option</li>
-</ol>
-<h3 id="what-are-custom-metrics-in-cloudwatch%3F">What are custom metrics in CloudWatch?</h3>
-<p>Custom metrics in CloudWatch let you track specific parts of your app that regular metrics don't cover. They help you:</p>
-<figure><table>
-<thead>
-<tr>
-<th>Regular CloudWatch Metrics</th>
-<th>Custom Metrics</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Monitor EC2 basics (CPU, disk, network)</td>
-<td>Track app-specific data</td>
-</tr>
-<tr>
-<td>Automatically sent by AWS</td>
-<td>You choose what to send</td>
-</tr>
-<tr>
-<td>Limited to AWS resource data</td>
-<td>Can include any data you want</td>
-</tr>
-</tbody>
-</table></figure>
-<p>Custom metrics fill the gaps left by standard AWS monitoring, giving you a complete view of your app's performance.</p>
-<p>
-<h2>Related posts</h2>
-<ul>
-<li><a href="/blog/aws-performance-insights-monitoring-rds-databases/">AWS Performance Insights: Monitoring RDS Databases</a></li><li><a href="/blog/10-aws-cost-optimization-strategies-2024/">10 AWS Cost Optimization Strategies 2024</a></li><li><a href="/blog/aws-devops-monitoring-metrics-tools-best-practices/">AWS DevOps Monitoring: Metrics, Tools, Best Practices</a></li><li><a href="/blog/aws-config-resource-inventory-change-tracking-guide/">AWS Config: Resource Inventory, Change Tracking Guide</a></li>
-</ul>
-</p>
