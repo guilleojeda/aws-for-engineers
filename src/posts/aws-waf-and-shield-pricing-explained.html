@@ -2,310 +2,89 @@
 layout: post.njk
 templateEngineOverride: html
 tags: posts
-title: "AWS WAF and Shield Pricing Explained"
-description: "Learn about AWS WAF and Shield pricing, including features, costs, and strategies for optimizing web application security and managing expenses."
+title: "AWS WAF and Shield Pricing: Costs, Billing, and What’s Included"
+description: "Compare AWS WAF pay-as-you-go charges, Shield Standard and Advanced costs, included WAF usage, and CloudFront flat-rate plans."
 date: "2025-04-14"
 datePublished: "2025-04-14T02:34:05.552000+00:00"
 heroImage: "/assets/media/48e6e79f9f544d5fe261.jpg"
 permalink: "/blog/aws-waf-and-shield-pricing-explained/"
 sourceUrl: "https://awsforengineers.com/blog/aws-waf-and-shield-pricing-explained/"
-dateModified: "2026-10-03"
-updateNote: "Added author attribution and profile information; corrected the article heading hierarchy and added article navigation."
+dateModified: "2026-10-04"
+updateNote: "Updated WAF, Shield, and CloudFront pricing guidance; removed unsupported cost examples."
 ---
-<p><a href="https://docs.aws.amazon.com/waf/" rel="nofollow noopener noreferrer" target="_blank">AWS WAF</a> and <a href="https://docs.aws.amazon.com/shield/" rel="nofollow noopener noreferrer" target="_blank">AWS Shield</a> are services designed to protect your web applications from cyber threats. Here’s a quick breakdown:</p>
-<ul>
-<li><strong>AWS WAF</strong>: Filters and monitors web traffic with customizable rules to block or allow requests. Pricing includes charges for Web ACLs, rules, and web requests.</li>
-<li><strong>AWS Shield</strong>: Provides DDoS protection with two tiers:
-<ul>
-<li><strong>Shield Standard</strong>: Free, basic protection for all AWS users.</li>
-<li><strong>Shield Advanced</strong>: $3,000/month, offering advanced protection, DDoS Response Team access, and WAF fee waivers.</li>
-</ul>
-</li>
-</ul>
-<h2 id="quick-comparison">Quick Comparison</h2>
-<figure><table>
-<thead>
-<tr>
-<th>Feature</th>
-<th>AWS WAF</th>
-<th>Shield Standard</th>
-<th>Shield Advanced</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><strong>Purpose</strong></td>
-<td>Web traffic filtering</td>
-<td>Basic DDoS protection</td>
-<td>Advanced DDoS protection</td>
-</tr>
-<tr>
-<td><strong>Cost</strong></td>
-<td>Pay-as-you-go</td>
-<td>Free</td>
-<td>$3,000/month</td>
-</tr>
-<tr>
-<td><strong>DDoS Response Team</strong></td>
-<td>Not included</td>
-<td>Not included</td>
-<td>Included (24/7 access)</td>
-</tr>
-<tr>
-<td><strong>WAF Integration</strong></td>
-<td>Standalone costs</td>
-<td>Not included</td>
-<td>WAF fees waived</td>
-</tr>
-<tr>
-<td><strong>Data Transfer</strong></td>
-<td>Standard AWS rates</td>
-<td>Standard AWS rates</td>
-<td>2TB included</td>
-</tr>
-</tbody>
-</table></figure>
+<p><strong>AWS WAF and AWS Shield have separate billing models.</strong> Pay-as-you-go AWS WAF charges for web ACLs, rules, and inspected requests, with additional fees for some features and higher inspection capacity. Shield Standard is included at no extra charge. Shield Advanced has an annual commitment, a monthly subscription, and usage-based data-transfer fees; it covers only specified AWS WAF charges on resources you protect with Shield Advanced. CloudFront also offers flat-rate plans that bundle WAF and DDoS features with delivery services. Check the current <a href="https://aws.amazon.com/waf/pricing/" rel="noopener noreferrer" target="_blank">AWS WAF pricing</a> and <a href="https://aws.amazon.com/shield/pricing/" rel="noopener noreferrer" target="_blank">AWS Shield pricing</a> before budgeting, because rates and included features can change.</p>
+
 <h2 id="key-takeaways">Key Takeaways</h2>
 <ul>
-<li>AWS WAF is ideal for managing web traffic with flexible rules, starting at $5/month per Web ACL.</li>
-<li>Shield Standard is free and automatically enabled for basic DDoS protection.</li>
-<li>Shield Advanced, at $3,000/month, is suited for businesses needing higher security and cost protection during DDoS attacks.</li>
+<li>Pay-as-you-go WAF cost depends on each web ACL, its rules, and requests processed. Bot Control, Fraud Control, CAPTCHA or Challenge actions, higher WCU usage, and deeper body inspection can add charges.</li>
+<li>Shield Standard is automatically enabled at no additional charge for common network- and transport-layer DDoS protection.</li>
+<li>Shield Advanced is currently $3,000 per month for the subscribed payer account, requires a one-year commitment, and can add data-transfer-out usage fees.</li>
+<li>Shield Advanced includes limited standard WAF usage only for resources protected by Shield Advanced. Optional WAF features and usage beyond stated limits can still be billed.</li>
+<li>For a CloudFront distribution, compare pay-as-you-go billing with CloudFront flat-rate plans, which package selected WAF and DDoS capabilities with plan-specific allowances.</li>
 </ul>
-<p>Use the <strong><a href="https://calculator.aws/" rel="nofollow noopener noreferrer" target="_blank">AWS Pricing Calculator</a></strong> to estimate costs based on your needs, and optimize your rules to save money.</p>
-<h2 id="aws-waf-and-shield-costs"><a href="https://docs.aws.amazon.com/waf/" rel="nofollow noopener noreferrer" target="_blank">AWS WAF</a> and Shield Costs</h2>
-<p><figure><img alt="AWS WAF" loading="lazy" src="/assets/media/d49b4d5cc57f41745914.jpg"/></figure></p>
-<p>AWS WAF and Shield pricing is based on usage and the level of protection you choose. Here’s a detailed look at the costs for each service.</p>
-<h3 id="waf-pricing-details">WAF Pricing Details</h3>
-<p>AWS WAF uses a pay-as-you-go model with charges based on specific components:</p>
+
+<h2 id="quick-comparison">AWS WAF and Shield at a Glance</h2>
 <figure><table>
 <thead>
-<tr>
-<th>Component</th>
-<th>Cost</th>
-</tr>
+<tr><th>Service or model</th><th>What it does</th><th>How billing works</th></tr>
 </thead>
 <tbody>
-<tr>
-<td>Web ACLs</td>
-<td>$5/month per Web ACL</td>
-</tr>
-<tr>
-<td>Rules</td>
-<td>$1/month per rule</td>
-</tr>
-<tr>
-<td>Web Requests</td>
-<td>$0.60 per million requests</td>
-</tr>
-<tr>
-<td>Bot Control</td>
-<td>$10/month per Web ACL + $1/million requests</td>
-</tr>
-<tr>
-<td>Fraud Control</td>
-<td>$10/month per Web ACL + $1/million requests</td>
-</tr>
+<tr><td><strong>AWS WAF</strong></td><td>Evaluates HTTP(S) requests against rules attached to a supported resource.</td><td>Pay-as-you-go charges for web ACLs, rules, and requests, plus optional feature and inspection charges.</td></tr>
+<tr><td><strong>Shield Standard</strong></td><td>Provides automatic protection against common network- and transport-layer DDoS events.</td><td>No additional charge; automatically enabled on supported AWS services.</td></tr>
+<tr><td><strong>Shield Advanced</strong></td><td>Adds DDoS protections for eligible resources, monitoring, and access to the Shield Response Team for eligible support plans.</td><td>$3,000 per month per subscribed payer account, a one-year subscription commitment, and data-transfer-out usage charges.</td></tr>
+<tr><td><strong>CloudFront flat-rate plan</strong></td><td>Bundles CloudFront delivery with tier-specific WAF, DDoS, and other features.</td><td>Monthly plan price and published usage allowances; feature availability varies by tier.</td></tr>
 </tbody>
 </table></figure>
-<p>For managed rules, AWS charges $1/month per rule group, plus $0.60 per million requests. If you use <a href="https://aws.amazon.com/marketplace" rel="nofollow noopener noreferrer" target="_blank">AWS Marketplace</a> Rules, pricing is determined by the third-party provider.</p>
-<h3 id="shield-pricing-options">Shield Pricing Options</h3>
-<p>AWS Shield is available in two tiers:</p>
+
+<h2 id="aws-waf-and-shield-costs">AWS WAF Pay-as-You-Go Pricing</h2>
+<figure><img alt="AWS WAF" loading="lazy" src="/assets/media/d49b4d5cc57f41745914.jpg"/></figure>
+<p>With the standard pay-as-you-go model, AWS bills each web ACL (also called a protection pack), the rules and rule groups added to it, and the requests the ACL processes. The current AWS pricing page lists these unit rates:</p>
 <figure><table>
 <thead>
-<tr>
-<th>Feature</th>
-<th>Shield Standard</th>
-<th>Shield Advanced</th>
-</tr>
+<tr><th>WAF charge</th><th>Current listed rate</th><th>How to read it</th></tr>
 </thead>
 <tbody>
-<tr>
-<td>Monthly Fee</td>
-<td>Free</td>
-<td>$3,000/month</td>
-</tr>
-<tr>
-<td>Data Transfer</td>
-<td>Standard AWS rates</td>
-<td>Included up to 2TB</td>
-</tr>
-<tr>
-<td>DDoS Response Team</td>
-<td>Not available</td>
-<td>Included</td>
-</tr>
-<tr>
-<td>WAF Integration</td>
-<td>Not included</td>
-<td>WAF fees waived</td>
-</tr>
-<tr>
-<td>Commitment</td>
-<td>None</td>
-<td>12-month minimum</td>
-</tr>
+<tr><td>Web ACL</td><td>$5 per month</td><td>Charged for each web ACL.</td></tr>
+<tr><td>Rule</td><td>$1 per month</td><td>Charged for each rule in the ACL.</td></tr>
+<tr><td>Request inspection</td><td>$0.60 per million requests</td><td>Applies to requests processed by the ACL.</td></tr>
+<tr><td>Rule group</td><td>$1 per month for each group added to an ACL</td><td>User-authored rules inside your own rule groups also count as rules.</td></tr>
 </tbody>
 </table></figure>
-<p>Shield Advanced offers extra perks like DDoS cost protection and free integration with AWS WAF. The $3,000 monthly fee covers all protected resources within the account.</p>
-<h2 id="cost-examples">Cost Examples</h2>
-<h3 id="basic-waf-setup-costs">Basic WAF Setup Costs</h3>
-<p>Here's an example of what AWS WAF might cost:</p>
-<figure><table>
-<thead>
-<tr>
-<th>Component</th>
-<th>Quantity</th>
-<th>Monthly Cost</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Web ACL</td>
-<td>1</td>
-<td>$5.00</td>
-</tr>
-<tr>
-<td>Custom Rules</td>
-<td>5</td>
-<td>$5.00</td>
-</tr>
-<tr>
-<td>Managed Rule Groups</td>
-<td>2</td>
-<td>$2.00</td>
-</tr>
-<tr>
-<td>Web Requests (50M)</td>
-<td>50M</td>
-<td>$30.00</td>
-</tr>
-<tr>
-<td>Bot Control</td>
-<td>1</td>
-<td>$60.00</td>
-</tr>
-<tr>
-<td><strong>Total</strong></td>
-<td></td>
-<td><strong>$102.00</strong></td>
-</tr>
-</tbody>
-</table></figure>
-<p>This setup includes custom rules tailored to specific threats and managed rules targeting common vulnerabilities. The estimate is based on handling 50 million requests per month.</p>
-<h3 id="combined-shield-and-waf-costs">Combined Shield and WAF Costs</h3>
-<p>Adding Shield Advanced to the basic WAF setup increases costs but offers higher protection levels.</p>
-<figure><table>
-<thead>
-<tr>
-<th>Component</th>
-<th>Standard Setup (Shield Standard)</th>
-<th>With Shield Advanced</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Shield Fee</td>
-<td>$0</td>
-<td>$3,000.00</td>
-</tr>
-<tr>
-<td>AWS WAF Costs</td>
-<td>$102.00</td>
-<td>$102.00</td>
-</tr>
-<tr>
-<td>Data Transfer (2TB)</td>
-<td>$180.00</td>
-<td>$180.00</td>
-</tr>
-<tr>
-<td>DDoS Response Team Access</td>
-<td>Not available</td>
-<td>Included</td>
-</tr>
-<tr>
-<td><strong>Estimated Monthly Total</strong></td>
-<td><strong>$282.00</strong></td>
-<td><strong>$3,282.00</strong></td>
-</tr>
-</tbody>
-</table></figure>
-<p>This configuration suits businesses with high-traffic applications that need advanced DDoS protection and 24/7 access to a DDoS Response Team. Both setups include AWS WAF usage fees and data transfer costs.</p>
-<h3 id="multi-account-setup-costs">Multi-Account Setup Costs</h3>
-<p>For organizations managing multiple AWS accounts, centralized management can impact costs:</p>
-<figure><table>
-<thead>
-<tr>
-<th>Setup Component</th>
-<th>Monthly Cost per Account</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><a href="https://docs.aws.amazon.com/waf/latest/developerguide/fms-chapter.html" rel="nofollow noopener noreferrer" target="_blank">Firewall Manager</a></td>
-<td>$100.00</td>
-</tr>
-<tr>
-<td>Web ACL (shared)</td>
-<td>$5.00</td>
-</tr>
-<tr>
-<td>Rule Groups (shared)</td>
-<td>$2.00</td>
-</tr>
-<tr>
-<td>Web Requests (25M)</td>
-<td>$15.00</td>
-</tr>
-<tr>
-<td><strong>Per Account Total</strong></td>
-<td><strong>$122.00</strong></td>
-</tr>
-</tbody>
-</table></figure>
-<p>For an enterprise managing 10 accounts, the total cost is approximately $1,220.00 per month, excluding any Shield Advanced fees. Centralized management simplifies administration and can reduce costs compared to managing accounts individually.</p>
-<h2 id="reducing-costs">Reducing Costs</h2>
-<h3 id="benefits-of-aws-shield-advanced">Benefits of <a href="https://docs.aws.amazon.com/shield/" rel="nofollow noopener noreferrer" target="_blank">AWS Shield</a> Advanced</h3>
-<p><figure><img alt="AWS Shield" loading="lazy" src="/assets/media/890f36ced363a7b2b603.jpg"/></figure></p>
-<p>AWS Shield Advanced includes a feature to help control expenses during DDoS attacks. It provides credits to offset usage spikes from services like <strong><a href="https://docs.aws.amazon.com/cloudfront/" rel="nofollow noopener noreferrer" target="_blank">Amazon CloudFront</a></strong>, <strong><a href="https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/Welcome.html" rel="nofollow noopener noreferrer" target="_blank">Amazon Route 53</a></strong>, <strong>AWS WAF</strong>, and <strong><a href="https://docs.aws.amazon.com/global-accelerator/latest/dg/what-is-global-accelerator.html" rel="nofollow noopener noreferrer" target="_blank">Global Accelerator</a></strong>. This ensures your security spending remains more predictable, even during high-traffic situations caused by attacks.</p>
-<h3 id="optimizing-rules-to-save-money">Optimizing Rules to Save Money</h3>
-<p>You can cut costs further by fine-tuning your security rules. Here are some strategies:</p>
+<p>AWS states that prices can vary by Region and that monthly WAF fees are prorated hourly. These unit prices are not a complete estimate: they exclude optional features and your protected resource’s own charges. A managed rule group from an AWS Marketplace seller can add the seller’s subscription and request fees on top of AWS WAF charges. See the official <a href="https://aws.amazon.com/waf/pricing/" rel="noopener noreferrer" target="_blank">AWS WAF pricing page</a> for current regional rates and examples.</p>
+
+<h3 id="waf-pricing-details">Extra WAF Charges for Capacity and Inspection</h3>
+<p>Web ACL capacity units (WCUs) measure the processing capacity of a web ACL. The base price includes up to 1,500 WCUs. Above that allocation, AWS lists an additional <strong>$0.20 per million requests for each extra 500 WCUs</strong>.</p>
+<p>Body inspection limits depend on the protected resource. AWS WAF can inspect up to 8 KB for Application Load Balancers and AWS AppSync. For CloudFront, API Gateway, Amazon Cognito, App Runner, Verified Access, and Amazon Bedrock AgentCore Gateway, the default is 16 KB and can be raised in 16 KB increments to 64 KB. Requests inspected beyond the default limit incur an additional <strong>$0.30 per million requests for each additional 16 KB</strong>. Oversized body content beyond the configured limit is not sent to WAF for inspection, so choose oversize handling with care. See AWS’s guide to <a href="https://docs.aws.amazon.com/waf/latest/developerguide/web-acl-setting-body-inspection-limit.html" rel="noopener noreferrer" target="_blank">request body inspection limits</a>.</p>
+<p>Standard Allow, Block, and Count rule actions do not add a per-action fee. CAPTCHA attempts and Challenge responses are metered separately. If a web ACL uses these actions, include those event counts in the estimate.</p>
+
+<h3 id="managed-rule-groups-bot-control-and-fraud-control">Managed Rules, Bot Control, and Fraud Control</h3>
+<p>Do not assume every managed or advanced rule feature has the same price:</p>
 <ul>
-<li><strong>Scope-down statements</strong>: Limit rule evaluations to specific conditions or paths, reducing unnecessary checks.</li>
-<li><strong>Rate-based rules</strong>: Set appropriate thresholds to manage unexpected traffic spikes effectively.</li>
-<li><strong>Rule consolidation</strong>: Combine similar rules to lower the total number without compromising protection.</li>
+<li><strong>AWS managed rule groups:</strong> AWS lists a monthly charge for each managed rule group added to a web ACL. Marketplace sellers set their own additional fees for third-party managed groups.</li>
+<li><strong>Bot Control:</strong> AWS currently lists a $10 monthly fee per web ACL, plus analyzed-request charges. Common Bot Control includes the first 10 million requests per month; Targeted Bot Control includes the first 1 million. The listed per-million request rate differs by level: AWS’s examples use $1 for Common and $10 for Targeted after the included requests.</li>
+<li><strong>Fraud Control:</strong> Account Takeover Prevention and Account Creation Fraud Prevention each add a $10 monthly fee per web ACL, plus tiered fees for requests they analyze. These request charges can be much higher than the base WAF charges, so estimate using the actual login or registration request volume.</li>
 </ul>
-<p>For instance, instead of creating separate rules for paths like <code>/api/users/*</code>, <code>/api/orders/*</code>, and <code>/api/products/*</code>, you can define a single rule with path-based conditions. This approach reduces the number of rules and minimizes processing demands.</p>
-<h3 id="tools-for-tracking-costs">Tools for Tracking Costs</h3>
-<p>Keep an eye on your spending with cost tracking tools. Use <strong>AWS Cost and Usage Reports (CUR)</strong> along with <strong><a href="https://docs.aws.amazon.com/athena/" rel="nofollow noopener noreferrer" target="_blank">Amazon Athena</a></strong> to analyze service usage data. By reviewing how often rules are triggered and examining traffic patterns to different endpoints, you can pinpoint costly configurations and make adjustments to improve efficiency.</p>
-<h2 id="cost-planning">Cost Planning</h2>
-<p>Planning for future expenses becomes much easier once you’ve got a handle on your current costs.</p>
-<h3 id="using-aws-pricing-calculator">Using <a href="https://calculator.aws/" rel="nofollow noopener noreferrer" target="_blank">AWS Pricing Calculator</a></h3>
-<p><figure><img alt="AWS Pricing Calculator" loading="lazy" src="/assets/media/5f819d3169d98ba901a2.jpg"/></figure></p>
-<p>Here’s how to estimate costs using the AWS Pricing Calculator:</p>
-<ul>
-<li>Open the AWS Pricing Calculator and select <strong>AWS WAF &amp; Shield</strong>.</li>
-<li>Input your monthly Web ACL requests (measured in millions).</li>
-<li>Specify the number of Web ACLs and rules you’ll need.</li>
-<li>Add <strong>Shield Advanced</strong> if required for additional protection.</li>
-<li>Configure multi-account setups using <strong>Firewall Manager</strong>, if applicable.</li>
-</ul>
-<p>The calculator will break down costs for each component. For instance, processing 100 million requests per month with 5 Web ACLs and 20 rules will generate separate charges for each.</p>
-<h3 id="estimating-costs-for-growth">Estimating Costs for Growth</h3>
-<p>When planning for growth, keep these factors in mind:</p>
-<ul>
-<li><strong>Traffic Patterns</strong>: Keep an eye on trends. WAF costs are tied to the number of requests processed.</li>
-<li><strong>Rule Complexity</strong>: More security rules or intricate configurations can lead to higher expenses.</li>
-<li><strong>Multi-Region Expansion</strong>: Expanding to new AWS regions may require additional Web ACLs and could increase data transfer costs.</li>
-</ul>
-<p>Use these factors alongside the Pricing Calculator to better predict scaling expenses.</p>
+<p>These optional feature charges are separate from standard WAF inspection and generally remain chargeable when Shield Advanced protects the resource. The AWS WAF Anti-DDoS managed rule group is separately priced with pay-as-you-go WAF; Shield Advanced includes access to its Layer 7 Anti-DDoS group for protected resources, subject to the subscription terms and request allowance. Review the current <a href="https://aws.amazon.com/waf/pricing/" rel="noopener noreferrer" target="_blank">Bot Control, Fraud Control, and DDoS pricing details</a> before enabling them.</p>
+
+<h2 id="shield-pricing-options">AWS Shield Standard vs. Shield Advanced Cost</h2>
+<figure><img alt="AWS Shield" loading="lazy" src="/assets/media/890f36ced363a7b2b603.jpg"/></figure>
+<h3 id="shield-standard-cost-and-scope">Shield Standard</h3>
+<p>Shield Standard is automatically enabled at no additional charge. AWS describes it as protection against common, frequently occurring network- and transport-layer DDoS events. It is a baseline service protection, not a promise to block every attack or a replacement for application-layer controls such as WAF rules.</p>
+
+<h3 id="shield-advanced-cost-and-inclusions">Shield Advanced</h3>
+<p>Shield Advanced currently costs <strong>$3,000 per month</strong> for the subscribed payer account and requires a <strong>one-year commitment</strong>. A single subscription can cover qualifying accounts in the same consolidated-billing family when the organization owns the accounts and their resources. Standard service charges still apply, and Shield Advanced adds usage fees based on data transferred out from protected CloudFront, Elastic Load Balancing, EC2, and Global Accelerator resources. These fees depend on resource type and Region; there is no general 2 TB transfer allowance.</p>
+<p>Shield Advanced supports eligible internet-facing resources including CloudFront distributions, Elastic Load Balancers, EC2, Global Accelerator, and Route 53. Protection must be applied to the resources you want covered. To escalate a DDoS event to the AWS Shield Response Team (SRT), AWS currently lists Business Support+, Enterprise Support, or Unified Operations as qualifying support plans. If SRT access is part of the decision, budget for the support plan separately from Shield Advanced; see the current <a href="https://aws.amazon.com/premiumsupport/pricing/" rel="noopener noreferrer" target="_blank">AWS Support plan pricing</a> and <a href="https://docs.aws.amazon.com/whitepapers/latest/aws-best-practices-ddos-resiliency/support.html" rel="noopener noreferrer" target="_blank">DDoS response prerequisites</a>. Existing customers on legacy Business Support should confirm their account’s SRT eligibility during the transition to the newer plans; AWS’s <a href="https://docs.aws.amazon.com/awssupport/latest/user/aws-support-plans.html" rel="noopener noreferrer" target="_blank">Support plan guide</a> lists January 1, 2027 as the end date for legacy Business Support.</p>
+<p>For resources protected by Shield Advanced, the subscription includes standard AWS WAF web ACL, rule, and base request-inspection fees up to 1,500 WCUs and the resource’s default body-inspection size, for up to 50 billion WAF requests per calendar month across the subscribed payer account. AWS also includes its Layer 7 Anti-DDoS managed rule group. Requests that Shield Advanced detects as DDoS do not count toward this allowance; requests above the limit can incur charges. WAF resources without Shield Advanced protection receive no such inclusion.</p>
+<p>Shield Advanced does not cover every WAF charge. Bot Control, Fraud Control, CAPTCHA, WCU usage above 1,500, inspection beyond the default body limit, and Marketplace-managed rule fees can still cost extra. The subscription’s DDoS cost-protection benefits are subject to AWS terms and the one-year commitment; do not treat Shield Advanced as a general cap on all AWS charges. See AWS’s guidance on <a href="https://docs.aws.amazon.com/waf/latest/developerguide/ddos-advanced-summary-deciding.html" rel="noopener noreferrer" target="_blank">Shield Advanced and WAF costs</a> and the <a href="https://aws.amazon.com/shield/pricing/" rel="noopener noreferrer" target="_blank">Shield pricing page</a>.</p>
+
+<h2 id="cloudfront-flat-rate-plans">CloudFront Flat-Rate Plans That Include WAF</h2>
+<p>If the protected application is delivered through CloudFront, compare pay-as-you-go billing with CloudFront’s flat-rate plans. The plans combine CloudFront delivery with selected WAF and DDoS features, bot management, and other services for monthly prices currently starting at $0, $15, $200, and $1,000 for the Free, Pro, Business, and Premium tiers. Each tier has its own WAF features and usage allowances; Premium also offers higher configurable allowances. The plans have no overage charges, but sustained usage beyond an allowance can lead to traffic-delivery adjustments.</p>
+<p>This is a CloudFront distribution pricing option, not a universal AWS WAF rate for ALBs, API Gateway, or other resources. Account Takeover Prevention, Account Creation Fraud Prevention, and partner-managed rule groups use pay-as-you-go pricing under a CloudFront plan. Compare required features and usage allowances against <a href="https://aws.amazon.com/cloudfront/pricing/" rel="noopener noreferrer" target="_blank">current CloudFront flat-rate pricing</a> and the <a href="https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/flat-rate-pricing-plan.html" rel="noopener noreferrer" target="_blank">plan documentation</a> before choosing a model.</p>
+
+<h2 id="cost-planning">Estimate and Manage Your WAF and Shield Bill</h2>
+<p>Build an estimate from your architecture and measured traffic, not a generic request-volume example. For each web ACL, record its Region, number of rules and groups, monthly request count, WCU total, and the volume of requests whose body inspection exceeds the default. Add analyzed-request counts for Bot Control and Fraud Control, CAPTCHA attempts, and Challenge responses. For Shield Advanced, include the protected resources, data transferred out, and any WAF traffic above the included allowance. Include the normal CloudFront, load balancer, or other service charges as well.</p>
+<p>Use the <strong><a href="https://calculator.aws/" rel="noopener noreferrer" target="_blank">AWS Pricing Calculator</a></strong> to compare the current pay-as-you-go and Shield Advanced components, then compare CloudFront plan features and allowances if the application uses CloudFront. After deployment, use Cost Explorer or cost and usage data to compare estimates with actual usage. Recheck prices when traffic patterns, rules, Regions, or service plans change.</p>
+<p>To reduce avoidable charges, remove unused rules and groups, and enable premium rule features only on the traffic that needs them. A scope-down statement can reduce requests evaluated by a request-priced managed group such as Bot Control; it does not reduce the base WAF request charge for requests the ACL still processes. See AWS’s guidance on <a href="https://docs.aws.amazon.com/waf/latest/developerguide/waf-rule-scope-down-statements.html" rel="noopener noreferrer" target="_blank">scope-down statements and metering</a>. Rate-based rules can help limit abusive traffic reaching an application, but they do not by themselves reduce WAF request metering. Test rule changes to preserve the protection your application requires. For broader context on how WAF fits with API and serverless controls, see our <a href="/blog/9-serverless-network-security-best-practices/">serverless network security guide</a>.</p>
+
 <h2 id="summary">Summary</h2>
-<p>AWS WAF and Shield operate on a consumption-based pricing model, meaning costs depend on the resources you use. To manage these expenses effectively, consider the following strategies:</p>
-<ul>
-<li><strong>Monitor traffic volumes</strong>: This helps you anticipate and plan for costs.</li>
-<li><strong>Refine rule sets</strong>: Ensure your security rules are efficient and tailored to your needs.</li>
-<li><strong>Leverage <a href="https://aws.amazon.com/aws-cost-management/aws-cost-explorer/" rel="nofollow noopener noreferrer" target="_blank">AWS Cost Explorer</a></strong>: Track and analyze your spending patterns.</li>
-</ul>
-<p>These steps work alongside the detailed pricing models discussed earlier. For accurate cost planning, use the <strong>AWS Pricing Calculator</strong> to estimate both current and future expenses, including those for multi-region deployments.</p>
-<p>When deploying WAF and Shield, align configurations with your specific requirements. Regularly review and update your rules to eliminate any that are no longer necessary.</p>
-<h2>Related posts</h2><ul><li><a href="/blog/aws-s3-guide-understanding-access-management/">AWS S3 Guide: Understanding Access Management</a></li><li><a href="/blog/aws-services-overview-core-components/">AWS Services Overview: Core Components</a></li><li><a href="/blog/10-aws-cost-optimization-strategies-2024/">10 AWS Cost Optimization Strategies 2024</a></li><li><a href="/blog/aws-vs-on-premises-cost-analysis-for-modernization/">AWS vs On-Premises: Cost Analysis for Modernization</a></li></ul>
+<p>For pay-as-you-go AWS WAF, budget per web ACL, per rule or rule group, and per request, then add the fees for higher capacity, deeper body inspection, or optional managed features. Shield Standard is automatic and free; Shield Advanced is a one-year, $3,000-per-month subscription with additional data-transfer charges and limited standard WAF inclusions for protected resources. If CloudFront fronts the application, check whether a flat-rate plan meets its protection and traffic needs. Use current AWS pricing pages and your own traffic data for a defensible estimate.</p>
