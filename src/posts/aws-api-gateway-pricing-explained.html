@@ -2,371 +2,96 @@
 layout: post.njk
 templateEngineOverride: html
 tags: posts
-title: "AWS API Gateway Pricing Explained"
-description: "Explore AWS API Gateway pricing across HTTP, REST, and WebSocket APIs, including cost components, optimization strategies, and free tier advantages."
+title: "Amazon API Gateway Pricing: HTTP, REST & WebSocket Costs"
+description: "Compare Amazon API Gateway pricing for HTTP, REST, and WebSocket APIs, including payload metering, worked examples, Free Tier eligibility, and extra costs."
 date: "2025-05-19"
 datePublished: "2025-05-19T20:12:15.386000+00:00"
 heroImage: "/assets/media/acf9495a51770d9f779d.jpg"
 permalink: "/blog/aws-api-gateway-pricing-explained/"
 sourceUrl: "https://awsforengineers.com/blog/aws-api-gateway-pricing-explained/"
 dateModified: "2026-10-03"
-updateNote: "Added author attribution and profile information; corrected the article heading hierarchy and added article navigation."
+updateNote: "Rebuilt the pricing guide with current payload metering, account-specific Free Tier terms, and worked HTTP, REST, and WebSocket examples."
 ---
-<p><a href="https://docs.aws.amazon.com/apigateway/" rel="nofollow noopener noreferrer" target="_blank">AWS API Gateway</a> pricing can be broken down into three main API types - HTTP APIs, REST APIs, and WebSocket APIs. Each has its own cost structure depending on usage and features:</p>
-<ul>
-<li><strong>HTTP APIs</strong>: $1.00 per million requests (first 300M), ideal for serverless workloads.</li>
-<li><strong>REST APIs</strong>: $3.50 per million requests, suited for advanced features like caching and API key management.</li>
-<li><strong>WebSocket APIs</strong>: $1.00 per million messages (first 1B), for real-time communication.</li>
-</ul>
-<h2 id="key-cost-components">Key Cost Components:</h2>
-<ul>
-<li><strong>Data Transfer Fees</strong>: $0.09 per GB for data sent to the internet.</li>
-<li><strong>Caching</strong>: Hourly rates based on cache size, starting at $0.02/hour for 0.5 GB.</li>
-<li><strong>Free Tier</strong>: 1 million API calls per month for HTTP, REST, and WebSocket APIs during the first 12 months.</li>
-</ul>
-<h2 id="example-costs">Example Costs:</h2>
-<ul>
-<li>216 million HTTP API requests/month = $216.</li>
-<li>5M REST API calls with 3 KB responses = $18.79 (includes data transfer fees).</li>
-</ul>
-<h2 id="quick-comparison">Quick Comparison:</h2>
+<p>Amazon API Gateway pricing depends on the API type and the traffic it handles. HTTP and REST APIs charge for API request units and outbound data; HTTP request payloads are metered in 512 KB increments. WebSocket APIs charge for messages and connection minutes. REST API caching and private connectivity can add separate charges, and the backend services you invoke have their own prices.</p>
+<p>The rates and AWS examples below were checked against the <a href="https://aws.amazon.com/api-gateway/pricing/" rel="nofollow noopener noreferrer" target="_blank">Amazon API Gateway pricing page</a> on October 3, 2026. AWS prices can vary by Region. Treat each example as an estimate for its stated assumptions, then check the current price for the Region where your API runs.</p>
+
+<h2 id="key-cost-components">API Gateway costs at a glance</h2>
 <figure><table>
 <thead>
 <tr>
-<th>API Type</th>
-<th>Base Pricing (US East)</th>
-<th>Features</th>
-<th>Best For</th>
+<th>API type</th>
+<th>What API Gateway meters</th>
+<th>Published rate example and Region</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td>HTTP APIs</td>
-<td>$1.00/million (first 300M)</td>
-<td>Basic API functionality</td>
-<td>Serverless workloads</td>
-</tr>
-<tr>
-<td>REST APIs</td>
-<td>$3.50/million (first 333M)</td>
-<td>Advanced features, caching</td>
-<td>Full API management</td>
-</tr>
-<tr>
-<td>WebSocket APIs</td>
-<td>$1.00/million (first 1B)</td>
-<td>Real-time communication</td>
-<td>High-concurrency applications</td>
-</tr>
-</tbody>
-</table></figure>
-<p><strong>Pro Tips for Cost Optimization</strong>:</p>
-<ul>
-<li>Choose HTTP APIs for cost savings (up to 71% cheaper than REST APIs).</li>
-<li>Use caching for repeated requests to reduce backend load.</li>
-<li>Monitor usage trends with AWS tools like Cost Explorer and set up alerts to avoid unexpected charges.</li>
-</ul>
-<p>AWS API Gateway follows a pay-as-you-go model, so understanding these components and strategies will help you manage costs effectively.</p>
-<h2 id="api-gateway-price-components">API Gateway Price Components</h2>
-<h3 id="api-types-and-request-costs">API Types and Request Costs</h3>
-<p>The cost of using Amazon API Gateway depends on the type of API you choose. Each API type comes with its own pricing structure tailored for specific needs and operational scales.</p>
-<figure><table>
-<thead>
-<tr>
-<th>API Type</th>
-<th>First Tier Pricing (US East)</th>
-<th>Second Tier Pricing</th>
-<th>Features</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>HTTP APIs</td>
-<td>$1.00 per million (first 300M)</td>
-<td>$0.90 per million (over 300M)</td>
-<td>Basic API functionality</td>
-</tr>
-<tr>
-<td>REST APIs</td>
-<td>$3.50 per million (first 333M)</td>
-<td>Tiered pricing for higher volumes</td>
-<td>Advanced features, caching</td>
-</tr>
-<tr>
-<td>WebSocket APIs</td>
-<td>$1.00 per million messages (first 1B)</td>
-<td>$0.80 per million (over 1B)</td>
-<td>Real-time communication</td>
-</tr>
-</tbody>
-</table></figure>
-<blockquote>
-<p>With Amazon API Gateway, you only pay for what you use. There are no upfront commitments or minimum fees. For HTTP APIs and REST APIs, charges are based on the number of API calls and the volume of data transferred out. </p>
-</blockquote>
-<p>Now, let’s explore how data transfer impacts overall API costs.</p>
-<h3 id="data-transfer-fees">Data Transfer Fees</h3>
-<p>When data is sent to the internet, the standard charge is $0.09 per GB. For HTTP APIs, data is measured in 512 KB increments, while WebSocket messages are metered in 32 KB increments. Transfers within the same Availability Zone are free. Private APIs, which require AWS PrivateLink, do not incur data transfer fees.</p>
-<p>Here’s an example: An Edge Optimized REST API handling five million calls per month, with each response being 3 KB and no caching enabled, would result in $17.50 in API call costs and $1.29 in data transfer fees. This adds up to a total of $18.79.</p>
-<h3 id="cache-pricing-for-rest-apis">Cache Pricing for REST APIs</h3>
-<p>For REST APIs, caching is priced hourly based on the cache size. This option is particularly useful for reducing backend load and latency, especially when dealing with consistent traffic or repeated requests.</p>
-<figure><table>
-<thead>
-<tr>
-<th>Cache Size</th>
-<th>Hourly Rate</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>0.5 GB</td>
-<td>$0.02</td>
-</tr>
-<tr>
-<td>1.6 GB</td>
-<td>$0.038</td>
-</tr>
-<tr>
-<td>237 GB</td>
-<td>$3.80</td>
-</tr>
-</tbody>
-</table></figure>
-<p>Using a cache can lead to cost savings by minimizing the number of calls made to backend services, which is ideal for APIs with predictable traffic patterns and frequent identical requests.</p>
-<h2 id="free-tier-usage-and-limits">Free Tier Usage and Limits</h2>
-<h3 id="free-tier-limits">Free Tier Limits</h3>
-<p>For new AWS customers, the AWS API Gateway offers a free tier during the first 12 months after signing up. Each month, the free tier includes:</p>
-<figure><table>
-<thead>
-<tr>
-<th>API Type</th>
-<th>Free Monthly Allowance</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>HTTP APIs</td>
-<td>1 million API calls</td>
-</tr>
-<tr>
-<td>REST APIs</td>
-<td>1 million API calls</td>
-</tr>
-<tr>
-<td>WebSocket APIs</td>
-<td>1 million messages and 750,000 connection minutes</td>
-</tr>
-</tbody>
-</table></figure>
-<blockquote>
-<p>The free tier is available for up to 12 months from the date of your initial AWS account creation.</p>
-</blockquote>
-<p>These allowances reset every month. For example, if you use 800,000 REST API calls in May, your limit will reset to the full 1 million in June.</p>
-<h3 id="moving-past-free-tier">Moving Past Free Tier</h3>
-<p>As your usage approaches the free tier limits, it's essential to keep an eye on your consumption and prepare for the transition to paid usage. AWS provides several tools to help you manage this process effectively.</p>
-<ul>
-<li>
-<strong>Set Up <a href="https://docs.aws.amazon.com/cost-management/latest/userguide/budgets-managing-costs.html" rel="nofollow noopener noreferrer" target="_blank">AWS Budgets</a></strong><br/>
-Create a zero-spend budget to get alerts when you're nearing your free tier limits. Common thresholds include:
-<ul>
-<li>80% of your free tier usage</li>
-<li>90% of your free tier usage</li>
-<li>100% of your free tier usage <br/>
-These notifications can help you adjust your API usage before incurring charges.</li>
-</ul>
-</li>
-<li>
-<strong>Enable Free Tier Alerts</strong><br/>
-AWS will send email notifications when you hit 85% of your free tier limits. This gives you time to either reduce usage or prepare for the switch to paid services.
-</li>
-<li>
-<strong>Monitor Usage Trends</strong><br/>
-Check your current, projected, and historical usage in the <a href="/blog/aws-backup-cost-optimization-guide-2024/">AWS Billing and Cost Management</a> console. This will help you track patterns and anticipate costs.
-</li>
-</ul>
-<p>It's important to note that API Gateway usage quotas are applied on a best-effort basis rather than being strict limits. Without monitoring, you could exceed your free tier and face charges at standard rates.</p>
-<p>To manage costs effectively once you move beyond the free tier, consider these strategies:</p>
-<ul>
-<li>Use HTTP APIs instead of REST APIs if you don't need advanced features.</li>
-<li>Add caching for frequently accessed endpoints.</li>
-<li>Set appropriate throttling limits to control traffic.</li>
-<li>Regularly review and optimize your API call patterns.</li>
-</ul>
-<h2 id="cost-reduction-methods">Cost Reduction Methods</h2>
-<h3 id="api-type-selection">API Type Selection</h3>
-<p>Choosing the right API type can significantly impact costs. For instance, HTTP APIs are priced at <strong>$1.00 per million requests</strong>, while REST APIs cost <strong>$3.50 per million requests</strong>.</p>
-<figure><table>
-<thead>
-<tr>
-<th><strong>Feature Need</strong></th>
-<th><strong>Recommended API Type</strong></th>
-<th><strong>Cost Impact</strong></th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Basic Lambda Integration</td>
 <td>HTTP API</td>
-<td>Up to 71% cost savings compared to REST</td>
+<td>Incoming request units, metered in 512 KB payload increments, plus data transferred out</td>
+<td>US East (N. Virginia, us-east-1): $1.00 per million units for the first 300 million; $0.90 per million above that tier</td>
 </tr>
 <tr>
-<td>API Key Management</td>
 <td>REST API</td>
-<td>Higher cost but essential for this feature</td>
+<td>API calls and data transferred out; optional stage cache charged by cache size and time</td>
+<td>US East (N. Virginia and Ohio), US West (Oregon), and Asia Pacific (Mumbai): $3.50 per million for the first 333 million calls; $2.80 per million for the next 667 million</td>
 </tr>
 <tr>
-<td>WebSocket/Real-time Needs</td>
 <td>WebSocket API</td>
-<td>Cost depends on connection time usage</td>
+<td>Messages sent and received, plus connected minutes</td>
+<td>In US East (N. Virginia), $1.00 per million messages and $0.25 per million connection minutes</td>
 </tr>
 </tbody>
 </table></figure>
-<p>If your application doesn’t require the extensive features of REST APIs, switching to HTTP APIs can lead to <strong>notable savings</strong>. For example, an app handling 10 million requests monthly could save <strong>around $300 annually</strong> by opting for HTTP APIs instead of REST APIs.</p>
-<p>In addition to API type selection, tweaking cache settings can further trim costs.</p>
-<h3 id="cache-settings">Cache Settings</h3>
-<p>Optimizing cache configurations is another effective way to manage expenses. Here’s how to approach it:</p>
+<p>These are usage charges for API Gateway. Outbound data, a REST cache, AWS PrivateLink, Lambda, logging, and other services can change the total. See AWS's <a href="https://aws.amazon.com/api-gateway/pricing/" rel="nofollow noopener noreferrer" target="_blank">current rate table and Region-specific examples</a> before budgeting production traffic.</p>
+
+<h2 id="api-gateway-price-components">Request and data charges by API type</h2>
+<h3 id="http-api-pricing">HTTP APIs</h3>
+<p>HTTP API request payloads are metered in 512 KB increments. A request with a payload up to 512 KB counts as one request unit; a larger payload can count as several units. For example, AWS prices a 4.5 MB upload as nine 512 KB request units. AWS's current pricing page shows this metering in its upload example; its <a href="https://docs.aws.amazon.com/pdfs/whitepapers/latest/best-practices-api-gateway-private-apis-integration/best-practices-api-gateway-private-apis-integration.pdf" rel="nofollow noopener noreferrer" target="_blank">API Gateway private APIs and private integration whitepaper</a> identifies the HTTP request tiers for us-east-1. The number of HTTP calls alone is therefore not enough to estimate a workload that sends large request bodies.</p>
+<p>AWS currently lists $1.00 per million HTTP request units for the first 300 million in a month and $0.90 per million above that tier in US East (N. Virginia). Outbound data is a separate cost. Small responses do not remove the request charge, and large responses can make transfer charges material. Check the live price for another Region.</p>
+<p><strong>Example:</strong> Suppose an API receives 10 million requests in a month and each request payload is no larger than 512 KB. At the first listed tier, the API Gateway request charge is 10 × $1.00 = <strong>$10</strong>. This is the request portion only; add applicable data transfer and integration costs. A request with a 1 MB payload counts as two request units, so 10 million such requests would produce 20 million billable units.</p>
+
+<h3 id="rest-api-pricing">REST APIs</h3>
+<p>Standard REST API usage is charged per API call, with separate charges for outbound data. AWS's published examples show the first request tier at $3.50 per million calls for the first 333 million per month, followed by $2.80 per million for the next 667 million in US East (N. Virginia and Ohio), US West (Oregon), and Asia Pacific (Mumbai). At higher volumes, AWS lists additional lower tiers; use the live pricing page for the complete schedule and your Region.</p>
+<p><strong>AWS's published example:</strong> Five million Regional or edge-optimized REST API calls in US East (N. Virginia or Ohio), US West (Oregon), or Asia Pacific (Mumbai), each returning a 3 KB response with caching off, produce $17.50 in call charges. AWS calculates 14.3 GB of outbound data at $0.09 per GB, or $1.29. The published API Gateway total is <strong>$18.79</strong>. The example does not include the backend, logs, or other services.</p>
+<p>For REST APIs with response streaming enabled, large response bodies affect the billable-request count. AWS divides the response payload by 10 MB and rounds up, with at least one billable request unit per API call. For example, its 65 MB response example counts seven units. The response data transfer charge still applies, so include both parts when estimating large downloads.</p>
+
+<h3 id="cache-pricing-for-rest-apis">REST API cache charges</h3>
+<p>API Gateway's optional stage cache is available for REST APIs and is charged hourly by cache size. AWS lists a 1.6 GB cache at $0.038 per hour in its example for US East, US West, and EU (Ireland). If it remains on for a 730-hour month, that is about $27.74 before other charges. Check the price for your Region and cache size.</p>
+<p>A cache can reduce backend requests and latency, but API Gateway still charges for each API call that reaches it, including cache hits, and the response is still transferred to the client. Caching therefore does not remove API Gateway request or outbound-data charges. Compare the cache's hourly cost only with backend work it can avoid. Keep cache keys, time-to-live, and invalidation behavior correct for the data being served. See AWS's <a href="https://docs.aws.amazon.com/apigateway/latest/developerguide/api-gateway-caching.html" rel="nofollow noopener noreferrer" target="_blank">REST API cache guidance</a>.</p>
+
+<h3 id="websocket-management">WebSocket APIs</h3>
+<p>WebSocket APIs charge for each message sent or received and for the total connected minutes. Messages are metered in 32 KB increments: a 33 KB message counts as two billable messages. A message can be up to 128 KB. WebSocket control frames such as ping and pong are not metered. These message units differ from HTTP or REST API calls.</p>
+<p>In US East (N. Virginia), AWS's published rates are $1.00 per million messages and $0.25 per million connection minutes.</p>
+<p><strong>AWS's published chat example:</strong> 1,000 users each stay connected for 12 hours a day for 30 days. Each user sends 100 messages and receives 500 messages a day, all 3 KB or smaller:</p>
 <ul>
-<li>Start with a <strong>0.5GB cache</strong> and track the <em>CacheHitCount</em> metric in <a href="https://docs.aws.amazon.com/cloudwatch/" rel="nofollow noopener noreferrer" target="_blank">CloudWatch</a>.</li>
-<li>Adjust TTL (time-to-live) values based on the nature of your data:
-<ul>
-<li>Use <strong>longer TTLs</strong> for static content.</li>
-<li>Set <strong>shorter TTLs</strong> for dynamic data.</li>
-</ul>
-</li>
-<li>Leverage <strong>request parameters as cache keys</strong> for better control over cached data.</li>
-</ul>
-<p>Keep in mind that cached responses must stay under <strong>1,048,576 bytes</strong>. When implementing caching, always weigh the hourly cost of the cache against the savings from reducing backend calls.</p>
-<p>Efficient WebSocket management also plays a critical role in cutting costs.</p>
-<h3 id="websocket-management">WebSocket Management</h3>
-<p>For applications with high concurrency, managing WebSocket connections effectively can lead to noticeable savings. WebSocket APIs are priced at <strong>$0.25 per million connection minutes</strong> and <strong>$1.00 per million messages</strong>.</p>
-<p>Here are some strategies to reduce WebSocket-related expenses:</p>
-<ul>
-<li>Use <strong>Lambda functions</strong> to automate connection cleanup for <em>onConnect</em> and <em>onDisconnect</em> events.</li>
-<li>Store connection IDs in <strong><a href="https://docs.aws.amazon.com/dynamodb/" rel="nofollow noopener noreferrer" target="_blank">DynamoDB</a></strong> to streamline session management.</li>
-<li>Utilize <strong><a href="https://keda.sh/" rel="nofollow noopener noreferrer" target="_blank">KEDA</a></strong> (Kubernetes-based Event Driven Autoscaling) to dynamically scale resources based on connection load.</li>
+<li>Messages: (100 + 500) × 1,000 × 30 = 18 million; 18 × $1.00 = <strong>$18.00</strong>.</li>
+<li>Connection time: 1,000 × 12 × 60 × 30 = 21.6 million minutes; 21.6 × $0.25 = <strong>$5.40</strong>.</li>
+<li>API Gateway total: $18.00 + $5.40 = <strong>$23.40</strong>, before integrations and other services.</li>
 </ul>
 
-<h2 id="cost-tracking-tools">Cost Tracking Tools</h2>
-<p>Once you've fine-tuned your API configurations, keeping an eye on expenses in real time becomes essential. AWS offers several tools to help you monitor costs and make informed decisions.</p>
-<h3 id="cost-explorer-setup">Cost Explorer Setup</h3>
-<p><strong>1. Enable Cost Explorer</strong></p>
-<p>Start by heading to the AWS Cost Management console and enabling Cost Explorer. Once activated, you'll gain access to your current month's data (available within 24 hours), along with 13 months of historical data and a 12-month cost forecast.</p>
-<p><strong>2. Use Consistent Tags</strong></p>
-<p>Organize and track your spending by applying consistent tags. These tags can categorize costs by factors like team, project, environment, or business unit. Here's an example of how tagging might look:</p>
-<figure><table>
-<thead>
-<tr>
-<th>Tag Category</th>
-<th>Example Key</th>
-<th>Example Value</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Environment</td>
-<td>environment</td>
-<td>production</td>
-</tr>
-<tr>
-<td>Team</td>
-<td>team</td>
-<td>backend-api</td>
-</tr>
-<tr>
-<td>Project</td>
-<td>project</td>
-<td>customer-portal</td>
-</tr>
-<tr>
-<td>Cost Center</td>
-<td>cost-center</td>
-<td>eng-dept-101</td>
-</tr>
-</tbody>
-</table></figure>
-<p><strong>3. Create Custom Reports</strong></p>
-<p><a href="https://aws.amazon.com/aws-cost-management/aws-cost-explorer/" rel="nofollow noopener noreferrer" target="_blank">AWS Cost Explorer</a> allows you to filter and analyze API Gateway costs based on usage type, region, and resource tags. This makes it easier to pinpoint where your money is going.</p>
-<h3 id="cost-alert-configuration">Cost Alert Configuration</h3>
-<p>To stay ahead of unexpected expenses, set up alert systems using <a href="/blog/cloudwatch-alarms-best-practices-for-thresholds-and-conditions/">CloudWatch alarms</a> and AWS Budgets:</p>
-<ul>
-<li>
-<strong>CloudWatch Alarms</strong>
-<ul>
-<li>Monitor metrics and receive notifications through Amazon SNS.</li>
-<li>Metric data updates every minute.</li>
-<li>Ensure alarms are configured in the US East (N. Virginia) Region, as billing metric data is stored there.</li>
-</ul>
-</li>
-<li>
-<strong>AWS Budgets</strong><br/>
-AWS Budgets provides tools for setting spending thresholds and includes built-in forecasting. Check out  for more details.
-</li>
-</ul>
-<p>For even tighter cost control, consider these additional steps:</p>
-<ul>
-<li>Configure CloudWatch alarms specifically in the US East (N. Virginia) Region to align with AWS billing data.</li>
-<li>Use <a href="https://aws.amazon.com/aws-cost-management/aws-cost-anomaly-detection/" rel="nofollow noopener noreferrer" target="_blank">AWS Cost Anomaly Detection</a> to automatically flag unusual spending patterns.</li>
-</ul>
+<h3 id="private-apis-and-private-connectivity">Private APIs and PrivateLink</h3>
+<p>API Gateway does not charge outbound data transfer for a Private API, but that does not make private connectivity free. AWS PrivateLink charges for each provisioned VPC endpoint Availability Zone and for data processed through the endpoint.</p>
+<p>For US East and US West (Oregon), AWS's pricing page models a month with one endpoint in one Availability Zone: 720 hours × $0.01 per hour is $7.20, and processing 15.7 GB at $0.01 per GB is $0.16. The PrivateLink portion is <strong>$7.36</strong>. With the example's $17.50 REST API call charge, the combined total is <strong>$24.86</strong>. More endpoint zones, traffic, and Region-specific rates change the total. Check <a href="https://aws.amazon.com/privatelink/pricing/" rel="nofollow noopener noreferrer" target="_blank">AWS PrivateLink pricing</a> for your design.</p>
+
+<h2 id="free-tier-usage-and-limits">Free Tier offers depend on account and plan</h2>
+<p>The API Gateway pricing page lists a service-specific monthly offer of one million REST API calls, one million HTTP API calls, and one million WebSocket messages plus 750,000 connection minutes, for up to 12 months. It also says that, starting July 15, 2025, new AWS customers can receive up to $200 in Free Tier credits.</p>
+<p>These account offers have different eligibility rules. AWS's current <a href="https://aws.amazon.com/free/free-tier-faqs/" rel="nofollow noopener noreferrer" target="_blank">Free Tier FAQ</a> describes up to $200 in credits for eligible new customers ($100 at signup and up to $100 earned through activities). Its Free plan ends after six months or when credits are exhausted, whichever comes first. On a paid plan, remaining Free Tier credits normally expire 12 months after account creation. AWS says those credits expire immediately if you upgrade by joining an AWS Organization or setting up a Control Tower landing zone. Check the account's credits page for the actual balance and expiry. The FAQ also says customers with an existing or previous AWS account are not eligible for the Free plan or its credits. Because the service pricing page's 12-month API Gateway allowance and the account-level program changed at different times, check the current <a href="https://docs.aws.amazon.com/awsaccountbilling/latest/aboutv2/free-tier.html" rel="nofollow noopener noreferrer" target="_blank">AWS Free Tier documentation</a> and the account's Free Tier usage page before subtracting any allowance from an estimate.</p>
+<p>Service offers and credits do not necessarily cover all costs in an API architecture. For example, the API Gateway page separately describes cache, data transfer, and PrivateLink charges. A budget can alert you when costs approach a chosen amount; it is not a substitute for confirming the account's eligibility or the billable usage.</p>
+
+<h2 id="cost-reduction-methods">How to estimate and manage your bill</h2>
+<h3 id="api-type-selection">Choose by required features, then compare rates</h3>
+<p>HTTP APIs have lower listed request rates than REST APIs, but price alone is not enough to select an API. Compare the features your application requires with AWS's <a href="https://docs.aws.amazon.com/apigateway/latest/developerguide/http-api-vs-rest.html" rel="nofollow noopener noreferrer" target="_blank">HTTP API and REST API feature comparison</a>. If either type meets the requirements, estimate both using the same request volume, payload sizes, response sizes, Region, and backend assumptions.</p>
+<h3 id="count-every-billed-part">Count every billed part</h3>
+<p>Build the estimate from observed traffic: count HTTP request units from payload sizes, REST calls and outbound bytes, or WebSocket message units and connection minutes. Then add the services that handle each request. A Lambda integration adds separate <a href="https://aws.amazon.com/lambda/pricing/" rel="nofollow noopener noreferrer" target="_blank">Lambda request and duration charges</a>; private integrations can add VPC link or load-balancer costs; logs and metrics can add <a href="https://aws.amazon.com/cloudwatch/pricing/" rel="nofollow noopener noreferrer" target="_blank">CloudWatch charges</a>. Retries are additional API traffic. If you use API Gateway Portals, include their separate Portal and PortalProducts charges from the current API Gateway price page.</p>
+<p>Use the <a href="https://aws.amazon.com/aws-cost-management/aws-cost-explorer/" rel="nofollow noopener noreferrer" target="_blank">AWS Cost Explorer</a> or a Cost and Usage Report to compare the estimate with billed usage by service, Region, and usage type. For general guidance on checking assumptions and tracing AWS spend, see <a href="/blog/10-aws-cost-optimization-strategies-2024/">10 AWS Cost Optimization Strategies for Engineers</a>. If an integration invokes Lambda, its invocation and duration are separate from the API Gateway charge; <a href="/blog/aws-lambda-metrics-explained/">AWS Lambda Metrics Explained</a> covers the metrics that help inspect that part of the bill.</p>
+
 <h2 id="summary">Summary</h2>
-<p>API Gateway pricing operates on a pay-as-you-go model, meaning there are no upfront costs to worry about. Here's a breakdown of the key aspects of API Gateway pricing covered earlier.</p>
-<p><strong>API Types and Their Costs</strong></p>
-<figure><table>
-<thead>
-<tr>
-<th>API Type</th>
-<th>Base Price</th>
-<th>Primary Cost Drivers</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>HTTP APIs</td>
-<td>See earlier sections for tiered pricing</td>
-<td>API calls, data transfer</td>
-</tr>
-<tr>
-<td>REST APIs</td>
-<td>See earlier sections for tiered pricing</td>
-<td>API calls, data transfer, optional caching</td>
-</tr>
-<tr>
-<td>WebSocket APIs</td>
-<td>See earlier sections for tiered pricing</td>
-<td>Messages, connection minutes</td>
-</tr>
-</tbody>
-</table></figure>
-<p><strong>Key Cost Management Strategies</strong></p>
-<ul>
-<li><strong>HTTP APIs</strong> offer a cost-effective solution for serverless setups, costing about one-third the price of REST APIs.</li>
-<li><strong>Caching</strong> can help lower backend call expenses, with fees ranging from $0.02 for a 0.5GB cache to $3.80 for a 237GB cache.</li>
-<li>For reduced data transfer costs, consider <strong><a href="https://docs.aws.amazon.com/cloudfront/" rel="nofollow noopener noreferrer" target="_blank">CloudFront</a> integration</strong> benefits.</li>
-</ul>
-<p><strong>Practical Cost Optimization</strong></p>
-<ul>
-<li>Using <strong>service proxy integrations</strong> can cut Lambda function costs for data transformations.</li>
-<li>Deploying effective caching strategies and refining authentication methods can further drive down expenses.</li>
-<li>For high-traffic scenarios, opting for <strong>HTTP APIs</strong> instead of REST APIs can lead to significant savings.</li>
-</ul>
-<p>The free tier offers a strong starting point, allowing up to one million API calls per month for the first 12 months. After that, keeping costs manageable relies on selecting the right API type and configuring it thoughtfully to suit your needs.</p>
+<p>HTTP APIs charge request units in 512 KB payload increments and outbound data. REST APIs charge calls and outbound data, with optional hourly caching and special metering for large streamed responses. WebSocket APIs charge 32 KB message units and connected minutes. Private APIs avoid API Gateway outbound data-transfer charges, but PrivateLink still has endpoint and processing costs. Add backend and monitoring charges, verify Free Tier eligibility for the actual account, and check the current Region-specific price before treating an estimate as a budget.</p>
+
 <h2 id="faqs">FAQs</h2>
-<h3 id="how-do-i-choose-the-most-cost-effective-api-type-http-rest-or-websocket-for-my-application">How do I choose the most cost-effective API type (HTTP, REST, or WebSocket) for my application?</h3>
-<p>To choose the most budget-friendly API type for your application, focus on two main considerations:</p>
-<h3 id="1-traffic-patterns"><strong>1. Traffic Patterns</strong></h3>
-<p>If your application requires real-time communication, <strong>WebSocket APIs</strong> are a great choice. However, they can be pricier since costs depend on connection minutes and the number of messages sent. For apps with sporadic or lower traffic, <strong>HTTP APIs</strong> are a more economical option, starting at <strong>$1.00 per million requests</strong> for the first 300 million. On the other hand, <strong>REST APIs</strong> - while packed with features - are the most expensive, starting at <strong>$3.50 per million requests</strong> for the first 333 million.</p>
-<h3 id="2-feature-requirements"><strong>2. Feature Requirements</strong></h3>
-<p><strong>REST APIs</strong> come with advanced capabilities like API keys and throttling, which are crucial for certain use cases. But if your app doesn’t rely on these features, <strong>HTTP APIs</strong> offer a simpler and cheaper solution.</p>
-<p>By analyzing your app’s traffic behavior and the features it truly needs, you can pick the API type that strikes the right balance between functionality and cost.</p>
-<h3 id="how-can-i-reduce-data-transfer-fees-when-using-aws-api-gateway">How can I reduce data transfer fees when using AWS API Gateway?</h3>
-<p>To cut down on data transfer fees with AWS API Gateway, try these practical approaches:</p>
-<ul>
-<li><strong>Opt for HTTP APIs instead of REST APIs</strong>: HTTP APIs are a more budget-friendly option, costing $1.00 per million requests compared to $3.50 for REST APIs.</li>
-<li><strong>Enable caching</strong>: Adding caching can significantly reduce backend calls, which helps lower data transfer expenses.</li>
-<li><strong>Compress your payloads</strong>: Smaller, compressed data means less information to transfer, saving both bandwidth and money.</li>
-<li><strong>Utilize Private APIs</strong>: For internal AWS communication, Private APIs can help you avoid external data transfer charges.</li>
-<li><strong>Keep an eye on usage</strong>: Use AWS tools like CloudWatch and Cost Explorer to monitor your data transfer and find ways to optimize.</li>
-</ul>
-<p>These strategies can help you manage your API Gateway expenses without compromising on performance.</p>
-<h3 id="what-is-caching-in-aws-api-gateway-and-how-does-it-help-save-costs">What is caching in AWS API Gateway, and how does it help save costs?</h3>
-<p>Caching in <strong>AWS API Gateway</strong> works by storing API responses for a short period, so when the same request comes in again, it can deliver the cached data instead of reaching out to the backend. This setup speeds up response times and boosts overall performance. If the data isn’t in the cache or has expired, the system fetches it from the backend, caches the new response, and uses it for future requests.</p>
-<p>This approach doesn’t just improve speed - it also cuts costs. With fewer backend calls, you can lower operational expenses, especially in high-traffic environments. Since <strong>API Gateway</strong> charges are tied to the number of requests and the volume of data processed, caching can help you save money while keeping your APIs running efficiently.</p>
-<h2>Related posts</h2><ul><li><a href="/blog/aws-codeartifact-intro-features-faqs/">AWS CodeArtifact: Intro, Features, FAQs</a></li><li><a href="/blog/10-aws-cost-optimization-strategies-2024/">10 AWS Cost Optimization Strategies 2024</a></li><li><a href="/blog/aws-vs-on-premises-cost-analysis-for-modernization/">AWS vs On-Premises: Cost Analysis for Modernization</a></li><li><a href="/blog/aws-waf-and-shield-pricing-explained/">AWS WAF and Shield Pricing Explained</a></li></ul><script type="application/ld+json">{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"How do I choose the most cost-effective API type (HTTP, REST, or WebSocket) for my application?","acceptedAnswer":{"@type":"Answer","text":"<p>To choose the most budget-friendly API type for your application, focus on two main considerations:</p> <h3 id=\"1-traffic-patterns\" tabindex=\"-1\"><strong>1. Traffic Patterns</strong></h3> <p>If your application requires real-time communication, <strong>WebSocket APIs</strong> are a great choice. However, they can be pricier since costs depend on connection minutes and the number of messages sent. For apps with sporadic or lower traffic, <strong>HTTP APIs</strong> are a more economical option, starting at <strong>$1.00 per million requests</strong> for the first 300 million. On the other hand, <strong>REST APIs</strong> - while packed with features - are the most expensive, starting at <strong>$3.50 per million requests</strong> for the first 333 million.</p> <h3 id=\"2-feature-requirements\" tabindex=\"-1\"><strong>2. Feature Requirements</strong></h3> <p><strong>REST APIs</strong> come with advanced capabilities like API keys and throttling, which are crucial for certain use cases. But if your app doesn’t rely on these features, <strong>HTTP APIs</strong> offer a simpler and cheaper solution.</p> <p>By analyzing your app’s traffic behavior and the features it truly needs, you can pick the API type that strikes the right balance between functionality and cost.</p>"}},{"@type":"Question","name":"How can I reduce data transfer fees when using AWS API Gateway?","acceptedAnswer":{"@type":"Answer","text":"<p>To cut down on data transfer fees with AWS API Gateway, try these practical approaches:</p> <ul> <li><strong>Opt for HTTP APIs instead of REST APIs</strong>: HTTP APIs are a more budget-friendly option, costing $1.00 per million requests compared to $3.50 for REST APIs.</li> <li><strong>Enable caching</strong>: Adding caching can significantly reduce backend calls, which helps lower data transfer expenses.</li> <li><strong>Compress your payloads</strong>: Smaller, compressed data means less information to transfer, saving both bandwidth and money.</li> <li><strong>Utilize Private APIs</strong>: For internal AWS communication, Private APIs can help you avoid external data transfer charges.</li> <li><strong>Keep an eye on usage</strong>: Use AWS tools like CloudWatch and Cost Explorer to monitor your data transfer and find ways to optimize.</li> </ul> <p>These strategies can help you manage your API Gateway expenses without compromising on performance.</p>"}},{"@type":"Question","name":"What is caching in AWS API Gateway, and how does it help save costs?","acceptedAnswer":{"@type":"Answer","text":"<p>Caching in <strong>AWS API Gateway</strong> works by storing API responses for a short period, so when the same request comes in again, it can deliver the cached data instead of reaching out to the backend. This setup speeds up response times and boosts overall performance. If the data isn’t in the cache or has expired, the system fetches it from the backend, caches the new response, and uses it for future requests.</p> <p>This approach doesn’t just improve speed - it also cuts costs. With fewer backend calls, you can lower operational expenses, especially in high-traffic environments. Since <strong>API Gateway</strong> charges are tied to the number of requests and the volume of data processed, caching can help you save money while keeping your APIs running efficiently.</p>"}}]}</script>
+<h3 id="how-do-i-choose-the-most-cost-effective-api-type-http-rest-or-websocket-for-my-application">Which API Gateway API type is cheapest?</h3>
+<p>For the listed request rates, HTTP APIs cost less per request unit than REST APIs. WebSocket pricing uses a different meter: messages plus connection minutes. Choose based on the required features and traffic pattern, then compare total costs with payload, transfer, cache, integration, and Region assumptions included.</p>
+<h3 id="how-can-i-reduce-data-transfer-fees-when-using-aws-api-gateway">Do Private APIs remove all data transfer or networking charges?</h3>
+<p>No. AWS does not charge API Gateway data transfer out for Private APIs, but AWS PrivateLink can charge for VPC endpoint hours and processed data. Integrations and other services can also add charges.</p>
+<h3 id="what-is-caching-in-aws-api-gateway-and-how-does-it-help-save-costs">Does API Gateway caching always reduce cost?</h3>
+<p>No. REST API caching has an hourly charge. It can save money when the reduction in backend work is worth more than the cache cost, but the result depends on hit rate, response size, and backend pricing.</p>
