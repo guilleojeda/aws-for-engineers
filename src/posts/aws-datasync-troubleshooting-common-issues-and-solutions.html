@@ -2,451 +2,96 @@
 layout: post.njk
 templateEngineOverride: html
 tags: posts
-title: "AWS DataSync Troubleshooting: Common Issues & Solutions"
-description: "Discover solutions to common AWS DataSync issues, including agent problems, task execution failures, and data transfer errors, for efficient cloud migration."
+title: "AWS DataSync Troubleshooting: Agent, Network, and Task Errors"
+description: "Trace AWS DataSync failures through agent connectivity, network paths, storage access, task options, and final data verification."
 date: "2024-05-01"
 datePublished: "2024-05-01T10:27:35.398000+00:00"
 heroImage: "/assets/media/8f9843d1b4b9d363f78c.jpg"
 permalink: "/blog/aws-datasync-troubleshooting-common-issues-and-solutions/"
 sourceUrl: "https://awsforengineers.com/blog/aws-datasync-troubleshooting-common-issues-and-solutions/"
 dateModified: "2026-10-03"
-updateNote: "Added author attribution and profile information."
+updateNote: "Replaced outdated option advice with a phase-based guide to agent, network, storage, task, and verification failures."
 ---
-<p><a href="https://aws.amazon.com/datasync/" target="_blank">AWS DataSync</a> enables fast, secure data transfer between on-premises storage and <a href="https://aws.amazon.com/" target="_blank">AWS</a>. However, issues can arise during setup and operation. This guide covers the most common problems and their solutions:</p>
-<h2 id="common-issues">Common Issues</h2>
-<h3 id="agent-issues">Agent Issues</h3>
+<p>When an AWS DataSync transfer fails, start with the task execution record and follow the failing phase to the agent, network path, storage location, or task option. This guide uses read-only AWS CLI commands to inspect a run, then shows what to correct before you retry. For a broader migration plan, see <a href="/blog/aws-content-migration-best-practices/">AWS Content Migration Best Practices</a>.</p>
+<h2 id="troubleshooting-steps">1. Read the task and execution state</h2>
+<p>A task defines the source, destination, and transfer options. Each run is a task execution. Set the task ARN and inspect its current configuration and recent runs:</p>
+<pre><code>export TASK_ARN='arn:aws:datasync:region:account-id:task/task-id'
+
+aws datasync describe-task --task-arn "$TASK_ARN" \
+  --query '{status:Status,mode:TaskMode,source:SourceLocationArn,destination:DestinationLocationArn,options:Options}'
+
+aws datasync list-task-executions --task-arn "$TASK_ARN" --max-results 5 \
+  --query 'TaskExecutions[].{status:Status,executionArn:TaskExecutionArn}'</code></pre>
+<p>Choose the failed or unexpected execution ARN from that list, then inspect its phase results, settings, and counters:</p>
+<pre><code>export EXECUTION_ARN='arn:aws:datasync:region:account-id:task/task-id/execution/exec-id'
+
+aws datasync describe-task-execution --task-execution-arn "$EXECUTION_ARN" \
+  --query '{status:Status,mode:TaskMode,options:Options,overrides:OverrideOptions,result:Result,filesSkipped:FilesSkipped,filesTransferred:FilesTransferred,filesVerified:FilesVerified,filesFailed:FilesFailed}'</code></pre>
+<p>These <code>describe</code> and <code>list</code> calls are read-only. Use the Region and AWS CLI profile that contain the task. Compare the execution’s <code>Result</code> fields and error detail with its CloudWatch logs or task report; a summary status alone may hide skipped files or a failure in one phase. See AWS guidance for <a href="https://docs.aws.amazon.com/datasync/latest/userguide/run-task.html" target="_blank" rel="noopener noreferrer">task execution statuses</a>, <a href="https://docs.aws.amazon.com/datasync/latest/userguide/configure-logging.html" target="_blank" rel="noopener noreferrer">CloudWatch logging</a>, and <a href="https://docs.aws.amazon.com/datasync/latest/userguide/task-reports.html" target="_blank" rel="noopener noreferrer">task reports</a>.</p>
 <ul>
-<li>Activation and connection difficulties</li>
-<li>Reviving offline agents</li>
-<li>Configuring NFS and SMB</li>
+<li><strong>Queued:</strong> another execution may be using the same agent, or an earlier execution of the same task may be ahead in the queue. A task can queue work that uses different filters or manifests; an agent runs one task at a time.</li>
+<li><strong>Launching:</strong> check that the agent is powered on and online, then trace its connection to the DataSync service.</li>
+<li><strong>Preparing:</strong> DataSync lists source and destination data to decide what to copy. Large namespaces can take minutes or hours; wait while the listing progresses, and use logs or support if it remains stalled.</li>
+<li><strong>Transferring or verifying:</strong> use the phase result, task logs, counters, and storage-side metrics to locate the failing operation.</li>
 </ul>
-<h3 id="task-execution-failures">Task Execution Failures</h3>
+<h2 id="resolving-agent-issues-1">2. Check the agent and its service connection</h2>
+<p>For transfers that use an agent, confirm the registered agent is online and identify its endpoint type:</p>
+<pre><code>export AGENT_ARN='arn:aws:datasync:region:account-id:agent/agent-id'
+aws datasync describe-agent --agent-arn "$AGENT_ARN" \
+  --query '{status:Status,lastConnectionTime:LastConnectionTime,endpointType:EndpointType}'</code></pre>
+<p>If it is offline, first check that the VM or EC2 instance is running and has working DNS, time synchronization, and the expected route to its DataSync service endpoint. Check the required destinations and ports for the endpoint type you chose. AWS manages DataSync agents and updates their software; do not reinstall the appliance as a routine recovery step. If power and network checks do not explain a persistent offline state, collect the agent ARN and diagnostics for AWS Support. A brief offline period can occur during an agent update.</p>
+<p>During activation, a browser or client may need temporary access to the agent on TCP port 80 to retrieve an activation key. DataSync closes that port after activation, and the key expires after 30 minutes if unused. A port 80 timeout during later transfers is not evidence that the agent is unhealthy. See AWS instructions for <a href="https://docs.aws.amazon.com/datasync/latest/userguide/activate-agent.html" target="_blank" rel="noopener noreferrer">agent activation</a> and <a href="https://docs.aws.amazon.com/datasync/latest/userguide/managing-agent.html" target="_blank" rel="noopener noreferrer">agent management</a>.</p>
+<h3 id="resolving-network-and-memory-issues-1">Trace the actual network path</h3>
+<p>DataSync can use different paths for agent-to-service control traffic and for reading or writing storage. Identify the locations and endpoint type before changing a firewall rule:</p>
 <ul>
-<li>Errors like <code>FsS3UnableToConnectToEndpoint</code>, <code>FsAzureBlobVolRootListBlobsFailed</code></li>
-<li>Verify location settings and permissions</li>
+<li><strong>Public or FIPS service endpoint:</strong> the agent needs outbound TCP 443 to the activation, control-plane, and data-plane endpoints listed for its Region. Basic mode agents also need the documented bootstrap access before activation.</li>
+<li><strong>VPC or FIPS VPC service endpoint:</strong> the agent needs TCP 1024–1064 to the DataSync VPC endpoint for control traffic and TCP 443 to the task network interfaces for data traffic. Port 22 is an optional AWS Support channel, not a normal transfer requirement.</li>
+<li><strong>Non-AWS file or object storage:</strong> the agent must separately reach that source or destination using the storage protocol and port configured for the location.</li>
+<li><strong>AWS storage such as S3, EFS, or FSx:</strong> DataSync may reach the storage through task network interfaces in your VPC. Check their subnet routes and security groups, plus the storage service’s own access rules.</li>
 </ul>
-<h3 id="data-transfer-errors">Data Transfer Errors</h3>
+<p>Use AWS’s <a href="https://docs.aws.amazon.com/datasync/latest/userguide/datasync-network.html" target="_blank" rel="noopener noreferrer">DataSync network requirements</a> for the exact direction, destination, and port. Allow only the documented flow between the relevant sources and destinations; broad inbound rules do not solve a missing route or a blocked outbound connection.</p>
+<h3 id="fixing-eni-not-found-errors">Resolve <code>EniNotFound</code> without changing agent permissions</h3>
+<p><code>EniNotFound</code> means a network interface allocated to the DataSync task was deleted. It does not mean that the agent needs permission to create an ENI. DataSync manages these task interfaces. Inspect the task’s source and destination network-interface ARNs with this read-only command, then confirm the subnet and security-group path:</p>
+<pre><code>aws datasync describe-task --task-arn "$TASK_ARN" \
+  --query '{sourceEnis:SourceNetworkInterfaceArns,destinationEnis:DestinationNetworkInterfaceArns}'</code></pre>
+<p>After restoring any required network access, manually restart the task; DataSync recreates missing interfaces when it starts. Avoid deleting interfaces associated with active tasks.</p>
+<h2 id="configuring-nfs-and-smb">3. Verify source and destination access</h2>
+<p>Test the path from the network where the DataSync agent runs, using the same server name, export or share path, and identity configured in the location. A TCP probe can show whether a port accepts connections, but it does not prove that the location credentials can read or write the required files.</p>
+<h3 id="nfs-and-efs-access">NFS and Amazon EFS</h3>
+<p>For an NFS server reached by an agent, DataSync uses TCP 2049 for NFS 4.0/4.1, or TCP 111 and 2049 for NFS 3.x. The default setting is <code>AUTOMATIC</code>, which selects NFS 4.1. Check the exported path, network reachability, and POSIX permissions on every directory in the path: DataSync needs read access to a source, write access to a destination, and execute permission to traverse directories. Keep export access scoped to the agent and required operation. A source can use an appropriate read-only identity. A destination may need root access to write ownership and permissions when those metadata are being preserved; grant it only when the configured transfer requires it.</p>
+<p>DataSync does not support NFSv4 ID mapping. If logs show <code>FsNfsIdMappingEnabled</code> or ownership appears as an unexpected UID/GID, check ID mapping and use an NFSv3 location when that feature is enabled. See AWS guidance for <a href="https://docs.aws.amazon.com/datasync/latest/userguide/create-nfs-location.html" target="_blank" rel="noopener noreferrer">NFS locations</a> and <a href="https://docs.aws.amazon.com/datasync/latest/userguide/troubleshooting-storage-issues.html" target="_blank" rel="noopener noreferrer">location errors</a>.</p>
+<p>For an Amazon EFS location, DataSync’s AWS-side network interfaces use the subnet and security-group configuration on that location. Check that the selected EFS path exists, the file system has reachable mount targets, and the security groups permit NFS on TCP 2049 between the DataSync interfaces and EFS. This AWS-side path does not depend on an on-premises agent reaching the EFS mount target.</p>
+<h3 id="smb-access">SMB file servers</h3>
+<p>Check that the agent can reach the file server on TCP 445 (or TCP 139 if your server uses it), that the share and subdirectory are correct, and that the configured identity can mount the share and access the needed files and metadata. Automatic SMB negotiation is the default; choose a specific protocol version only when negotiation fails, and prefer SMB 3.0.2 or later. For Kerberos, use the server’s domain name, verify the principal and keytab match, and allow the required path to the KDC (typically TCP 88). DataSync does not support DFS Namespaces; configure the underlying file server and share. See AWS guidance for <a href="https://docs.aws.amazon.com/datasync/latest/userguide/create-smb-location.html" target="_blank" rel="noopener noreferrer">SMB locations and permissions</a>.</p>
+<h3 id="s3-and-other-location-errors">S3 and other AWS locations</h3>
+<p>For an S3 access error, match the failing API operation in the logs to the DataSync location role, bucket policy, and (when used) KMS key policy. For EFS or FSx, check the file system’s location settings, subnet, security groups, and protocol permissions. Follow the network path for the actual source/destination pair rather than assuming every transfer passes through the agent.</p>
+<h2 id="fixing-transfer-mode-and-sync-option-errors-1">4. Check task mode and transfer options</h2>
+<p><code>TaskMode</code> and <code>TransferMode</code> control different things. A task uses <code>BASIC</code> or <code>ENHANCED</code> mode; its data-transfer option is <code>CHANGED</code> or <code>ALL</code>. Snowball and online/offline are not <code>TransferMode</code> values.</p>
 <ul>
-<li>I/O errors, NFS/EFS mount issues</li>
-<li>Check server logs, security groups, agent access</li>
+<li><code>CHANGED</code> (the default) transfers data and metadata that differ between locations. It is the usual choice for recurring synchronization.</li>
+<li><code>ALL</code> copies all source data without comparing source and destination first.</li>
+<li><code>PreserveDeletedFiles=PRESERVE</code> (the default) keeps destination-only files. <code>REMOVE</code> deletes destination files that are absent at the source. <code>REMOVE</code> cannot be used with <code>TransferMode=ALL</code>, because <code>ALL</code> does not scan the destination to find deletions.</li>
+<li><code>OverwriteMode=ALWAYS</code> (the default) lets changed source data overwrite destination data; <code>NEVER</code> protects destination data from overwrites. This is a separate decision from end-of-transfer verification.</li>
 </ul>
-<h2 id="troubleshooting-steps">Troubleshooting Steps</h2>
-<h3 id="resolving-agent-issues">Resolving Agent Issues</h3>
-<figure><table>
-<thead>
-<tr>
-<th>Step</th>
-<th>Action</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>1</td>
-<td>Verify agent status is online and endpoint is correct</td>
-</tr>
-<tr>
-<td>2</td>
-<td>Check network configuration and VPC endpoint settings</td>
-</tr>
-<tr>
-<td>3</td>
-<td>Ensure activation key hasn't expired</td>
-</tr>
-<tr>
-<td>4</td>
-<td>Restart agent or reinstall DataSync software</td>
-</tr>
-</tbody>
-</table></figure>
-<h3 id="configuring-nfs-and-smb">Configuring <a href="https://en.wikipedia.org/wiki/Network_File_System" target="_blank">NFS</a> and <a href="https://en.wikipedia.org/wiki/Server_Message_Block" target="_blank">SMB</a></h3>
-<p><figure><img alt="NFS" loading="lazy" src="/assets/media/574d7163f138d516ec4f.jpg"/></figure></p>
-<figure><table>
-<thead>
-<tr>
-<th>Step</th>
-<th>Action</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>1</td>
-<td>Verify NFS export is configured correctly</td>
-</tr>
-<tr>
-<td>2</td>
-<td>Ensure SMB version is compatible</td>
-</tr>
-<tr>
-<td>3</td>
-<td>Configure correct NFS/SMB version for task</td>
-</tr>
-</tbody>
-</table></figure>
-<h3 id="fixing-transfer-mode-and-sync-option-errors">Fixing Transfer Mode and Sync Option Errors</h3>
-<figure><table>
-<thead>
-<tr>
-<th>Step</th>
-<th>Action</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>1</td>
-<td>Select correct <code>TransferMode</code> (ONLINE, OFFLINE, Snowball)</td>
-</tr>
-<tr>
-<td>2</td>
-<td>Set <code>PreserveDeletedFiles</code> correctly (ALL or REMOVE)</td>
-</tr>
-</tbody>
-</table></figure>
-<h3 id="resolving-network-and-memory-issues">Resolving Network and Memory Issues</h3>
-<figure><table>
-<thead>
-<tr>
-<th>Error</th>
-<th>Solution</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>EniNotFound</code></td>
-<td>Ensure agent has permissions to create ENI</td>
-</tr>
-<tr>
-<td>Memory allocation error</td>
-<td>Check agent meets memory requirements</td>
-</tr>
-</tbody>
-</table></figure>
-<h3 id="fixing-nfs-and-efs-mounting-errors">Fixing NFS and <a href="https://en.wikipedia.org/wiki/Amazon_Elastic_File_System" target="_blank">EFS</a> Mounting Errors</h3>
-<p><figure><img alt="EFS" loading="lazy" src="/assets/media/3735376628ce132adfd2.jpg"/></figure></p>
-<figure><table>
-<thead>
-<tr>
-<th>Error</th>
-<th>Solution</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>NFS export config error</td>
-<td>Verify export is configured correctly</td>
-</tr>
-<tr>
-<td>EFS mount path error</td>
-<td>Check mount path is correct and up-to-date</td>
-</tr>
-<tr>
-<td>Version compatibility issue</td>
-<td>Configure correct NFS/EFS version for task</td>
-</tr>
-</tbody>
-</table></figure>
-<h2 id="optimizing-datasync-operations">Optimizing DataSync Operations</h2>
+<p>Before a retry, inspect the task’s current options and any execution overrides. If deletions are enabled, confirm the destination is safe to reconcile before starting the task. For the complete option definitions and defaults, see AWS’s <a href="https://docs.aws.amazon.com/datasync/latest/userguide/configure-metadata.html" target="_blank" rel="noopener noreferrer">file and object handling options</a>.</p>
+<p>Basic and Enhanced have different supported location pairs, agent types, limits, metrics, and verification behavior. Basic supports all supported DataSync location pairs, subject to its item quotas. Enhanced is available only for the following supported pairs: transfers among S3, EFS, and FSx for Lustre without an agent; between NFS, SMB, or HDFS and supported AWS storage using an Enhanced agent; and between Azure Blob or other cloud object storage and supported AWS storage (no agent is needed when one endpoint is S3). The AWS identity creating an Enhanced task needs <code>iam:CreateServiceLinkedRole</code>; this is a caller permission, not a permission assigned to the agent. See AWS documentation for <a href="https://docs.aws.amazon.com/datasync/latest/userguide/using-service-linked-roles-service-action-2.html" target="_blank" rel="noopener noreferrer">DataSync service-linked roles</a>. Check the current <a href="https://docs.aws.amazon.com/datasync/latest/userguide/choosing-task-mode.html" target="_blank" rel="noopener noreferrer">task mode support matrix</a> before creating locations or agents. DataSync does not let you change a task’s mode after creation.</p>
+<h2 id="managing-task-execution-and-verification">5. Recover, retry, and verify</h2>
+<h3 id="diagnosing-verification-failures">Treat verification as evidence</h3>
+<p>DataSync checks data integrity during transfer. By default, Basic mode also performs a full point-in-time scan at the end; Enhanced mode verifies transferred data. The additional end-of-transfer check depends on <code>VerifyMode</code> and task mode:</p>
 <ul>
-<li>Ensure agents meet memory requirements</li>
-<li>Split tasks using include/exclude filters</li>
-<li>Monitor agent performance and adjust configuration</li>
-<li>Specify correct <code>TransferMode</code> and <code>PreserveDeletedFiles</code> options</li>
-<li>Schedule tasks during off-peak hours</li>
+<li><code>ONLY_FILES_TRANSFERRED</code> checks the transferred data and metadata. This is the default for Enhanced mode.</li>
+<li><code>POINT_IN_TIME_CONSISTENT</code> scans the selected source and destination data at the end to check that they are synchronized. This is the default for Basic mode. It is unavailable for Enhanced mode and for transfers to S3 Glacier Flexible Retrieval or S3 Glacier Deep Archive, and can take much longer on large datasets.</li>
+<li><code>NONE</code> skips the additional end-of-transfer scan; DataSync still performs integrity checks during transfer. It is not a repair for permission, network, or data mismatch errors.</li>
 </ul>
-<p>By understanding these common issues and following the troubleshooting steps, you can resolve problems and optimize AWS DataSync for efficient, reliable data transfer.</p>
-<h2 id="common-aws-datasync-issues">Common <a href="https://aws.amazon.com/datasync/" target="_blank">AWS DataSync</a> Issues</h2>
-<p><figure><img alt="AWS DataSync" loading="lazy" src="/assets/media/ffdca730394193518a0d.jpg"/></figure></p>
-<p>AWS DataSync is a powerful service that enables fast, secure, and reliable data transfer between on-premises storage systems and AWS storage services. Like any complex system, it's not immune to issues and errors. In this section, we'll explore the most frequent challenges encountered with AWS DataSync.</p>
-<h3 id="agent-related-issues">Agent-Related Issues</h3>
-<p>Agent-related problems are common in AWS DataSync. These issues can include:</p>
-<ul>
-<li>Difficulties activating and connecting agents</li>
-<li>Reviving offline agents</li>
-<li>Configuring NFS and SMB</li>
-</ul>
-<p>To resolve these issues, reconfigure your automation to avoid overlapping actions and ensure that your agent's status is online. You may encounter errors such as <code>SyncTaskDeletedByUser</code> or <code>NoMem</code> when automating DataSync workflows.</p>
-<h3 id="task-execution-failures-1">Task Execution Failures</h3>
-<p>Task execution failures are another common issue with AWS DataSync. These errors can include:</p>
-<ul>
-<li><code>FsS3UnableToConnectToEndpoint</code></li>
-<li><code>FsAzureBlobVolRootListBlobsFailed</code></li>
-</ul>
-<p>To resolve these issues, verify that your location's <a href="https://en.wikipedia.org/wiki/Amazon_S3" target="_blank">S3</a> bucket is reachable and configured correctly. Ensure that your <a href="https://en.wikipedia.org/?title=HDFS&amp;redirect=no" target="_blank">HDFS</a> cluster allows the agent to communicate with the cluster's NameNode and DataNode ports.</p>
-<h3 id="data-transfer-errors-1">Data Transfer Errors</h3>
-<p>Data transfer errors are a common occurrence with AWS DataSync. These errors can include:</p>
-<ul>
-<li>Input/output errors</li>
-<li>NFS mount errors</li>
-<li>Amazon EFS mount errors</li>
-</ul>
-<p>To resolve these issues, check your NFS server's logs and metrics to determine if the problem started on the NFS server. Verify that your security group settings allow your agent to connect to the VPC endpoint.</p>
-<p>By understanding these common issues, you can quickly identify and resolve problems, minimizing downtime and data loss. In the next section, we'll explore resolving agent issues in more detail.</p>
-<h2 id="resolving-agent-issues-1">Resolving Agent Issues</h2>
-<p>This section covers common issues with AWS DataSync agents and provides practical solutions for activation, connection, and offline scenarios.</p>
-<h3 id="activating-and-connecting-agents">Activating and Connecting Agents</h3>
-<p>To troubleshoot activation and connection issues, follow these steps:</p>
-<p>1. <strong>Verify agent status</strong>: Ensure your agent's status is online and you have chosen the correct service endpoint.</p>
-<p>2. <strong>Check network configuration</strong>: Verify that your browser can access the agent using port 80.</p>
-<p>3. <strong>Check VPC endpoint settings</strong>: If using a VPC service endpoint, ensure your security group settings allow the agent to connect to the VPC endpoint. See <a href="https://docs.aws.amazon.com/datasync/latest/userguide/datasync-network.html" target="_blank">Network requirements for VPC endpoints</a> for required ports.</p>
-<p>4. <strong>Check activation key expiration</strong>: Agent activation keys expire in 30 minutes if unused.</p>
-<p>By following these steps, you should be able to resolve common activation and connection issues with your AWS DataSync agent.</p>
-<h3 id="reviving-offline-agents">Reviving Offline Agents</h3>
-<p>If your AWS DataSync agent goes offline, follow these steps to revive it:</p>
-<p>1. <strong>Check system logs</strong>: Check the agent's system logs for errors or issues that may have caused it to go offline.</p>
-<p>2. <strong>Verify network configuration</strong>: Ensure the agent's network configuration is correct and it can connect to the required interfaces.</p>
-<p>3. <strong>Check agent status</strong>: Ensure the agent's status is online and it is properly configured.</p>
-<p>4. <strong>Restart or reinstall</strong>: If the issue persists, try restarting the agent or reinstalling the DataSync software.</p>
-<p>By following these steps, you should be able to revive your offline AWS DataSync agent and resume data transfer operations.</p>
-<h3 id="configuring-nfs-and-smb-1">Configuring NFS and SMB</h3>
-<p>To configure NFS and SMB correctly, follow these steps:</p>
-<figure><table>
-<thead>
-<tr>
-<th><strong>Step</strong></th>
-<th><strong>Action</strong></th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>1</td>
-<td>Verify that your NFS server's export is correctly configured and the agent can access the export.</td>
-</tr>
-<tr>
-<td>2</td>
-<td>Ensure your SMB version is compatible with the DataSync agent.</td>
-</tr>
-<tr>
-<td>3</td>
-<td>Configure the correct NFS or SMB version for your DataSync task to prevent compatibility issues.</td>
-</tr>
-</tbody>
-</table></figure>
-<p>By following these steps, you should be able to configure NFS and SMB correctly and prevent compatibility and performance issues with your DataSync tasks.</p>
-<p>By understanding and addressing these common agent-related issues, you can minimize downtime and data loss, ensuring that your AWS DataSync operations run smoothly and efficiently.</p>
-<h2 id="troubleshooting-data-transfer">Troubleshooting Data Transfer</h2>
-<h3 id="fixing-transfer-mode-and-sync-option-errors-1">Fixing Transfer Mode and Sync Option Errors</h3>
-<p>When configuring your DataSync task, it's essential to set the <code>TransferMode</code> and <code>PreserveDeletedFiles</code> options correctly. If you encounter errors related to these options, follow these steps to resolve the issue:</p>
-<figure><table>
-<thead>
-<tr>
-<th><strong>Step</strong></th>
-<th><strong>Action</strong></th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>1</td>
-<td>Verify that you have selected the correct <code>TransferMode</code> for your task. You can choose from <code>ONLINE</code>, <code>OFFLINE</code>, or <code>Snowball</code>.</td>
-</tr>
-<tr>
-<td>2</td>
-<td>Check that you have set <code>PreserveDeletedFiles</code> to the correct value. If you want to preserve deleted files, set it to <code>ALL</code> or <code>REMOVE</code> accordingly.</td>
-</tr>
-</tbody>
-</table></figure>
-<p>By double-checking these options, you can avoid common errors and ensure a successful data transfer.</p>
-<h3 id="resolving-network-and-memory-issues-1">Resolving Network and Memory Issues</h3>
-<p>Network interface issues and memory allocation errors can hinder your data transfer process. To troubleshoot these issues:</p>
-<figure><table>
-<thead>
-<tr>
-<th><strong>Error</strong></th>
-<th><strong>Solution</strong></th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>EniNotFound</code></td>
-<td>Ensure that your agent has the necessary permissions to create an Elastic Network Interface (ENI).</td>
-</tr>
-<tr>
-<td><code>Cannot allocate memory</code></td>
-<td>Check that your agent meets the minimum memory requirements for the number of files you are trying to transfer.</td>
-</tr>
-</tbody>
-</table></figure>
-<p>By addressing these network and memory issues, you can prevent data transfer failures and ensure a smooth process.</p>
-<h3 id="fixing-nfs-and-efs-mounting-errors-1">Fixing NFS and EFS Mounting Errors</h3>
-<p>Mounting errors can occur when using NFS or Amazon EFS file systems with DataSync. To troubleshoot these issues:</p>
-<figure><table>
-<thead>
-<tr>
-<th><strong>Error</strong></th>
-<th><strong>Solution</strong></th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>NFS export configuration error</td>
-<td>Verify that your NFS server's export is correctly configured and the agent can access the export.</td>
-</tr>
-<tr>
-<td>EFS mount path error</td>
-<td>Check that your EFS mount path is correct and up-to-date, as changes to the file system's mount path can cause errors.</td>
-</tr>
-<tr>
-<td>NFS or EFS version compatibility issue</td>
-<td>Ensure that you have configured the correct NFS or EFS version for your DataSync task to prevent compatibility issues.</td>
-</tr>
-</tbody>
-</table></figure>
-<p>By following these steps, you can resolve common NFS and EFS mounting errors and ensure a successful data transfer.</p>
-<h2 id="managing-task-execution-and-verification">Managing Task Execution and Verification</h2>
-<h3 id="resolving-slow-or-stuck-tasks">Resolving Slow or Stuck Tasks</h3>
-<p>If a DataSync task appears stuck or slow, try the following steps to resolve the issue:</p>
-<figure><table>
-<thead>
-<tr>
-<th><strong>Step</strong></th>
-<th><strong>Action</strong></th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>1</td>
-<td>Check the task status in the AWS Management Console or using the AWS CLI. Verify that the task is not stuck in the <strong>Preparing</strong> status.</td>
-</tr>
-<tr>
-<td>2</td>
-<td>Ensure your agent meets the minimum memory requirements for the number of files you are trying to transfer.</td>
-</tr>
-<tr>
-<td>3</td>
-<td>Review your task configuration, including the <code>TransferMode</code> and <code>PreserveDeletedFiles</code> options, to ensure they are set correctly.</td>
-</tr>
-</tbody>
-</table></figure>
-<p>If you've checked these potential causes and the task remains stuck, consider reaching out to AWS Support for further assistance.</p>
-<h3 id="diagnosing-verification-failures">Diagnosing Verification Failures</h3>
-<p>Verification failures can occur due to various reasons. To diagnose verification failures:</p>
-<figure><table>
-<thead>
-<tr>
-<th><strong>Step</strong></th>
-<th><strong>Action</strong></th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>1</td>
-<td>Review the task logs to identify the specific error message or code associated with the verification failure.</td>
-</tr>
-<tr>
-<td>2</td>
-<td>Check the data integrity of your source and destination storage systems to ensure that the data is consistent and not corrupted.</td>
-</tr>
-<tr>
-<td>3</td>
-<td>Verify that your agent has the necessary permissions and access to the storage systems involved in the task.</td>
-</tr>
-</tbody>
-</table></figure>
-<p>By following these steps, you can identify and address the root cause of the verification failure, ensuring successful task completion.</p>
-<h3 id="handling-unintended-task-deletions">Handling Unintended Task Deletions</h3>
-<p>Accidental or script-driven deletion of DataSync tasks can be stressful. To handle unintended task deletions:</p>
-<figure><table>
-<thead>
-<tr>
-<th><strong>Step</strong></th>
-<th><strong>Action</strong></th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>1</td>
-<td>Immediately stop any automated scripts or processes that may be deleting tasks.</td>
-</tr>
-<tr>
-<td>2</td>
-<td>Check the AWS Management Console or AWS CLI to verify that the task has been deleted.</td>
-</tr>
-<tr>
-<td>3</td>
-<td>If you have a backup of the task configuration, recreate the task with the same settings. Otherwise, reconfigure the task from scratch.</td>
-</tr>
-</tbody>
-</table></figure>
-<p>By taking prompt action, you can minimize the impact of unintended task deletions and ensure that your data transfer processes remain uninterrupted.</p>
-<h2 id="optimizing-datasync-operations-1">Optimizing DataSync Operations</h2>
-<p>Optimizing DataSync operations is crucial for efficient and reliable data transfer. This section provides best practices for enhancing the performance and reliability of AWS DataSync operations, focusing on agent management and task configuration.</p>
-<h3 id="improving-agent-efficiency">Improving Agent Efficiency</h3>
-<p>To optimize DataSync agent efficiency:</p>
-<ul>
-<li>Ensure your agents meet the minimum memory requirements for the number of files you are trying to transfer.</li>
-<li>Consider splitting tasks using include/exclude filters to target specific directories or prefixes, which can help reduce the load on your agents.</li>
-<li>Monitor your agent's performance and adjust its configuration accordingly by checking the agent's logs, CPU usage, and memory consumption.</li>
-</ul>
-<p>By optimizing your agent's performance, you can significantly improve the overall efficiency of your DataSync operations.</p>
-<h3 id="configuring-tasks-effectively">Configuring Tasks Effectively</h3>
-<p>Configuring tasks effectively is critical to minimizing errors and maximizing throughput. When setting up a task:</p>
-<figure><table>
-<thead>
-<tr>
-<th><strong>Task Configuration</strong></th>
-<th><strong>Best Practice</strong></th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>TransferMode</code></td>
-<td>Specify the correct <code>TransferMode</code> option to ensure efficient data transfer.</td>
-</tr>
-<tr>
-<td><code>PreserveDeletedFiles</code></td>
-<td>Set the <code>PreserveDeletedFiles</code> option correctly to prevent data loss.</td>
-</tr>
-<tr>
-<td>Scheduling</td>
-<td>Schedule tasks to run during off-peak hours to minimize network congestion and optimize bandwidth usage.</td>
-</tr>
-</tbody>
-</table></figure>
-<p>By following these best practices, you can optimize your DataSync operations, improve agent efficiency, and configure tasks effectively, resulting in faster, more reliable, and more efficient data transfer.</p>
-<h2 id="conclusion">Conclusion</h2>
-<p>In conclusion, troubleshooting AWS DataSync is crucial for smooth and efficient data transfer operations. By understanding common issues and applying the provided solutions, you can minimize errors, optimize performance, and maximize throughput.</p>
-<h3 id="key-takeaways">Key Takeaways</h3>
-<p>This article has covered a range of topics, including:</p>
-<ul>
-<li>Resolving agent issues</li>
-<li>Troubleshooting data transfer</li>
-<li>Managing task execution and verification</li>
-<li>Optimizing DataSync operations</li>
-</ul>
-<p>By following the best practices and guidelines outlined in this article, you can ensure that your AWS DataSync operations run smoothly, efficiently, and reliably.</p>
-<h3 id="unlocking-the-full-potential-of-aws-datasync">Unlocking the Full Potential of <a href="https://aws.amazon.com/" target="_blank">AWS</a> DataSync</h3>
-<p><figure><img alt="AWS" loading="lazy" src="/assets/media/2d135ce4df17cc4bb773.jpg"/></figure></p>
-<p>With AWS DataSync, you can accelerate your data migration to the cloud, simplify your data management, and reduce costs. By troubleshooting common issues and optimizing your DataSync operations, you can unlock the full potential of this service and achieve your data transfer goals.</p>
+<p>These options are not interchangeable: use one that matches the required assurance and supported task mode. If verification reports a mismatch, inspect the listed paths and source/destination errors in CloudWatch logs or a task report. A file changed or deleted while DataSync was transferring or verifying can cause a mismatch; rerun after writes settle, then confirm the verified count and application-level data expected at the destination. See AWS guidance for <a href="https://docs.aws.amazon.com/datasync/latest/userguide/configure-data-verification-options.html" target="_blank" rel="noopener noreferrer">verification modes</a> and <a href="https://docs.aws.amazon.com/datasync/latest/userguide/troubleshooting-task-verification.html" target="_blank" rel="noopener noreferrer">verification failures</a>.</p>
+<h3 id="memory-and-large-datasets">Handle memory and large-dataset errors</h3>
+<p>For <code>Cannot allocate memory</code>, check that an agent meets the current VM or EC2 requirements for its mode and dataset. Basic mode has item quotas, and directory count and metadata size affect memory use. If appropriate, split the transfer with include/exclude filters while preserving the task’s intended deletion and synchronization scope. Enhanced mode supports far larger datasets for supported location pairs, but it requires an Enhanced task and, when applicable, an Enhanced agent. If a <code>NoMem</code> service error persists, save the task execution ARN and logs and contact AWS Support.</p>
+<h3 id="recovery-checklist">Verify a corrected run</h3>
+<p>After changing the specific root cause, start a new execution and confirm it reaches <code>SUCCESS</code>. Review the available phase results and reconcile transferred, skipped, failed, deleted, and verified counts with the expected scope. Enhanced mode can prepare, transfer, and verify concurrently, and exposes different counters from Basic mode, so interpret the fields for the selected mode instead of expecting every Basic phase field. Check the destination data and required metadata, especially after changing overwrite, deletion, filters, or permissions. If errors remain, stop repeated retries and use the new execution’s logs and report to isolate the next failing path.</p>
 <h2 id="faqs">FAQs</h2>
-<h3 id="why-does-datasync-take-so-long-to-verify-data%3F">Why does DataSync take so long to verify data?</h3>
-<p>DataSync verifies data integrity at the end of a transfer. The time it takes depends on several factors, including:</p>
-<figure><table>
-<thead>
-<tr>
-<th>Factor</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Number of files or objects</td>
-<td>More files or objects mean longer verification times.</td>
-</tr>
-<tr>
-<td>Total data amount</td>
-<td>Larger amounts of data take longer to verify.</td>
-</tr>
-<tr>
-<td>Source and destination storage performance</td>
-<td>Faster storage systems reduce verification times.</td>
-</tr>
-</tbody>
-</table></figure>
-<h3 id="is-aws-datasync-fully-managed%3F">Is AWS DataSync fully managed?</h3>
-<p>Yes, DataSync fully manages the creation, use, and deletion of Elastic Network Interfaces (ENIs) on your behalf. This means you don't need to worry about managing the underlying infrastructure, allowing you to focus on your data transfer operations.</p>
-<h3 id="does-aws-datasync-copy-or-move-files%3F">Does AWS DataSync copy or move files?</h3>
-<p>For online data transfers, AWS DataSync simplifies, automates, and accelerates copying large amounts of data to and from on-premises storage, edge locations, other cloud providers, and AWS Storage services. This allows you to easily migrate your data to the cloud or between storage systems without worrying about the underlying complexity.</p>
-<p>
-<h2>Related posts</h2>
-<ul>
-<li><a href="/blog/aws-content-migration-best-practices/">AWS Content Migration Best Practices</a></li><li><a href="/blog/aws-ec2-and-s3-for-beginners/">AWS EC2 and S3 for Beginners</a></li><li><a href="/blog/aws-services-overview-core-components/">AWS Services Overview: Core Components</a></li><li><a href="/blog/getting-started-with-aws-s3-essential-concepts/">Getting Started with AWS S3: Essential Concepts</a></li>
-</ul>
-</p>
+<h3 id="does-datasync-move-or-copy-files">Does DataSync move or copy files?</h3>
+<p>DataSync copies from source to destination; it does not remove the source data. <code>PreserveDeletedFiles=REMOVE</code> can remove destination files that are not present in the source when used with a compatible transfer mode.</p>
+<h3 id="why-is-a-task-taking-a-long-time-in-preparing">Why is a task taking a long time in Preparing?</h3>
+<p>DataSync inventories files, objects, directories, and metadata before deciding what to transfer. A large or slow source or destination can make this phase take hours. Check progress and storage performance before treating the phase as a failure.</p>
+<h3 id="can-i-turn-off-verification-to-fix-a-task">Can I turn off verification to fix a task?</h3>
+<p>No verification setting fixes a transfer error. <code>VerifyMode=NONE</code> skips the additional end-of-transfer scan but keeps in-transfer integrity checks. Find and correct the error reported by the execution and its logs, then verify the result to the level your migration requires.</p>
