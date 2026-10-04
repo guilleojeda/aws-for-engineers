@@ -2,286 +2,80 @@
 layout: post.njk
 templateEngineOverride: html
 tags: posts
-title: "5 Common AWS IaC Pitfalls & Solutions"
-description: "Explore the top 5 common AWS IaC pitfalls and their solutions to ensure efficient, secure, and cost-effective infrastructure deployments with this expert guide."
+title: "5 AWS IaC Pitfalls and How to Avoid Them"
+description: "Avoid AWS infrastructure as code drift, unsafe updates, conflicting Terraform state, and weak validation with practical CloudFormation, CDK, and Terraform guidance."
 date: "2024-05-13"
 datePublished: "2024-05-13T04:53:34.809000+00:00"
 heroImage: "/assets/media/6759efef43aa5b645aa6.jpg"
 permalink: "/blog/5-common-aws-iac-pitfalls-and-solutions/"
 sourceUrl: "https://awsforengineers.com/blog/5-common-aws-iac-pitfalls-and-solutions/"
 dateModified: "2026-10-03"
-updateNote: "Added author attribution and profile information."
+updateNote: "Reworked the guide with current CloudFormation import, drift, and change-set limits, CDK review guidance, and Terraform S3 state-locking practices."
 ---
-<p>Avoid these common pitfalls when implementing Infrastructure as Code (IaC) on <a href="https://aws.amazon.com/" target="_blank">AWS</a>:</p>
-<ol>
-<li>
-<p><strong>Lack of Planning and Rushed Implementation</strong></p>
+<p id="related-video-from-youtube">Infrastructure as code (IaC) makes AWS changes repeatable when teams know which resources they own, review the changes before applying them, and compare code with deployed infrastructure. These five pitfalls show where IaC workflows break down and how to prevent or recover from those failures.</p>
+
+<h2 id="1.-lack-of-planning-and-rushed-implementation">1. Start coding before defining ownership</h2>
+<p>Writing templates before you understand the account can leave existing resources unmanaged, create duplicates, or put one resource under two systems of control. That is especially risky when IaC is introduced into an account with resources created by consoles, scripts, or another provisioning tool.</p>
+<p>Before the first deployment, inventory the resources in scope and decide who owns each one, which system will change it, and how related resources will be grouped. For existing resources, choose deliberately whether to adopt, leave, or replace them. If CloudFormation is taking ownership, check that the resource type supports import and follow its import workflow; an ordinary stack update does not automatically adopt an existing resource. AWS maintains a <a href="https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/resource-import-supported-resources.html" target="_blank" rel="noopener noreferrer">current list of resource types that support CloudFormation import</a>.</p>
+<p>Start with a small, well-understood slice and review its proposed effects before expanding. Keep dependencies and data-bearing resources visible in the plan. If ownership is unclear, pause that resource’s rollout and record who will resolve it rather than letting two stacks or teams manage it at once.</p>
+
+<h2 id="2.-choosing-the-wrong-iac-tools">2. Choose a tool by its workflow, not its label</h2>
+<p>Broad claims such as “multi-cloud,” “native,” or “easy to learn” do not tell you how a tool fits your AWS resources and operating process. Compare the resource coverage you need, the skills already on the team, how changes are reviewed, and how the tool records ownership of deployed resources.</p>
+<h3 id="why-choosing-the-wrong-iac-tool-fails">Why tool assumptions fail</h3>
+<p>The code you write may not be the artifact AWS receives. The AWS CDK synthesizes an app into a cloud assembly that includes a CloudFormation template for each stack. Review the synthesized output as well as the higher-level code. <code>cdk diff</code> compares local CDK stacks with deployed stacks; its default method can fall back to a template-only diff if it cannot create a change set, so know which kind of diff you reviewed. See the AWS references for <a href="https://docs.aws.amazon.com/cdk/v2/guide/ref-cli-cmd-synth.html" target="_blank" rel="noopener noreferrer"><code>cdk synth</code></a> and <a href="https://docs.aws.amazon.com/cdk/v2/guide/ref-cli-cmd-diff.html" target="_blank" rel="noopener noreferrer"><code>cdk diff</code></a>.</p>
+<p>CloudFormation also requires an explicit capability acknowledgement when a template creates IAM resources. Templates that create custom-named IAM resources require <code>CAPABILITY_NAMED_IAM</code>. That acknowledgement does not approve the permissions themselves: review the policies and trust relationships the template will create. See AWS guidance on <a href="https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/control-access-with-iam.html" target="_blank" rel="noopener noreferrer">acknowledging IAM resources in CloudFormation templates</a>.</p>
+<h3 id="key-steps-to-avoid-pitfalls">How to choose and review the workflow</h3>
 <ul>
-<li>Take your time and map out an implementation plan</li>
-<li>Identify resources and infrastructure components to manage</li>
-<li>Implement security controls and scalability requirements</li>
+  <li>Confirm that the tool supports the resource types and deployment patterns you actually use.</li>
+  <li>Identify where the desired configuration and deployment state live, and who can apply changes.</li>
+  <li>Check the generated template, plan, or diff for replacements, deletions, and permission changes.</li>
+  <li>Use the tool already responsible for a resource unless there is a reviewed migration plan to transfer ownership.</li>
 </ul>
-</li>
-<li>
-<p><strong>Choosing the Wrong IaC Tools</strong></p>
+<p>CloudFormation, CDK, and Terraform have different authoring and state workflows. CDK generates CloudFormation templates; Terraform uses its own state and backend. Treat those differences as part of the tool choice instead of assuming one tool’s safeguards apply to another.</p>
+
+<h2 id="3.-inadequate-training-and-skilled-resources">3. Rely on one operator to understand IaC</h2>
+<p>If deployment and recovery knowledge lives with one person, a routine incident can turn into an undocumented console edit or an unsafe retry. The change may solve the immediate problem while leaving the code behind, so the next deployment starts from a false picture of the live resource.</p>
+<h3 id="the-importance-of-skilled-resources">Why shared operating knowledge matters</h3>
+<p>CloudFormation drift detection can help find changes made outside a stack, but its result has limits: it checks only supported resource types and properties explicitly set in the template. A drift check on a parent stack does not check its nested stacks; run detection on each nested stack as needed. An <code>IN_SYNC</code> result is therefore not proof that every setting on every resource matches your intent. See the <a href="https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/using-cfn-stack-drift.html" target="_blank" rel="noopener noreferrer">CloudFormation drift detection considerations</a>.</p>
+<h3 id="overcoming-inadequate-training-and-skilled-resources">Make failures recoverable by the team</h3>
+<p>Write a short runbook for reviewing a planned change, deploying it, finding stack events or provider errors, and handling out-of-band changes. Pair people on higher-risk updates and practise recovery in a non-production environment. Give operators a clear emergency-change path that records what changed and requires a follow-up code review.</p>
+<p>When drift appears, first decide whether the live change is intended. If it is, update the IaC definition and apply a reviewed change; if it is not, restore the resource to the intended configuration. Do not copy live settings into code or revert them blindly before understanding the impact on dependent services and data.</p>
+
+<h2 id="4.-insufficient-version-control-and-collaboration">4. Let concurrent changes bypass coordination</h2>
+<p>Version control gives the team a reviewable history, but a Git repository alone does not serialize deployments or protect a tool’s state. Use pull requests or an equivalent review process, make the proposed deployment output available to reviewers, and assign a clear owner to each apply operation.</p>
+<h3 id="the-importance-of-version-control">Keep code and deployment ownership clear</h3>
+<p>Store infrastructure definitions in version control and review changes to production access, resource replacement, and deletion with the same care as application changes. Restrict who can apply infrastructure and keep routine changes within the reviewed workflow. Record emergency changes and reconcile them back into code before the next normal deployment.</p>
+<h3 id="overcoming-insufficient-version-control-and-collaboration">Coordinate Terraform state writers</h3>
+<p>If you use Terraform, state locking depends on the backend. Terraform 1.10 and later support <a href="https://docs.aws.amazon.com/pdfs/prescriptive-guidance/latest/terraform-aws-provider-best-practices/terraform-aws-provider-best-practices.pdf" target="_blank" rel="noopener noreferrer">native S3 state locking</a>; it is opt-in, so enable it with <code>use_lockfile = true</code> and turn on S3 bucket versioning so earlier state can be recovered after accidental deletion or human error. For example:</p>
+<pre><code>terraform {
+  backend "s3" {
+    bucket       = "example-iac-state"
+    key          = "network/prod.tfstate"
+    region       = "us-east-1"
+    use_lockfile = true
+  }
+}</code></pre>
+<p>State and saved plan files can contain sensitive resource values even when the CLI redacts them. Keep them out of Git and limit access to the people and automation that need them. The S3 backend needs permissions on both its state object and, when locking is enabled, its lock object; scope those IAM permissions accordingly. See HashiCorp guidance on <a href="https://developer.hashicorp.com/terraform/language/manage-sensitive-data" target="_blank" rel="noopener noreferrer">Terraform sensitive data</a>, <a href="https://developer.hashicorp.com/terraform/cli/commands/plan" target="_blank" rel="noopener noreferrer">saved plan files</a>, and <a href="https://developer.hashicorp.com/terraform/language/backend/s3" target="_blank" rel="noopener noreferrer">S3 backend permissions</a>.</p>
+<p>Terraform automatically locks operations that can write state when the configured backend supports locking; not every backend does. Avoid disabling locking to get past a conflict. Before using <code>terraform force-unlock</code>, confirm the lock belongs to a run that has stopped and automatic unlocking failed. Current HashiCorp docs describe <a href="https://developer.hashicorp.com/terraform/language/state/locking" target="_blank" rel="noopener noreferrer">Terraform’s state-locking behavior</a> and mark DynamoDB-based S3 locking as deprecated. CloudFormation stack operations do not use Terraform’s state backend or locks.</p>
+
+<h2 id="5.-inadequate-testing-and-validation">5. Treat validation as proof of a safe deployment</h2>
+<p>A template that parses can still describe an invalid, destructive, or insecure change. For example, a syntactically valid security group rule can expose a service more widely than intended. Validate structure early, then inspect the proposed infrastructure changes and test the behaviors that depend on AWS.</p>
+<h3 id="the-importance-of-testing-and-validation">What each check can and cannot tell you</h3>
+<p>The CloudFormation <code>validate-template</code> command checks whether a template is valid JSON or YAML. That syntax check does not establish that the deployment will work or that the proposed infrastructure is secure. A CloudFormation change set previews proposed resource changes, including additions, modifications, deletions, and replacements, but AWS says change sets do not guarantee that the update will succeed. Runtime conditions can still cause a failure. Read the <a href="https://docs.aws.amazon.com/AWSCloudFormation/latest/APIReference/API_ValidateTemplate.html" target="_blank" rel="noopener noreferrer"><code>ValidateTemplate</code> API reference</a> and official guidance for <a href="https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/using-cfn-updating-stacks-changesets.html" target="_blank" rel="noopener noreferrer">reviewing and executing change sets</a>.</p>
+<h3 id="overcoming-inadequate-testing-and-validation">Build checks around the risk</h3>
 <ul>
-<li>Evaluate your infrastructure and resource requirements</li>
-<li>Research and compare tools like <a href="https://www.terraform.io/" target="_blank">Terraform</a> and <a href="https://aws.amazon.com/cloudformation/" target="_blank">CloudFormation</a></li>
-<li>Consider multi-cloud support, scalability, and security features</li>
+  <li>Run formatting, synthesis, and static or policy checks before deployment.</li>
+  <li>Review the actual Terraform plan, CDK diff, or CloudFormation change set. Investigate replacements, deletions, IAM changes, and effects on data before approval.</li>
+  <li>Test service wiring, permissions, networking, and update behavior in an isolated non-production environment when those behaviors matter to the change.</li>
+  <li>After a failed deployment, inspect the tool output and resource events, correct the cause, and review a fresh plan or change set before trying again.</li>
 </ul>
-</li>
-<li>
-<p><strong>Inadequate Training and Skilled Resources</strong></p>
-<ul>
-<li>Provide training for team members on IaC tools and <a href="/blog/">AWS services</a></li>
-<li>Hire experienced professionals with IaC and AWS expertise</li>
-<li>Foster collaboration and knowledge sharing among the team</li>
-</ul>
-</li>
-<li>
-<p><strong>Insufficient Version Control and Collaboration</strong></p>
-<ul>
-<li>Implement version control (e.g., <a href="https://git-scm.com/" target="_blank">Git</a>) for infrastructure code</li>
-<li>Establish a clear collaboration process with defined roles</li>
-<li>Use IaC tools like Terraform or CloudFormation for automation</li>
-</ul>
-</li>
-<li>
-<p><strong>Inadequate Testing and Validation</strong></p>
-<ul>
-<li>Implement a testing framework for automation</li>
-<li>Write unit, integration, and end-to-end tests for infrastructure code</li>
-<li>Perform regular code reviews and testing for quality assurance</li>
-</ul>
-</li>
-</ol>
-<p>By avoiding these pitfalls, you can ensure efficient, secure, and cost-effective IaC deployments on AWS.</p>
-<h2 id="related-video-from-youtube">Related video from YouTube</h2>
-<iframe allowfullscreen="" frameborder="0" loading="lazy" src="https://www.youtube.com/embed/bgfx76jr7tA"></iframe><h2 id="1.-lack-of-planning-and-rushed-implementation">1. Lack of Planning and Rushed Implementation</h2>
-<p>Rushing into Infrastructure as Code (IaC) implementation without proper planning can lead to a messy codebase and failed realization of IaC benefits. It's essential to <strong>take your time</strong> and <strong>map out your implementation plan</strong>. A common approach is to identify a specific part of your infrastructure, codify it, learn on the job, and then move onto the next part.</p>
-<p><strong>Why Rushed Implementation Fails</strong></p>
-<ul>
-<li>Lack of understanding of IaC fundamentals</li>
-<li>Poorly designed infrastructure that is difficult to manage and maintain</li>
-</ul>
-<p><strong>Key Steps to Avoid Pitfalls</strong></p>
-<figure><table>
-<thead>
-<tr>
-<th>Step</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>1</td>
-<td>Define a clear implementation plan</td>
-</tr>
-<tr>
-<td>2</td>
-<td>Identify the resources and infrastructure components to be managed</td>
-</tr>
-<tr>
-<td>3</td>
-<td>Choose the right IaC tool for your needs</td>
-</tr>
-<tr>
-<td>4</td>
-<td>Implement security controls and scalability requirements</td>
-</tr>
-<tr>
-<td>5</td>
-<td>Continuously monitor and update your IaC implementation</td>
-</tr>
-</tbody>
-</table></figure>
-<p>By taking a structured approach to IaC implementation, you can avoid common pitfalls and ensure a smoother transition to IaC. Remember, IaC is not a one-time task; it's an ongoing process that requires continuous learning, improvement, and refinement.</p>
-<h2 id="2.-choosing-the-wrong-iac-tools">2. Choosing the Wrong IaC Tools</h2>
-<p>Selecting the wrong Infrastructure as Code (IaC) tool can lead to various problems, including increased complexity, decreased productivity, and failed realization of IaC benefits. With multiple IaC tools available, such as Terraform and AWS CloudFormation, it's crucial to <strong>choose the right tool</strong> for your specific needs and requirements.</p>
-<h3 id="why-choosing-the-wrong-iac-tool-fails">Why Choosing the Wrong IaC Tool Fails</h3>
-<figure><table>
-<thead>
-<tr>
-<th>Reason</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Incompatibility</td>
-<td>The tool doesn't work with your existing infrastructure and resources.</td>
-</tr>
-<tr>
-<td>Limited Support</td>
-<td>The tool lacks support for multi-cloud environments.</td>
-</tr>
-<tr>
-<td>Steep Learning Curve</td>
-<td>The tool has inadequate documentation, making it difficult to learn.</td>
-</tr>
-<tr>
-<td>Limited Features</td>
-<td>The tool lacks scalability and security features.</td>
-</tr>
-</tbody>
-</table></figure>
-<h3 id="key-steps-to-avoid-pitfalls">Key Steps to Avoid Pitfalls</h3>
-<figure><table>
-<thead>
-<tr>
-<th>Step</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>1</td>
-<td>Evaluate your infrastructure and resource requirements.</td>
-</tr>
-<tr>
-<td>2</td>
-<td>Research and compare IaC tools (e.g., Terraform, CloudFormation).</td>
-</tr>
-<tr>
-<td>3</td>
-<td>Consider factors such as multi-cloud support, scalability, and security.</td>
-</tr>
-<tr>
-<td>4</td>
-<td>Choose an IaC tool that aligns with your organization's goals and objectives.</td>
-</tr>
-<tr>
-<td>5</td>
-<td>Provide adequate training and resources for your team.</td>
-</tr>
-</tbody>
-</table></figure>
-<p>By following these steps, you can avoid common pitfalls associated with choosing the wrong IaC tool and ensure a smoother transition to IaC. Remember, the right IaC tool can significantly impact the success of your infrastructure management and development efforts.</p>
-<h2 id="3.-inadequate-training-and-skilled-resources">3. Inadequate Training and Skilled Resources</h2>
-<p>Inadequate training and skilled resources can hinder successful IaC implementation on AWS. Without proper training, teams may struggle to manage and maintain their infrastructure, leading to errors, inefficiencies, and security vulnerabilities.</p>
-<h3 id="the-importance-of-skilled-resources">The Importance of Skilled Resources</h3>
-<p>Having skilled resources with expertise in IaC tools like Terraform, AWS CloudFormation, and Ansible is crucial for successful implementation. These tools require a deep understanding of infrastructure management, automation, and AWS services.</p>
-<h3 id="overcoming-inadequate-training-and-skilled-resources">Overcoming Inadequate Training and Skilled Resources</h3>
-<p>To overcome this pitfall, consider the following steps:</p>
-<figure><table>
-<thead>
-<tr>
-<th><strong>Step</strong></th>
-<th><strong>Description</strong></th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>1</td>
-<td>Identify knowledge gaps and provide training for team members on IaC tools and AWS services.</td>
-</tr>
-<tr>
-<td>2</td>
-<td>Hire experienced professionals with expertise in IaC and AWS infrastructure management.</td>
-</tr>
-<tr>
-<td>3</td>
-<td>Encourage collaboration and knowledge sharing among team members to improve overall skills and expertise.</td>
-</tr>
-<tr>
-<td>4</td>
-<td>Develop a comprehensive onboarding process for new team members to ensure they have the necessary skills and knowledge.</td>
-</tr>
-<tr>
-<td>5</td>
-<td>Continuously monitor and evaluate team performance, providing additional training and resources as needed.</td>
-</tr>
-</tbody>
-</table></figure>
-<p>By following these steps, you can ensure that your team has the necessary skills and expertise to successfully implement and manage IaC on AWS.</p>
-<h2 id="4.-insufficient-version-control-and-collaboration">4. Insufficient Version Control and Collaboration</h2>
-<p>Insufficient version control and collaboration can hinder successful IaC implementation on AWS. Without a well-defined collaboration process, teams may experience difficulties in managing infrastructure changes, leading to errors, inconsistencies, and security vulnerabilities.</p>
-<h3 id="the-importance-of-version-control">The Importance of Version Control</h3>
-<p>Version control is crucial for tracking changes to infrastructure code, ensuring that all team members are on the same page, and maintaining a record of changes. This helps to identify and resolve issues quickly, reducing downtime and improving overall efficiency.</p>
-<h3 id="overcoming-insufficient-version-control-and-collaboration">Overcoming Insufficient Version Control and Collaboration</h3>
-<p>To overcome this pitfall, follow these steps:</p>
-<figure><table>
-<thead>
-<tr>
-<th><strong>Step</strong></th>
-<th><strong>Description</strong></th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>1.</td>
-<td>Implement a version control system like Git to track changes to infrastructure code.</td>
-</tr>
-<tr>
-<td>2.</td>
-<td>Establish a clear collaboration process, defining roles and responsibilities for team members.</td>
-</tr>
-<tr>
-<td>3.</td>
-<td>Use IaC tools like Terraform or AWS CloudFormation to automate infrastructure deployment and management.</td>
-</tr>
-<tr>
-<td>4.</td>
-<td>Regularly review and update infrastructure code to ensure consistency and accuracy.</td>
-</tr>
-<tr>
-<td>5.</td>
-<td>Foster a culture of collaboration and knowledge sharing among team members to improve overall skills and expertise.</td>
-</tr>
-</tbody>
-</table></figure>
-<p>By following these steps, you can ensure that your team has a well-defined collaboration process and version control system in place, leading to successful IaC implementation on AWS.</p>
-<h2 id="5.-inadequate-testing-and-validation">5. Inadequate Testing and Validation</h2>
-<p>Inadequate testing and validation can lead to infrastructure deployment errors, security vulnerabilities, and downtime. It's crucial to test and validate your IaC code to ensure it meets the required standards and functions as expected.</p>
-<h3 id="the-importance-of-testing-and-validation">The Importance of Testing and Validation</h3>
-<p>Testing and validation are critical steps in the IaC implementation process. They help identify errors, inconsistencies, and security vulnerabilities in the infrastructure code, allowing you to fix them before deployment. This ensures that your infrastructure is reliable, secure, and efficient.</p>
-<h3 id="overcoming-inadequate-testing-and-validation">Overcoming Inadequate Testing and Validation</h3>
-<p>To overcome this pitfall, follow these steps:</p>
-<figure><table>
-<thead>
-<tr>
-<th><strong>Step</strong></th>
-<th><strong>Description</strong></th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>1.</td>
-<td>Implement a testing framework to automate testing and validation.</td>
-</tr>
-<tr>
-<td>2.</td>
-<td>Write unit tests, integration tests, and end-to-end tests to cover different aspects of your infrastructure code.</td>
-</tr>
-<tr>
-<td>3.</td>
-<td>Use tools to validate your infrastructure code against the desired state.</td>
-</tr>
-<tr>
-<td>4.</td>
-<td>Perform regular code reviews and testing to ensure that your infrastructure code is up-to-date and meets the required standards.</td>
-</tr>
-<tr>
-<td>5.</td>
-<td>Foster a culture of testing and validation within your team to ensure that everyone is aware of its importance.</td>
-</tr>
-</tbody>
-</table></figure>
-<p>By following these steps, you can ensure that your IaC code is thoroughly tested and validated, reducing the risk of errors, security vulnerabilities, and downtime.</p>
+<p>Local and unit tests give fast feedback, but they cannot prove every AWS permission or service integration. For a practical approach to validating deployed workflows, see our guide to <a href="/blog/10-best-practices-for-end-to-end-testing-aws-apps/">end-to-end testing AWS applications</a>.</p>
+
 <h2 id="conclusion">Conclusion</h2>
-<p>In conclusion, avoiding common AWS IaC pitfalls is crucial for efficient, secure, and cost-effective infrastructure management. By understanding the importance of planning, choosing the right IaC tools, providing adequate training, ensuring version control and collaboration, and testing and validating infrastructure code, you can overcome common mistakes and ensure successful IaC deployments on AWS.</p>
-<h3 id="key-takeaways">Key Takeaways</h3>
-<p>To reap the benefits of IaC, remember:</p>
+<p>IaC is most dependable when every resource has a clear owner, each change is reviewed in the form the deployment tool will apply, and the team can reconcile code with live infrastructure. The exact safeguards differ: CloudFormation has stack change sets and bounded drift detection, CDK produces CloudFormation templates, and Terraform state locking depends on its backend.</p>
+<h3 id="key-takeaways">Key takeaways</h3>
 <ul>
-<li><strong>Plan strategically</strong>: Take your time to map out your implementation plan and identify the resources and infrastructure components to be managed.</li>
-<li><strong>Choose the right IaC tool</strong>: Select a tool that aligns with your organization's goals and objectives, and provide adequate training and resources for your team.</li>
-<li><strong>Ensure version control and collaboration</strong>: Implement a version control system and establish a clear collaboration process to track changes and maintain a record of changes.</li>
-<li><strong>Test and validate</strong>: Implement a testing framework to automate testing and validation, and perform regular code reviews and testing to ensure that your infrastructure code is up-to-date and meets the required standards.</li>
+  <li>Inventory existing resources and assign one clear owner before adopting them into IaC.</li>
+  <li>Review generated templates and planned changes; do not assume a successful syntax check guarantees a safe update.</li>
+  <li>Keep operators able to recover together, and use state locking only where the Terraform backend supports it.</li>
 </ul>
-<p>By following these best practices, you can overcome common AWS IaC pitfalls and ensure that your infrastructure is scalable, secure, and efficient.</p>
-<p>
-<h2>Related posts</h2>
-<ul>
-<li><a href="/blog/aws-engineering-blog-mastering-infrastructure-as-code/">AWS Engineering Blog: Mastering Infrastructure as Code</a></li><li><a href="/blog/aws-hybrid-cloud-security-compliance-best-practices/">AWS Hybrid Cloud Security: Compliance Best Practices</a></li><li><a href="/blog/aws-vpc-guide-configuration-essentials/">AWS VPC Guide: Configuration Essentials</a></li><li><a href="/blog/aws-content-migration-best-practices/">AWS Content Migration Best Practices</a></li>
-</ul>
-</p>

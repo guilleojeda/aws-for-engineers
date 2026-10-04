@@ -2,134 +2,55 @@
 layout: post.njk
 templateEngineOverride: html
 tags: posts
-title: "5 Best Practices for AWS Operational Excellence"
-description: "Enhance AWS reliability and efficiency with five best practices focused on small changes, regular updates, failure design, data analysis, and managed services."
+title: "5 AWS Operational Excellence Best Practices for Reliable Workloads"
+description: "Apply five AWS operational excellence practices for safer changes, useful runbooks, tested failure response, actionable monitoring, and informed use of managed services."
 date: "2025-01-09"
 datePublished: "2025-01-09T00:56:43.797000+00:00"
 heroImage: "/assets/media/4064273611c0b3ccc338.jpg"
 permalink: "/blog/5-best-practices-for-aws-operational-excellence/"
 sourceUrl: "https://awsforengineers.com/blog/5-best-practices-for-aws-operational-excellence/"
 dateModified: "2026-10-03"
-updateNote: "Added author attribution and profile information."
+updateNote: "Rewrote the guide with current AWS Well-Architected guidance, corrected service behavior, and added practical steps and related guides."
 ---
-<p><strong>Want to improve your AWS systems' reliability and efficiency? Start with these 5 practical steps:</strong></p>
-<ol>
-<li><strong>Make Small, Reversible Changes</strong>: Use tools like <a href="https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/Welcome.html" rel="nofollow noopener noreferrer" target="_blank">AWS CloudFormation</a> and CodePipeline to test, monitor, and roll back changes safely.</li>
-<li><strong>Keep Procedures Updated</strong>: Regularly review workflows, simulate failures with "game days", and centralize documentation using AWS Systems Manager.</li>
-<li><strong>Design for Failure</strong>: Build fault-tolerant systems with redundancy (e.g., EC2 Auto Scaling), test resilience with <a href="https://docs.aws.amazon.com/fis/latest/userguide/what-is.html" rel="nofollow noopener noreferrer" target="_blank">AWS Fault Injection Simulator</a>, and track failures using CloudTrail.</li>
-<li><strong>Analyze Data</strong>: Leverage <a href="https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/WhatIsCloudWatch.html" rel="nofollow noopener noreferrer" target="_blank">AWS CloudWatch</a> for real-time monitoring, set alerts, automate responses with Lambda, and refine systems using trends.</li>
-<li><strong>Use Managed Services</strong>: Offload routine tasks to services like <a href="https://docs.aws.amazon.com/rds/" rel="nofollow noopener noreferrer" target="_blank">Amazon RDS</a> and <a href="https://docs.aws.amazon.com/lambda/" rel="nofollow noopener noreferrer" target="_blank">AWS Lambda</a> for high availability and reduced manual effort.</li>
-</ol>
-<p>These strategies help maintain scalable, reliable workloads while simplifying operations. Let’s explore how to apply them effectively.</p>
-<h2 id="1-implement-small-reversible-changes">1. Implement Small, Reversible Changes</h2>
-<p>Making small, incremental changes helps keep AWS operations stable while reducing risks. This approach aligns with the core principles of AWS's operational excellence pillar.</p>
-<p>Tools like <strong>AWS CloudFormation</strong> allow you to make controlled, automated deployments with version history, making it easy to roll back if something goes wrong. Pair this with <strong><a href="https://docs.aws.amazon.com/codepipeline/latest/userguide/welcome.html" rel="nofollow noopener noreferrer" target="_blank">AWS CodePipeline</a></strong> to deploy updates step-by-step, monitor their performance, and automatically revert changes if issues arise.</p>
-<p><strong>Monitoring is key.</strong> Use <strong>AWS CloudWatch</strong> to set up automated alerts and rollbacks based on performance metrics. By tracking these metrics during deployments, you can quickly spot and resolve any problems.</p>
-<p>To maintain clarity and troubleshoot effectively, store all change documentation in <strong><a href="https://docs.aws.amazon.com/codecommit/" rel="nofollow noopener noreferrer" target="_blank">AWS CodeCommit</a></strong> or another version control system. Plan your changes carefully - test them in isolated environments, validate them, and roll them out gradually while keeping an eye on performance metrics.</p>
-<p>Regularly updating your operational procedures ensures this approach stays effective as your workloads evolve.</p>
-<h2 id="2-regularly-update-operations-procedures">2. Regularly Update Operations Procedures</h2>
-<p>Keeping your operational procedures up to date is key to maintaining reliable and efficient AWS systems. This helps ensure your systems meet changing requirements and align with AWS's performance and reliability standards.</p>
-<ul>
-<li><strong>Monitor key metrics with AWS CloudWatch</strong>: Use these insights to spot areas that need improvement and fine-tune your processes.</li>
-<li><strong>Schedule quarterly reviews</strong>: These help identify gaps in your workflows, find automation opportunities, and address any performance issues.</li>
-<li><strong>Leverage AWS CloudFormation</strong>: Automate infrastructure deployment and management to ensure consistency across your environment.</li>
-<li><strong>Run 'game days' regularly</strong>: Simulate failure scenarios to uncover weaknesses and improve your procedures.</li>
-<li><strong>Centralize your procedures</strong>: Use AWS Systems Manager to store runbooks and automate routine tasks, making them easily accessible to your team.</li>
-</ul>
-<h2 id="3-design-for-failure">3. Design for Failure</h2>
-<p>Creating AWS systems that can handle failures is a key part of building reliable and efficient infrastructure. By planning for potential breakdowns, you can ensure your systems remain resilient and operational.</p>
-<p><strong>Build Fault Tolerance</strong><br/>
-Incorporate redundancy into essential components of your system using AWS tools. For instance, deploy applications across multiple Availability Zones with Amazon EC2 Auto Scaling to maintain the necessary number of instances, even during disruptions. Making small, reversible changes and keeping procedures updated can reduce the impact of failures.</p>
-<p><strong>Test Resilience Regularly</strong><br/>
-Use tools like AWS Fault Injection Simulator to introduce controlled failures. This helps uncover vulnerabilities before they can disrupt your production environment. Routine testing not only validates your failure response processes but also strengthens your system's ability to withstand issues.</p>
-<figure><table>
-<thead>
-<tr>
-<th>Failure Scenario</th>
-<th>Mitigation Strategy</th>
-<th>AWS Service</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Database Outage</td>
-<td>Use read replicas with automatic failover</td>
-<td><a href="https://docs.aws.amazon.com/neptune/latest/userguide/intro.html" rel="nofollow noopener noreferrer" target="_blank">Amazon Neptune</a></td>
-</tr>
-<tr>
-<td>Instance Failure</td>
-<td>Set up auto-scaling across multiple AZs</td>
-<td>EC2 Auto Scaling</td>
-</tr>
-</tbody>
-</table></figure>
-<p><strong>Track and Monitor Failures</strong><br/>
-<a href="https://docs.aws.amazon.com/cloudtrail/" rel="nofollow noopener noreferrer" target="_blank">AWS CloudTrail</a> is an excellent tool for tracking changes and documenting failures. By analyzing these failures and recording lessons learned, you can avoid similar issues in the future. Additionally, establish targeted monitoring for specific failure scenarios and automate responses to critical problems.</p>
-<p>Designing with failure in mind ensures your AWS infrastructure can handle disruptions while maintaining service availability. This approach keeps your systems running smoothly and supports uninterrupted business operations <a href="https://docs.aws.amazon.com/wellarchitected/latest/operational-excellence-pillar/operational-excellence.html" rel="nofollow noopener noreferrer" target="_blank"><sup>[1]</sup></a><a href="https://docs.aws.amazon.com/pdfs/wellarchitected/latest/operational-excellence-pillar/wellarchitected-operational-excellence-pillar.pdf" rel="nofollow noopener noreferrer" target="_blank"><sup>[2]</sup></a>.</p>
-<h2 id="4-analyze-operational-data">4. Analyze Operational Data</h2>
-<p>Analyzing operational data is key to refining and improving your AWS systems. Tools like <strong>AWS CloudWatch</strong> make it easier to track metrics, logs, and events across your architecture, giving you the information you need to make smarter decisions.</p>
-<p><strong>Set Up Real-Time Monitoring</strong><br/>
-CloudWatch lets you keep an eye on performance, error rates, latency, and resource usage. Create custom dashboards to track your most important metrics in real-time. This makes it easier to spot issues early and address them before they affect your system.</p>
-<figure><table>
-<thead>
-<tr>
-<th>Metric Category</th>
-<th>Key Indicators</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Performance</td>
-<td>CPU Usage, Memory Utilization</td>
-</tr>
-<tr>
-<td>Reliability</td>
-<td>Error Rates, System Uptime</td>
-</tr>
-<tr>
-<td>User Experience</td>
-<td>API Latency, Response Times</td>
-</tr>
-</tbody>
-</table></figure>
-<p><strong>Make Decisions Based on Data</strong><br/>
-With <strong>CloudWatch Logs Insights</strong>, you can analyze logs to find patterns, set alerts for unusual activity, and establish clear thresholds for operational events. By acting on this data, you can resolve issues before they turn into larger problems.</p>
-<p><strong>Automate Responses</strong><br/>
-Set up CloudWatch alarms to automatically trigger actions using <strong>AWS Lambda</strong>. For example, you can scale resources or notify your team during critical events. Automation reduces manual work and helps keep your systems stable.</p>
-<p><strong>Continuously Improve</strong><br/>
-Use trends in your data to fine-tune monitoring thresholds, alerts, and automated responses. Regularly reviewing this information ensures your systems stay efficient, reliable, and cost-effective.</p>
-<h2 id="5-utilize-managed-services">5. Utilize Managed Services</h2>
-<p>Monitoring and analyzing operational data is essential, but turning to managed services can make operations smoother and more dependable.</p>
-<p>AWS-managed services take care of routine tasks, freeing up your time and reducing manual effort.</p>
-<p><strong>Automated Database Operations</strong><br/>
-With Amazon RDS, tasks like backups, software updates, and failovers are handled automatically. This minimizes downtime and ensures your databases are always available without constant oversight.</p>
-<p><strong>Serverless Computing</strong><br/>
-AWS Lambda removes the hassle of managing servers. It automatically scales to meet demand, and you’re only charged for the compute time you use. This approach keeps things simple and cost-effective.</p>
-<p><strong>Built-in High Availability</strong><br/>
-Managed services come with built-in redundancy. For instance, RDS Multi-AZ replicates data to a standby instance, enabling quick recovery during outages.</p>
-<p><strong>Service Integration</strong><br/>
-These services also simplify monitoring by offering pre-configured CloudWatch metrics. You can easily track key performance indicators like:</p>
-<ul>
-<li>Service uptime and availability</li>
-<li>Response times and latency</li>
-<li>Error rates and system health</li>
-<li>Resource utilization</li>
-</ul>
+<p>AWS operational excellence means running and monitoring workloads, learning from operational events, and improving the processes that deliver business value. The practices below are a practical selection, not an official five-part AWS checklist. The Well-Architected Operational Excellence pillar groups its guidance into <strong>Organization, Prepare, Operate, and Evolve</strong>, with recommendations for controlled changes, clear procedures, useful operational data, and continuous learning.</p>
+<p>Use these practices together: a safe release needs a way to detect trouble, a known response, and a workload designed to recover. Choose controls that match your service objectives and the AWS services you actually use. See the <a href="https://docs.aws.amazon.com/wellarchitected/latest/operational-excellence-pillar/welcome.html" rel="noopener noreferrer" target="_blank">AWS Well-Architected Operational Excellence pillar</a> for the full framework.</p>
+<h2 id="1-implement-small-reversible-changes">1. Make small, reversible changes</h2>
+<p>Smaller changes are easier to review, test, and diagnose. Keep application code, infrastructure definitions, and deployment configuration in version control so the team can see what changed and restore a known version when that is safe.</p>
+<h3>Validate the proposed change before deployment</h3>
+<p>Run automated checks before release, then deploy to a lower environment that exercises the same important dependencies as production. For infrastructure managed with CloudFormation, a <a href="https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/using-cfn-updating-stacks-changesets.html" rel="noopener noreferrer" target="_blank">change set previews proposed resource changes</a>, including resources that may be replaced. Review the preview, but remember that it does not guarantee the update will succeed.</p>
+<p>For tool-specific guidance on resource ownership, reviewing generated plans, and handling drift or Terraform state, see our guide to <a href="/blog/5-common-aws-iac-pitfalls-and-solutions/">AWS IaC pitfalls</a>.</p>
+<h3>Limit the release and plan the recovery</h3>
+<p>Deploy in stages when your delivery system supports it. For example, release an API change to a small portion of traffic, compare its error rate and latency with the existing version, and pause before the next stage if a service guardrail is exceeded. Define who can stop the rollout and how to restore service.</p>
+<p>A rollback is not always safe for data or schema changes. Keep application versions compatible with the migration sequence, or plan a forward repair and recovery procedure. AWS recommends frequent, small, reversible changes and fast feedback on change quality in its <a href="https://docs.aws.amazon.com/wellarchitected/latest/operational-excellence-pillar/design-for-operations.html" rel="noopener noreferrer" target="_blank">guidance for designing operations</a>.</p>
+<h2 id="2-regularly-update-operations-procedures">2. Keep procedures current and usable</h2>
+<p>A runbook should help a responder complete a known task; a playbook should guide investigation when the cause or response is not yet clear. Give each procedure an owner and keep it near the source of truth your team uses, with permissions and review practices appropriate to its contents.</p>
+<h3>Make each procedure actionable</h3>
+<p>For a common event such as a rise in API errors, document the signal that starts the response, safe checks to narrow the cause, actions the responder may take, how to confirm recovery, and when to escalate. Include links to the relevant dashboard, service owner, and recovery steps. Keep commands and assumptions current as the workload changes.</p>
+<p>For repeatable AWS actions, <a href="https://docs.aws.amazon.com/systems-manager/latest/userguide/automation-documents.html" rel="noopener noreferrer" target="_blank">Systems Manager Automation runbooks</a> can encode ordered steps against AWS resources. Review the permissions a runbook needs and use an appropriate IAM role; automation should be understandable, limited to its purpose, and safe to retry where possible.</p>
+<h3>Rehearse and improve procedures</h3>
+<p>Review procedures after incidents, significant architecture or deployment changes, and exercises that expose gaps. A game day can walk the on-call team through a dependency outage or a failed release without affecting production. Record what was unclear, assign corrective actions, and update the procedure. AWS recommends validating operational readiness, maintaining runbooks and playbooks, and practicing failure response in the pillar's <a href="https://docs.aws.amazon.com/wellarchitected/latest/operational-excellence-pillar/prepare.html" rel="noopener noreferrer" target="_blank">Prepare guidance</a>.</p>
+<h2 id="3-design-for-failure">3. Design for failure and test recovery</h2>
+<p>Start with the outcomes the workload must preserve during an interruption, then map the dependencies that could prevent them: compute, network paths, data stores, queues, identity, and external services. Decide which failures the design must tolerate and what recovery time and data loss are acceptable. A multi-Availability Zone design helps isolate some zone failures, but every required tier and dependency needs a compatible recovery plan.</p>
+<h3>Configure redundancy for the workload</h3>
+<p>For an EC2 application, an Auto Scaling group can replace unhealthy instances and distribute capacity across Availability Zones when it is configured with subnets in those zones. Use health checks that reflect whether the application can serve requests, and ensure the remaining capacity and dependencies can handle the load during an impairment. AWS's <a href="https://docs.aws.amazon.com/wellarchitected/latest/reliability-pillar/rel_fault_isolation_multiaz_region_system.html" rel="noopener noreferrer" target="_blank">multi-location reliability guidance</a> explains how to plan across Availability Zones and when a regional recovery design may be warranted.</p>
+<h3>Test the response with clear limits</h3>
+<p>Use controlled exercises to check that monitoring detects the failure, responders follow the procedure, and the workload returns to an acceptable state. AWS Fault Injection Service templates define actions, targets, an IAM role, and optional stop conditions. A CloudWatch alarm can stop an experiment when a workload signal crosses a safety threshold, but stopping the experiment does not guarantee that every effect has been undone: only some FIS actions support configured post-actions. Define how the workload will return to steady state, then verify recovery. Start with a narrow target and a non-production environment when practical. See the AWS docs for <a href="https://docs.aws.amazon.com/fis/latest/userguide/stop-conditions.html" rel="noopener noreferrer" target="_blank">FIS stop conditions</a> and <a href="https://docs.aws.amazon.com/fis/latest/userguide/action-sequence.html" rel="noopener noreferrer" target="_blank">action post-actions</a>.</p>
+<h2 id="4-analyze-operational-data">4. Use operational data to guide action</h2>
+<p>Collect data that answers a question about customer or business outcomes. For a request-serving API, useful signals might include successful request volume, error rate, and latency percentiles; a queue-based worker may also need queue age and processing failures. Add infrastructure and dependency signals where they help explain those outcomes. Metrics, logs, and traces should let responders connect a symptom to the affected component.</p>
+<h3>Make alerts actionable</h3>
+<p>Set thresholds from workload behavior and service objectives rather than using a universal CPU or latency number. Give each alert an owner, a response procedure, and an escalation path. Review alarm history after incidents and adjust thresholds or missing-data treatment when alerts are late, noisy, or fail to detect a real problem.</p>
+<p>CloudWatch alarms can notify subscribers, invoke Lambda functions, or emit state-change events to EventBridge, among other supported actions. Reserve automatic remediation for known, bounded responses; grant only the permissions it needs and test its failure path. The current <a href="https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/alarm-actions.html" rel="noopener noreferrer" target="_blank">CloudWatch alarm actions documentation</a> lists the available actions and their behavior. For a service-specific walkthrough of Lambda execution, error, and throttling metrics, see <a href="/blog/how-to-analyze-lambda-metrics-in-cloudwatch/">our guide to analyzing Lambda metrics in CloudWatch</a>.</p>
+<h3>Use the right record for the investigation</h3>
+<p>CloudTrail records account activity such as AWS API calls; it does not record application exceptions or serve as a workload-failure monitor. Use application logs and metrics to investigate those failures. When the question is how an AWS resource's recorded configuration changed, AWS Config can provide configuration history for resource types you have configured it to record. Its history and inventory concepts are covered in our <a href="/blog/aws-config-resource-inventory-change-tracking-guide/">AWS Config resource inventory and change tracking guide</a>, and in the <a href="https://docs.aws.amazon.com/config/latest/developerguide/config-concepts.html" rel="noopener noreferrer" target="_blank">AWS Config documentation</a>.</p>
+<h2 id="5-utilize-managed-services">5. Use managed services with clear expectations</h2>
+<p>Managed services can reduce the work your team does for selected infrastructure tasks, but the amount of work transferred differs by service and configuration. Compare that benefit with the controls you still need to own: access, capacity, application behavior, data protection, monitoring, and recovery. AWS remains responsible for the resilience of the cloud infrastructure; customers remain responsible for configuring and operating resilient workloads and protecting their data under the service's model.</p>
+<h3>Check the service's failure behavior</h3>
+<p>For example, an Amazon RDS Multi-AZ DB instance deployment maintains a standby for failover, but that standby does not serve read traffic. A Multi-AZ DB cluster is a different deployment type with reader instances. Confirm which deployment you have, what failover covers, and whether backups and restore procedures meet your recovery objectives. See <a href="https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/Concepts.MultiAZ.html" rel="noopener noreferrer" target="_blank">how RDS Multi-AZ deployments differ</a>.</p>
+<p>Lambda removes the need to manage the function's server fleet, but your workload still depends on concurrency limits, permissions, event delivery and retry behavior, and downstream capacity. Review service quotas and test the whole request path instead of treating a managed service as an availability guarantee. AWS's <a href="https://docs.aws.amazon.com/wellarchitected/latest/reliability-pillar/shared-responsibility-model-for-resiliency.html" rel="noopener noreferrer" target="_blank">shared responsibility guidance for resiliency</a> describes the boundary between AWS infrastructure and customer workload responsibilities.</p>
 <h2 id="conclusion">Conclusion</h2>
-<p>Achieving top-notch performance in AWS requires a focus on continuous improvement and automation, guided by clear, systematic methods. The five best practices we've covered offer a solid approach to making your AWS setup more reliable and efficient.</p>
-<p>Making small, incremental changes helps lower deployment risks and speeds up recovery times. Keeping procedures updated ensures they match evolving infrastructure needs, while clear documentation and defined responsibilities keep workflows smooth. Once processes are fine-tuned, reviewing operational data can help drive ongoing improvements.</p>
-<p>Data-driven decision-making plays a key role here. Tools like <strong>AWS CloudWatch</strong> and <strong>Trusted Advisor</strong> can help monitor key metrics, improve recovery times, and fine-tune system performance. Additionally, managed services can ease the workload by offering built-in features like high availability and monitoring.</p>
-<p>For more hands-on advice, check out resources like <em>AWS for Engineers</em>, which provide step-by-step guides to implementing these strategies.</p>
+<p>Operational excellence comes from a working loop: make a controlled change, observe its effect, respond through a prepared procedure, and use what you learn to improve the workload. Start with the practice that addresses your largest operational risk, name an owner, and verify that the expected recovery or customer outcome actually occurs.</p>
 <h2 id="faqs">FAQs</h2>
 <h3 id="what-is-an-example-of-an-operational-excellence-best-practice-in-aws">What is an example of an operational excellence best practice in AWS?</h3>
-<p>One example is using operations as code to minimize errors and standardize how events are handled. By automating deployments and configurations with Infrastructure as Code (IaC), you can maintain consistency and easily reverse changes when needed. The AWS Well-Architected Framework advises designing workloads for regular updates and making changes in small, reversible steps <a href="https://docs.aws.amazon.com/wellarchitected/latest/operational-excellence-pillar/operational-excellence.html" rel="nofollow noopener noreferrer" target="_blank"><sup>[1]</sup></a><a href="https://docs.aws.amazon.com/prescriptive-guidance/latest/neptune-well-architected-framework/operational-excellence-pillar.html" rel="nofollow noopener noreferrer" target="_blank"><sup>[3]</sup></a>.</p>
-<h3 id="what-are-the-3-areas-of-operational-excellence-in-the-cloud-aws">What are the 3 areas of operational excellence in the cloud AWS?</h3>
-<p>The three main areas of operational excellence in AWS are:</p>
-<ul>
-<li><strong>Organization</strong>: Structuring teams and clearly defining workload responsibilities.</li>
-<li><strong>Prepare</strong>: Creating and documenting procedures to ensure operational readiness.</li>
-<li><strong>Operate &amp; Evolve</strong>: Managing systems effectively while continuously improving processes <a href="https://d1.awsstatic.com/whitepapers/architecture/AWS-Operational-Excellence-Pillar.pdf" rel="nofollow noopener noreferrer" target="_blank"><sup>[4]</sup></a><a href="https://docs.aws.amazon.com/prescriptive-guidance/latest/neptune-well-architected-framework/operational-excellence-pillar.html" rel="nofollow noopener noreferrer" target="_blank"><sup>[3]</sup></a>.</li>
-</ul>
-<p>These areas help streamline AWS operations by focusing on team structure, well-documented workflows, and ongoing optimization. Tools like AWS CloudFormation can assist with infrastructure management, while CloudWatch provides monitoring and actionable insights.</p>
-<p>These FAQs summarize the core principles of operational excellence, tying them to actionable best practices.</p>
-<h2>Related Blog Posts</h2><ul><li><a href="/blog/aws-engineering-blog-autoscaling-for-high-availability/">AWS Engineering Blog: Autoscaling for High Availability</a></li><li><a href="/blog/aws-content-migration-best-practices/">AWS Content Migration Best Practices</a></li><li><a href="/blog/aws-cross-service-resilience-patterns/">AWS Cross-Service Resilience Patterns</a></li><li><a href="/blog/aws-operational-excellence-pillar-key-concepts/">AWS Operational Excellence Pillar: Key Concepts</a></li></ul>
+<p>One example is treating infrastructure changes as code: review the proposed change, test it in a lower environment, release it in a controlled stage, and define how to recover if its health signals worsen. The right rollout and recovery method depends on the resources and data affected.</p>
+<h3 id="what-are-the-3-areas-of-operational-excellence-in-the-cloud-aws">What focus areas does AWS use for the Operational Excellence pillar?</h3>
+<p>AWS groups pillar guidance into four focus areas: <strong>Organization, Prepare, Operate, and Evolve</strong>. The five practices in this article are a practical selection across those areas, not AWS's official list of focus areas. See the <a href="https://docs.aws.amazon.com/wellarchitected/latest/operational-excellence-pillar/welcome.html" rel="noopener noreferrer" target="_blank">AWS Well-Architected Operational Excellence pillar</a>.</p>
