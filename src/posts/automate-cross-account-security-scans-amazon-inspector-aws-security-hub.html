@@ -2,370 +2,78 @@
 layout: post.njk
 templateEngineOverride: html
 tags: posts
-title: "Automate Cross-Account Security Scans: Amazon Inspector + AWS Security Hub"
-description: "Learn how to automate cross-account security scans using Amazon Inspector and AWS Security Hub. Set up continuous scanning, verify coverage, review findings, and fix vulnerabilities."
+title: "Amazon Inspector and Security Hub: Cross-Account Scanning"
+description: "Configure Amazon Inspector across AWS accounts and Regions, verify EC2, ECR, and Lambda coverage, and send findings to Security Hub CSPM."
 date: "2024-05-30"
 datePublished: "2024-05-30T19:05:23.037000+00:00"
 heroImage: "/assets/media/9bbd47e8ce72c477e228.jpg"
 permalink: "/blog/automate-cross-account-security-scans-amazon-inspector-aws-security-hub/"
 sourceUrl: "https://awsforengineers.com/blog/automate-cross-account-security-scans-amazon-inspector-aws-security-hub/"
 dateModified: "2026-10-03"
-updateNote: "Added author attribution and profile information. Corrected Inspector references and replaced obsolete Classic assessment setup, integration, and scheduling steps with current service guidance."
+updateNote: "Updated Inspector organization coverage, Security Hub CSPM integration, and finding remediation guidance."
 ---
-<p><strong>Automating security scans across multiple AWS accounts is crucial for efficiency, consistency, and comprehensive coverage.</strong> This guide shows you how to:</p>
-<ul>
-<li>Set up and configure <a href="https://aws.amazon.com/inspector/" target="_blank">Amazon Inspector</a> and <a href="https://aws.amazon.com/security-hub/" target="_blank">AWS Security Hub</a></li>
-<li>Automate security scans</li>
-<li>Review findings</li>
-<li>Remediate vulnerabilities across accounts</li>
-</ul>
-<h2 id="related-video-from-youtube">Related video from YouTube</h2>
-<iframe allowfullscreen="" frameborder="0" loading="lazy" src="https://www.youtube.com/embed/oBac-GAoZJ8"></iframe><h2 id="key-steps%3A">Key Steps:</h2>
-<ol>
-<li>
-<p><strong>Set up Amazon Inspector</strong></p>
-<ul>
-<li>Designate an administrator account</li>
-<li>Configure scan types (EC2, ECR, Lambda) for accounts to monitor</li>
-</ul>
-</li>
-<li>
-<p><strong>Set up AWS Security Hub</strong></p>
-<ul>
-<li>Enable AWS Security Hub</li>
-<li>Integrate with Amazon Inspector</li>
-</ul>
-</li>
-<li>
-<p><strong>Verify Continuous Scanning and Coverage</strong></p>
-<ul>
-<li>Review scanning coverage across accounts and Regions; use EventBridge for finding workflows</li>
-</ul>
-</li>
-<li>
-<p><strong>Review Findings</strong></p>
-<ul>
-<li>Access findings in AWS Security Hub console</li>
-<li>Prioritize and analyze findings by severity, resource type, and compliance</li>
-<li>Use filters and custom insights</li>
-</ul>
-</li>
-<li>
-<p><strong>Fix Security Vulnerabilities (Optional)</strong></p>
-<ul>
-<li>Automate remediation with AWS Systems Manager Automation</li>
-<li>Integrate third-party vulnerability management tools</li>
-<li>Follow best practices for fixing vulnerabilities</li>
-</ul>
-</li>
-</ol>
-<p><strong>Benefits of Automated Scans:</strong></p>
-<ul>
-<li>Efficiency: Reduces manual effort</li>
-<li>Consistency: Uniform security checks across accounts</li>
-<li>Comprehensive Coverage: Identifies vulnerabilities effectively</li>
-</ul>
-<h2 id="prerequisites">Prerequisites</h2>
-<h3 id="aws-accounts-and-access">AWS Accounts and Access</h3>
-<p>To automate cross-account security scans, you need:</p>
-<ul>
-<li>An AWS administrator account with permissions to set up and configure Amazon Inspector and AWS Security Hub</li>
-<li>Multiple AWS accounts you want to monitor and scan for security vulnerabilities</li>
-<li><a href="https://aws.amazon.com/iam/" target="_blank">AWS IAM</a> roles or users with permissions to access and manage the required <a href="/blog/">AWS services</a></li>
-</ul>
-<h3 id="required-aws-services">Required AWS Services</h3>
-<p>You'll need to activate and configure these AWS services:</p>
-<figure><table>
-<thead>
-<tr>
-<th>Service</th>
-<th>Purpose</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Amazon Inspector</td>
-<td>Continuously monitors your AWS workloads for vulnerabilities and network exposure</td>
-</tr>
-<tr>
-<td>AWS Security Hub</td>
-<td>Collects and prioritizes security alerts and findings, including from Amazon Inspector</td>
-</tr>
-<tr>
-<td>AWS EventBridge (optional)</td>
-<td>Routes finding events to notification or remediation workflows</td>
-</tr>
-<tr>
-<td>AWS Systems Manager (optional)</td>
-<td>Automates remediation of security vulnerabilities</td>
-</tr>
-</tbody>
-</table></figure>
-<h3 id="agents-or-components">Agents or Components</h3>
-<p>Current Amazon Inspector uses the Systems Manager (SSM) Agent for agent-based EC2 package scanning and EBS snapshots for agentless scanning. Review the <a href="https://docs.aws.amazon.com/inspector/latest/user/scanning-ec2.html" rel="noopener noreferrer" target="_blank">EC2 scanning prerequisites</a> for your instances and scan mode. Security Hub CSPM receives findings through service integrations without a separate Security Hub agent.</p>
-<p>This guide refers to current Amazon Inspector. Inspector Classic, which used assessment targets and a separate agent, reached full shutdown on May 20, 2026; see the <a href="https://docs.aws.amazon.com/general/latest/gr/full_shutdown_services.html" rel="noopener noreferrer" target="_blank">AWS lifecycle registry</a>.</p>
-<h2 id="step-1%3A-set-up-amazon-inspector">Step 1: Set up <a href="https://aws.amazon.com/inspector/" target="_blank">Amazon Inspector</a></h2>
-<p><figure><img alt="Amazon Inspector" loading="lazy" src="/assets/media/55ca9c3abb1e89d41668.jpg"/></figure></p>
-<h3 id="designate-an-administrator-account">Designate an Administrator Account</h3>
-<p>To get started with Amazon Inspector, you'll need to designate an administrator account. This account will manage Amazon Inspector for your organization:</p>
-<ol>
-<li>Log in to your <a href="https://aws.amazon.com/organizations/" target="_blank">AWS Organizations</a> management account.</li>
-<li>Open the Amazon Inspector console at <a href="https://console.aws.amazon.com/inspector/v2/home" target="_blank">https://console.aws.amazon.com/inspector/v2/home</a>.</li>
-<li>In the <strong>Delegated administrator</strong> pane, enter the 12-digit ID of the AWS account you want to designate as the Amazon Inspector administrator. Then choose <strong>Delegate</strong> and confirm.</li>
-</ol>
-<h3 id="configure-scan-types">Configure Scan Types</h3>
-<p>Next, you'll need to configure the scan types you want to enable. Amazon Inspector offers three scan types: EC2, ECR, and Lambda. You can enable one, two, or all three based on your needs.</p>
-<p>To configure scan types:</p>
-<ol>
-<li>Log in to the designated administrator account.</li>
-<li>Open the Amazon Inspector console.</li>
-<li>In the navigation pane, choose <strong>Account Management</strong>.</li>
-<li>Select the accounts you want to enable scanning for.</li>
-<li>Choose the scan types to enable (EC2, ECR, or Lambda).</li>
-</ol>
-<h3 id="example%3A-ec2-scan-configuration">Example: EC2 Scan Configuration</h3>
-<p>In the delegated administrator account, use <strong>Account management</strong> to activate EC2 scanning for the member accounts you intend to monitor in each relevant Region. Follow the <a href="https://docs.aws.amazon.com/inspector/latest/user/managing-multiple-accounts.html" rel="noopener noreferrer" target="_blank">AWS multi-account guide</a> for account enrollment and automatic activation for new members.</p>
-<p>For agent-based package scanning, verify that the supported EC2 instances are managed by Systems Manager and have the required permissions. Review scan coverage to identify excluded or unscanned instances. Current Inspector performs scanning after activation; assessment targets and manually scheduled Classic assessment runs are not part of this workflow.</p>
-<h2 id="step-2%3A-set-up-aws-security-hub">Step 2: Set Up <a href="https://aws.amazon.com/security-hub/" target="_blank">AWS Security Hub</a></h2>
-<p><figure><img alt="AWS Security Hub" loading="lazy" src="/assets/media/bd2520354b79718cf26c.jpg"/></figure></p>
-<h3 id="enable-aws-security-hub">Enable AWS Security Hub</h3>
-<p>To enable AWS Security Hub:</p>
-<ol>
-<li>Open the AWS Security Hub console at <a href="https://console.aws.amazon.com/securityhub/" target="_blank">https://console.aws.amazon.com/securityhub/</a>.</li>
-<li>Choose the Region where you want to enable Security Hub.</li>
-<li>Choose <strong>Go to Security Hub CSPM</strong> when onboarding, then choose <strong>Enable Security Hub</strong> for manual setup.</li>
-<li>Review the terms and conditions, then click <strong>Enable Security Hub</strong> to confirm.</li>
-</ol>
-<p>For console, AWS CLI, and API setup, follow <a href="https://docs.aws.amazon.com/securityhub/latest/userguide/securityhub-settingup.html" rel="noopener noreferrer" target="_blank">AWS's Security Hub CSPM enablement guide</a>. For an organization, designate its delegated administrator and configure member enrollment in the relevant Regions.</p>
-<h3 id="integrate-with-amazon-inspector">Integrate with Amazon Inspector</h3>
-<p>Enable Amazon Inspector and Security Hub CSPM in the accounts and Regions you intend to monitor. Enabling Security Hub CSPM automatically activates its Inspector integration, which sends Inspector findings in AWS Security Finding Format (ASFF). Follow the <a href="https://docs.aws.amazon.com/inspector/latest/user/securityhub-integration.html" rel="noopener noreferrer" target="_blank">official integration guide</a> to review configuration and filtering. This integration does not include Amazon Inspector Code Security findings.</p>
-<p>For cross-account visibility, configure Security Hub CSPM's own organization administration and member enrollment as well as Inspector's delegated administration. The two services have separate account-management settings.</p>
-<h3 id="verify-the-integration">Verify the Integration</h3>
-<p>To verify that Amazon Inspector findings are being sent to AWS Security Hub:</p>
-<ol>
-<li>Open the AWS Security Hub console at <a href="https://console.aws.amazon.com/securityhub/" target="_blank">https://console.aws.amazon.com/securityhub/</a>.</li>
-<li>Choose the Region where you enabled Security Hub.</li>
-<li>Click <strong>Findings</strong> in the navigation pane.</li>
-<li>Look for findings from Amazon Inspector. If you don't see any findings, check that the integration is set up correctly and that Amazon Inspector is sending findings to Security Hub.</li>
-</ol>
-<h2 id="step-3%3A-schedule-scans-automatically">Step 3: Verify Continuous Scanning and Coverage</h2>
-<p>Current Amazon Inspector automatically scans supported resources after their scan types are activated. EC2 scan cadence depends on the scan method; use <a href="https://docs.aws.amazon.com/inspector/latest/user/scanning-ec2.html" rel="noopener noreferrer" target="_blank">AWS's EC2 scanning documentation</a> to understand the behavior for your environment.</p>
-<h3 id="ensuring-comprehensive-coverage">Review Scanning Coverage</h3>
-<ul>
-<li>Review scanning status and coverage for the intended member accounts and Regions.</li>
-<li>Check that supported instances are enrolled and that exclusions are intentional.</li>
-<li>Monitor new and updated findings, and resolve coverage gaps before relying on the results.</li>
-</ul>
-<h3 id="using-aws-eventbridge">Route Finding Events with EventBridge</h3>
-<p>Use EventBridge to route finding events to notification or remediation workflows; see <a href="https://docs.aws.amazon.com/inspector/latest/user/findings-managing-automating-responses.html" rel="noopener noreferrer" target="_blank">Amazon Inspector with EventBridge</a>. These workflows handle findings rather than schedule retired Classic assessment targets.</p>
-<h3 id="using-aws-systems-manager-automation">Use Systems Manager Automation for Remediation</h3>
-<p>Systems Manager Automation can run approved remediation actions when a finding workflow calls for them. It is not required to schedule current Inspector's continuous scanning.</p>
-<h2 id="step-4%3A-review-findings">Step 4: Review Findings</h2>
-<h3 id="access-findings-in-aws-security-hub">Access Findings in AWS Security Hub</h3>
-<p>Now that you've set up Amazon Inspector and integrated it with AWS Security Hub, you can review the findings:</p>
-<ol>
-<li>Log in to the AWS Security Hub console.</li>
-<li>In the navigation pane, choose <strong>Findings</strong>.</li>
-<li>Select the findings you want to review. You can filter by severity, resource type, and other criteria.</li>
-</ol>
-<h3 id="prioritize-and-analyze-findings">Prioritize and Analyze Findings</h3>
-<p>When reviewing findings, focus on those with high severity and impact. Analyze the findings to understand the issue and identify affected resources. Here's how to prioritize and analyze findings:</p>
-<ul>
-<li><strong>Severity</strong>: Focus on Critical or High severity findings.</li>
-<li><strong>Resource type</strong>: Prioritize findings related to critical resources like EC2 instances or S3 buckets.</li>
-<li><strong>Compliance</strong>: Identify findings relevant to specific compliance standards or security frameworks.</li>
-</ul>
-<h3 id="use-filters-and-custom-insights">Use Filters and Custom Insights</h3>
-<p>AWS Security Hub provides filters and custom insights to help you focus on critical findings. You can create custom insights to group related findings and identify trends.</p>
-<p>To create a custom insight:</p>
-<ol>
-<li>In the AWS Security Hub console, choose <strong>Insights</strong>.</li>
-<li>Click <strong>Create insight</strong>.</li>
-<li>Select the relevant findings and filters to include.</li>
-<li>Choose a name and description for the insight.</li>
-<li>Click <strong>Create insight</strong>.</li>
-</ol>
-<figure><table>
-<thead>
-<tr>
-<th>Step</th>
-<th>Action</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>1</td>
-<td>Log in to the AWS Security Hub console.</td>
-</tr>
-<tr>
-<td>2</td>
-<td>In the navigation pane, choose <strong>Findings</strong>.</td>
-</tr>
-<tr>
-<td>3</td>
-<td>Select the findings you want to review. Filter by severity, resource type, and other criteria.</td>
-</tr>
-<tr>
-<td>4</td>
-<td>Prioritize findings with high severity and impact.</td>
-</tr>
-<tr>
-<td>5</td>
-<td>Analyze findings to understand the issue and identify affected resources.</td>
-</tr>
-<tr>
-<td>6</td>
-<td>Focus on Critical or High severity findings.</td>
-</tr>
-<tr>
-<td>7</td>
-<td>Prioritize findings related to critical resources like EC2 instances or S3 buckets.</td>
-</tr>
-<tr>
-<td>8</td>
-<td>Identify findings relevant to specific compliance standards or security frameworks.</td>
-</tr>
-<tr>
-<td>9</td>
-<td>Use filters and custom insights to focus on critical findings.</td>
-</tr>
-<tr>
-<td>10</td>
-<td>To create a custom insight:</td>
-</tr>
-<tr>
-<td>11</td>
-<td>In the AWS Security Hub console, choose <strong>Insights</strong>.</td>
-</tr>
-<tr>
-<td>12</td>
-<td>Click <strong>Create insight</strong>.</td>
-</tr>
-<tr>
-<td>13</td>
-<td>Select the relevant findings and filters to include.</td>
-</tr>
-<tr>
-<td>14</td>
-<td>Choose a name and description for the insight.</td>
-</tr>
-<tr>
-<td>15</td>
-<td>Click <strong>Create insight</strong>.</td>
-</tr>
-</tbody>
-</table></figure>
-<h2 id="step-5%3A-fix-security-vulnerabilities-(optional)">Step 5: Fix Security Vulnerabilities (Optional)</h2>
-<h3 id="use-aws-systems-manager-automation">Use AWS Systems Manager Automation</h3>
-<p>To fix security vulnerabilities across multiple resources, you can automate the process using AWS Systems Manager Automation. This service lets you create an Automation runbook that targets specific resources, like Amazon EC2 instances, based on tags or resource IDs.</p>
-<p>Here's how to fix Amazon Inspector findings with AWS Systems Manager Automation:</p>
-<ol>
-<li>Create an Automation runbook targeting the affected resources.</li>
-<li>Specify the fix action, such as patching or updating software.</li>
-<li>Configure the runbook to reboot instances after fixing, if needed.</li>
-<li>Run the runbook to fix the vulnerabilities.</li>
-</ol>
-<h3 id="integrate-third-party-tools">Integrate Third-Party Tools</h3>
-<p>You can also integrate third-party vulnerability management tools with AWS to automate fixing vulnerabilities. For example:</p>
-<ul>
-<li>Use a tool like <a href="https://www.tenable.com/products/nessus" target="_blank">Nessus</a>, <a href="https://www.qualys.com/" target="_blank">Qualys</a>, or <a href="https://www.openvas.org/" target="_blank">OpenVAS</a> to identify vulnerabilities.</li>
-<li>Then, use AWS Systems Manager Automation to fix them.</li>
-</ul>
-<h3 id="best-practices-for-fixing-vulnerabilities">Best Practices for Fixing Vulnerabilities</h3>
-<p>When fixing vulnerabilities, follow these best practices:</p>
-<figure><table>
-<thead>
-<tr>
-<th>Best Practice</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Prioritize</td>
-<td>Focus on high-severity and high-impact vulnerabilities first.</td>
-</tr>
-<tr>
-<td>Automate</td>
-<td>Use automation to fix vulnerabilities at scale.</td>
-</tr>
-<tr>
-<td>Test</td>
-<td>Test fix actions in a non-production environment before applying to production.</td>
-</tr>
-<tr>
-<td>Monitor</td>
-<td>Monitor progress and adjust the process as needed.</td>
-</tr>
-<tr>
-<td>Document</td>
-<td>Document fix activities for auditing and compliance.</td>
-</tr>
-</tbody>
-</table></figure>
-<h2 id="conclusion">Conclusion</h2>
-<h3 id="key-steps-summary">Key Steps Summary</h3>
-<p>Here are the key steps to automate cross-account security scans using Amazon Inspector and AWS Security Hub:</p>
-<p>1. <strong>Set up Amazon Inspector</strong></p>
-<ul>
-<li>Designate an administrator account to manage Amazon Inspector</li>
-<li>Configure scan types (EC2, ECR, Lambda) for the accounts you want to monitor</li>
-</ul>
-<p>2. <strong>Set up AWS Security Hub</strong></p>
-<ul>
-<li>Enable AWS Security Hub</li>
-<li>Integrate with Amazon Inspector to receive findings</li>
-</ul>
-<p>3. <strong>Verify Continuous Scanning and Coverage</strong></p>
-<ul>
-<li>Verify that scan types are active and eligible resources are covered; route findings with EventBridge when needed</li>
-</ul>
-<p>4. <strong>Review Findings</strong></p>
-<ul>
-<li>Access findings in the AWS Security Hub console</li>
-<li>Prioritize and analyze findings based on severity, resource type, and compliance standards</li>
-<li>Use filters and custom insights to focus on critical findings</li>
-</ul>
-<p>5. <strong>Fix Security Vulnerabilities (Optional)</strong></p>
-<ul>
-<li>Automate remediation using AWS Systems Manager Automation</li>
-<li>Integrate with third-party vulnerability management tools</li>
-<li>Follow best practices for fixing vulnerabilities</li>
-</ul>
-<h3 id="benefits-of-automated-scans">Benefits of Automated Scans</h3>
-<p>Automating cross-account security scans offers these advantages:</p>
-<ul>
-<li><strong>Efficiency</strong>: Reduces manual effort in collecting and prioritizing findings</li>
-<li><strong>Consistency</strong>: Ensures uniform security checks and remediation across all accounts</li>
-<li><strong>Comprehensive Coverage</strong>: Helps identify and address security vulnerabilities and compliance issues more effectively</li>
-</ul>
-<h3 id="additional-resources">Additional Resources</h3>
-<p>For more information, refer to these resources:</p>
+<p><strong>Amazon Inspector automatically scans supported AWS workloads across an organization, while AWS Security Hub helps teams review and prioritize the findings.</strong> Some scan types rescan continuously; others use resource-specific intervals or scan-on-push settings. Reliable coverage depends on enabling the right scan types in every account and Region, then checking which resources are actually eligible.</p>
+<p>AWS Security Hub is now a broader security operations experience that correlates signals from services such as Amazon Inspector, GuardDuty, Security Hub Cloud Security Posture Management (Security Hub CSPM), and Macie. Security Hub CSPM remains the posture management capability that receives Inspector findings. This guide focuses on Inspector scanning and that finding integration; the broader Security Hub experience can add correlated exposure views.</p>
+
+<h2 id="what-amazon-inspector-scans">What Amazon Inspector scans</h2>
+<p>Amazon Inspector does not use manually scheduled assessment targets. Activate a scan type for an account and Region, and Inspector automatically scans supported resources. The scan method and eligibility rules depend on the resource:</p>
 <figure><table>
 <thead>
 <tr>
 <th>Resource</th>
-<th>Description</th>
+<th>What Inspector checks</th>
+<th>Coverage detail</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><a href="https://docs.aws.amazon.com/inspector/latest/user/what-is-inspector.html" target="_blank">Amazon Inspector User Guide</a></td>
-<td>Detailed documentation on Amazon Inspector</td>
+<td>Amazon EC2</td>
+<td>Software package vulnerabilities, network exposure, and network reachability.</td>
+<td>Agent-based package scanning uses the Systems Manager Agent to collect inventory from eligible managed instances. Hybrid scanning can also use EBS snapshots for eligible instances that are not managed by Systems Manager. Network reachability checks run separately from package scans.</td>
 </tr>
 <tr>
-<td><a href="https://docs.aws.amazon.com/securityhub/latest/userguide/what-is-securityhub.html" target="_blank">AWS Security Hub User Guide</a></td>
-<td>Detailed documentation on AWS Security Hub</td>
+<td>Amazon ECR</td>
+<td>Package vulnerabilities in container images stored in private ECR repositories.</td>
+<td>Use Amazon ECR enhanced scanning with Inspector and choose continuous scanning or scan-on-push. Only eligible, active images within the configured re-scan period are monitored; basic manual scans are a different mode.</td>
 </tr>
 <tr>
-<td><a href="https://docs.aws.amazon.com/inspector/latest/user/findings-managing-automating-responses.html" target="_blank">AWS Documentation: Inspector Finding Events</a></td>
-<td>Routing Inspector finding events through EventBridge</td>
+<td>AWS Lambda</td>
+<td>Third-party package vulnerabilities in function dependencies and, optionally, code vulnerabilities in the function.</td>
+<td>Standard scanning covers supported <code>$LATEST</code> functions invoked or updated within the last 90 days. Lambda code scanning is an optional scan type. It differs from the separate Inspector Code Security capability for repositories; Inspector Code Security findings are not sent through the Security Hub CSPM integration.</td>
 </tr>
 </tbody>
 </table></figure>
-<p>
-<h2>Related posts</h2>
+<p>Review the current <a href="https://docs.aws.amazon.com/inspector/latest/user/scanning-resources.html" rel="noopener noreferrer" target="_blank">Inspector scan types</a>, <a href="https://docs.aws.amazon.com/inspector/latest/user/scanning-ec2.html" rel="noopener noreferrer" target="_blank">EC2 scan methods</a>, <a href="https://docs.aws.amazon.com/inspector/latest/user/scanning-ecr.html" rel="noopener noreferrer" target="_blank">ECR scanning behavior</a>, and <a href="https://docs.aws.amazon.com/inspector/latest/user/scanning-lambda.html" rel="noopener noreferrer" target="_blank">Lambda scanning eligibility</a> before choosing coverage. On first activation, Inspector may enable EC2, ECR, and Lambda standard scanning by default; Lambda code scanning is optional.</p>
+
+<h2 id="prerequisites">Plan account and Region coverage</h2>
+<h3 id="step-1%3A-set-up-amazon-inspector">Set up Inspector administration</h3>
+<p>Amazon Inspector is Regional. Choose the AWS accounts and Regions that contain the workloads you need to scan. Designate the same member account as Inspector's delegated administrator in each Region where you use the service; <a href="https://docs.aws.amazon.com/inspector/latest/user/designating-admin.html" rel="noopener noreferrer" target="_blank">registering the delegated administrator in one Region does not register it in every other Region</a>. Your organization must use all features in AWS Organizations.</p>
+<p>For centralized, repeatable enrollment, AWS recommends managing Inspector with <a href="https://docs.aws.amazon.com/inspector/latest/user/managing-multiple-accounts.html" rel="noopener noreferrer" target="_blank">AWS Organizations policies</a>. Designate the Inspector administrator first, then apply a policy for the scan types and organizational accounts or units you want covered. Policies can automate enablement for current and new organization accounts across Regions, and policy-managed scan types take precedence over conflicting account-level enablement. The delegated administrator still controls other Inspector settings.</p>
+<p>If you are not using organization policies, the delegated administrator can activate Inspector for selected member accounts from the Inspector console's Account management page. Use the Region selector, enable the required scan types, and turn on automatic activation for new member accounts. Repeat the enrollment and new-account setting in every Region in scope. See AWS's guide to <a href="https://docs.aws.amazon.com/inspector/latest/user/adding-member-accounts.html" rel="noopener noreferrer" target="_blank">activating member-account scans</a> for the current console and API steps.</p>
+<p>Inspector creates the <code>AWSServiceRoleForAmazonInspector2</code> service-linked role when you activate it; Security Hub CSPM creates <code>AWSServiceRoleForSecurityHub</code> when you enable it. You do not need to create either role manually. The IAM identity used for setup still needs the permissions AWS requires to designate administrators, enable the services, and create their service-linked roles. See the current AWS guides for <a href="https://docs.aws.amazon.com/inspector/latest/user/using-service-linked-roles.html" rel="noopener noreferrer" target="_blank">Inspector service-linked roles</a> and <a href="https://docs.aws.amazon.com/securityhub/latest/userguide/using-service-linked-roles.html" rel="noopener noreferrer" target="_blank">Security Hub CSPM service-linked roles</a>.</p>
+
+<h2 id="step-2%3A-set-up-aws-security-hub">Enable Security Hub CSPM for findings</h2>
+<p>Enable Security Hub CSPM in the same accounts and Regions where Inspector runs. Once CSPM is enabled, its Inspector integration activates automatically and Inspector findings are sent in AWS Security Finding Format. There is no separate integration toggle. CSPM receives findings generated after it is enabled; it does not <a href="https://docs.aws.amazon.com/securityhub/latest/userguide/what-is-securityhub.html" rel="noopener noreferrer" target="_blank">backfill findings from before enablement</a>. The integration does not include findings from Amazon Inspector Code Security.</p>
+<p>For an organization, Inspector's delegated administrator does not automatically configure CSPM membership. When managing the services directly, designate a CSPM delegated administrator and use central configuration policies to enable CSPM and set standards and controls for selected accounts or organizational units across the home Region and linked Regions. These policies are created from the home Region. If your team uses the expanded AWS Security Hub console, its <a href="https://docs.aws.amazon.com/securityhub/latest/userguide/securityhub-v2-da-policy.html" rel="noopener noreferrer" target="_blank">configuration catalog</a> can apply organization policies for Amazon Inspector's vulnerability-management capabilities and deployments for CSPM.</p>
+<p>Do not treat Region aggregation as service enablement. Security Hub CSPM's cross-Region aggregation copies findings and related data to a home Region only from Regions where CSPM is already enabled. It does not turn CSPM on in those Regions. Use <a href="https://docs.aws.amazon.com/securityhub/latest/userguide/central-configuration-intro.html" rel="noopener noreferrer" target="_blank">central configuration</a> to manage organization settings and <a href="https://docs.aws.amazon.com/securityhub/latest/userguide/security-hub-region-aggregation.html" rel="noopener noreferrer" target="_blank">cross-Region aggregation</a> to consolidate regional results.</p>
+<p>For the service integration prerequisites and the exact findings it transfers, see the <a href="https://docs.aws.amazon.com/inspector/latest/user/securityhub-integration.html" rel="noopener noreferrer" target="_blank">Amazon Inspector and Security Hub CSPM integration guide</a>. AWS's <a href="https://aws.amazon.com/blogs/aws/aws-security-hub-now-generally-available-with-near-real-time-analytics-and-risk-prioritization/" rel="noopener noreferrer" target="_blank">overview of the expanded Security Hub</a> explains how it relates Inspector findings to other security signals.</p>
+
+<h2 id="verify-scan-coverage">Verify scan coverage</h2>
+<p>After activation, review Inspector coverage by account, Region, and resource type. An enabled scan type does not mean every resource is being scanned. Check for:</p>
 <ul>
-<li><a href="/blog/cloudwatch-alarms-automate-ec2-recovery/">CloudWatch Alarms: Automate EC2 Recovery</a></li><li><a href="/blog/aws-hybrid-cloud-security-compliance-best-practices/">AWS Hybrid Cloud Security: Compliance Best Practices</a></li><li><a href="/blog/10-aws-cost-optimization-strategies-2024/">10 AWS Cost Optimization Strategies 2024</a></li><li><a href="/blog/aws-s3-guide-understanding-access-management/">AWS S3 Guide: Understanding Access Management</a></li>
+<li><strong>EC2:</strong> supported operating system and scan method; for agent-based scanning, a healthy Systems Manager-managed instance. In hybrid mode, confirm an unmanaged instance meets Inspector's agentless EBS and size requirements.</li>
+<li><strong>ECR:</strong> enhanced scanning is enabled for the intended private repositories, the scan frequency is continuous or scan-on-push as planned, and images are active and inside the re-scan period.</li>
+<li><strong>Lambda:</strong> supported runtime and a function version that is eligible for scanning; idle functions can leave coverage after 90 days.</li>
+<li><strong>Organization and Regions:</strong> every intended account is associated with Inspector and has the required scan types enabled in each target Region. Check new-account enrollment separately if you use manual activation.</li>
 </ul>
-</p>
+<p>Use the Inspector console's coverage view or the <code>ListCoverage</code> API to investigate gaps. AWS documents the available statuses in its guide to <a href="https://docs.aws.amazon.com/inspector/latest/user/assessing-coverage.html" rel="noopener noreferrer" target="_blank">assessing Inspector coverage</a>.</p>
+<p>In Security Hub CSPM, filter findings by product and account to confirm Inspector results arrive in the expected Regions. If you use a home Region, confirm the linked Regions are included in the aggregation configuration. Remember that findings are regional until CSPM is enabled there and aggregation is configured.</p>
+
+<h2 id="step-4%3A-review-findings">Review findings</h2>
+<p>Prioritize findings using severity together with resource importance, exploitability, network exposure, and the package or image involved. The expanded AWS Security Hub can correlate Inspector vulnerabilities with threat and configuration signals to show broader exposures; Inspector's own coverage view remains the place to check whether resources are being scanned.</p>
+<h2 id="step-5%3A-fix-security-vulnerabilities-(optional)">Fix vulnerabilities through a tested workflow</h2>
+<p><a href="https://docs.aws.amazon.com/securityhub/latest/userguide/create-automation-rules.html" rel="noopener noreferrer" target="_blank">Security Hub CSPM automation rules update finding fields</a> or suppress matching findings. Changing a finding's workflow status does not patch software or change the affected resource. To remediate, connect a finding to a deliberate response workflow, such as a tested Systems Manager Automation runbook for a supported patch or a deployment process that rebuilds an ECR image or Lambda package. Apply least-privilege permissions, test the action before broad rollout, and verify the resource changed and Inspector reevaluated it. Amazon Inspector can publish findings to EventBridge for routing to these workflows; <a href="https://docs.aws.amazon.com/inspector/latest/user/findings-managing-automating-responses.html" rel="noopener noreferrer" target="_blank">EventBridge does not supply a fix by itself</a>.</p>
+<p>For a closer look at the separate finding-triage role of rules, read <a href="/blog/how-automation-rules-work-in-aws-security-hub/">How Automation Rules Work in AWS Security Hub</a>.</p>
+
+<h2 id="conclusion">Conclusion</h2>
+<p>Automating Inspector across accounts means planning scan types and Regions, applying organization-wide enrollment, and checking actual coverage for EC2, ECR, and Lambda. Enable Security Hub CSPM separately where you want Inspector findings, and configure aggregation only when you need a consolidated regional view. Keep finding organization and resource remediation as separate steps so a status change is never mistaken for a repaired workload.</p>
