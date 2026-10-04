@@ -3,556 +3,92 @@ layout: post.njk
 templateEngineOverride: html
 tags: posts
 title: "AWS Migration Security: 10-Point Checklist"
-description: "Ensure a secure AWS migration with this comprehensive 10-point checklist covering data encryption, IAM, network security, compliance, disaster planning, app security, data protection, cloud security monitoring, incident response, and third-party security management."
+description: "Use this 10-point AWS migration security checklist to verify encryption, access, recovery, data transfers, monitoring, and incident readiness before cutover."
 date: "2024-08-02"
 datePublished: "2024-08-02T00:11:00.791000+00:00"
 heroImage: "/assets/media/e46d299a554ba7c3990e.jpg"
 permalink: "/blog/aws-migration-security-10-point-checklist/"
 sourceUrl: "https://awsforengineers.com/blog/aws-migration-security-10-point-checklist/"
-dateModified: "2026-10-03"
-updateNote: "Added author attribution and profile information."
+dateModified: "2026-10-04"
+updateNote: "Replaced outdated AWS security guidance with current service behavior and added evidence-based cutover criteria for all ten checklist points."
 ---
-<p>Moving to <a href="https://aws.amazon.com/" target="_blank">AWS</a>? Here's a quick 10-point checklist to keep your data safe:</p>
-<ol>
-<li>Encrypt data at rest and in transit</li>
-<li>Set up Identity and Access Management (IAM)</li>
-<li>Secure your network with VPCs and firewalls</li>
-<li>Meet compliance requirements (e.g., <a href="https://simple.wikipedia.org/wiki/Health_Insurance_Portability_and_Accountability_Act" target="_blank">HIPAA</a>, <a href="https://en.wikipedia.org/wiki/Payment_Card_Industry_Data_Security_Standard" target="_blank">PCI-DSS</a>)</li>
-<li>Plan for disasters and outages</li>
-<li>Secure your applications and code</li>
-<li>Protect data during migration</li>
-<li>Monitor cloud security continuously</li>
-<li>Prepare for security incidents</li>
-<li>Manage third-party security risks</li>
-</ol>
+<p>A secure AWS migration needs checks that prove each workload is ready for cutover. Use this checklist to map the systems, data, identities, connections, and vendors in scope, assign an owner to each control, and keep evidence that shows the control works.</p>
+<p>Apply the checks to the migration path as well as the destination: staging copies, temporary credentials, transfer services, test environments, and rollback data can all expose production information. AWS and the customer share security responsibilities; what the customer configures depends on the AWS services in use and the workload.</p>
+<h2 id="understanding-the-checklist">How to use this checklist</h2>
+<p>Start with an inventory of the source and target systems, AWS accounts and Regions, data stores, network paths, people and workloads with access, and third parties involved. For each item below, record the owner, the evidence, any gap, and the decision required before cutover. Keep the same record after migration so operations teams can verify ongoing controls.</p>
 <figure><table>
 <thead>
 <tr>
-<th>Security Step</th>
-<th>Key Action</th>
+<th scope="col">Security check</th>
+<th scope="col">Evidence to retain</th>
 </tr>
 </thead>
 <tbody>
-<tr>
-<td>Data Encryption</td>
-<td>Use <a href="https://aws.amazon.com/kms/" target="_blank">AWS KMS</a> for key management</td>
-</tr>
-<tr>
-<td>IAM</td>
-<td>Implement role-based access control</td>
-</tr>
-<tr>
-<td>Network Security</td>
-<td>Set up VPCs and security groups</td>
-</tr>
-<tr>
-<td>Compliance</td>
-<td>Use AWS regions that follow rules</td>
-</tr>
-<tr>
-<td>Disaster Planning</td>
-<td>Create regular backups with <a href="https://aws.amazon.com/backup/" target="_blank">AWS Backup</a></td>
-</tr>
-<tr>
-<td>App Security</td>
-<td>Use <a href="https://aws.amazon.com/waf/" target="_blank">AWS WAF</a> to guard against web attacks</td>
-</tr>
-<tr>
-<td>Data Protection</td>
-<td>Use <a href="https://aws.amazon.com/snowball/" target="_blank">AWS Snowball</a> for large data transfers</td>
-</tr>
-<tr>
-<td>Security Monitoring</td>
-<td>Set up <a href="https://aws.amazon.com/security-hub/" target="_blank">AWS Security Hub</a></td>
-</tr>
-<tr>
-<td>Incident Response</td>
-<td>Create and test response plans</td>
-</tr>
-<tr>
-<td>Third-Party Management</td>
-<td>Regularly check vendor security</td>
-</tr>
+<tr><td>1. Encrypt stored data and every transfer path</td><td>Service configuration, key policy, and a tested encrypted connection</td></tr>
+<tr><td>2. Use short-lived, least-privilege access</td><td>Identity and role map, MFA settings, and access review results</td></tr>
+<tr><td>3. Allow only approved network flows</td><td>Network diagram, security group and route review, and connectivity test results</td></tr>
+<tr><td>4. Map compliance duties to owners</td><td>Control matrix, data-location decisions, and reviewed audit evidence</td></tr>
+<tr><td>5. Prove backup recovery meets business targets</td><td>Approved RPO/RTO and a successful restore exercise with measured results</td></tr>
+<tr><td>6. Check application and deployment security</td><td>Build and scan results, patch status, and tested web protections where needed</td></tr>
+<tr><td>7. Reconcile data after transfer</td><td>Transfer reports, validation results, and resolved exceptions</td></tr>
+<tr><td>8. Collect the security signals you need</td><td>Logging and detection coverage, retention settings, and a tested alert route</td></tr>
+<tr><td>9. Exercise the incident response plan</td><td>Current contacts, runbook, exercise findings, and assigned follow-up actions</td></tr>
+<tr><td>10. Constrain and review third-party access</td><td>Vendor access record, role trust policy, and evidence of access monitoring</td></tr>
 </tbody>
 </table></figure>
-<p>This checklist helps you avoid data breaches, follow rules, and protect your company's reputation during AWS migration.</p>
-<h2 id="related-video-from-youtube">Related video from YouTube</h2>
-<iframe allowfullscreen="" frameborder="0" loading="lazy" src="https://www.youtube-nocookie.com/embed/ahcXz0a3-SA"></iframe><h2 id="understanding-the-checklist">Understanding the Checklist</h2>
-<h3 id="applying-the-checklist-to-your-migration">Applying the Checklist to Your Migration</h3>
-<p>To use the 10-point checklist effectively, follow these steps:</p>
-<figure><table>
-<thead>
-<tr>
-<th>Step</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>1. Risk assessment</td>
-<td>Check for security weak spots in your current setup</td>
-</tr>
-<tr>
-<td>2. Set priorities</td>
-<td>Focus on the most important security measures first</td>
-</tr>
-<tr>
-<td>3. Assign tasks</td>
-<td>Choose who will handle each security step</td>
-</tr>
-<tr>
-<td>4. Make a schedule</td>
-<td>Plan when to put each security measure in place</td>
-</tr>
-<tr>
-<td>5. Keep checking</td>
-<td>Regularly review how well each security step is working</td>
-</tr>
-</tbody>
-</table></figure>
-<h3 id="why-each-point-matters">Why Each Point Matters</h3>
-<p>Each item on the checklist helps keep your AWS migration safe. Here's why they're important:</p>
-<figure><table>
-<thead>
-<tr>
-<th>Checklist Item</th>
-<th>Why It's Important</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Data encryption</td>
-<td>Keeps sensitive info private</td>
-</tr>
-<tr>
-<td>Identity and Access Management (IAM)</td>
-<td>Controls who can access and manage resources</td>
-</tr>
-<tr>
-<td>Network security</td>
-<td>Protects against unwanted access and harmful activities</td>
-</tr>
-<tr>
-<td>Meeting compliance requirements</td>
-<td>Helps avoid fines and penalties</td>
-</tr>
-<tr>
-<td>Planning for disasters and outages</td>
-<td>Keeps your business running if something goes wrong</td>
-</tr>
-<tr>
-<td>Securing applications</td>
-<td>Protects apps and data from threats</td>
-</tr>
-<tr>
-<td>Protecting data during migration</td>
-<td>Keeps info safe while it's being moved</td>
-</tr>
-<tr>
-<td>Monitoring cloud security</td>
-<td>Spots potential risks in your AWS setup</td>
-</tr>
-<tr>
-<td>Preparing for security incidents</td>
-<td>Helps you respond quickly to security problems</td>
-</tr>
-<tr>
-<td>Managing third-party security</td>
-<td>Makes sure outside vendors don't create security risks</td>
-</tr>
-</tbody>
-</table></figure>
-<h2 id="10-key-security-steps-for-aws-migration">10 Key Security Steps for <a href="https://aws.amazon.com/" target="_blank">AWS</a> Migration</h2>
-<p><figure><img alt="AWS" loading="lazy" src="/assets/media/2d135ce4df17cc4bb773.jpg"/></figure></p>
-<h3 id="1.-data-encryption">1. Data Encryption</h3>
-<h4 id="protecting-stored-data">Protecting Stored Data</h4>
-<p>AWS offers these encryption options:</p>
-<figure><table>
-<thead>
-<tr>
-<th>Option</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Server-Side Encryption (SSE)</td>
-<td>Encrypts data at rest using AES-256</td>
-</tr>
-<tr>
-<td>Client-Side Encryption</td>
-<td>Encrypts data before sending to AWS</td>
-</tr>
-</tbody>
-</table></figure>
-<p>When using SSE:</p>
+<h2 id="10-key-security-steps-for-aws-migration">10 security checks for an AWS migration</h2>
+<h3 id="1.-data-encryption">1. Encrypt data at rest and in transit</h3>
+<p>Inventory databases, volumes, object stores, snapshots, backups, logs, and temporary migration copies. Select the encryption option for each service based on data sensitivity, access needs, and the applicable policy. Amazon S3 now encrypts new objects by default with SSE-S3, but check existing objects and every other service explicitly; a bucket default does not retroactively change objects already stored.</p>
+<p>Where you use customer-managed AWS KMS keys, restrict key use to the roles and services that need it, review key policies, and enable rotation when required by policy. KMS key rotation changes key material; it does not re-encrypt the data already protected by that key. Re-encrypt stored data separately when your security requirement calls for a new encryption key.</p>
+<p>Require TLS for application and service traffic. A private AWS Direct Connect link is not encrypted in transit by default. If you use it, add an appropriate encryption layer such as TLS, an IPsec VPN, or MACsec on a supported connection; MACsec protects a specific link and does not provide end-to-end encryption across every network segment. See the AWS guidance for <a href="https://docs.aws.amazon.com/AmazonS3/latest/userguide/bucket-encryption.html" target="_blank" rel="noopener">S3 default encryption</a>, <a href="https://docs.aws.amazon.com/kms/latest/developerguide/rotate-keys.html" target="_blank" rel="noopener">KMS key rotation</a>, and <a href="https://docs.aws.amazon.com/directconnect/latest/UserGuide/encryption-in-transit.html" target="_blank" rel="noopener">encryption with Direct Connect</a>.</p>
+<p><strong>Verify:</strong> retain encryption configuration for each store and copy, key-policy review, and a test showing that transfer paths use approved encryption. <strong>Ready when:</strong> every in-scope data store and transfer path has an owner, an approved protection method, and no unexplained plaintext exception.</p>
+<h3 id="2.-identity-and-access-management-(iam)">2. Replace standing access with scoped roles</h3>
+<p>Federate workforce users through your identity provider, such as AWS IAM Identity Center, and grant access with permission sets or roles that issue temporary credentials. Use workload roles for applications and automation. Avoid creating IAM users with long-lived access keys for people; retain them only for a documented use case that cannot use federation or roles.</p>
+<p>Apply least privilege, require MFA for human access (especially privileged access and the root user), and review who can assume each role. Separate migration operator, application, and break-glass permissions so temporary migration access can be removed without disrupting the workload. AWS recommends federation and temporary credentials for human users and roles for workloads in its <a href="https://docs.aws.amazon.com/IAM/latest/UserGuide/best-practices.html" target="_blank" rel="noopener">IAM security best practices</a>.</p>
+<p><strong>Verify:</strong> retain the human and workload identity map, role trust and permission policies, MFA coverage, and a test using representative users and workload roles. Review S3-specific access paths with this <a href="/blog/aws-s3-guide-understanding-access-management/">guide to Amazon S3 access management</a>. <strong>Ready when:</strong> each identity has a business owner and only the permissions needed for its task, with unused credentials removed and emergency access tested.</p>
+<h3 id="3.-network-security">3. Restrict and test network paths</h3>
+<p>Map required traffic between on-premises systems, migration tools, AWS services, and users. Put resources in subnets that match their exposure needs, keep databases and internal services off public routes when they do not need internet access, and review route tables, gateways, endpoints, DNS, and ingress and egress.</p>
+<p>Use security groups as the primary resource-level control: they are stateful and allow traffic. Network ACLs are stateless subnet-level controls that allow or deny traffic; use them where subnet-wide guardrails are useful and account for return traffic explicitly. Enable VPC Flow Logs where they help investigate whether actual traffic matches the approved design. AWS explains the distinct roles of <a href="https://docs.aws.amazon.com/vpc/latest/userguide/VPC_Security.html" target="_blank" rel="noopener">security groups, network ACLs, and VPC Flow Logs</a>.</p>
+<p><strong>Verify:</strong> retain the reviewed network diagram and rule exports, then test required paths and expected denials from representative source locations. <strong>Ready when:</strong> every allowed path has a documented purpose and owner, and unapproved paths fail the connectivity test.</p>
+<h3 id="4.-meeting-compliance-requirements">4. Assign compliance controls and evidence</h3>
+<p>List the legal, contractual, and internal requirements that apply to the workload, then map each control to its owner, implementation, and evidence. Check the scope and conditions of the AWS services and Regions you plan to use. Region selection can be part of a data-location decision, but it does not by itself make an application or organization compliant.</p>
+<p>Under the <a href="https://aws.amazon.com/compliance/shared-responsibility-model/" target="_blank" rel="noopener">AWS shared responsibility model</a>, AWS protects the cloud infrastructure while customer duties depend on the services, data, and workload. <a href="https://docs.aws.amazon.com/artifact/latest/ug/downloading-documents.html" target="_blank" rel="noopener">AWS Artifact provides AWS compliance reports and other documents</a> for review; they are evidence about AWS controls, not a certification of your particular workload. Have the responsible compliance or legal owner confirm which requirements and evidence apply. For more on shared controls across AWS and on-premises systems, see our <a href="/blog/aws-hybrid-cloud-security-compliance-best-practices/">hybrid cloud security and compliance guide</a>.</p>
+<p><strong>Verify:</strong> retain the approved control matrix, data-location rationale, relevant AWS Artifact documents, and owner sign-off. <strong>Ready when:</strong> every applicable control has an accountable owner and a specific piece of evidence, and unresolved gaps have an explicit disposition before cutover.</p>
+<h3 id="5.-planning-for-disasters-and-outages">5. Test recovery against RPO and RTO</h3>
+<p>Set a recovery point objective (RPO) for acceptable data loss and a recovery time objective (RTO) for acceptable service downtime for each workload. Choose backup frequency, retention, copies, and recovery design to meet those business targets. A successful backup job is not proof that the application can recover.</p>
+<p>Restore selected backups into an isolated test environment. Check data integrity, dependencies, application behavior, access, and the operator runbook; record actual recovery time and the age of the recovered data. AWS recommends <a href="https://docs.aws.amazon.com/wellarchitected/latest/framework/rel_backing_up_data_periodic_recovery_testing_data.html" target="_blank" rel="noopener">periodic recovery tests to confirm backups meet RPO and RTO</a>. Its <a href="https://docs.aws.amazon.com/aws-backup/latest/devguide/restoring-a-backup.html" target="_blank" rel="noopener">AWS Backup restore testing</a> can help exercise restores, and our <a href="/blog/automated-disaster-recovery-testing-with-aws/">disaster recovery testing guide</a> covers application-level validation.</p>
+<p><strong>Verify:</strong> retain the approved RPO/RTO, restore logs, data checks, and measured results. <strong>Ready when:</strong> an end-to-end restore meets the workload targets and a named operator can repeat it; otherwise adjust the design or obtain an explicit business decision before relying on it.</p>
+<h3 id="6.-securing-applications">6. Secure application code and deployment</h3>
+<p>Include application dependencies, container images, infrastructure definitions, secrets, build permissions, and operating system patching in the migration review. Scan source and dependencies, prevent secrets from entering repositories or build output, review infrastructure changes, and test authentication and authorization paths in the deployed application.</p>
+<p>Amazon Inspector checks software vulnerabilities in supported EC2 instances, ECR images, and Lambda functions; its EC2 scanning also assesses network exposure. Check the coverage of each scan type because the service does not assess every application or deployment risk. AWS WAF controls matching HTTP(S) requests to supported resources through a web ACL; it does not replace secure code, identity checks, patching, or application testing. See <a href="https://docs.aws.amazon.com/inspector/latest/user/scanning-resources.html" target="_blank" rel="noopener">Amazon Inspector scan types</a> and <a href="https://docs.aws.amazon.com/waf/latest/developerguide/how-aws-waf-works.html" target="_blank" rel="noopener">how AWS WAF works</a>.</p>
+<p><strong>Verify:</strong> retain build and scan results, exception approvals, patch status, and tests for key application access paths. <strong>Ready when:</strong> findings that block release are fixed or explicitly accepted by the right owner, and application protections match the actual threats and supported resources.</p>
+<h3 id="7.-protecting-data-during-migration">7. Protect and reconcile data during transfer</h3>
+<p>Choose a transfer method based on data volume, available bandwidth, change rate, downtime window, and operating constraints. For AWS DataSync, checksum verification checks copied data during transfer and can perform additional comparison at the end of a run. For database moves with AWS Database Migration Service (AWS DMS), enable data validation only after checking that the source and target are supported; validation adds queries and time, requires a primary key or unique index for tables, and has other documented limits.</p>
+<p>Do not base a 2026 plan on obsolete physical-transfer assumptions: AWS lists Snowmobile as shut down on March 14, 2024. Since November 7, 2025, Snowball Edge devices have been available only to existing customers. AWS directs new customers to DataSync for online transfers, AWS Data Transfer Terminal for physical transfers, or partner solutions. Confirm current eligibility and availability before selecting a transfer service. See the AWS <a href="https://docs.aws.amazon.com/datasync/latest/userguide/configure-data-verification-options.html" target="_blank" rel="noopener">DataSync verification options</a>, <a href="https://docs.aws.amazon.com/dms/latest/userguide/CHAP_Validating.html" target="_blank" rel="noopener">DMS validation requirements and limits</a>, <a href="https://docs.aws.amazon.com/general/latest/gr/full_shutdown_services.html" target="_blank" rel="noopener">service shutdown list</a>, and <a href="https://aws.amazon.com/blogs/storage/aws-snow-device-updates/" target="_blank" rel="noopener">Snow device availability notice</a>. For DataSync run diagnosis, see our <a href="/blog/aws-datasync-troubleshooting-common-issues-and-solutions/">DataSync troubleshooting guide</a>.</p>
+<p>Compare source and target counts, checksums, database validation results, and application-level queries that matter to the workload. Maintain a manifest of transferred data and investigate skipped files, mismatches, unsupported objects, and records changed during replication; do not treat a successful transfer status as proof that the target is complete.</p>
+<p><strong>Verify:</strong> retain the transfer manifest and execution report, reconciliation results, DMS exceptions, and sign-off from the data owner. <strong>Ready when:</strong> all required data is accounted for, discrepancies are resolved or accepted, and the target passes representative application checks.</p>
+<h3 id="8.-monitoring-cloud-security">8. Separate audit, configuration, threat, and operations signals</h3>
+<p>Choose each service for the signal it provides and the response it enables:</p>
 <ul>
-<li>Turn it on for all AWS services with sensitive data</li>
-<li>Use AWS Key Management Service (KMS) for encryption keys</li>
-<li>Check and change keys often</li>
+<li><a href="https://docs.aws.amazon.com/awscloudtrail/latest/userguide/cloudtrail-events.html" target="_blank" rel="noopener">AWS CloudTrail</a> records account activity and API actions. Trails and event data stores need deliberate retention and coverage choices; management events are recorded by default, while data events such as object-level activity are not all included by default.</li>
+<li><a href="https://docs.aws.amazon.com/config/latest/developerguide/how-does-config-work.html" target="_blank" rel="noopener">AWS Config</a> records supported resource configuration history and evaluates configured rules.</li>
+<li><a href="https://docs.aws.amazon.com/guardduty/latest/ug/" target="_blank" rel="noopener">Amazon GuardDuty</a> analyzes supported data sources for suspicious activity and produces security findings.</li>
+<li><a href="https://docs.aws.amazon.com/inspector/latest/user/scanning-resources.html" target="_blank" rel="noopener">Amazon Inspector</a> scans supported workloads for software vulnerabilities and assesses EC2 network exposure.</li>
+<li><a href="https://docs.aws.amazon.com/securityhub/latest/userguide/securityhub-findings-viewing.html" target="_blank" rel="noopener">AWS Security Hub CSPM</a> helps review posture checks and findings from integrated services.</li>
+<li><a href="https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/" target="_blank" rel="noopener">Amazon CloudWatch</a> collects operational metrics and logs and supports alarms and dashboards.</li>
 </ul>
-<h4 id="securing-data-in-motion">Securing Data in Motion</h4>
-<p>To protect data being sent:</p>
-<ul>
-<li>Use Transport Layer Security (TLS)</li>
-<li>Use <a href="https://aws.amazon.com/vpn/" target="_blank">AWS VPN</a> for secure connections</li>
-</ul>
-<p>For TLS:</p>
-<ul>
-<li>Enable it for all AWS services sending sensitive data</li>
-<li>Use TLS 1.2 or newer</li>
-<li>Check and update TLS certificates regularly</li>
-</ul>
-<h4 id="managing-encryption-keys">Managing Encryption Keys</h4>
-<p>To handle encryption keys well:</p>
-<ul>
-<li>Use AWS KMS for safe key storage and rotation</li>
-<li>Change keys often</li>
-<li>Watch how keys are used</li>
-</ul>
-<h3 id="2.-identity-and-access-management-(iam)">2. Identity and Access Management (IAM)</h3>
-<h4 id="controlling-user-access">Controlling User Access</h4>
-<p>To manage access:</p>
-<ul>
-<li>Give users only the permissions they need</li>
-<li>Use groups and roles to manage access</li>
-<li>Check and update permissions often</li>
-</ul>
-<h4 id="setting-up-role-based-access">Setting Up Role-Based Access</h4>
-<p>To set up Role-Based Access Control (RBAC):</p>
-<ul>
-<li>Make roles with needed permissions</li>
-<li>Give roles to users</li>
-<li>Check and update roles often</li>
-</ul>
-<h4 id="using-multi-factor-authentication">Using Multi-Factor Authentication</h4>
-<p>To use Multi-Factor Authentication (MFA):</p>
-<ul>
-<li>Turn it on for all users</li>
-<li>Use a safe MFA device (like a U2F key)</li>
-<li>Check and update MFA settings often</li>
-</ul>
-<h3 id="3.-network-security">3. Network Security</h3>
-<h4 id="setting-up-a-secure-vpc">Setting Up a Secure VPC</h4>
-<p>To set up a secure Virtual Private Cloud (VPC):</p>
-<ul>
-<li>Make a VPC to keep AWS resources separate</li>
-<li>Set up subnets to divide resources</li>
-<li>Use security groups to control traffic</li>
-</ul>
-<h4 id="configuring-security-groups-and-acls">Configuring Security Groups and ACLs</h4>
-<p>To set up security groups and Access Control Lists (ACLs):</p>
-<ul>
-<li>Make security groups to control traffic</li>
-<li>Set up ACLs to control subnet and VPC traffic</li>
-<li>Check and update these often</li>
-</ul>
-<h4 id="connecting-on-premises-to-aws">Connecting On-Premises to AWS</h4>
-<p>To connect on-site systems to AWS:</p>
-<ul>
-<li>Use AWS VPN for a secure, encrypted connection</li>
-<li>Use <a href="https://aws.amazon.com/directconnect/" target="_blank">AWS Direct Connect</a> for a dedicated, secure link</li>
-<li>Check and update connections often</li>
-</ul>
-<h3 id="4.-meeting-compliance-requirements">4. Meeting Compliance Requirements</h3>
-<h4 id="understanding-relevant-regulations">Understanding Relevant Regulations</h4>
-<p>To follow rules like HIPAA and PCI-DSS:</p>
-<ul>
-<li>Learn about rules that apply to you</li>
-<li>Know what security measures are needed</li>
-<li>Put those measures in place</li>
-</ul>
-<h4 id="managing-data-location">Managing Data Location</h4>
-<p>To handle where data is stored:</p>
-<ul>
-<li>Use AWS regions that follow the rules</li>
-<li>Encrypt sensitive data</li>
-<li>Check and update data location often</li>
-</ul>
-<h4 id="setting-up-audit-logs">Setting Up Audit Logs</h4>
-<p>To keep track of what happens:</p>
-<ul>
-<li>Use <a href="https://aws.amazon.com/cloudtrail/" target="_blank">AWS CloudTrail</a> to log API calls</li>
-<li>Use <a href="https://aws.amazon.com/cloudwatch/" target="_blank">AWS CloudWatch</a> to log resource use</li>
-<li>Check and update logs often</li>
-</ul>
-<h3 id="5.-planning-for-disasters-and-outages">5. Planning for Disasters and Outages</h3>
-<h4 id="creating-backup-plans">Creating Backup Plans</h4>
-<p>To make backup plans:</p>
-<ul>
-<li>Use AWS Backup for AWS resources</li>
-<li>Use <a href="https://aws.amazon.com/storagegateway/" target="_blank">AWS Storage Gateway</a> for on-site resources</li>
-<li>Check and update backup plans often</li>
-</ul>
-<h4 id="ensuring-high-availability">Ensuring High Availability</h4>
-<p>To keep systems running:</p>
-<ul>
-<li>Use <a href="https://aws.amazon.com/autoscaling/" target="_blank">AWS Auto Scaling</a> to adjust resources</li>
-<li>Use <a href="https://aws.amazon.com/elasticloadbalancing/" target="_blank">AWS Elastic Load Balancer</a> to spread traffic</li>
-<li>Check and update these settings often</li>
-</ul>
-<h4 id="preparing-for-disasters">Preparing for Disasters</h4>
-<p>To get ready for problems:</p>
-<ul>
-<li>Make a plan for what to do if something goes wrong</li>
-<li>Test the plan often</li>
-<li>Update the plan regularly</li>
-</ul>
-<h3 id="6.-securing-applications">6. Securing Applications</h3>
-<h4 id="reviewing-and-securing-code">Reviewing and Securing Code</h4>
-<p>To keep code safe:</p>
-<ul>
-<li>Use <a href="https://aws.amazon.com/codepipeline/" target="_blank">AWS CodePipeline</a> to check and deploy code</li>
-<li>Use <a href="https://aws.amazon.com/codebuild/" target="_blank">AWS CodeBuild</a> to build and test code</li>
-<li>Check and update code security often</li>
-</ul>
-<h4 id="checking-for-vulnerabilities">Checking for Vulnerabilities</h4>
-<p>To find weak spots:</p>
-<ul>
-<li>Use <a href="https://aws.amazon.com/inspector/" target="_blank">AWS Inspector</a> to scan AWS resources</li>
-<li>Use AWS CloudWatch to watch resource use</li>
-<li>Check and update scans often</li>
-</ul>
-<h4 id="using-web-application-firewalls">Using Web Application Firewalls</h4>
-<p>To protect web apps:</p>
-<ul>
-<li>Use AWS WAF to guard against web attacks</li>
-<li>Set up WAF rules for specific threats</li>
-<li>Check and update WAF settings often</li>
-</ul>
-<h3 id="7.-protecting-data-during-migration">7. Protecting Data During Migration</h3>
-<h4 id="safe-data-transfer-methods">Safe Data Transfer Methods</h4>
-<p>To move data safely:</p>
-<ul>
-<li>Use AWS Snowball for large data moves</li>
-<li>Use <a href="https://aws.amazon.com/blogs/aws/aws-snowmobile-move-exabytes-of-data-to-the-cloud-in-weeks/" target="_blank">AWS Snowmobile</a> for very large data moves</li>
-<li>Check and update transfer methods often</li>
-</ul>
-<h4 id="checking-data-integrity">Checking Data Integrity</h4>
-<p>To make sure data is correct:</p>
-<ul>
-<li>Use AWS CloudWatch to watch resource use</li>
-<li>Use AWS CloudTrail to log API calls</li>
-<li>Check data often to make sure it's right</li>
-</ul>
-<h4 id="handling-sensitive-information">Handling Sensitive Information</h4>
-<p>To protect important data:</p>
-<ul>
-<li>Use AWS Key Management Service for encryption keys</li>
-<li>Use <a href="https://aws.amazon.com/cloudhsm/" target="_blank">AWS CloudHSM</a> for very sensitive data</li>
-<li>Check and update how you handle sensitive data often</li>
-</ul>
-<h3 id="8.-monitoring-cloud-security">8. Monitoring Cloud Security</h3>
-<h4 id="using-security-assessment-tools">Using Security Assessment Tools</h4>
-<p>To keep an eye on security:</p>
-<ul>
-<li>Use <a href="/blog/">AWS Security</a> Hub to watch and check security data</li>
-<li>Use AWS CloudWatch to log resource use</li>
-<li>Check and update these tools often</li>
-</ul>
-<h4 id="ongoing-compliance-checks">Ongoing Compliance Checks</h4>
-<p>To stay within the rules:</p>
-<ul>
-<li>Use AWS CloudTrail to log API calls</li>
-<li>Use AWS CloudWatch to log resource use</li>
-<li>Check and update compliance checks often</li>
-</ul>
-<h4 id="fixing-security-issues">Fixing Security Issues</h4>
-<p>To fix problems:</p>
-<ul>
-<li>Use AWS Security Hub to find and analyze issues</li>
-<li>Use AWS CloudWatch to watch for problems</li>
-<li>Fix issues quickly and check often</li>
-</ul>
-<h3 id="9.-preparing-for-security-incidents">9. Preparing for Security Incidents</h3>
-<h4 id="detecting-security-issues">Detecting Security Issues</h4>
-<p>To spot problems:</p>
-<ul>
-<li>Use AWS CloudWatch to watch resource use</li>
-<li>Use AWS CloudTrail to log API calls</li>
-<li>Check and update how you detect issues often</li>
-</ul>
-<h4 id="creating-a-response-plan">Creating a Response Plan</h4>
-<p>To get ready for problems:</p>
-<ul>
-<li>Use AWS Security Hub to watch security data</li>
-<li>Use AWS CloudWatch to log resource use</li>
-<li>Make and update response plans often</li>
-</ul>
-<h4 id="learning-from-incidents">Learning from Incidents</h4>
-<p>To improve from past issues:</p>
-<ul>
-<li>Use AWS Security Hub to analyze security data</li>
-<li>Use AWS CloudWatch to log resource use</li>
-<li>Update your plans based on what you learn</li>
-</ul>
-<h3 id="10.-managing-third-party-security">10. Managing Third-Party Security</h3>
-<h4 id="checking-vendor-security">Checking Vendor Security</h4>
-<p>To make sure outside vendors are safe:</p>
-<ul>
-<li>Use AWS Security Hub to check security data</li>
-<li>Use AWS CloudWatch to watch resource use</li>
-<li>Check vendor security often</li>
-</ul>
-<h4 id="secure-third-party-integration">Secure Third-Party Integration</h4>
-<p>To safely connect with other services:</p>
-<ul>
-<li>Use AWS Security Hub to watch security</li>
-<li>Use AWS CloudWatch to log resource use</li>
-<li>Check and update how you connect with others often</li>
-</ul>
-<h4 id="understanding-security-responsibilities">Understanding Security Responsibilities</h4>
-<p>To know who's in charge of what:</p>
-<ul>
-<li>Use AWS Security Hub to see security info</li>
-<li>Use AWS CloudWatch to log resource use</li>
-<li>Make sure everyone knows their job in keeping things safe</li>
-</ul>
-<h2 id="conclusion">Conclusion</h2>
-<h3 id="review-of-key-points">Review of Key Points</h3>
-<p>This checklist covers the main security steps for a safe AWS migration. The ten key points are:</p>
-<figure><table>
-<thead>
-<tr>
-<th>Security Step</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Data Encryption</td>
-<td>Protect stored data and data in transit</td>
-</tr>
-<tr>
-<td>Identity and Access Management</td>
-<td>Control user access and set up roles</td>
-</tr>
-<tr>
-<td>Network Security</td>
-<td>Set up secure VPCs and manage connections</td>
-</tr>
-<tr>
-<td>Compliance</td>
-<td>Follow rules and manage data location</td>
-</tr>
-<tr>
-<td>Disaster Planning</td>
-<td>Create backups and prepare for problems</td>
-</tr>
-<tr>
-<td>Application Security</td>
-<td>Check code and protect against attacks</td>
-</tr>
-<tr>
-<td>Data Protection During Migration</td>
-<td>Use safe transfer methods and check data</td>
-</tr>
-<tr>
-<td>Cloud Security Monitoring</td>
-<td>Use tools to watch for issues</td>
-</tr>
-<tr>
-<td>Security Incident Preparation</td>
-<td>Make plans to handle security problems</td>
-</tr>
-<tr>
-<td>Third-Party Security</td>
-<td>Check vendor safety and manage connections</td>
-</tr>
-</tbody>
-</table></figure>
-<p>By following these steps, you can lower the risk of security issues during your AWS migration.</p>
-<h3 id="keeping-security-strong-after-migration">Keeping Security Strong After Migration</h3>
-<p>Security doesn't stop after migration. It's important to keep checking and improving your security setup. Here are some ways to do that:</p>
-<figure><table>
-<thead>
-<tr>
-<th>Task</th>
-<th>How Often</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Check security settings</td>
-<td>Every month</td>
-</tr>
-<tr>
-<td>Fix weak spots</td>
-<td>As soon as found</td>
-</tr>
-<tr>
-<td>Watch for odd activity</td>
-<td>Daily</td>
-</tr>
-<tr>
-<td>Learn about new threats</td>
-<td>Weekly</td>
-</tr>
-<tr>
-<td>Test your security</td>
-<td>Every 3 months</td>
-</tr>
-</tbody>
-</table></figure>
+<p>Enable the coverage required in every account and Region in scope, configure retention to match your audit and investigation needs, and route actionable findings to a team that can respond. CloudWatch resource metrics alone are not an audit trail or a complete security detection plan.</p>
+<p><strong>Verify:</strong> retain a signal-coverage matrix, sample events or findings, retention settings, alert-routing details, and evidence that a test alert reached the right responder. <strong>Ready when:</strong> required activity is recorded, a detection signal is generated and delivered, and an owner knows how to triage it. For account-wide scanning and finding workflows, see our guide to <a href="/blog/automate-cross-account-security-scans-amazon-inspector-aws-security-hub/">Amazon Inspector and Security Hub</a>.</p>
+<h3 id="9.-preparing-for-security-incidents">9. Prepare and exercise incident response</h3>
+<p>Define who can declare an incident, who leads containment, who preserves evidence, how legal and communications teams are engaged, and how decisions are recorded. Prepare runbooks for likely migration risks such as exposed credentials, unintended public access, failed replication, suspicious API calls, or data exfiltration. Keep response access available even if normal identity systems or network paths are disrupted.</p>
+<p>Run a tabletop or controlled technical exercise before cutover. Test how responders find the relevant CloudTrail events and security findings, disable or replace a compromised credential, isolate an affected resource without destroying evidence, and restore service safely. Record decisions, timing, missing permissions, and actions with named owners.</p>
+<p><strong>Verify:</strong> retain the current contact and escalation list, runbook version, exercise record, and closed or tracked follow-up actions. <strong>Ready when:</strong> an on-call responder can execute the first containment steps and reach the right decision-makers using the documented process.</p>
+<h3 id="10.-managing-third-party-security">10. Constrain third-party access and data handling</h3>
+<p>List vendors, migration tools, managed service providers, and software agents that can access AWS accounts or customer data. Record what data each receives, which systems it can reach, how long access is needed, how the vendor reports incidents, and how access and data are removed when the work ends.</p>
+<p>For cross-account AWS access, prefer a narrowly scoped role over shared long-term credentials. Restrict its trust policy to the expected principal and require an external ID supplied for your customer relationship. An external ID helps address the confused deputy problem, but AWS does not treat it as a secret and it does not replace least privilege or vendor review. Log and periodically review role assumptions and revoke access when it is no longer needed. See AWS guidance on <a href="https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_common-scenarios_third-party.html" target="_blank" rel="noopener">third-party role access and external IDs</a>.</p>
+<p><strong>Verify:</strong> retain vendor and data-flow records, the approved trust and permission policies, sample access events, incident contacts, and an access-removal procedure. <strong>Ready when:</strong> every external identity has an accountable owner, a limited purpose and duration, monitored activity, and a tested revocation path.</p>
 <h2 id="faqs">FAQs</h2>
-<h3 id="how-to-perform-an-aws-security-assessment%3F">How to perform an AWS security assessment?</h3>
-<p>To check the safety of your AWS setup, follow these 7 steps:</p>
-<figure><table>
-<thead>
-<tr>
-<th>Step</th>
-<th>What to do</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>1. Check AWS security rules</td>
-<td>Learn about AWS safety guidelines</td>
-</tr>
-<tr>
-<td>2. Look for risks often</td>
-<td>Check for weak spots in your setup</td>
-</tr>
-<tr>
-<td>3. Make sure access is set up right</td>
-<td>Check who can use what in AWS</td>
-</tr>
-<tr>
-<td>4. Set up safety measures</td>
-<td>Use tools to stop threats</td>
-</tr>
-<tr>
-<td>5. Test your defenses</td>
-<td>Try to find holes in your security</td>
-</tr>
-<tr>
-<td>6. Look at AWS logs</td>
-<td>Check records to spot problems</td>
-</tr>
-<tr>
-<td>7. Plan for emergencies</td>
-<td>Know what to do if something goes wrong</td>
-</tr>
-</tbody>
-</table></figure>
-<p>These steps will help you keep your AWS setup safe:</p>
-<p>1. <strong>Check AWS security rules</strong></p>
-<p>Read AWS safety guides to understand how to protect your setup.</p>
-<p>2. <strong>Look for risks often</strong></p>
-<p>Regularly check your AWS setup to find and fix weak spots.</p>
-<p>3. <strong>Make sure access is set up right</strong></p>
-<p>Check that only the right people can use your AWS tools.</p>
-<p>4. <strong>Set up safety measures</strong></p>
-<p>Use firewalls and other tools to protect against threats.</p>
-<p>5. <strong>Test your defenses</strong></p>
-<p>Try to break into your own setup to find problems before others do.</p>
-<p>6. <strong>Look at AWS logs</strong></p>
-<p>Check AWS records to spot and fix security issues quickly.</p>
-<p>7. <strong>Plan for emergencies</strong></p>
-<p>Make a plan for what to do if something goes wrong with your AWS setup.</p>
-<p>
-<h2>Related posts</h2>
-<ul>
-<li><a href="/blog/aws-s3-guide-understanding-access-management/">AWS S3 Guide: Understanding Access Management</a></li><li><a href="/blog/analyze-legacy-code-for-aws-migration-5-strategies/">Analyze Legacy Code for AWS Migration: 5 Strategies</a></li><li><a href="/blog/aws-content-migration-best-practices/">AWS Content Migration Best Practices</a></li><li><a href="/blog/aws-hybrid-cloud-security-compliance-best-practices/">AWS Hybrid Cloud Security: Compliance Best Practices</a></li>
-</ul>
-</p>
+<h3>Does choosing an AWS Region make a migration compliant?</h3>
+<p>No. Region and service choices can help meet data-location and service-scope requirements, but compliance also depends on the workload, customer configuration, processes, evidence, and applicable obligations. Have the responsible compliance owner review the control matrix and supporting evidence.</p>
+<h3>Does a successful backup or transfer job prove the data is ready?</h3>
+<p>No. Restore a backup and validate that the application works within its RTO and RPO. After a migration transfer, reconcile the source and target and run application-level checks before cutover.</p>
