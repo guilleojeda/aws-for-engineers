@@ -2,397 +2,75 @@
 layout: post.njk
 templateEngineOverride: html
 tags: posts
-title: "AWS SAM Pipelines: Setup Guide"
-description: "Learn how to set up AWS SAM Pipelines for automating CI/CD workflows in serverless applications, ensuring faster deployments and fewer errors."
+title: "AWS SAM Pipelines: Setup and CI/CD Guide"
+description: "Set up AWS SAM Pipelines with bootstrap and init, choose IAM or OIDC credentials, and verify the generated deployment stages, tests, and production controls."
 date: "2025-03-25"
 datePublished: "2025-03-25T09:34:00.583000+00:00"
 heroImage: "/assets/media/585bb86ea79f1f486882.jpg"
 permalink: "/blog/aws-sam-pipelines-setup-guide/"
 sourceUrl: "https://awsforengineers.com/blog/aws-sam-pipelines-setup-guide/"
-dateModified: "2026-10-03"
-updateNote: "Added author attribution and profile information."
+dateModified: "2026-10-04"
+updateNote: "Rewrote the setup flow to distinguish AWS resource bootstrapping from pipeline-file generation, document OIDC and IAM options, and explain starter-stage and test-gate limits."
 ---
-<p><a href="https://docs.aws.amazon.com/serverless-application-model/" rel="nofollow noopener noreferrer" target="_blank">AWS SAM</a> Pipelines make deploying serverless applications easier by automating CI/CD workflows. Here's everything you need to know to get started:</p>
-<p><strong>Key Benefits:</strong></p>
-<ul>
-<li><strong>Fewer Errors:</strong> Automates deployments, reducing manual mistakes.</li>
-<li><strong>Faster Deployments:</strong> Saves time, so you can focus on coding.</li>
-<li><strong>Simplified Workflows:</strong> Lowers operational overhead.</li>
-</ul>
-<p><strong>Quick Setup Overview:</strong></p>
-<ol>
-<li><strong><a href="/blog/">AWS Account</a> Prep:</strong> Create an IAM user, assign permissions, and set up access keys securely.</li>
-<li><strong>Install AWS SAM CLI:</strong> Ensure <a href="https://www.python.org/" rel="nofollow noopener noreferrer" target="_blank">Python</a> 3.7+, <a href="https://www.docker.com/" rel="nofollow noopener noreferrer" target="_blank">Docker</a>, and Git are installed. Use <code>choco</code> (Windows) or <code>brew</code> (macOS) to install the CLI.</li>
-<li><strong>Git Repo Setup:</strong> Organize your project with a clear structure and push to version control.</li>
-<li><strong>Configure AWS Resources:</strong> Set up IAM roles, an S3 bucket for artifacts, and define pipeline YAML templates.</li>
-<li><strong>Pipeline Initialization:</strong> Use <code>sam pipeline init --bootstrap</code> to create pipeline files and configure stages like dev, staging, and production.</li>
-</ol>
-<p><strong>Tips for Success:</strong></p>
-<ul>
-<li>Use <a href="https://docs.aws.amazon.com/systems-manager/" rel="nofollow noopener noreferrer" target="_blank">AWS Systems Manager</a> or Secrets Manager to manage sensitive data.</li>
-<li>Monitor your pipeline with <a href="https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/WhatIsCloudWatch.html" rel="nofollow noopener noreferrer" target="_blank">AWS CloudWatch</a> for performance and alerts.</li>
-<li>Troubleshoot issues by checking IAM permissions, build logs, and CloudFormation stack events.</li>
-</ul>
-<p>This guide gives you the steps to configure, deploy, and monitor serverless applications efficiently.</p>
-<h2 id="setup-requirements">Setup Requirements</h2>
-<p>Prepare the following steps to ensure your SAM Pipeline runs smoothly.</p>
-<h3 id="aws-account-setup">AWS Account Setup</h3>
-<p>Here's what you'll need to do:</p>
-<ul>
-<li><strong>Create an IAM user</strong>: Set up a dedicated IAM user with programmatic access specifically for pipeline operations.</li>
-<li><strong>Assign Permissions</strong>: Attach policies that allow access to:
-<ul>
-<li><a href="https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/Welcome.html" rel="nofollow noopener noreferrer" target="_blank">AWS CloudFormation</a></li>
-<li>AWS Lambda</li>
-<li>Amazon S3</li>
-<li><a href="https://docs.aws.amazon.com/codebuild/" rel="nofollow noopener noreferrer" target="_blank">AWS CodeBuild</a></li>
-<li><a href="https://docs.aws.amazon.com/codepipeline/latest/userguide/welcome.html" rel="nofollow noopener noreferrer" target="_blank">AWS CodePipeline</a></li>
-</ul>
-</li>
-<li><strong>Generate AWS access keys</strong>: Save these keys securely for use in your pipeline.</li>
-</ul>
-<p>To keep your account secure, stick to the principle of least privilege. Only grant permissions that are absolutely necessary for your pipeline's tasks.</p>
-<h3 id="aws-sam-cli-installation"><a href="https://docs.aws.amazon.com/serverless-application-model/" rel="nofollow noopener noreferrer" target="_blank">AWS SAM</a> CLI Installation</h3>
-<p><figure><img alt="AWS SAM" loading="lazy" src="/assets/media/e44fe68c23d0315d69d1.jpg"/></figure></p>
-<p>The AWS SAM CLI is essential for working with SAM Pipelines. Install it on your development machine by following these steps:</p>
-<p>1. <strong>System Requirements</strong></p>
-<p>Ensure your system meets these requirements:</p>
-<ul>
-<li>Python 3.7 or newer</li>
-<li>Docker (for local testing)</li>
-<li>Git 2.0 or newer</li>
-</ul>
-<p>2. <strong>Installation Steps</strong></p>
-<p>For Windows users:</p>
-<pre><code>choco install aws-sam-cli
-</code></pre>
-<p>For macOS users:</p>
-<pre><code>brew install aws-sam-cli
-</code></pre>
-<p>3. <strong>Verify Installation</strong></p>
-<p>Run this command to confirm the installation:</p>
+<p>AWS SAM Pipelines generates a starter continuous integration and delivery (CI/CD) configuration for a serverless application. The setup has two separate jobs: <code>sam pipeline bootstrap</code> creates or connects the AWS resources that a deployment stage needs, while <code>sam pipeline init</code> writes a pipeline configuration for your CI/CD provider. Run <code>sam pipeline init --bootstrap</code> for the guided flow that combines them.</p>
+<p>The generated pipeline is a starting point. AWS describes the starter as a two-stage deployment, and you must inspect the generated files to confirm what runs before production. Test commands and production approvals need explicit configuration; a job name alone does not mean that tests or an approval gate are active.</p>
+<p>AWS documents starter configurations for AWS CodePipeline, Jenkins, GitLab CI/CD, GitHub Actions, and Bitbucket Pipelines. Check the <a href="https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/serverless-generating-example-ci-cd.html" target="_blank" rel="noopener noreferrer">AWS provider list and setup flow</a> for the current options.</p>
+
+<h2 id="setup-requirements">Before you start</h2>
+<h3 id="aws-sam-cli-installation">Prepare a SAM project and tools</h3>
+<p>Start in the root of an existing AWS SAM project, where its <code>template.yaml</code> and application code live. Install the current AWS SAM CLI using the <a href="https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/install-sam-cli.html" target="_blank" rel="noopener noreferrer">official installation instructions</a>, and install Git. Docker is needed for local invocation and for builds that use <code>--use-container</code>; it is not a universal prerequisite for every SAM command. See AWS's <a href="https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/install-docker.html" target="_blank" rel="noopener noreferrer">Docker requirements for SAM</a>.</p>
+<p>Before bootstrapping, check the project and CLI from its root:</p>
 <pre><code>sam --version
+sam validate
+sam build
 </code></pre>
-<p>Once installed, move on to setting up your Git repository for version control and pipeline integration.</p>
-<h3 id="git-repository-setup">Git Repository Setup</h3>
-<p>1. <strong>Repository Structure</strong></p>
-<p>Organize your project repository like this:</p>
-<pre><code>my-sam-app/
-├── template.yaml
-├── src/
-│   └── functions/
-├── tests/
-└── pipeline/
-    └── pipeline.yaml
-</code></pre>
-<p>2. <strong>Version Control Best Practices</strong></p>
-<p>Adopt these practices for effective version control:</p>
-<ul>
-<li>Use feature branches for development work.</li>
-<li>Keep the main branch stable and production-ready.</li>
-<li>Add a detailed <code>.gitignore</code> file to exclude unnecessary files.</li>
-<li>Set up branch protection rules to prevent accidental changes.</li>
-</ul>
-<p>3. <strong>Initial Configuration</strong></p>
-<p>Initialize your repository and push the initial setup:</p>
-<pre><code>git init
-git remote add origin &lt;repository-url&gt;
-git add .
-git commit -m "Initial SAM project setup"
-git push -u origin main
-</code></pre>
-<p>With these steps completed, your environment will be ready for SAM Pipeline operations.</p>
-<h2 id="aws-resource-configuration">AWS Resource Configuration</h2>
-<p>Set up AWS resources to enable the SAM Pipeline.</p>
-<h3 id="pipeline-iam-roles">Pipeline IAM Roles</h3>
-<p>Define IAM roles to manage pipeline operations effectively.</p>
-<p>1. <strong>Pipeline Execution Role</strong></p>
-<p>Create a role with permissions for pipeline tasks:</p>
-<pre><code>{
-    "Version": "2012-10-17",
-    "Statement": [
-        {
-            "Effect": "Allow",
-            "Action": [
-                "cloudformation:*",
-                "s3:*",
-                "lambda:*",
-                "codebuild:*",
-                "codepipeline:*"
-            ],
-            "Resource": "*"
-        }
-    ]
-}
-</code></pre>
-<p>2. <strong>CodeBuild Service Role</strong></p>
-<p>Set up a service role for CodeBuild:</p>
-<pre><code>aws iam create-role --role-name sam-pipeline-build-role \
-    --assume-role-policy-document file://trust-policy.json
-</code></pre>
-<p>Attach the required policy:</p>
-<pre><code>aws iam attach-role-policy --role-name sam-pipeline-build-role \
-    --policy-arn arn:aws:iam::aws:policy/AWSCodeBuildAdminAccess
-</code></pre>
-<h3 id="artifact-storage-setup">Artifact Storage Setup</h3>
-<p>Create an S3 bucket to store pipeline artifacts:</p>
-<pre><code>aws s3 mb s3://your-pipeline-artifacts-bucket \
-    --region us-east-1
-</code></pre>
-<p>Enable versioning for the bucket:</p>
-<pre><code>aws s3api put-bucket-versioning \
-    --bucket your-pipeline-artifacts-bucket \
-    --versioning-configuration Status=Enabled
-</code></pre>
-<p>Add encryption to the bucket for security:</p>
-<pre><code>aws s3api put-bucket-encryption \
-    --bucket your-pipeline-artifacts-bucket \
-    --server-side-encryption-configuration '{
-        "Rules": [
-            {
-                "ApplyServerSideEncryptionByDefault": {
-                    "SSEAlgorithm": "AES256"
-                }
-            }
-        ]
-    }'
-</code></pre>
-<h3 id="cicd-service-integration">CI/CD Service Integration</h3>
-<p>After setting up IAM roles and artifact storage, integrate CI/CD services.</p>
-<p>1. <strong>Create Pipeline Configuration</strong></p>
-<p>Define the pipeline in a YAML template:</p>
-<pre><code>Resources:
-  Pipeline:
-    Type: AWS::CodePipeline::Pipeline
-    Properties:
-      Name: sam-app-pipeline
-      RoleArn: !GetAtt PipelineRole.Arn
-      ArtifactStore:
-        Type: S3
-        Location: !Ref ArtifactBucketName
-      Stages:
-        - Name: Source
-          Actions:
-            - Name: Source
-              ActionTypeId:
-                Category: Source
-                Owner: AWS
-                Provider: CodeCommit
-                Version: '1'
-              Configuration:
-                RepositoryName: !Ref RepositoryName
-                BranchName: main
-              OutputArtifacts:
-                - Name: SourceCode
-</code></pre>
-<p>2. <strong>Set Build Specifications</strong></p>
-<p>Add a <code>buildspec.yml</code> file to your repository:</p>
-<pre><code>version: 0.2
-phases:
-  install:
-    runtime-versions:
-      python: 3.9
-  build:
-    commands:
-      - sam build
-      - sam deploy --no-confirm-changeset --no-fail-on-empty-changeset
-artifacts:
-  files:
-    - template.yaml
-    - packaged.yaml
-  discard-paths: yes
-</code></pre>
-<p>3. <strong>Configure Pipeline Triggers</strong></p>
-<p>Set up automatic triggers for the pipeline:</p>
-<pre><code>aws codepipeline put-webhook \
-    --pipeline-name sam-app-pipeline \
-    --webhook-name pipeline-webhook \
-    --authentication-configuration Type=GITHUB_HMAC,SecretToken=your-secret \
-    --target-pipeline sam-app-pipeline \
-    --target-action Source \
-    --filters Name=event,Value=push
-</code></pre>
-<h2 id="pipeline-setup-and-configuration">Pipeline Setup and Configuration</h2>
-<h3 id="pipeline-initialization">Pipeline Initialization</h3>
-<p>To set up your pipeline, run the following command: <code>sam pipeline init --bootstrap</code>. This interactive setup will guide you through creating two key files: <code>pipeline/pipeline.yaml</code> and <code>pipeline/config.yaml</code>. You'll also be prompted to select your CI/CD system, set configurations, and define environment names and regions.</p>
-<p>Here's what these files do:</p>
-<ul>
-<li><strong><code>pipeline/pipeline.yaml</code></strong>: Defines the main pipeline infrastructure.</li>
-<li><strong><code>pipeline/config.yaml</code></strong>: Manages environment-specific settings.</li>
-</ul>
-<h3 id="pipeline-stage-configuration">Pipeline Stage Configuration</h3>
-<p>Set up your pipeline stages to align with your deployment process. Below is an example configuration:</p>
-<pre><code>Stages:
-  - Name: Development
-    DeploymentPreferences:
-      Type: Linear10PercentEvery1Minute
-      Alarms:
-        - !Ref ErrorAlarm
-    Variables:
-      Environment: dev
-      StackName: sam-app-dev
+<p><code>sam validate</code> checks the SAM template, and <code>sam build</code> prepares the application for deployment. If <code>cfn-lint</code> is installed, <code>sam validate --lint</code> adds CloudFormation lint checks. If your build uses containerized dependencies, install and start Docker before adding <code>--use-container</code>. See AWS's <a href="https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/validate-cfn-lint.html" target="_blank" rel="noopener noreferrer"><code>sam validate --lint</code> guidance</a>.</p>
 
-  - Name: Staging
-    DeploymentPreferences:
-      Type: Linear10PercentEvery2Minutes
-      Alarms:
-        - !Ref ErrorAlarm
-        - !Ref LatencyAlarm
-    Variables:
-      Environment: staging
-      StackName: sam-app-staging
+<h3 id="aws-account-setup">Choose AWS access and permissions</h3>
+<p>Bootstrap uses AWS credentials from your configured AWS CLI profile. For the guided <code>sam pipeline init --bootstrap</code> flow, select the intended profile as the active <code>AWS_PROFILE</code> before launching it, then confirm the account with:</p>
+<pre><code>export AWS_PROFILE=sam-bootstrap
+aws sts get-caller-identity</code></pre>
+<p><code>AWS_PROFILE</code> selects the default named profile for AWS CLI commands and SDKs; follow AWS's <a href="https://docs.aws.amazon.com/sdkref/latest/guide/file-format.html" target="_blank" rel="noopener noreferrer">shared profile instructions</a> for your shell. When you run <code>sam pipeline bootstrap</code> as a separate step, pass that profile with its <code>--profile</code> option. The identity running bootstrap needs permission to create or use the resources for each stage. Depending on the permissions method, these include a pipeline IAM user and access key or an OIDC identity provider and roles, a CloudFormation execution role, an S3 artifact bucket, and optionally an Amazon ECR repository for image-based functions. Give this setup work to an authorized administrator or infrastructure role. The identity used by CI/CD should receive only the access it needs to package and deploy the application.</p>
+<p>For CI/CD authentication, prefer OpenID Connect (OIDC) when your provider supports it. AWS SAM's OIDC setup supports GitHub Actions, GitLab, and Bitbucket Pipelines. Bootstrap records the provider and repository details in IAM trust so the workflow can assume a role with temporary credentials. Scope that trust to the intended repository and deployment branch, then review the generated trust policy. If you choose IAM access keys instead, store them only in the CI provider's protected secret store, restrict who can read them, and rotate them. The <a href="https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/deploying-with-oidc.html" target="_blank" rel="noopener noreferrer">AWS SAM OIDC guide</a> lists the supported providers and setup prompts.</p>
 
-  - Name: Production
-    DeploymentPreferences:
-      Type: Canary10Percent5Minutes
-      Alarms:
-        - !Ref ErrorAlarm
-        - !Ref LatencyAlarm
-        - !Ref ThrottlesAlarm
-    Variables:
-      Environment: prod
-      StackName: sam-app-prod
-</code></pre>
-<h3 id="template-customization">Template Customization</h3>
-<p>Once your stages are defined, refine your pipeline by adding build commands, environment variables, and approval steps.</p>
-<p><strong>1. Add Custom Build Commands</strong></p>
-<p>Modify your <code>buildspec.yml</code> to include custom build steps:</p>
-<pre><code>version: 0.2
-phases:
-  install:
-    runtime-versions:
-      nodejs: 14
-    commands:
-      - npm install -g typescript
-      - npm ci
-  pre_build:
-    commands:
-      - npm run lint
-      - npm run test
-  build:
-    commands:
-      - npm run build
-      - sam build
-      - sam deploy --no-confirm-changeset
-  post_build:
-    commands:
-      - npm run integration-test
-</code></pre>
-<p><strong>2. Configure Environment Variables</strong></p>
-<p>Define environment-specific parameters in your pipeline configuration:</p>
-<pre><code>Parameters:
-  EnvironmentName:
-    Type: String
-    Default: dev
-    AllowedValues:
-      - dev
-      - staging
-      - prod
+<h2 id="pipeline-setup-and-configuration">Bootstrap AWS resources and generate the pipeline</h2>
+<h3 id="pipeline-initialization">Run the guided setup</h3>
+<p>From the SAM project root, run:</p>
+<pre><code>sam pipeline init --bootstrap</code></pre>
+<p>Choose an AWS starter template and your CI/CD provider, then follow the prompts for the AWS account, Region, deployment stages, and permissions method. Review the summary before confirming resource creation. The command bootstraps the AWS resources for the stages you configure and generates the provider-specific pipeline file in your repository. Its file format and location depend on the selected provider; there is no universal <code>pipeline/pipeline.yaml</code> plus <code>pipeline/config.yaml</code> pair.</p>
+<p>Some teams separate infrastructure provisioning from pipeline setup because the people who can create IAM roles or buckets may differ from application developers. In that case, an administrator runs <code>sam pipeline bootstrap</code> once for each deployment stage in its intended account and Region. The developer then runs <code>sam pipeline init</code> and refers to those existing resources. The <a href="https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/sam-cli-command-reference-sam-pipeline-bootstrap.html" target="_blank" rel="noopener noreferrer"><code>sam pipeline bootstrap</code> reference</a> documents its resources and options; the <a href="https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/sam-cli-command-reference-sam-pipeline-init.html" target="_blank" rel="noopener noreferrer"><code>sam pipeline init</code> reference</a> explains the guided <code>--bootstrap</code> option.</p>
 
-  ApiDomainName:
-    Type: String
-    Default: api.example.com
+<h3 id="pipeline-stage-configuration">Understand the starter stages</h3>
+<p>AWS's starter pipeline configuration includes two deployment stages. In the current GitHub Actions template, these are named testing and production. Treat them as the template's default path, not a complete development, staging, and production promotion model; extend or replace the template if your release process needs more stages. The starter does not create AWS accounts for you; select the accounts, Regions, and stack names that match your release process. Where possible, keep production in a separate AWS account from testing.</p>
+<p>The bootstrap step creates or references the stage's supporting roles and artifact storage. It does not deploy your application stack. The generated CI/CD configuration performs the build, packaging, and deployment steps when its provider triggers the workflow. See AWS's overview of <a href="https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/serverless-generating-example-ci-cd.html" target="_blank" rel="noopener noreferrer">starter CI/CD pipeline generation and supported providers</a>.</p>
 
-  LogRetentionDays:
-    Type: Number
-    Default: 14
-</code></pre>
-<p><strong>3. Add Approval Gates</strong></p>
-<p>Include manual approval steps for critical stages like production:</p>
-<pre><code>Stages:
-  - Name: ApproveProductionDeployment
-    Actions:
-      - Name: ManualApproval
-        ActionTypeId:
-          Category: Approval
-          Owner: AWS
-          Provider: Manual
-          Version: '1'
-        Configuration:
-          CustomData: "Please review and approve production deployment"
-        RunOrder: 1
-</code></pre>
-<p>This setup ensures proper oversight and allows for tailored configurations across different environments.</p>
+<h3 id="template-customization">Add tests and production controls</h3>
+<p>Read the generated pipeline file before committing it. In the current AWS GitHub Actions starter, the <code>test</code> and <code>integration-test</code> jobs contain comments where test commands should go. The production job includes a commented example of a GitHub environment; it is not an active approval rule until you configure that environment and its protection rules. The same template also deploys matching <code>feature*</code> branches to named stacks in the testing account and deletes those stacks when a branch is deleted. Review these triggers and the testing role's scope before using them. Other providers have their own templates and controls, so inspect the file for the provider you selected. You can review the <a href="https://github.com/aws/aws-sam-cli-pipeline-init-templates/blob/main/GitHub-Actions/two-stage-pipeline-template/%7B%7Bcookiecutter.outputDir%7D%7D/.github/workflows/pipeline.yaml" target="_blank" rel="noopener noreferrer">AWS GitHub Actions starter workflow</a> in the official template repository.</p>
+<ul>
+<li>Add the unit and integration test commands your application actually uses, and make failed tests stop the production path.</li>
+<li>Configure an approval or protected environment in your CI/CD provider if production requires human review.</li>
+<li>Restrict which branches or protected environments can assume the production role, and verify that the role can deploy only to the intended account and resources.</li>
+<li>Review IAM policy and trust changes, stack names, Regions, and artifact locations. A successful build does not prove that a deployment is safe.</li>
+</ul>
+<p>For more on reviewing generated infrastructure and deployment changes, see our guide to <a href="/blog/5-common-aws-iac-pitfalls-and-solutions/">AWS infrastructure-as-code pitfalls</a>.</p>
 
-<h2 id="pipeline-operation">Pipeline Operation</h2>
-<h3 id="version-control-integration">Version Control Integration</h3>
-<p>Make sure all necessary SAM pipeline configuration files are stored in your repository. To keep sensitive information like API keys or credentials secure, use <strong>AWS Systems Manager Parameter Store</strong> or <strong>Secrets Manager</strong> instead of including them in your source code. Once everything is set, you can start the pipeline run.</p>
-<h3 id="running-the-pipeline">Running the Pipeline</h3>
-<p>After integrating version control and committing your configuration changes, the pipeline will automatically deploy as part of your CI/CD workflow. If needed, you can also trigger deployments manually through the <strong>AWS CodePipeline console</strong>.</p>
-<h3 id="pipeline-monitoring">Pipeline Monitoring</h3>
-<p>Use AWS tools to keep an eye on your pipeline's performance. The <strong><a href="/blog/aws-network-dashboard-issues-troubleshooting-tips/">AWS console dashboard</a></strong> provides status updates and logs, while <strong>CloudWatch</strong> monitors metrics and sends alerts to help with troubleshooting.</p>
-<h2 id="troubleshooting-guide">Troubleshooting Guide</h2>
-<p>AWS SAM Pipelines can encounter issues during setup or execution. Use these steps to address common problems effectively.</p>
-<h3 id="iam-permission-errors">IAM Permission Errors</h3>
-<p>Insufficient IAM permissions can disrupt pipeline operations. Here's how to handle these errors:</p>
-<ul>
-<li><strong>Review <a href="/blog/aws-s3-cloudtrail-integration-guide-2024/">CloudTrail Logs</a></strong>: Check CloudTrail logs to identify any failed API calls.</li>
-<li><strong>Update Role Policies</strong>: Ensure your pipeline execution role has the necessary permissions. For example:</li>
-</ul>
-<pre><code>{
-    "Version": "2012-10-17",
-    "Statement": [
-        {
-            "Effect": "Allow",
-            "Action": [
-                "cloudformation:CreateStack",
-                "s3:PutObject",
-                "lambda:UpdateFunctionCode"
-            ],
-            "Resource": "*"
-        }
-    ]
-}
-</code></pre>
-<ul>
-<li><strong>Check Resource-Level Access</strong>: Confirm that your roles have the required access to resources like <a href="/blog/learn-aws-s3-fundamentals/">S3 buckets</a> and Lambda functions.</li>
-</ul>
-<h3 id="build-error-solutions">Build Error Solutions</h3>
-<p>Build failures often stem from configuration or dependency issues. Here's how to troubleshoot:</p>
-<ul>
-<li><strong>Verify Build Specifications</strong>: Make sure your <code>buildspec.yml</code> file includes the correct runtime and build commands.</li>
-<li><strong>Check Dependencies</strong>: Ensure all required packages are included in your dependency files (e.g., <code>package.json</code> for Node.js or <code>requirements.txt</code> for Python).</li>
-<li><strong>Review Build Logs</strong>: Look at CodeBuild logs for errors. Common issues to watch for include:
-<ul>
-<li>Missing environment variables</li>
-<li>Mismatched Python or Node.js versions</li>
-<li>Insufficient memory during the build process</li>
-</ul>
-</li>
-</ul>
-<h3 id="deployment-error-fixes">Deployment Error Fixes</h3>
-<p>Deployment failures can be resolved using these steps:</p>
-<ul>
-<li><strong>Validate Templates</strong>: Use the SAM CLI to validate your template locally:</li>
-</ul>
-<pre><code>sam validate --template template.yaml
-</code></pre>
-<ul>
-<li><strong>Check Stack Events</strong>: Look at CloudFormation stack events for detailed error messages about failed resource creation.</li>
-<li><strong>Monitor Resource Limits</strong>: Ensure you aren't exceeding AWS service quotas in your target region. Common limits include:
-<ul>
-<li>Lambda concurrent executions</li>
-<li>CloudFormation stack resource counts</li>
-<li>IAM role trust relationships</li>
-</ul>
-</li>
-</ul>
-<h2 id="summary">Summary</h2>
-<p>Here's a quick recap of the key points covered. AWS SAM Pipelines simplifies deploying serverless applications by automating CI/CD workflows. To make it work, focus on three main areas: configuring AWS resources, setting up the pipeline, and keeping an eye on its performance.</p>
-<p>During pipeline setup, you'll define deployment stages and link critical AWS resources like IAM roles and S3 buckets to ensure secure and smooth operations.</p>
-<p>For the pipeline to run smoothly, you'll need:</p>
-<ul>
-<li>A well-configured AWS account</li>
-<li>The AWS SAM CLI installed and ready</li>
-<li>Version control integration</li>
-<li>Properly assigned IAM permissions</li>
-</ul>
-<p>The automated process not only saves time but also improves development by:</p>
-<ul>
-<li>Reducing deployment errors</li>
-<li>Keeping workflows consistent</li>
-<li>Allowing for faster updates</li>
-<li>Offering tools to monitor performance</li>
-</ul>
-<p>Use CloudWatch to track how your pipeline is performing and make adjustments as needed. These steps can help you manage your deployments more efficiently.</p>
-<h2>Related Blog Posts</h2><ul><li><a href="/blog/10-best-practices-for-end-to-end-testing-aws-apps/">10 Best Practices for End-to-End Testing AWS Apps</a></li><li><a href="/blog/test-serverless-apps-locally-with-aws-sam-cli/">Test Serverless Apps Locally with AWS SAM CLI</a></li><li><a href="/blog/aws-sam-local-setup-guide/">AWS SAM Local: Setup Guide</a></li><li><a href="/blog/monitor-lambda-errors-with-cloudwatch/">Monitor Lambda Errors with CloudWatch</a></li></ul>
+<h2 id="pipeline-operation">Verify the first pipeline run</h2>
+<h3 id="running-the-pipeline">Check the generated files and trigger</h3>
+<p>Inspect the full diff before committing. Confirm that the trigger branch, AWS account and Region for each stage, stack names, assumed roles, S3 artifact buckets, and any ECR repositories match your plan. Check that test steps run real commands and that the production job depends on passing tests and any required approval. Protect the production branch or environment before a trigger can deploy there.</p>
+<pre><code>git status --short
+git diff --check
+git diff</code></pre>
+<p>New files marked <code>??</code> in <code>git status --short</code> are not included in <code>git diff</code>; open each generated file at the path shown and review its full contents before committing. If you want an untracked file to appear in a diff, use <code>git add -N &lt;path&gt;</code> for that file, then run <code>git diff -- &lt;path&gt;</code>. Commit the reviewed pipeline configuration and use the provider's run page to follow its first execution. Start with the non-production stage. Confirm that the expected build and tests ran, that the stack deployed in the intended account and Region, and that CloudFormation reports a successful stack update. Inspect the provider log and CloudFormation stack events if a stage fails. Do not treat an empty placeholder test job as evidence that the application was tested.</p>
+
+<h3 id="pipeline-monitoring">Keep development and production paths separate</h3>
+<p>For rapid cloud testing during development, <code>sam sync --watch</code> can sync local changes to a development stack. AWS recommends <code>sam sync</code> for development; use <code>sam deploy</code> or the CI/CD pipeline for production deployments. A sync can update resources directly through service APIs and create CloudFormation drift, so do not point a watch session at production. See AWS's <a href="https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/using-sam-cli-sync.html" target="_blank" rel="noopener noreferrer"><code>sam sync</code> guidance</a>.</p>
+
+<h2 id="troubleshooting-guide">Troubleshoot common failures</h2>
+<h3 id="iam-permission-errors">IAM or OIDC access is denied</h3>
+<p>Run <code>aws sts get-caller-identity</code> with the profile used for bootstrap to verify the account. For a CI failure, confirm the workflow's OIDC provider, repository and branch conditions, and role ARN agree with the bootstrap configuration. If using IAM keys, check that the CI provider is reading the intended protected secrets. Then identify the denied AWS action in the CI log or CloudTrail event and add only the missing permission to the responsible role.</p>
+
+<h3 id="build-error-solutions">The build or test stage fails</h3>
+<p>Check the provider's build log for a missing runtime, dependency, or container requirement. Run <code>sam validate</code> and <code>sam build</code> locally with the same template and build options. If the workflow shows a test job as successful but no tests ran, add the test command and verify that a deliberate failing test causes the job to fail.</p>
+
+<h3 id="deployment-error-fixes">The CloudFormation deployment fails</h3>
+<p>Check the stack events in the same account and Region as the failed stage. Confirm the CloudFormation execution role can create or update the resources in the SAM template, the pipeline role can pass that role, and the artifact bucket or ECR repository matches the target Region and package type. Review IAM changes and resource replacements before retrying. Resolve the cause, then run the pipeline again so the same reviewed path deploys the fix.</p>
