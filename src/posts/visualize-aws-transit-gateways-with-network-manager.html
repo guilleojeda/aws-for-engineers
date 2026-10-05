@@ -3,580 +3,70 @@ layout: post.njk
 templateEngineOverride: html
 tags: posts
 title: "Visualize AWS Transit Gateways with Network Manager"
-description: "Learn how to visualize and manage AWS Transit Gateway networks with Network Manager. Set up your account, link Transit Gateways, view network topology, monitor performance, and fix common issues."
+description: "Create a global network, register Transit Gateways, read topology and CloudWatch views, and choose the right AWS tool for route and reachability checks."
 date: "2024-07-31"
 datePublished: "2024-07-31T00:38:17.653000+00:00"
 heroImage: "/assets/media/94be10a342adbc10c66d.jpg"
 permalink: "/blog/visualize-aws-transit-gateways-with-network-manager/"
 sourceUrl: "https://awsforengineers.com/blog/visualize-aws-transit-gateways-with-network-manager/"
-dateModified: "2026-10-03"
-updateNote: "Added author attribution and profile information."
+dateModified: "2026-10-04"
+updateNote: "Rebuilt the guide around Transit Gateway registration, current Network Manager maps and telemetry, analyzer scope, Cloud WAN separation, and pricing."
 ---
-<p><a href="https://docs.aws.amazon.com/managedservices/latest/userguide/networking-manager.html" target="_blank">AWS Network Manager</a> helps you visualize and manage your <a href="/blog/aws-transit-gateway-route-tables-explained/">Transit Gateway</a> networks. Here's what you need to know:</p>
-<ul>
-<li>Network Manager provides a central dashboard for your entire network</li>
-<li>It helps track performance, spot issues, and make data-driven decisions</li>
-<li>You can see your network layout, including Transit Gateways, VPCs, and subnets</li>
-</ul>
-<p>To get started:</p>
+<p>AWS Network Manager’s Global Networks for Transit Gateways feature gives you a central inventory and topology view of existing Transit Gateways across Regions and, when configured, accounts. It can show AWS attachments and on-premises network objects that you model in the global network. It does not create or change Transit Gateways, prove that an application can connect, or benchmark traffic. This guide covers the Transit Gateway view; <a href="https://docs.aws.amazon.com/network-manager/latest/tgwnm/what-are-global-networks.html" rel="noopener noreferrer" target="_blank">AWS documents its scope and concepts</a>.</p>
+
+<h2 id="before-you-start">Before you start</h2>
+<p>You need an existing Transit Gateway. Create or change the Transit Gateway and its attachments through Amazon VPC, then register the gateway with Network Manager. A Transit Gateway can belong to only one global network. When registered, its VPC, VPN, Direct Connect gateway, Connect, and peering attachments are included in the global network. The feature is an inventory and monitoring view; it does not modify those network resources.</p>
+<p>Network Manager uses a fixed home Region for each global network. AWS currently documents US West (Oregon), <code>us-west-2</code>, for commercial Regions and AWS GovCloud (US-West) for GovCloud networks; the home Region cannot be changed after the global network is established. For multiple AWS accounts, multi-account access is optional and requires AWS Organizations with Network Manager trusted access. You can register a delegated administrator to handle it from a member account. Start with the <a href="https://docs.aws.amazon.com/network-manager/latest/tgwnm/gnw-getting-started.html" rel="noopener noreferrer" target="_blank">current setup prerequisites</a> and <a href="https://docs.aws.amazon.com/network-manager/latest/tgwnm/what-are-global-networks.html" rel="noopener noreferrer" target="_blank">home Region details</a> for your account scope.</p>
+
+<h2 id="set-up-aws-network-manager">Create a global network and register Transit Gateways</h2>
 <ol>
-<li>Set up your AWS account and ensure you have Transit Gateways</li>
-<li>Create a Global Network in Network Manager</li>
-<li>Link your Transit Gateways to the Global Network</li>
-<li>Use the dashboard to view your network topology and details</li>
+<li><strong>Create the container.</strong> Open Network Manager, choose <em>Connectivity</em> and <em>Global Networks</em>, then create a global network with a name and description. Do not create a Cloud WAN core network unless you are using Cloud WAN.</li>
+<li><strong>Register an existing gateway.</strong> Open the global network, choose <em>Transit gateways</em>, then <em>Register transit gateway</em>. Select the account and Transit Gateway, and register it. Repeat for each gateway whose details and attachments you want included.</li>
+<li><strong>Model on-premises resources when needed.</strong> Add sites, devices, and links to represent physical locations and network equipment, then associate supported customer gateways or Connect peers. These records are details you provide; Network Manager does not discover your entire physical network for you.</li>
 </ol>
-<p>Key features:</p>
-<figure><table>
-<thead>
-<tr>
-<th>Feature</th>
-<th>Benefit</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Network topology view</td>
-<td>See how your network is connected</td>
-</tr>
-<tr>
-<td>Performance metrics</td>
-<td>Monitor throughput, packet loss, and latency</td>
-</tr>
-<tr>
-<td>Alerts</td>
-<td>Get notified of network issues</td>
-</tr>
-<tr>
-<td>Resource organization</td>
-<td>Use tags and groups for better management</td>
-</tr>
-<tr>
-<td>CloudWatch integration</td>
-<td>Collect and analyze network data</td>
-</tr>
-<tr>
-<td>API access</td>
-<td>Automate network management tasks</td>
-</tr>
-</tbody>
-</table></figure>
-<p>By using Network Manager, you can effectively visualize, monitor, and manage your <a href="https://aws.amazon.com/transit-gateway/" target="_blank">AWS Transit Gateway</a> networks.</p>
-<h2 id="related-video-from-youtube">Related video from YouTube</h2>
-<iframe allowfullscreen="" frameborder="0" loading="lazy" src="https://www.youtube.com/embed/S5nnwr5_kDA"></iframe><h2 id="before-you-start">Before you start</h2>
-<p>To use AWS Network Manager with Transit Gateways, make sure you have everything ready.</p>
-<h3 id="set-up-your-aws-account">Set up your AWS account</h3>
-<ol>
-<li>Sign in to AWS</li>
-<li>Go to IAM (Identity and Access Management)</li>
-<li>Add a new user:
-<ul>
-<li>Choose a username</li>
-<li>Select both "Programmatic Access" and "AWS Management Console Access"</li>
-<li>Set permissions (add to group, copy from existing user, or attach policies)</li>
-<li>Add optional tags</li>
-<li>Review and create user</li>
-<li>Save the Access Key ID and Secret Access Key</li>
-</ul>
-</li>
-</ol>
-<h3 id="check-for-transit-gateways">Check for Transit Gateways</h3>
-<p>Make sure you have Transit Gateways in your AWS setup. If not:</p>
-<ol>
-<li>Go to the VPC Dashboard</li>
-<li>Click "Transit Gateways"</li>
-<li>Click "Create transit gateway"</li>
-<li>Fill in the details</li>
-<li>Click "Create transit gateway"</li>
-</ol>
-<h3 id="know-the-basics">Know the basics</h3>
-<p>You should understand these AWS networking ideas:</p>
-<figure><table>
-<thead>
-<tr>
-<th>Concept</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>VPC</td>
-<td>Virtual Private Cloud</td>
-</tr>
-<tr>
-<td>Subnet</td>
-<td>A part of your VPC's IP address range</td>
-</tr>
-<tr>
-<td>Route table</td>
-<td>Controls traffic between subnets</td>
-</tr>
-<tr>
-<td>Network ACL</td>
-<td>Controls inbound and outbound traffic for subnets</td>
-</tr>
-<tr>
-<td>Security group</td>
-<td>Acts as a virtual firewall for instances</td>
-</tr>
-<tr>
-<td>Transit Gateway</td>
-<td>Connects VPCs and on-premises networks</td>
-</tr>
-</tbody>
-</table></figure>
-<p>If these terms are new to you, learn about them before going further.</p>
-<h2 id="set-up-aws-network-manager">Set up <a href="https://docs.aws.amazon.com/managedservices/latest/userguide/networking-manager.html" target="_blank">AWS Network Manager</a></h2>
-<p><figure><img alt="AWS Network Manager" loading="lazy" src="/assets/media/a379fbda49e9e83ecd43.jpg"/></figure></p>
-<p>Follow these steps to start using AWS Network Manager for viewing your Transit Gateways:</p>
-<h3 id="log-in-to-aws-management-console">Log in to AWS Management Console</h3>
-<ol>
-<li>Open the <a href="https://aws.amazon.com/console/" target="_blank">AWS Management Console</a></li>
-<li>Sign in with your AWS account</li>
-<li>If you have multiple accounts, pick the right one from the dropdown menu</li>
-</ol>
-<h3 id="find-network-manager-service">Find Network Manager service</h3>
-<figure><table>
-<thead>
-<tr>
-<th>Method</th>
-<th>Steps</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Search</td>
-<td>1. Click <strong>Services</strong> at the top  <br/>2. Type "Network Manager" in the search bar  <br/>3. Choose <strong>Network Manager</strong> from the list</td>
-</tr>
-<tr>
-<td>Navigation menu</td>
-<td>Look for Network Manager under <strong>Networking &amp; Connectivity</strong></td>
-</tr>
-</tbody>
-</table></figure>
-<h3 id="create-a-global-network">Create a Global Network</h3>
-<ol>
-<li>In Network Manager, click <strong>Create a global network</strong></li>
-<li>Fill in these details:
-<ul>
-<li>Name</li>
-<li>Description</li>
-<li>AWS Regions</li>
-</ul>
-</li>
-<li>Click <strong>Create global network</strong></li>
-</ol>
-<h3 id="link-transit-gateways">Link Transit Gateways</h3>
-<ol>
-<li>Go to <strong>Transit Gateways</strong> in Network Manager</li>
-<li>Click <strong>Link Transit Gateway</strong></li>
-<li>Pick the Transit Gateway you want to add</li>
-<li>Choose your Global Network</li>
-<li>Click <strong>Link Transit Gateway</strong></li>
-</ol>
-<h2 id="view-transit-gateway-networks">View Transit Gateway Networks</h2>
-<h3 id="open-network-manager-dashboard">Open Network Manager Dashboard</h3>
-<p>To see your <a href="/blog/aws-transit-gateway-scalability-and-limits-explained/">Transit Gateway networks</a>:</p>
-<ol>
-<li>Go to the AWS Management Console</li>
-<li>Choose Network Manager from the services list</li>
-<li>Click on "Global Networks" tab</li>
-<li>Select your global network</li>
-</ol>
-<p>The dashboard shows your network layout, including Transit Gateways, VPCs, and subnets. Use it to see your network, check its health, and fix problems.</p>
-<h3 id="read-network-topology-view">Read network topology view</h3>
-<p>The network topology view shows a map of your network. It includes:</p>
-<ul>
-<li>Nodes (Transit Gateways, VPCs, subnets)</li>
-<li>Connections between nodes</li>
-</ul>
-<p>This view helps you see how your network parts connect and spot issues.</p>
-<h3 id="understand-node-and-connection-details">Understand node and connection details</h3>
-<p>To learn more about a node or connection:</p>
-<ol>
-<li>Click on it in the topology view</li>
-<li>Look at the details panel</li>
-</ol>
-<p>For example, clicking a Transit Gateway shows:</p>
-<figure><table>
-<thead>
-<tr>
-<th>Information</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Name</td>
-<td>The Transit Gateway's name</td>
-</tr>
-<tr>
-<td>Description</td>
-<td>Any added description</td>
-</tr>
-<tr>
-<td>ASN</td>
-<td>Autonomous System Number</td>
-</tr>
-<tr>
-<td>VPN connections</td>
-<td>Connected VPNs</td>
-</tr>
-<tr>
-<td>Attached VPCs</td>
-<td>List of connected VPCs</td>
-</tr>
-<tr>
-<td>Attached subnets</td>
-<td>List of connected subnets</td>
-</tr>
-</tbody>
-</table></figure>
-<h3 id="use-filters-and-search">Use filters and search</h3>
-<p>To find specific parts of your network:</p>
-<ol>
-<li>Use filters to narrow down the view</li>
-<li>Use the search bar to find items by name or description</li>
-</ol>
-<p>Filter options:</p>
-<figure><table>
-<thead>
-<tr>
-<th>Filter</th>
-<th>Examples</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Node type</td>
-<td>Transit Gateway, VPC, Subnet</td>
-</tr>
-<tr>
-<td>Region</td>
-<td>US-East-1, EU-West-2</td>
-</tr>
-<tr>
-<td>Tag</td>
-<td>Production, Development</td>
-</tr>
-</tbody>
-</table></figure>
-<p>These tools help you quickly find what you need in your network.</p>
-<h2 id="check-network-health-and-performance">Check network health and performance</h2>
-<h3 id="look-at-network-metrics">Look at network metrics</h3>
-<p>Network Manager shows key metrics to help you spot issues in your Transit Gateway networks:</p>
-<figure><table>
-<thead>
-<tr>
-<th>Metric</th>
-<th>What it shows</th>
-<th>Why it's important</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Network throughput</td>
-<td>Amount of data moving through your network</td>
-<td>Helps find bottlenecks</td>
-</tr>
-<tr>
-<td>Packet loss</td>
-<td>Percentage of lost data packets</td>
-<td>High loss can mean network problems</td>
-</tr>
-<tr>
-<td>Latency</td>
-<td>Time for data to travel across the network</td>
-<td>High latency can show network issues</td>
-</tr>
-</tbody>
-</table></figure>
-<p>To see these metrics:</p>
-<ol>
-<li>Open the Network Manager dashboard</li>
-<li>Click the "Metrics" tab</li>
-<li>Pick the metric you want to view</li>
-</ol>
-<h3 id="spot-network-problems">Spot network problems</h3>
-<p>By looking at these metrics, you can find possible network issues:</p>
-<figure><table>
-<thead>
-<tr>
-<th>Problem</th>
-<th>What to look for</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Network congestion</td>
-<td>High packet loss or latency</td>
-</tr>
-<tr>
-<td>Slow connections</td>
-<td>High latency</td>
-</tr>
-</tbody>
-</table></figure>
-<p>When you spot these issues, try to find the cause and fix it.</p>
-<h3 id="set-up-alerts">Set up alerts</h3>
-<p>Network Manager lets you create alerts for network issues. Here's how:</p>
-<ol>
-<li>Go to the Network Manager dashboard</li>
-<li>Click the "Alerts" tab</li>
-<li>Click "Create alert"</li>
-<li>Choose what to alert on</li>
-<li>Set the alert level</li>
-<li>Add how you want to be notified</li>
-</ol>
-<p>For example, you could set an alert for when packet loss goes above a certain level.</p>
-<h2 id="fix-common-visualization-issues">Fix common visualization issues</h2>
-<h3 id="handle-missing-information">Handle missing information</h3>
-<p>When using Network Manager to view Transit Gateways, you might not see all the network details. Here's how to fix this:</p>
-<ol>
-<li><strong>Check your data</strong>: Make sure all your network info is in Network Manager and up-to-date.</li>
-<li><strong>Look at settings</strong>: Check that Network Manager is set up right.</li>
-<li><strong>Check your access</strong>: Make sure you have the right permissions to see everything.</li>
-</ol>
-<p>These steps will help you find and fix issues with missing information.</p>
-<h3 id="solve-permission-problems">Solve permission problems</h3>
-<p>If you can't see Transit Gateways in Network Manager, you might have permission issues. Here's what to do:</p>
-<figure><table>
-<thead>
-<tr>
-<th>Step</th>
-<th>Action</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>1</td>
-<td>Check IAM roles and policies</td>
-</tr>
-<tr>
-<td>2</td>
-<td>Verify your user permissions</td>
-</tr>
-<tr>
-<td>3</td>
-<td>Use <a href="https://aws.amazon.com/iam/" target="_blank">AWS IAM</a> Access Analyzer</td>
-</tr>
-</tbody>
-</table></figure>
-<p>Following these steps will help you fix permission problems and see your Transit Gateways.</p>
-<h3 id="address-data-sync-delays">Address data sync delays</h3>
-<p>Sometimes, there's a delay in updating data between Network Manager and your AWS resources. To fix this:</p>
-<ol>
-<li><strong>Check data collection settings</strong>: Make sure Network Manager is set to collect data often enough.</li>
-<li><strong>Look at network connection</strong>: Check that your network is working well between Network Manager and AWS resources.</li>
-<li><strong>Use AWS CloudWatch</strong>: This tool can help you spot and fix sync delays.</li>
-</ol>
-<h2 id="tips-for-better-network-visualization">Tips for better network visualization</h2>
-<h3 id="organize-network-resources">Organize network resources</h3>
-<p>To make your network easier to see and manage, keep your AWS resources tidy. This helps you spot links between different parts and fix problems faster.</p>
-<p>Here's how to organize your network resources:</p>
-<figure><table>
-<thead>
-<tr>
-<th>Method</th>
-<th>Description</th>
-<th>How it helps</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>AWS Resource Groups</td>
-<td>Group resources by type, use, or team</td>
-<td>Makes managing and viewing resources easier</td>
-</tr>
-<tr>
-<td>Consistent naming</td>
-<td>Use clear names for all resources</td>
-<td>Helps identify and understand resources quickly</td>
-</tr>
-<tr>
-<td><a href="/blog/">AWS Tags</a></td>
-<td>Add labels to resources</td>
-<td>Makes filtering and searching resources simpler</td>
-</tr>
-</tbody>
-</table></figure>
-<h3 id="use-tags-effectively">Use tags effectively</h3>
-<p>Tags help you manage and view your AWS resources better. Good tag use lets you sort, find, and group resources in ways that work for you.</p>
-<p>Tips for using tags well:</p>
-<figure><table>
-<thead>
-<tr>
-<th>Tip</th>
-<th>Details</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Set standard tags</td>
-<td>Choose a set of tags for everyone to use</td>
-</tr>
-<tr>
-<td>Track ownership</td>
-<td>Use tags to show who owns each resource</td>
-</tr>
-<tr>
-<td>Show resource purpose</td>
-<td>Use tags to explain what each resource does</td>
-</tr>
-</tbody>
-</table></figure>
-<h3 id="keep-network-docs-up-to-date">Keep network docs up to date</h3>
-<p>Keeping your network information current is key for good network viewing. This means tracking changes to your network parts, like new Transit Gateways or security groups.</p>
-<p>Ways to keep your network info fresh:</p>
-<figure><table>
-<thead>
-<tr>
-<th>Method</th>
-<th>How to do it</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Use AWS Network Manager</td>
-<td>Manage and view network resources in one place</td>
-</tr>
-<tr>
-<td>Use version control</td>
-<td>Track changes to your network info with tools like Git</td>
-</tr>
-<tr>
-<td>Update regularly</td>
-<td>Set times to check and update your network info</td>
-</tr>
-</tbody>
-</table></figure>
-<h2 id="extra-network-manager-features">Extra Network Manager features</h2>
-<h3 id="set-up-network-sites">Set up network sites</h3>
-<p>Network Manager lets you create and manage multiple network sites. This helps you organize and see your network better. A network site can be a data center, office, or cloud setup. Setting up network sites helps you:</p>
-<ul>
-<li>Group related network parts</li>
-<li>See how your network is set up and connected</li>
-<li>Check how well your network is working across sites</li>
-</ul>
-<p>To set up a network site:</p>
-<ol>
-<li>Log in to AWS</li>
-<li>Go to Network Manager</li>
-<li>Click "Network sites"</li>
-<li>Click "Create network site"</li>
-<li>Fill in the details</li>
-<li>Click "Create network site"</li>
-</ol>
-<p>You can also bring in sites from <a href="https://docs.aws.amazon.com/organizations/latest/userguide/orgs_introduction.html" target="_blank">AWS Organizations</a> or set them up using AWS tools.</p>
-<h3 id="use-aws-cloudwatch">Use <a href="https://aws.amazon.com/cloudwatch/" target="_blank">AWS CloudWatch</a></h3>
-<p><figure><img alt="AWS CloudWatch" loading="lazy" src="/assets/media/361c9f0e35d01f1b4cdc.jpg"/></figure></p>
-<p>CloudWatch helps you keep an eye on your AWS setup. When you use it with Network Manager, you can:</p>
-<ul>
-<li>Collect network data</li>
-<li>Set up alerts for network problems</li>
-<li>See network information in charts</li>
-</ul>
-<p>To use CloudWatch with Network Manager:</p>
-<ol>
-<li>Log in to AWS</li>
-<li>Go to CloudWatch</li>
-<li>Click "Metrics"</li>
-<li>Pick "Network Manager"</li>
-<li>Choose what you want to see</li>
-<li>Make a chart to show the data</li>
-</ol>
-<p>You can also use CloudWatch to collect and look at network logs.</p>
-<h3 id="work-with-network-manager-apis">Work with Network Manager APIs</h3>
-<p>Network Manager has tools (APIs) to help you do network tasks automatically. With these tools, you can:</p>
-<ul>
-<li>Set up and manage network parts without manual work</li>
-<li>Connect Network Manager to other AWS services</li>
-<li>Set up your network automatically</li>
-</ul>
-<p>The API works with AWS tools and lets you manage your network. You can use it to:</p>
-<ul>
-<li>Set up network sites and parts</li>
-<li>Get network data and logs</li>
-<li>Change network settings</li>
-</ul>
-<p>To start using the API:</p>
-<ol>
-<li>Log in to AWS</li>
-<li>Go to API Gateway</li>
-<li>Click "APIs"</li>
-<li>Pick "Network Manager"</li>
-<li>Click "Create API key"</li>
-<li>Use this key to connect to Network Manager</li>
-</ol>
-<figure><table>
-<thead>
-<tr>
-<th>API Task</th>
-<th>What it Does</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Create resources</td>
-<td>Set up new network parts</td>
-</tr>
-<tr>
-<td>Get metrics</td>
-<td>Fetch network performance data</td>
-</tr>
-<tr>
-<td>Update settings</td>
-<td>Change network configurations</td>
-</tr>
-<tr>
-<td>Manage sites</td>
-<td>Add or change network locations</td>
-</tr>
-</tbody>
-</table></figure>
-<h2 id="wrap-up">Wrap-up</h2>
-<h3 id="key-takeaways">Key takeaways</h3>
-<p>This guide showed you how to use AWS Network Manager to see your Transit Gateways. You learned to:</p>
-<ul>
-<li>Set up Network Manager</li>
-<li>Connect Transit Gateways</li>
-<li>Look at your network layout</li>
-<li>Check how well your network is working</li>
-<li>Fix common viewing problems</li>
-<li>Use extra Network Manager tools</li>
-</ul>
-<h3 id="keep-an-eye-on-your-network">Keep an eye on your network</h3>
-<p>It's important to check your network often. Here's why:</p>
-<figure><table>
-<thead>
-<tr>
-<th>Reason</th>
-<th>Benefit</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Spot issues early</td>
-<td>Fix problems before they get big</td>
-</tr>
-<tr>
-<td>Keep things running smoothly</td>
-<td>Less downtime, better performance</td>
-</tr>
-<tr>
-<td>Improve security</td>
-<td>Find and fix weak spots</td>
-</tr>
-</tbody>
-</table></figure>
-<p>Use what you've learned to:</p>
-<ul>
-<li>Look at your Transit Gateways regularly</li>
-<li>Check network health and speed</li>
-<li>Make your network better over time</li>
-</ul>
-<p>
-<h2>Related posts</h2>
-<ul>
-<li><a href="/blog/aws-transit-gateway-route-tables-explained/">AWS Transit Gateway Route Tables Explained</a></li><li><a href="/blog/aws-config-resource-inventory-change-tracking-guide/">AWS Config: Resource Inventory, Change Tracking Guide</a></li><li><a href="/blog/aws-transit-gateway-scalability-and-limits-explained/">AWS Transit Gateway: Scalability &amp; Limits Explained</a></li><li><a href="/blog/aws-vpc-guide-configuration-essentials/">AWS VPC Guide: Configuration Essentials</a></li>
-</ul>
+<p>For a multi-Region network, a global network can include Transit Gateways from several Regions. If two registered gateways are peered, the peer gateway can appear from the registered gateway’s attachment, but its own attachments are visible only when you register that peer Transit Gateway too. Review <a href="https://docs.aws.amazon.com/network-manager/latest/tgwnm/tgw-registrations.html" rel="noopener noreferrer" target="_blank">Transit Gateway registration behavior and limits</a> before organizing gateways into global networks.</p>
+<p>Use an IAM role or federated console session with only the permissions required to create or view the global network and register the intended resources. For multi-account visibility, use the documented Organization and delegated-administrator setup.</p>
+
+<h2 id="view-transit-gateway-networks">Read the topology and geography views</h2>
+<p>Open the global network and choose <em>Transit Gateway network</em> to see its overview. The geography view places AWS Regions and registered network resources on a map; it can show VPCs and the connectivity of VPNs, Direct Connect gateways, and Connect peers, along with sites and devices that you added. The topology tree presents logical relationships. Use these views to answer “what is registered, where is it, and how is it represented?”—not “can this packet reach its destination?” AWS describes the views in its <a href="https://docs.aws.amazon.com/network-manager/latest/tgwnm/nm-visualize-tgw.html" rel="noopener noreferrer" target="_blank">Transit Gateway dashboard guide</a>.</p>
+<p>Select a gateway or attachment to inspect the resource details and related objects. If a remote peer’s attachments are missing, confirm that the peer gateway itself is registered. If an on-premises office or device is absent from the map, add the corresponding site, device, link, and supported association; the map uses the location information you provide for those objects.</p>
+
+<h2 id="check-network-health-and-performance">Know what monitoring and events show</h2>
+<p>The Transit Gateway Monitoring view uses Amazon CloudWatch metrics for gateway traffic. It includes bytes and packets in and out and bytes or packets dropped because of a black-hole route or no matching route. These measures help you spot traffic changes and certain routing drops. They do not measure application request latency, per-flow packet loss, or the time for a packet to cross the network. CloudWatch metrics for Transit Gateway are documented in the <a href="https://docs.aws.amazon.com/network-manager/latest/tgwnm/nm-visualize-tgw.html" rel="noopener noreferrer" target="_blank">Network Manager monitoring guide</a>.
 </p>
+<p>Network Manager also provides Transit Gateway network events such as topology, routing, and status changes through EventBridge. The console’s event summary requires onboarding to CloudWatch Logs Insights; follow the documented onboarding flow and ensure the role has the required permissions. You can create CloudWatch alarms on supported metrics or EventBridge rules for selected events, but there is no generic Network Manager alert that detects every network issue. A blank chart or event pane should prompt you to check the selected gateway, account, time range, permissions, and event onboarding.</p>
+
+<h2 id="choose-the-right-diagnostic-tool">Choose a diagnostic tool for the question</h2>
+<table>
+<thead><tr><th>Question</th><th>Use</th><th>What the result means</th></tr></thead>
+<tbody>
+<tr><td>What gateways, attachments, and modeled sites are in this network?</td><td>Network Manager geography, topology, and inventory views</td><td>A view of registered or modeled resources, not a live path test.</td></tr>
+<tr><td>Do the Transit Gateway route tables contain a path for these addresses?</td><td>Network Manager Route Analyzer</td><td>It analyzes Transit Gateway route tables for registered gateways. It does not inspect VPC route tables, customer-gateway routes, security groups, or network ACLs; it does not support intra-Region peering, and it returns a return-path result only when the forward path succeeds.</td></tr>
+<tr><td>Does the current supported VPC configuration allow this path?</td><td>VPC Reachability Analyzer</td><td>It models supported resource configuration and reports a path or a blocking component. It sends no packets and does not test the data plane.</td></tr>
+<tr><td>What happened to real application traffic?</td><td>Application telemetry, an approved active test, CloudWatch metrics, and VPC Flow Logs as appropriate</td><td>These provide workload or observed-traffic evidence. Choose each signal for its documented scope.</td></tr>
+</tbody>
+</table>
+<p>The <a href="https://docs.aws.amazon.com/network-manager/latest/tgwnm/route-analyzer.html" rel="noopener noreferrer" target="_blank">Route Analyzer documentation</a> spells out its Transit Gateway route-table scope and limitations. Use <a href="https://docs.aws.amazon.com/vpc/latest/reachability/how-reachability-analyzer-works.html" rel="noopener noreferrer" target="_blank">Reachability Analyzer</a> when you need a supported, same-Region configuration analysis across VPC resources. For accepted or rejected VPC IP-flow records, enable <a href="https://docs.aws.amazon.com/vpc/latest/userguide/flow-logs.html" rel="noopener noreferrer" target="_blank">VPC Flow Logs</a>. For measured throughput, jitter, or latency, use a controlled test and application telemetry; see the <a href="/blog/ultimate-guide-to-aws-network-performance-benchmarking/">network benchmarking guide</a>.</p>
+
+<h2 id="fix-common-visualization-issues">Troubleshoot missing map, metric, or event data</h2>
+<ul>
+<li><strong>A Transit Gateway is missing:</strong> confirm that it exists, is registered with this global network, and belongs to the account you selected. A Transit Gateway can be registered to only one global network.</li>
+<li><strong>Attachments are missing:</strong> confirm that the attachment belongs to the registered Transit Gateway. Register a peered Transit Gateway separately if its attachments must appear.</li>
+<li><strong>Sites or devices are missing:</strong> create the site/device records and required links or associations. Verify their location details if they should appear on a geography map.</li>
+<li><strong>Metrics look empty:</strong> select the correct gateway and time range, then check CloudWatch access and the Transit Gateway metrics in the gateway’s Region. These metrics show gateway traffic and routing drops, not request latency.</li>
+<li><strong>Events are not visible:</strong> complete CloudWatch Logs Insights onboarding for the global network and verify the required IAM permissions. Use EventBridge for rules that should route matching events to another target.</li>
+</ul>
+<p>For a longer checklist that separates Network Manager, CloudWatch, Flow Logs, and configuration analyzers, see <a href="/blog/aws-network-dashboard-issues-troubleshooting-tips/">AWS network dashboard troubleshooting</a>. For the route-table associations and return paths behind a Transit Gateway flow, read <a href="/blog/aws-transit-gateway-route-tables-explained/">how Transit Gateway route tables work</a>.</p>
+
+<h2 id="cloud-wan-and-pricing">Understand Cloud WAN and costs</h2>
+<p>A global network can organize registered Transit Gateways without a Cloud WAN core network, or include a Cloud WAN core network when you use that service. <a href="https://docs.aws.amazon.com/network-manager/latest/cloudwan/what-is-cloudwan.html" rel="noopener noreferrer" target="_blank">AWS Cloud WAN is a managed wide-area networking service built around a core network</a>, with its own configuration workflow and pricing. Skip Cloud WAN core-network setup when your task is only to register and visualize Transit Gateways.</p>
+<p>AWS states that there are no additional fees for using Global Networks for Transit Gateways. The Transit Gateways, attachments, data processing, data transfer, and other resources you use can still incur their normal charges. If you add a Cloud WAN core network, check <a href="https://aws.amazon.com/cloud-wan/pricing/" rel="noopener noreferrer" target="_blank">current Cloud WAN pricing</a> separately. AWS’s <a href="https://aws.amazon.com/transit-gateway/pricing/" rel="noopener noreferrer" target="_blank">Transit Gateway pricing page</a> describes the underlying attachment and data-processing charges.</p>
+<p>For more on Transit Gateway route scale, bandwidth, MTU, and service quotas, continue with the <a href="/blog/aws-transit-gateway-scalability-and-limits-explained/">Transit Gateway scalability and limits guide</a>. To validate the VPC routes and security controls that sit beyond the Transit Gateway, use the <a href="/blog/aws-vpc-guide-configuration-essentials/">VPC configuration guide</a>.</p>
+
+<h2 id="faqs">Frequently asked questions</h2>
+<h3 id="does-network-manager-create-or-change-my-transit-gateway">Does Network Manager create or change my Transit Gateway?</h3>
+<p>No. Create and configure Transit Gateways and their attachments through Amazon VPC or the EC2 APIs. Network Manager creates the global-network container, registers existing gateways, and provides inventory, topology, monitoring, and analysis views.</p>
+<h3 id="does-the-map-prove-that-traffic-can-reach-a-resource">Does the map prove that traffic can reach a resource?</h3>
+<p>No. The map represents registered AWS resources and modeled network objects. Use Route Analyzer for Transit Gateway route-table analysis, Reachability Analyzer for supported VPC configuration paths, and live application or network tests for observed behavior.</p>
+<h3 id="do-i-need-a-cloud-wan-core-network">Do I need a Cloud WAN core network?</h3>
+<p>No, not to register and visualize Transit Gateways with Global Networks for Transit Gateways. Create a core network only when you are using AWS Cloud WAN and have reviewed that service’s separate configuration and pricing.</p>
