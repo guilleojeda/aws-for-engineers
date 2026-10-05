@@ -2,514 +2,199 @@
 layout: post.njk
 templateEngineOverride: html
 tags: posts
-title: "Session Management in AWS Lambda: Guide"
-description: "Discover effective session management techniques in AWS Lambda using external storage, stateless authentication, and API Gateway integration."
+title: "AWS Lambda Session Management: JWTs, Cookies, and DynamoDB"
+description: "Choose between Cognito JWTs and revocable server-side sessions in AWS Lambda, with DynamoDB TTL, secure cookies, API Gateway authorizers, and concurrency guidance."
 date: "2024-09-30"
 datePublished: "2024-09-30T18:57:44.976000+00:00"
+dateModified: "2026-10-04"
+updateNote: "Rebuilt the guide around JWTs and revocable server-side sessions, correcting DynamoDB TTL, cookie, and API Gateway authorizer guidance."
 heroImage: "/assets/media/cfb675d48858787dc341.jpg"
 permalink: "/blog/session-management-in-aws-lambda-guide/"
 sourceUrl: "https://awsforengineers.com/blog/session-management-in-aws-lambda-guide/"
-dateModified: "2026-10-03"
-updateNote: "Added author attribution and profile information."
 ---
-<p><a href="https://aws.amazon.com/lambda/" target="_blank">AWS Lambda</a> functions are stateless, making session management tricky. Here's how to handle it:</p>
+<p>A Lambda execution environment can be reused, but an application must not depend on its memory or temporary files surviving for another invocation. Keep durable user session state in an external store, or use a verifiable token when server-side session state is unnecessary. AWS recommends designing standard Lambda functions to be stateless and committing permanent changes to durable services before the function exits; see <a href="https://docs.aws.amazon.com/lambda/latest/dg/concepts-application-design.html" target="_blank" rel="noopener noreferrer">AWS guidance on Lambda application design</a>.</p>
+<p>First separate two things that are often both called a “session”:</p>
 <ul>
-<li>Store session data externally (<a href="https://aws.amazon.com/dynamodb/" target="_blank">DynamoDB</a>, S3, <a href="https://aws.amazon.com/elasticache/" target="_blank">ElastiCache</a>)</li>
-<li>Use stateless authentication (JWTs, Cognito)</li>
-<li>Let <a href="https://aws.amazon.com/api-gateway/" target="_blank">API Gateway</a> manage sessions</li>
+<li><strong>An authentication token</strong> carries signed identity and authorization claims. The API can validate it without loading a per-user session record on every request.</li>
+<li><strong>An opaque session ID</strong> is a random secret that the server looks up. A server-side record lets the application change session data and provides a control point for rejecting later requests before the browser cookie expires. The enforcement delay depends on the store consistency, authorizer cache, and any request already in progress.</li>
 </ul>
-<p>Key points:</p>
-<ul>
-<li>Lambda functions forget everything after each run</li>
-<li>No built-in storage or shared memory</li>
-<li>External storage is crucial for maintaining state</li>
-<li>Proper session management improves user experience and security</li>
-</ul>
-<p>Quick comparison of external storage options:</p>
-<figure><table>
-<thead>
-<tr>
-<th>Storage</th>
-<th>Speed</th>
-<th>Scalability</th>
-<th>Cost</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>DynamoDB</td>
-<td>Fast</td>
-<td>High</td>
-<td>Can be expensive</td>
-</tr>
-<tr>
-<td>ElastiCache</td>
-<td>Very fast</td>
-<td>Medium</td>
-<td>Requires EC2 management</td>
-</tr>
-<tr>
-<td>S3</td>
-<td>Slower</td>
-<td>High</td>
-<td>Cost-effective for large data</td>
-</tr>
-</tbody>
-</table></figure>
-<p>To implement session management in Lambda:</p>
-<ol>
-<li>Set up external storage (e.g., DynamoDB table)</li>
-<li>Create Lambda functions for session operations</li>
-<li>Use API Gateway to handle requests</li>
-<li>Implement proper security measures</li>
-</ol>
-<p>Remember: Always encrypt sensitive data, manage IAM roles carefully, and follow <a href="/blog/aws-content-migration-best-practices/">AWS best practices</a> for security and performance.</p>
-<h2 id="related-video-from-youtube">Related video from YouTube</h2>
-<iframe allowfullscreen="" frameborder="0" loading="lazy" src="https://www.youtube-nocookie.com/embed/BFC16uM15Cg"></iframe><h2 id="aws-lambda-and-statelessness"><a href="https://aws.amazon.com/lambda/" target="_blank">AWS Lambda</a> and Statelessness</h2>
-<p><figure><img alt="AWS Lambda" loading="lazy" src="/assets/media/5c80186f74defaa9acf3.jpg"/></figure></p>
-<h3 id="how-lambda's-stateless-model-works">How Lambda's Stateless Model Works</h3>
-<p>Lambda functions are stateless. Each run starts fresh, with no memory of past executions. Here's the gist:</p>
-<ul>
-<li>Every request triggers a new function instance</li>
-<li>Functions don't remember previous runs</li>
-<li>You must initialize data each time</li>
-<li>Function state vanishes after execution</li>
-</ul>
-<p>This setup helps Lambda scale and handle multiple requests. But it makes managing user sessions tricky.</p>
-<h3 id="effects-on-session-management">Effects on Session Management</h3>
-<p>Lambda's stateless nature shakes up session handling:</p>
-<p>1. <strong>No built-in storage</strong></p>
-<p>Lambda can't keep session info between calls.</p>
-<p>2. <strong>External storage needed</strong></p>
-<p>You'll need services like DynamoDB or Redis to maintain state.</p>
-<p>3. <strong>More complex</strong></p>
-<p>It takes extra code and infrastructure to manage sessions.</p>
-<p>4. <strong>Performance hit</strong></p>
-<p>Grabbing session data from external storage can slow things down.</p>
-<p>5. <strong>Security challenges</strong></p>
-<p>You've got to be extra careful with session tokens.</p>
-<p>Take an e-commerce app using Lambda. It might store shopping carts in DynamoDB. The function would fetch and update cart data with each call.</p>
-<blockquote>
-<p>"The stateless and ephemeral nature of serverless functions shifts the way attackers approach these systems." - Hillel Solow, Serverless Security R&amp;D</p>
-</blockquote>
-<p>This shows why solid security is crucial, even in stateless setups.</p>
-<p>To handle sessions in Lambda:</p>
-<ol>
-<li>Use authenticated session tokens</li>
-<li>Store session data externally</li>
-<li>Sign and encrypt tokens properly</li>
-<li>Use secure session management libraries</li>
-</ol>
-<h2 id="session-management-methods-for-lambda">Session Management Methods for Lambda</h2>
-<p>Lambda's stateless nature makes session management tricky. Here are three ways to handle it:</p>
-<h3 id="external-storage-for-sessions">External Storage for Sessions</h3>
-<p>Store session data outside Lambda for better scaling and persistence. Here's a quick comparison:</p>
-<figure><table>
-<thead>
-<tr>
-<th>Storage</th>
-<th>Speed</th>
-<th>Scalability</th>
-<th>Cost</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>DynamoDB</td>
-<td>Fast</td>
-<td>High</td>
-<td>Can add up</td>
-</tr>
-<tr>
-<td>ElastiCache</td>
-<td>Very fast</td>
-<td>Medium</td>
-<td>EC2 management needed</td>
-</tr>
-<tr>
-<td>S3</td>
-<td>Slower</td>
-<td>High</td>
-<td>Cheap for big data</td>
-</tr>
-</tbody>
-</table></figure>
-<p>Want to use DynamoDB? Here's how:</p>
-<p>1. Make a DynamoDB table with session IDs as keys</p>
-<p>2. Write Lambda functions to work with the table</p>
-<p>3. Use AWS SDK in your Lambda code</p>
-<h3 id="stateless-authentication">Stateless Authentication</h3>
-<p>Skip server-side storage with stateless auth. JWTs and Cognito are popular:</p>
-<p><strong>JWT:</strong></p>
-<ol>
-<li>Create a JWT with user info at login</li>
-<li>Send it to the client</li>
-<li>Check it on future requests</li>
-</ol>
-<p><strong>Cognito:</strong></p>
-<ol>
-<li>Set up a User Pool</li>
-<li>Add Cognito auth to your Lambdas</li>
-<li>Use Cognito tokens for user ID and access</li>
-</ol>
-<h3 id="api-gateway-for-sessions"><a href="https://aws.amazon.com/api-gateway/" target="_blank">API Gateway</a> for Sessions</h3>
-<p><figure><img alt="API Gateway" loading="lazy" src="/assets/media/f8063ef8e04b17a3937a.jpg"/></figure></p>
-<p>Let API Gateway handle session cookies:</p>
-<ol>
-<li>Set up API Gateway for cookies</li>
-<li>Make Lambdas for auth and sessions</li>
-<li>Use Lambda Proxy to pass data</li>
-</ol>
-<p>Here's a simple Lambda to check sessions:</p>
-<pre><code>def lambda_handler(event, context):
-    cookies = event['headers'].get('Cookie', '')
-    session_id = extract_session_id(cookies)
+<p>For a typical API that only needs verified identity and scopes, use an identity provider such as Amazon Cognito with an API Gateway authorizer. Choose a server-side session when you need server-controlled revocation, mutable session data, or a browser login that should hide identity-provider tokens from JavaScript. API Gateway routes and authorizers can enforce access; API Gateway is not a durable session store.</p>
 
-    if validate_session(session_id):
-        return {
-            'statusCode': 200,
-            'body': 'Valid session'
-        }
-    else:
-        return {
-            'statusCode': 401,
-            'body': 'Invalid session'
-        }
-</code></pre>
-<p>This checks for a valid session cookie and responds accordingly.</p>
+<h2 id="aws-lambda-and-statelessness"><a href="https://aws.amazon.com/lambda/" target="_blank" rel="noopener noreferrer">AWS Lambda</a> and Statelessness</h2>
+<figure><img alt="AWS Lambda" loading="lazy" src="/assets/media/5c80186f74defaa9acf3.jpg"/></figure>
+<h3 id="how-lambda's-stateless-model-works">What stateless means in practice</h3>
+<p>Lambda can reuse an execution environment to reduce initialization work. Module-level SDK clients and other reusable connections can therefore improve efficiency. Reuse is an optimization, not a persistence guarantee: a later request can run in a different environment, and an environment can be retired. Do not keep a user's login, cart, or authorization decision in a global variable or local file and expect the next invocation to find it.</p>
+<p>Store data that must survive an invocation in a database or object store. For application state patterns such as idempotent writes, concurrency control, and event processing, see <a href="/blog/5-patterns-for-resilient-serverless-state-management/">5 Patterns for Resilient Serverless State Management on AWS</a>.</p>
+<h3 id="effects-on-session-management">What a session needs</h3>
+<p>A session design defines how a request proves identity, how long that proof is valid, how the application finds any server-side data, and how sign-out or account changes take effect. Lambda changes where state must live; it does not change these application responsibilities.</p>
+
+<h2 id="session-management-methods-for-lambda">Session Management Methods for Lambda</h2>
+<h3 id="stateless-authentication">Use Cognito or another identity provider when a token is enough</h3>
+<p>Amazon Cognito user pools issue ID, access, and refresh tokens for different purposes. Use an access token for API authorization; an ID token describes the authenticated user and is not a substitute for an access token. For an HTTP API, API Gateway's <a href="https://docs.aws.amazon.com/apigateway/latest/developerguide/http-api-jwt-authorizer.html" target="_blank" rel="noopener noreferrer">JWT authorizer</a> can verify a configured issuer, audience, token signature, expiry, and route scopes, then pass validated claims to the Lambda integration. REST APIs have a separate <a href="https://docs.aws.amazon.com/apigateway/latest/developerguide/apigateway-integrate-with-cognito.html" target="_blank" rel="noopener noreferrer">Cognito user-pool authorizer</a> option.</p>
+<p>A self-contained JWT is convenient because a request can be checked without a database lookup, but an API that only checks its signature and expiry does not consult a live session record. Cognito token revocation prevents use with Cognito APIs, but AWS notes that a revoked token can still pass local JWT signature-and-expiry verification until it expires. If a security or account event must take effect immediately at your API, use a server-side revocation check or opaque session. If you can tolerate a delay, keep access-token lifetimes short enough for the window your product accepts. See <a href="https://docs.aws.amazon.com/cognito/latest/developerguide/token-revocation.html" target="_blank" rel="noopener noreferrer">Cognito's token-revocation guidance</a>.</p>
+<h3 id="external-storage-for-sessions">Use a server-side record when sessions must be revocable</h3>
+<p>Give the client a high-entropy, opaque session ID and store only a one-way hash of that ID with the minimum session data the application needs. On each protected request, hash the presented ID, retrieve the record by its primary key, and check its expiry in application code.</p>
+<figure><table>
+<thead><tr><th>Option</th><th>Good fit</th><th>Trade-off</th></tr></thead>
+<tbody>
+<tr><td><a href="https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Introduction.html" target="_blank" rel="noopener noreferrer">Amazon DynamoDB</a></td><td>Durable, shared session records with key-based reads and updates.</td><td>Adds a service call to the request. TTL cleanup is asynchronous, so the application must enforce expiry.</td></tr>
+<tr><td><a href="https://docs.aws.amazon.com/AmazonElastiCache/latest/dg/WhatIs.corecomponents.html" target="_blank" rel="noopener noreferrer">Amazon ElastiCache for Valkey or Redis OSS</a></td><td>Low-latency lookups where an in-memory store and its operating model fit.</td><td>Choose capacity, eviction, failover, and durability settings deliberately; it is not a durable database by default.</td></tr>
+<tr><td>Amazon S3</td><td>Session-related files or larger objects referenced by an application record.</td><td>Usually a poor primary store for a small record read on each authenticated request.</td></tr>
+</tbody>
+</table></figure>
+<p>For most applications that need revocation without introducing a separate cache, a small DynamoDB item keyed by a hashed session ID is a straightforward starting point. Keep cart, profile, or workflow data in the data model that owns it instead of turning the authentication session into a general-purpose data container.</p>
+<h3 id="api-gateway-for-sessions"><a href="https://aws.amazon.com/api-gateway/" target="_blank" rel="noopener noreferrer">API Gateway</a> validates or routes requests; it does not store sessions</h3>
+<p>API Gateway can call a JWT authorizer or a Lambda authorizer before invoking a route. Put custom session lookup logic in a Lambda authorizer when it should protect many routes, or in the integration Lambda when authorization is specific to that operation. In either design, the session record remains in a data store.</p>
+<p>For an HTTP API Lambda proxy integration using payload format 2.0, API Gateway places incoming cookies in the event's <code>cookies</code> array. A Lambda response can set browser cookies with a <code>cookies</code> array, which API Gateway returns as <code>Set-Cookie</code> headers. This is HTTP transport, not session storage; see AWS's documentation for <a href="https://docs.aws.amazon.com/apigateway/latest/developerguide/http-api-develop-integrations-lambda.html" target="_blank" rel="noopener noreferrer">HTTP API Lambda proxy payloads</a>.</p>
+<p>Authorizer caching changes revocation behavior. While an authorization result is cached, API Gateway can reuse an earlier Allow without calling the authorizer or checking DynamoDB again. To avoid cache-based delay after revocation, disable that cache and use a lookup with suitable consistency; for DynamoDB, the example uses a strongly consistent base-table read in the same Region. Otherwise set the cache lifetime within the revocation delay the application accepts, and configure identity sources so the cache key identifies the relevant caller. A request already authorized may still finish. Read the API type's <a href="https://docs.aws.amazon.com/apigateway/latest/developerguide/http-api-lambda-authorizer.html" target="_blank" rel="noopener noreferrer">Lambda authorizer caching rules</a> before enabling it.</p>
+
 <h2 id="setting-up-session-management-in-lambda">Setting Up Session Management in Lambda</h2>
-<p>Let's set up session management in AWS Lambda using DynamoDB, Lambda functions, and API Gateway. Here's how:</p>
-<h3 id="dynamodb-for-session-storage"><a href="https://aws.amazon.com/dynamodb/" target="_blank">DynamoDB</a> for Session Storage</h3>
-<p><figure><img alt="DynamoDB" loading="lazy" src="/assets/media/b8ef902aa023ba39af61.jpg"/></figure></p>
-<p>Create a DynamoDB table for sessions:</p>
+<p>The example below uses a DynamoDB table for opaque browser sessions. Create a table with a string partition key named <code>sessionHash</code> and on-demand billing:</p>
 <pre><code>aws dynamodb create-table \
     --table-name UserSessions \
-    --attribute-definitions AttributeName=sessionId,AttributeType=S \
-    --key-schema AttributeName=sessionId,KeyType=HASH \
+    --attribute-definitions AttributeName=sessionHash,AttributeType=S \
+    --key-schema AttributeName=sessionHash,KeyType=HASH \
     --billing-mode PAY_PER_REQUEST
-
-aws dynamodb update-time-to-live \
+</code></pre>
+<pre><code>aws dynamodb wait table-exists --table-name UserSessions
+</code></pre>
+<p>After the table becomes active, enable TTL on a numeric Unix epoch-seconds attribute named <code>expiresAt</code>:</p>
+<pre><code>aws dynamodb update-time-to-live \
     --table-name UserSessions \
-    --time-to-live-specification "Enabled=true, AttributeName=ttl"
+    --time-to-live-specification '{"Enabled":true,"AttributeName":"expiresAt"}'
 </code></pre>
-<h3 id="lambda-functions-for-sessions">Lambda Functions for Sessions</h3>
-<p>Here's a Python example for creating a session:</p>
-<pre><code>import boto3
-import hashlib
+<p>The function's execution role should have only the required item operations on this table, such as <code>dynamodb:PutItem</code>, <code>dynamodb:GetItem</code>, and <code>dynamodb:DeleteItem</code>. Add <code>dynamodb:UpdateItem</code> only if the function renews or changes sessions. Do not grant broad DynamoDB access or accept the user ID for a new session directly from an untrusted request; pass the identity established by your login flow.</p>
+<h3 id="dynamodb-for-session-storage">Create, look up, and revoke an opaque session</h3>
+<p>This Python example uses a cryptographically secure random token, stores its SHA-256 hash, and checks the precise expiry on every lookup. The table and SDK resource are initialized outside the handler for reuse, but session state is read from DynamoDB. Handle store errors at the API boundary and fail closed if the session cannot be checked.</p>
+<pre><code>import hashlib
+import os
+import secrets
 import time
-import json
 
-dynamodb = boto3.resource('dynamodb')
-table = dynamodb.Table('UserSessions')
+import boto3
+from http.cookies import CookieError, SimpleCookie
 
-def create_session(event, context):
-    user_id = event['userId']
-    session_id = hashlib.sha256(f"{user_id}{time.time()}".encode()).hexdigest()
+SESSION_LIFETIME_SECONDS = 3600
+SESSION_COOKIE_NAME = "__Host-sid"
 
-    item = {
-        'sessionId': session_id,
-        'userId': user_id,
-        'ttl': int(time.time()) + 3600  # 1 hour expiration
-    }
+table = boto3.resource("dynamodb").Table(os.environ["SESSIONS_TABLE"])
 
-    table.put_item(Item=item)
 
-    return {
-        'statusCode': 200,
-        'body': json.dumps({'sessionId': session_id})
-    }
-</code></pre>
-<p>For session validation:</p>
-<pre><code>def validate_session(event, context):
-    session_id = event['sessionId']
+def session_key(token):
+    return hashlib.sha256(token.encode("utf-8")).hexdigest()
 
-    response = table.get_item(Key={'sessionId': session_id})
 
-    if 'Item' in response:
-        return {
-            'statusCode': 200,
-            'body': json.dumps({'valid': True, 'userId': response['Item']['userId']})
-        }
-    else:
-        return {
-            'statusCode': 401,
-            'body': json.dumps({'valid': False})
-        }
-</code></pre>
-<h3 id="connecting-with-api-gateway">Connecting with API Gateway</h3>
-<ol>
-<li>Create a new API in API Gateway</li>
-<li>Add resources for <code>/create-session</code>, <code>/validate-session</code>, and <code>/deactivate-session</code></li>
-<li>Set up POST methods for each resource, linking them to the Lambda functions</li>
-<li>Deploy your API</li>
-</ol>
-<p>To secure your endpoints, use a Lambda authorizer:</p>
-<pre><code>def lambda_handler(event, context):
-    auth_token = event['authorizationToken']
+def issue_session(authenticated_user_id):
+    token = secrets.token_urlsafe(32)
+    now = int(time.time())
+    expires_at = now + SESSION_LIFETIME_SECONDS
 
-    if auth_token == 'allow':
-        return generate_policy('user', 'Allow', event['methodArn'])
-    else:
-        return generate_policy('user', 'Deny', event['methodArn'])
+    table.put_item(
+        Item={
+            "sessionHash": session_key(token),
+            "userId": authenticated_user_id,
+            "createdAt": now,
+            "expiresAt": expires_at,
+            "version": 1,
+        },
+        ConditionExpression="attribute_not_exists(sessionHash)",
+    )
+    return token, expires_at
 
-def generate_policy(principal_id, effect, resource):
-    return {
-        'principalId': principal_id,
-        'policyDocument': {
-            'Version': '2012-10-17',
-            'Statement': [
-                {
-                    'Action': 'execute-api:Invoke',
-                    'Effect': effect,
-                    'Resource': resource
-                }
-            ]
-        }
-    }
-</code></pre>
-<p>That's it! You've now set up a basic session management system using AWS Lambda, DynamoDB, and API Gateway. Don't forget to handle errors, implement logging, and follow AWS best practices for security and performance.</p>
-<h2 id="best-practices-for-lambda-sessions">Best Practices for Lambda Sessions</h2>
-<p>Here's how to make your Lambda sessions work better:</p>
-<h3 id="securing-session-data">Securing Session Data</h3>
-<p>Protect your session info:</p>
-<ul>
-<li>Encrypt sensitive details</li>
-<li>Manage IAM roles carefully</li>
-<li>Follow AWS shared responsibility model</li>
-</ul>
-<p>Example: Encrypt session data before DynamoDB storage:</p>
-<pre><code>from cryptography.fernet import Fernet
 
-key = Fernet.generate_key()
-f = Fernet(key)
-encrypted_data = f.encrypt(session_data.encode())
-</code></pre>
-<h3 id="handling-errors-and-logging">Handling Errors and Logging</h3>
-<p>Track issues and control sessions:</p>
-<ul>
-<li>Use <a href="https://aws.amazon.com/cloudwatch/" target="_blank">AWS CloudWatch</a> for monitoring</li>
-<li>Set up alerts for quick fixes</li>
-<li>Log essential info to cut costs</li>
-</ul>
-<p>Log errors in your Lambda function:</p>
-<pre><code>import logging
+def session_from_event(event):
+    cookie_values = event.get("cookies", [])
+    if not isinstance(cookie_values, list) or any(not isinstance(value, str) for value in cookie_values):
+        return None
 
-logger = logging.getLogger()
-logger.setLevel(logging.ERROR)
-
-def lambda_handler(event, context):
+    cookie = SimpleCookie()
     try:
-        # Your code here
-    except Exception as e:
-        logger.error(f"An error occurred: {str(e)}")
-        raise
-</code></pre>
-<h3 id="improving-performance">Improving Performance</h3>
-<p>Speed up Lambda functions:</p>
-<ul>
-<li>Initialize SDK clients outside the handler</li>
-<li>Use environment variables for parameters</li>
-<li>Cache often-accessed data</li>
-</ul>
-<figure><table>
-<thead>
-<tr>
-<th>Technique</th>
-<th>Description</th>
-<th>Impact</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Execution Environment Reuse</td>
-<td>Initialize outside handler</td>
-<td>Faster run time</td>
-</tr>
-<tr>
-<td>Environment Variables</td>
-<td>Store parameters</td>
-<td>Easy scaling</td>
-</tr>
-<tr>
-<td>Caching</td>
-<td>Store frequent data</td>
-<td>Fewer DB queries</td>
-</tr>
-</tbody>
-</table></figure>
-<p>Use execution environment reuse:</p>
-<pre><code>import boto3
+        cookie.load("; ".join(cookie_values))
+    except CookieError:
+        return None
+    morsel = cookie.get(SESSION_COOKIE_NAME)
+    token = morsel.value if morsel else None
 
-# Initialize outside the handler
-dynamodb = boto3.resource('dynamodb')
-table = dynamodb.Table('UserSessions')
+    if not isinstance(token, str) or not token or len(token) > 256:
+        return None
 
-def lambda_handler(event, context):
-    # Use 'table' here
+    response = table.get_item(
+        Key={"sessionHash": session_key(token)},
+        ConsistentRead=True,
+    )
+    session = response.get("Item")
+    now = int(time.time())
+
+    if not session:
+        return None
+    try:
+        expires_at = int(session.get("expiresAt", 0))
+    except (TypeError, ValueError, OverflowError):
+        return None
+    if expires_at <= now:
+        return None
+    return session
+
+
+def revoke_session(token):
+    if isinstance(token, str) and token and len(token) <= 256:
+        table.delete_item(Key={"sessionHash": session_key(token)})
+
+
+def login_response(authenticated_user_id):
+    token, _ = issue_session(authenticated_user_id)
+    return {
+        "statusCode": 204,
+        "headers": {"cache-control": "no-store"},
+        "cookies": [
+            SESSION_COOKIE_NAME + "=" + token
+            + "; Path=/; Max-Age=" + str(SESSION_LIFETIME_SECONDS)
+            + "; Secure; HttpOnly; SameSite=Lax"
+        ],
+        "body": "",
+    }
 </code></pre>
+<p>The login handler should call <code>login_response</code> only after credentials or an identity-provider callback have been verified. This response example assumes an HTTP API Lambda proxy integration with payload format 2.0. Do not return the session token in a page, URL, log entry, or JSON body. On sign-out, delete the corresponding DynamoDB item and return a clearing cookie with the same name and path, for example <code>__Host-sid=; Path=/; Max-Age=0; Secure; HttpOnly; SameSite=Lax</code>.</p>
+<h3 id="connecting-with-api-gateway">Connect the API and validate each request</h3>
+<ol>
+<li>Configure API Gateway to invoke the Lambda integration, and choose an HTTP API JWT authorizer or a Lambda authorizer if its checks match the authentication design.</li>
+<li>For cookie sessions, have the integration or custom authorizer read the cookie and perform the server-side lookup. If a Lambda authorizer cache is enabled, account for its revocation delay as described above.</li>
+<li>For every protected operation, use the verified <code>userId</code> from the session or authorizer context. Check that the user is allowed to access the particular record or action; authentication alone does not grant access to every object.</li>
+<li>Return generic authentication errors to clients and keep session secrets out of logs and error details.</li>
+</ol>
+<p>DynamoDB TTL is a cleanup mechanism, not an authorization check. DynamoDB removes expired items in a background process, typically within a few days. An expired record can therefore still be returned before deletion. The code above rejects it using <code>expiresAt</code> even while the row remains; see AWS guidance on <a href="https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/TTL.html" target="_blank" rel="noopener noreferrer">DynamoDB TTL</a> and <a href="https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/ttl-expired-items.html" target="_blank" rel="noopener noreferrer">filtering expired items from reads</a>.</p>
+
+<h2 id="best-practices-for-lambda-sessions">Best Practices for Lambda Sessions</h2>
+<h3 id="securing-session-data">Protect the browser credential and stored record</h3>
+<p>The session ID is a bearer credential: anyone who obtains it can act as that user until the application rejects it. Use HTTPS, a <code>Secure</code> and <code>HttpOnly</code> cookie, and an explicit <code>SameSite=Lax</code> or <code>SameSite=Strict</code> policy. The <code>__Host-</code> cookie prefix also requires <code>Secure</code>, <code>Path=/</code>, and no <code>Domain</code> attribute, which limits subdomain cookie injection. Choose <code>SameSite</code> based on the sign-in flow and navigation behavior; see OWASP's <a href="https://cheatsheetseries.owasp.org/cheatsheets/Session_Management_Cheat_Sheet.html" target="_blank" rel="noopener noreferrer">session cookie guidance</a>.</p>
+<p>Browsers attach cookies automatically, so cookie authentication also needs a CSRF design. Keep state-changing work off <code>GET</code> requests and use a CSRF token or strict Origin/Referer validation for protected writes. SameSite is useful defense in depth, but should not be the only defense for every application; see the OWASP <a href="https://cheatsheetseries.owasp.org/cheatsheets/Cross-Site_Request_Forgery_Prevention_Cheat_Sheet.html" target="_blank" rel="noopener noreferrer">CSRF prevention guidance</a>. <code>HttpOnly</code> stops JavaScript from reading a cookie, but it does not stop injected script from sending requests as the logged-in user.</p>
+<p>If the browser app and API are cross-origin, configure API Gateway CORS with the exact allowed origin and credentials support, and have the client include credentials. Cross-site cookies generally need <code>SameSite=None; Secure</code>. CORS controls which browser scripts may read responses; it is not a replacement for CSRF protection. AWS documents <a href="https://docs.aws.amazon.com/apigateway/latest/developerguide/http-api-cors.html" target="_blank" rel="noopener noreferrer">CORS for HTTP APIs</a>.</p>
+<p>Keep only a hash of a high-entropy random session ID in DynamoDB. Store minimal data such as the user identifier, issue time, expiry, and a version; do not store passwords or bearer tokens in the session row. DynamoDB encrypts table data at rest by default, as described in its <a href="https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/EncryptionAtRest.html" target="_blank" rel="noopener noreferrer">encryption documentation</a>. Protect access with a narrow IAM role and use TLS for service requests.</p>
+<h3 id="handling-errors-and-logging">Handle failures without leaking credentials</h3>
+<p>If DynamoDB or the session service is unavailable, reject protected operations rather than treating an unverified request as authenticated. Log an outcome and request identifier for diagnosis, but redact the <code>Cookie</code> and <code>Authorization</code> headers and never log the raw token. Keep user-facing errors generic; a 401 can mean no valid session, while a service failure should produce an appropriate 5xx response.</p>
+<h3 id="improving-performance">Measure the whole request path</h3>
+<p>Initialize SDK clients outside the handler to reuse connections when Lambda reuses an environment. This does not cache user sessions. Use a primary-key lookup such as DynamoDB <code>GetItem</code>, keep the item small, and measure function duration and store latency before adding a cache. A cache can reduce database reads, but it also adds an invalidation path and can delay logout or revocation.</p>
+<h3 id="managing-session-lifecycle">Rotate credentials and define expiry</h3>
+<p>Issue a new session ID after sign-in and after a privilege change rather than carrying forward an ID supplied before authentication. Set both an idle timeout and an absolute maximum lifetime if the product needs both; the database expiry is authoritative, and the browser cookie's <code>Max-Age</code> should not extend beyond it. Revoke by deleting the record, then clear the cookie. To support “sign out all devices,” design a key or index that finds only one user's active sessions instead of scanning the whole table.</p>
+
 <h2 id="fixing-common-session-problems">Fixing Common Session Problems</h2>
-<h3 id="reducing-cold-starts-and-delays">Reducing Cold Starts and Delays</h3>
-<p>Cold starts in AWS Lambda can slow down your app. Here's how to fix them:</p>
-<p>1. <strong>Use Provisioned Concurrency</strong></p>
-<p>This keeps Lambda functions warm. James Beswick from AWS found it can cut cold start times from 650 ms to 7-66 ms.</p>
-<p>2. <strong>Optimize Function Size</strong></p>
-<p>Smaller functions load faster. Cut the fat from your code.</p>
-<p>3. <strong>Choose the Right Language</strong></p>
-<p>Python, Node.js, and Go start up quicker than Java or .NET. Python is at least 2x faster than Java for cold starts.</p>
-<p>4. <strong>Avoid VPCs When Possible</strong></p>
-<p>Lambda functions outside VPCs start up faster. Nathan Mashilev saw much lower latency for these functions.</p>
-<figure><table>
-<thead>
-<tr>
-<th>Technique</th>
-<th>Cold Start Time Impact</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Provisioned Concurrency</td>
-<td>7-66 ms (vs 650 ms)</td>
-</tr>
-<tr>
-<td>Running Outside VPC</td>
-<td>Up to 8.83 seconds faster</td>
-</tr>
-<tr>
-<td>Using Python</td>
-<td>At least 2x faster than Java</td>
-</tr>
-</tbody>
-</table></figure>
-<h3 id="managing-session-timeouts">Managing Session Timeouts</h3>
-<p>Lambda functions max out at 15 minutes. Here's how to handle that:</p>
-<p>1. <strong>Use Context Object</strong></p>
-<p>Check remaining time with <code>context.get_remaining_time_in_millis()</code>.</p>
-<p>2. <strong>Set Up Signal Handlers</strong></p>
-<p>Create a plan B for near-timeout situations:</p>
-<pre><code>import signal
+<h3 id="reducing-cold-starts-and-delays">Diagnose latency across Lambda and the session store</h3>
+<p>A slow session check is not necessarily a cold start. Measure Lambda initialization, handler duration, and DynamoDB or cache latency separately. Check for throttling, network configuration, oversized session items, or unnecessary reads before tuning provisioned concurrency. A warm execution environment can reuse a connection; it cannot make an external store call disappear.</p>
+<h3 id="managing-session-timeouts">Make timeout and expiry rules agree</h3>
+<p>Use one server-side expiry timestamp as the decision point and reject the session whenever it is at or before the current time. Set the TTL attribute to that timestamp so DynamoDB eventually cleans up the item. If implementing a sliding timeout, extend the server record only after an authenticated activity that merits renewal and send a matching cookie lifetime. A stale browser cookie or a pending TTL deletion must never extend authorization.</p>
+<h3 id="solving-concurrency-issues">Handle concurrent updates and logout races</h3>
+<p>Two requests can read the same session version and then overwrite each other's changes. For mutable session data or sliding expiry, use an atomic update with a condition on the expected version and increment that version; if the condition fails, reload and retry only if the operation remains safe. DynamoDB evaluates condition expressions as part of the write; see the <a href="https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Expressions.ConditionExpressions.html" target="_blank" rel="noopener noreferrer">condition-expression guide</a>. Do not renew with an unconditional <code>PutItem</code>: a request racing with sign-out could recreate a deleted session. A renewal should require that the item still exists, is not expired, and has the expected version.</p>
+<p>A request that passed authorization just before sign-out may already be running when the session is deleted. If that matters for a high-impact operation, recheck authorization at the operation boundary or serialize the operation with the session change. For revocation-sensitive checks, the example uses a strongly consistent base-table read; see the <a href="https://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_GetItem.html" target="_blank" rel="noopener noreferrer">GetItem consistency options</a>. If requests can be served in multiple Regions, account for the replication consistency of the chosen DynamoDB global table mode; a write in one Region may not be visible immediately in another when using the default multi-Region eventual consistency mode, as AWS explains in its <a href="https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/globaltables_HowItWorks.html" target="_blank" rel="noopener noreferrer">global tables documentation</a>.</p>
 
-def timeout_handler(_signal, _frame):
-    logger.info("Time's up! Saving progress...")
-    # Save progress here
-
-signal.signal(signal.SIGALRM, timeout_handler)
-
-def lambda_handler(event, context):
-    signal.alarm(int(context.get_remaining_time_in_millis() / 1000) - 15)
-    # Main function code
-</code></pre>
-<p>3. <strong>Implement Idempotency</strong></p>
-<p>Make sure retries are safe and don't cause side effects.</p>
-<p>4. <strong>Use Event-Driven Approach</strong></p>
-<p>Send failed events to an SQS queue for automatic retries.</p>
-<h3 id="solving-concurrency-issues">Solving Concurrency Issues</h3>
-<p>Concurrency problems can mess up your sessions. Here's the fix:</p>
-<p>1. <strong>Set Concurrency Limits</strong></p>
-<p>Stop one function from hogging everything. The default is 1000 per AWS Region.</p>
-<p>2. <strong>Monitor and Adjust</strong></p>
-<p>Use CloudWatch to track function behavior and tweak limits as needed.</p>
-<p>3. <strong>Use as Emergency Switch</strong></p>
-<p>Setting concurrency to zero can temporarily disable a function. Handy for testing or emergencies.</p>
-<p>4. <strong>Know Your Account Limits</strong></p>
-<p>Each AWS account has a fixed AccountLimit. Know yours and ask for more if needed.</p>
 <h2 id="conclusion">Conclusion</h2>
-<p>AWS Lambda's stateless nature makes session management tricky. Here's how to tackle it:</p>
-<ul>
-<li>Store session data in DynamoDB or S3</li>
-<li>Use stateless authentication</li>
-<li>Let API Gateway handle sessions</li>
-</ul>
-<p>The <code>session-lambda</code> Python package makes DynamoDB sessions easy:</p>
-<pre><code>@session(key_name='session-id', update=False, ttl=15*60)  
-def lambda_handler(event, context):  
-    session_data = get_session_data()  
-    # Your code here
-</code></pre>
-<p>To manage Lambda sessions effectively:</p>
-<ul>
-<li>Set TTL on DynamoDB tables</li>
-<li>Use environment variables</li>
-<li>Write idempotent code</li>
-<li>Watch function concurrency</li>
-</ul>
-<h3 id="what's-next-for-serverless-sessions%3F">What's Next for Serverless Sessions?</h3>
-<p>Serverless is moving towards stateful functions. Take <a href="https://docs.partykit.io/how-partykit-works/" target="_blank">PartyKit</a>, for example. It lets developers create stateful serverless functions for things like multiplayer games.</p>
-<figure><table>
-<thead>
-<tr>
-<th>Now</th>
-<th>Future</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>External storage</td>
-<td>Built-in state management</td>
-</tr>
-<tr>
-<td>Complex sessions</td>
-<td>Simpler coding</td>
-</tr>
-<tr>
-<td>Limited real-time</td>
-<td>Better real-time collaboration</td>
-</tr>
-</tbody>
-</table></figure>
-<p>We'll likely see:</p>
-<ul>
-<li>More platforms with built-in state management</li>
-<li>Better tools for real-time, collaborative apps</li>
-<li>Faster cold starts and better performance</li>
-</ul>
-<p>The future's bright, but today's best practices are still key for solid, scalable serverless apps with good session management.</p>
+<p>Use Cognito or another identity provider's short-lived access tokens when verified claims are enough. Use an opaque, server-side session when the application needs mutable session data or the ability to invalidate a session record before the browser cookie expires. Keep durable state outside Lambda, enforce expiry on every lookup, secure browser cookies against theft and CSRF, and treat authorizer caching as part of the revocation policy.</p>
+
 <h2 id="faqs">FAQs</h2>
 <h3 id="can-aws-lambda-maintain-state%3F">Can AWS Lambda maintain state?</h3>
-<p>Nope, AWS Lambda functions are stateless. They don't keep data between runs. This means:</p>
-<ul>
-<li>Each function starts fresh</li>
-<li>No built-in data storage across runs</li>
-<li>In-memory data doesn't stick around</li>
-</ul>
-<p>Want to keep data between Lambda runs? You'll need external storage:</p>
-<figure><table>
-<thead>
-<tr>
-<th>Storage</th>
-<th>When to use</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>DynamoDB</td>
-<td>Quick NoSQL database</td>
-</tr>
-<tr>
-<td>ElastiCache</td>
-<td>Fast in-memory data store</td>
-</tr>
-<tr>
-<td>S3</td>
-<td>Big dataset storage</td>
-</tr>
-</tbody>
-</table></figure>
+<p>Lambda may reuse an execution environment, but the application should behave as if it exists for one invocation. Reuse module-level SDK clients or connections where appropriate; store user sessions and other durable state in a database or another shared service.</p>
 <h3 id="are-lambda-functions-stateful%3F">Are Lambda functions stateful?</h3>
-<p>Not by default. But you can add some statefulness:</p>
-<p>1. <strong>Use external databases</strong></p>
-<p>Store session data in DynamoDB or ElastiCache.</p>
-<p>2. <strong>Try tumbling windows</strong></p>
-<p>AWS feature for maintaining state in stream processing.</p>
-<p>3. <strong>Use global variables</strong></p>
-<p>Store data in function-level variables, but watch out:</p>
-<ul>
-<li>Data only lasts during the function's "warm" period</li>
-<li>No guarantees on container warmth duration</li>
-</ul>
-<p>Remember: For reliable state management, always go for external storage.</p>
-<p>
-<h2>Related posts</h2>
-<ul>
-<li><a href="/blog/aws-step-functions-saga-pattern-implementation/">AWS Step Functions: Saga Pattern Implementation</a></li><li><a href="/blog/9-serverless-network-security-best-practices/">9 Serverless Network Security Best Practices</a></li><li><a href="/blog/7-ways-to-mitigate-aws-lambda-cold-starts/">7 Ways to Mitigate AWS Lambda Cold Starts</a></li><li><a href="/blog/aws-lambda-getting-started-deploy-your-first-function/">AWS Lambda Getting Started: Deploy Your First Function</a></li>
-</ul>
-</p>
+<p>Not as a durable application guarantee. A global variable or file in <code>/tmp</code> can remain available if an environment is reused, but another request can run elsewhere or after that environment is removed. Never use that behavior for authentication, authorization, or data correctness.</p>
+<h3 id="does-dynamodb-ttl-expire-a-session">Does DynamoDB TTL log a user out at the expiry time?</h3>
+<p>No. TTL deletes expired records asynchronously, typically within a few days. The application must compare the stored expiry with the current time and reject an expired session even if DynamoDB still returns the item.</p>
+<h3 id="can-api-gateway-manage-sessions">Can API Gateway manage sessions?</h3>
+<p>API Gateway can validate supported tokens, invoke an authorizer, route a request to Lambda, and pass or set cookies for an HTTP API integration. The application still needs a token or an external session store, and must define expiry, revocation, and authorization behavior.</p>
