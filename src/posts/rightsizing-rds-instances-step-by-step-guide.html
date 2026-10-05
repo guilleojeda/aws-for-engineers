@@ -2,121 +2,91 @@
 layout: post.njk
 templateEngineOverride: html
 tags: posts
-title: "Rightsizing RDS Instances: Step-by-Step Guide"
-description: "Learn how to rightsize your Amazon RDS instances for optimal performance and cost management through monitoring, analysis, and adjustments."
+title: "How to Right-Size Amazon RDS Instances: A Step-by-Step Guide"
+description: "Use RDS metrics, Database Insights, and Compute Optimizer to choose a suitable DB instance class, plan a safe resize, and validate performance and cost."
 date: "2025-04-07"
 datePublished: "2025-04-07T02:31:18.569000+00:00"
 heroImage: "/assets/media/e6800efd197f2c06f37d.jpg"
 permalink: "/blog/rightsizing-rds-instances-step-by-step-guide/"
 sourceUrl: "https://awsforengineers.com/blog/rightsizing-rds-instances-step-by-step-guide/"
-dateModified: "2026-10-03"
-updateNote: "Added author attribution and profile information."
+dateModified: "2026-10-04"
+updateNote: "Reworked the guide with current RDS metrics, Compute Optimizer eligibility, Database Insights, and safer class-change guidance."
 ---
-<p><strong>Oversized <a href="https://aws.amazon.com/rds/" rel="nofollow noopener noreferrer" target="_blank">Amazon RDS</a> instances waste money. Undersized ones hurt performance. Here's how to find the right balance.</strong></p>
-<p>To rightsize your RDS instance:</p>
-<ul>
-<li><strong>Monitor usage</strong> with tools like <a href="https://aws.amazon.com/cloudwatch/" rel="nofollow noopener noreferrer" target="_blank">AWS CloudWatch</a>, Compute Optimizer, and <a href="https://aws.amazon.com/rds/performance-insights/" rel="nofollow noopener noreferrer" target="_blank">Performance Insights</a>.</li>
-<li><strong>Analyze metrics</strong> like CPU, memory, IOPS, and storage performance.</li>
-<li><strong>Adjust instance types</strong> based on workload needs (e.g., General Purpose for web apps, Memory Optimized for analytics).</li>
-<li><strong>Save costs</strong> with <a href="https://aws.amazon.com/ec2/pricing/reserved-instances/" rel="nofollow noopener noreferrer" target="_blank">Reserved Instances</a> for steady workloads.</li>
-<li><strong>Automate monitoring</strong> to stay ahead of resource issues.</li>
-</ul>
-<p><strong>Quick tip:</strong> Use <a href="https://aws.amazon.com/compute-optimizer/" rel="nofollow noopener noreferrer" target="_blank">AWS Compute Optimizer</a> for AI-based recommendations and test changes in non-production environments before applying.</p>
-<p>Rightsizing ensures you get the best performance while controlling AWS costs.</p>
-<h2 id="rds-instance-types-and-workload-requirements">RDS Instance Types and Workload Requirements</h2>
-<h3 id="rds-instance-categories">RDS Instance Categories</h3>
-<p>Amazon RDS provides various instance types tailored to different database workloads. Here's a quick breakdown:</p>
+<p>Right-sizing an Amazon RDS DB instance means choosing a class that meets the database and application’s performance needs without paying for unused capacity. Low average CPU alone does not prove that an instance is oversized: memory pressure, storage waits, connections, workload peaks, and application latency can all affect the decision.</p>
+<p>Use this sequence:</p>
+<ol>
+<li>Measure a representative workload and set the application outcomes that must hold.</li>
+<li>Find the limiting resource with CloudWatch, database load, and application signals.</li>
+<li>Compare eligible DB instance classes and validate the change plan.</li>
+<li>Resize during a controlled change window, then compare results with the baseline.</li>
+</ol>
+
+<h2 id="rds-instance-types-and-workload-requirements">Choose a class for the workload</h2>
+<h3 id="rds-instance-categories">Understand DB instance class families</h3>
+<p>A DB instance class sets the compute and memory capacity of the database host. RDS class families include general purpose (<code>db.m*</code>), memory optimized (<code>db.r*</code>, <code>db.x*</code>, and <code>db.z*</code>), compute optimized (<code>db.c*</code>), and burstable performance (<code>db.t*</code>). Their exact processors, memory, storage, and network limits vary by class. Check the current <a href="https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/Concepts.DBInstanceClass.html" target="_blank" rel="noopener noreferrer">RDS DB instance class documentation</a> for engine, version, and Region support.</p>
 <figure><table>
 <thead>
-<tr>
-<th>Instance Category</th>
-<th>Characteristics</th>
-<th>Best For</th>
-</tr>
+<tr><th>Family</th><th>Typical fit</th><th>Check before choosing</th></tr>
 </thead>
 <tbody>
-<tr>
-<td><strong>General Purpose (e.g., M5)</strong></td>
-<td>Balanced CPU and memory</td>
-<td>Standard web apps and development environments</td>
-</tr>
-<tr>
-<td><strong>Memory Optimized (e.g., R5, R6g)</strong></td>
-<td>High memory-to-CPU ratio</td>
-<td>In-memory analytics and handling large datasets</td>
-</tr>
-<tr>
-<td><strong>Burstable (e.g., T3)</strong></td>
-<td>Base performance with burst capability</td>
-<td>Variable workloads and testing environments</td>
-</tr>
+<tr><td>General purpose</td><td>Workloads with balanced compute and memory needs.</td><td>Compare CPU, memory, EBS and network limits with measured peaks.</td></tr>
+<tr><td>Memory optimized</td><td>Workloads that benefit from a larger memory-to-vCPU ratio.</td><td>Confirm memory pressure is the constraint; a larger cache alone does not fix slow queries or storage waits.</td></tr>
+<tr><td>Compute optimized</td><td>CPU-bound workloads that need more compute capacity.</td><td>Verify that CPU, rather than I/O, locks, or application behavior, is driving the latency.</td></tr>
+<tr><td>Burstable performance</td><td>Workloads with intermittent CPU demand.</td><td>Review baseline CPU, credit metrics, and any surplus-credit charges under Unlimited mode.</td></tr>
 </tbody>
 </table></figure>
-<p>Select an instance type that aligns with your workload needs to get the best performance.</p>
-<h3 id="matching-instance-types-to-database-workloads">Matching Instance Types to Database Workloads</h3>
-<p>The right instance depends on how you use your database. For example:</p>
-<ul>
-<li><strong>Transactional workloads</strong>: Look for strong I/O performance and enough memory for buffering.</li>
-<li><strong>Analytical workloads</strong>: Memory-optimized instances are ideal for handling large datasets efficiently.</li>
-</ul>
-<p>As your workload changes, consider adjusting your instance type to maintain performance.</p>
-<h3 id="key-instance-selection-criteria">Key Instance Selection Criteria</h3>
-<p>When choosing an RDS instance, focus on these critical factors:</p>
-<ul>
-<li><strong>CPU Requirements</strong>: Check vCPU usage and account for peak demand.</li>
-<li><strong>Memory Needs</strong>: Ensure you have enough memory for buffering and temporary operations.</li>
-<li><strong>Storage Performance</strong>: Pay attention to IOPS, throughput, and latency metrics.</li>
-<li><strong>Network Performance</strong>: Consider data transfer rates, throughput, and the number of connections.</li>
-</ul>
-<h2 id="how-to-rightsize-rds-instances">How to Rightsize RDS Instances</h2>
-<h3 id="measuring-resource-usage">Measuring Resource Usage</h3>
-<p>To ensure your Amazon RDS instances are properly provisioned, start by using AWS CloudWatch to track key metrics:</p>
-<ul>
-<li><strong>CPU Utilization</strong>: Keep an eye on the percentage of compute resources being used.</li>
-<li><strong>Memory Consumption</strong>: Check how much memory is available.</li>
-<li><strong>IOPS</strong>: Measure the number of read/write operations per second.</li>
-</ul>
-<p>Set up <a href="/blog/cloudwatch-alarms-best-practices-for-thresholds-and-conditions/">CloudWatch alarms</a> to stay ahead of potential issues. For example, you can create an alarm for high CPU usage with the following command:</p>
-<pre><code>aws cloudwatch put-metric-alarm --alarm-name "RDS-High-CPU" --metric-name "CPUUtilization" --namespace "AWS/RDS" --threshold 75
-</code></pre>
-<p>Once you've gathered this data, compare it with your application's performance needs.</p>
-<h3 id="checking-performance-requirements">Checking Performance Requirements</h3>
-<p>Use the metrics collected from CloudWatch to assess whether your RDS instance is meeting your workload demands. Look specifically at CPU utilization, memory usage, and IOPS. Make sure these numbers align with what your application requires before making any adjustments.</p>
-<h3 id="changing-instance-settings">Changing Instance Settings</h3>
-<p>If your analysis shows that changes are needed, follow these steps:</p>
-<ul>
-<li><strong>Review usage data</strong>: Look at at least two weeks of metrics to identify trends.</li>
-<li><strong>Plan for downtime</strong>: Schedule updates during periods of low activity since most changes may cause a brief service interruption.</li>
-<li><strong>Modify the instance</strong>: Use the command below to adjust the instance size:</li>
-</ul>
-<pre><code>aws rds modify-db-instance --db-instance-identifier mydbinstance --db-instance-class db.r5.xlarge --apply-immediately
-</code></pre>
-<h3 id="using-aws-compute-optimizer">Using <a href="https://aws.amazon.com/compute-optimizer/" rel="nofollow noopener noreferrer" target="_blank">AWS Compute Optimizer</a></h3>
-<p><figure><img alt="AWS Compute Optimizer" loading="lazy" src="/assets/media/bcb2bb7f32237e7203b9.jpg"/></figure></p>
-<p>To fine-tune your instance selection, take advantage of AWS Compute Optimizer:</p>
-<ol>
-<li>Turn on AWS Compute Optimizer for your account.</li>
-<li>Wait 14 days to gather sufficient data for recommendations.</li>
-<li>Review the recommendations and test any changes in a staging or non-production environment.</li>
-<li>After applying changes, monitor the instance's performance to ensure it meets your needs.</li>
-</ol>
-<p>Consistent monitoring is key - continue to track usage and adjust as necessary to avoid over- or under-provisioning.</p>
+<p>Class availability and capabilities depend on the engine, version, and Region. Compare the specifications of the exact candidate classes rather than relying on a family name alone.</p>
 
-<h2 id="maintaining-optimal-instance-sizes">Maintaining Optimal Instance Sizes</h2>
-<h3 id="regular-performance-reviews">Regular Performance Reviews</h3>
-<p>Set aside time each month to review your database performance. Check CPU, memory, storage usage, and costs to identify areas for improvement. Keep a record of these reviews to build a performance history, helping you track trends and make informed decisions.</p>
-<h3 id="leveraging-rds-reserved-instances">Leveraging RDS <a href="https://aws.amazon.com/ec2/pricing/reserved-instances/" rel="nofollow noopener noreferrer" target="_blank">Reserved Instances</a></h3>
-<p><figure><img alt="Reserved Instances" loading="lazy" src="/assets/media/14a401339e142eda52e1.jpg"/></figure></p>
-<p>In addition to regular reviews, consider cost-saving options like Reserved Instances (RIs) for consistent workloads. Analyze your usage patterns and compare them with AWS Compute Optimizer's recommendations to confirm your instance size. Then, select the RI that aligns best with your needs.</p>
-<h3 id="automating-resource-monitoring">Automating Resource Monitoring</h3>
-<p>Use AWS CloudWatch to automatically monitor your RDS resource usage. For example, you can set up an alarm to track memory usage with the following command:</p>
-<pre><code>aws cloudwatch put-metric-alarm --alarm-name "RDS-Memory-High" --metric-name "FreeableMemory" --namespace "AWS/RDS" --statistic "Average" --period 300 --threshold 1073741824 --comparison-operator "LessThanThreshold" --evaluation-periods 3
+<h3 id="matching-instance-types-to-database-workloads">Match the class to the bottleneck</h3>
+<p>Use a class change when the evidence points to a compute or memory capacity limit. If the database is waiting on storage, blocked by locks, or spending time on inefficient queries, moving to a larger class may add cost without addressing the cause. Storage capacity, storage type, provisioned IOPS, and throughput are separate choices; review them separately when the storage signals point to a limit.</p>
+<p>For each candidate, check engine and software compatibility, vCPU and memory, processor architecture where relevant, network and EBS bandwidth, and local-storage features. A class can have a different performance profile even when its CPU and memory appear to fit.</p>
+
+<h3 id="key-instance-selection-criteria">Review the signals that affect sizing</h3>
+<p>Amazon RDS publishes CloudWatch metrics in the <code>AWS/RDS</code> namespace. Select metrics that fit the symptom, and compare them with application latency, errors, throughput, and request volume. Common signals include:</p>
+<ul>
+<li><strong><code>CPUUtilization</code>:</strong> CPU use over time. Compare peaks and sustained periods with query activity and application latency.</li>
+<li><strong><code>FreeableMemory</code>:</strong> memory available to the database host, in bytes. It is not a direct measure of memory used by a particular query or application.</li>
+<li><strong><code>DatabaseConnections</code>:</strong> client network connections; it does not count every database session.</li>
+<li><strong>Read and write latency, IOPS, and throughput:</strong> use these with queue depth and storage settings to investigate I/O pressure.</li>
+<li><strong><code>FreeStorageSpace</code>:</strong> available storage capacity, which is different from instance-class capacity.</li>
+<li><strong>Burst and CPU-credit metrics:</strong> useful for supported burstable classes.</li>
+</ul>
+<p>Metric availability varies by engine and configuration. See the AWS <a href="https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/rds-metrics.html" target="_blank" rel="noopener noreferrer">RDS CloudWatch metrics reference</a> for definitions and limits.</p>
+
+<h2 id="how-to-rightsize-rds-instances">Follow a measured resizing workflow</h2>
+<h3 id="measuring-resource-usage">Build a representative baseline</h3>
+<p>Collect enough data to include ordinary traffic, known busy periods, scheduled jobs, backups, and recurring monthly or seasonal work. The right observation period depends on how the workload varies; a quiet week is not a useful baseline if the database has a month-end reporting peak.</p>
+<p>Record application outcomes such as request latency, error rate, and throughput alongside RDS metrics. Define the service objectives and operating headroom the database must maintain. Do not use a universal CPU, memory, or IOPS threshold as a substitute for those workload requirements.</p>
+
+<h3 id="checking-performance-requirements">Find what is limiting performance</h3>
+<p>CloudWatch shows resource and storage trends, while CloudWatch Database Insights helps explain database load by waits and SQL activity. Database load is average active sessions, not CPU utilization or the number of open connections. Compare the load breakdown with CPU, memory, storage metrics, database logs, and the application symptom before deciding that the instance class is the cause. See the guide to <a href="/blog/aws-performance-insights-monitoring-rds-databases/">using CloudWatch Database Insights with RDS</a> for more on interpreting those signals.</p>
+<p>AWS retired the Performance Insights console experience on July 31, 2026, and moved users to Database Insights. Some RDS settings and API parameters still use the Performance Insights name. Follow the current <a href="https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/Database-Insights.html" target="_blank" rel="noopener noreferrer">Database Insights documentation</a> for the monitoring view and configuration available to your engine and Region.</p>
+
+<h3 id="changing-instance-settings">Plan and apply a class change</h3>
+<p>Confirm that the target class supports your DB engine and version in the Region, and that it meets the workload’s resource and compatibility needs. Test the candidate where a representative test environment is available. Before production, check backups, pending modifications, the maintenance plan, application connection behavior, and a rollback path.</p>
+<p>Changing an RDS DB instance class causes downtime. RDS applies the change during the next maintenance window unless you request immediate application. Multi-AZ can reduce the impact of some changes, but plan for an interruption and check the behavior for your deployment. If you choose to apply a change immediately, RDS also applies other pending modifications.</p>
+<p>For a provisioned RDS DB instance, the CLI command has this form:</p>
+<pre><code>aws rds modify-db-instance \
+  --db-instance-identifier orders-prod \
+  --db-instance-class db.m6i.large \
+  --no-apply-immediately
 </code></pre>
-<p>Create additional alerts for high CPU usage, low storage availability, or increased I/O wait times. Enable AWS Compute Optimizer for automated suggestions. For more detailed tracking, activate enhanced monitoring with this command:</p>
-<pre><code>aws rds modify-db-instance --db-instance-identifier mydbinstance --monitoring-interval 1 --monitoring-role-arn arn:aws:iam::123456789012:role/rds-monitoring-role
-</code></pre>
+<p>This example schedules the class change for the maintenance window. Replace the identifier and class with values for your DB instance, and verify that the class is orderable for its engine, version, and Region. For Aurora or a Multi-AZ DB cluster, check the current procedure for that deployment because some settings are managed at the cluster level. See AWS guidance on <a href="https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/USER_ModifyInstance.Settings.html" target="_blank" rel="noopener noreferrer">DB instance modification timing and downtime</a> before choosing when to apply it.</p>
+
+<h3 id="using-aws-compute-optimizer">Use Compute Optimizer within its limits</h3>
+<p>AWS Compute Optimizer can help compare candidate instance and storage configurations, but its RDS coverage is limited. It currently generates database recommendations for RDS for MySQL, RDS for PostgreSQL, Aurora MySQL-Compatible Edition, and Aurora PostgreSQL-Compatible Edition, and only for supported resource types and instance classes. See the live <a href="https://docs.aws.amazon.com/compute-optimizer/latest/ug/supported-resources.html" target="_blank" rel="noopener noreferrer">Compute Optimizer support list</a> before expecting a recommendation for another engine or class.</p>
+<p>For an RDS or Aurora DB instance, AWS requires at least 30 hours of CloudWatch metrics within the previous 14 days. AWS also documents that Performance Insights must be enabled for Compute Optimizer to identify over-provisioned DB instances. The current console experience is Database Insights, though some setup fields retain the older Performance Insights name; use the current RDS and Database Insights instructions for your engine. The paid enhanced infrastructure metrics preference extends the recommendation lookback to as many as 93 days. Review the current <a href="https://docs.aws.amazon.com/compute-optimizer/latest/ug/requirements.html" target="_blank" rel="noopener noreferrer">database recommendation prerequisites</a> and <a href="https://docs.aws.amazon.com/compute-optimizer/latest/ug/enhanced-infrastructure-metrics.html" target="_blank" rel="noopener noreferrer">enhanced metrics details</a>.</p>
+<p>Treat a recommendation as a candidate. Check its lookback period, performance-risk information, analyzed metrics, and projected limits against your own workload evidence and service objectives before changing production capacity.</p>
+
+<h2 id="maintaining-optimal-instance-sizes">Keep sizing decisions current</h2>
+<h3 id="regular-performance-reviews">Review after changes and workload shifts</h3>
+<p>After a resize, compare similar workload periods before and after the change. Check application latency, errors, and throughput along with CPU, available memory, connections, and storage signals. If the application loses headroom or misses an objective, restore the previous class or test another candidate. Revisit sizing after meaningful changes in traffic, database configuration, software, or service objectives.</p>
+
+<h3 id="leveraging-rds-reserved-instances">Consider RDS Reserved DB Instances after sizing</h3>
+<p>Once the class and expected steady usage are understood, compare On-Demand charges with Amazon RDS Reserved DB Instance offerings. An RDS reservation is a one- or three-year billing commitment for discounted matching usage; it is not a physical database instance or a capacity reservation. The discount applies automatically when eligible usage matches the reservation’s Region, engine, class, and applicable license or deployment terms. Some engines and license models support size flexibility within the same instance family; for example, RDS for SQL Server and Oracle License Included are not size-flexible. Aurora has separate reservation guidance. Review the current <a href="https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/USER_WorkingWithReservedDBInstances.html" target="_blank" rel="noopener noreferrer">RDS Reserved DB Instance terms</a> and <a href="https://docs.aws.amazon.com/AmazonRDS/latest/AuroraUserGuide/USER_WorkingWithReservedDBInstances.html" target="_blank" rel="noopener noreferrer">Aurora reservation terms</a> before buying. These are distinct from EC2 Reserved Instances.</p>
+
+<h3 id="automating-resource-monitoring">Alert on workload conditions</h3>
+<p>Use CloudWatch alarms for signals that represent a service objective or a capacity risk with a clear response. Choose the metric, statistic, period, and threshold from the workload’s behavior; a static CPU threshold that is unrelated to application impact can create noise or miss a real issue. Pair resource alerts with application latency or error signals where that gives operators a clearer picture. The site’s guide to <a href="/blog/cloudwatch-alarms-best-practices-for-thresholds-and-conditions/">CloudWatch alarm thresholds and conditions</a> explains how to set useful alarm periods and evaluation rules.</p>
+
 <h2 id="summary">Summary</h2>
-<p>To successfully rightsize, focus on consistent performance tracking, cost management, and periodic upkeep. Tools like <strong>AWS Compute Optimizer</strong> and <strong>CloudWatch</strong> can help you balance performance and expenses effectively.</p>
-<p>For predictable workloads, <strong>RDS Reserved Instances</strong> are a smart choice to lower costs. Pairing a structured Reserved Instance strategy with regular performance evaluations ensures savings without sacrificing performance.</p>
-<p>Keep an eye on <strong><a href="/blog/custom-cloudwatch-metrics-setup-guide-2024/">CloudWatch metrics</a></strong>, review <strong>AWS Compute Optimizer</strong> recommendations every month, set up automated alerts for resource limits, and utilize Reserved Instances for steady workloads. These steps will help you maintain efficiency and control costs.</p>
-<h2>Related posts</h2><ul><li><a href="/blog/aws-rds-blog-insights-performance-tuning/">AWS RDS Blog Insights: Performance Tuning</a></li><li><a href="/blog/mysql-to-amazon-rds-migration-guide/">MySQL to Amazon RDS Migration Guide</a></li><li><a href="/blog/aws-performance-insights-monitoring-rds-databases/">AWS Performance Insights: Monitoring RDS Databases</a></li><li><a href="/blog/aws-ec2-right-sizing-cost-performance-optimization/">AWS EC2 Right Sizing: Cost-Performance Optimization</a></li></ul>
+<p>Right-size an RDS instance from representative workload data, not a quiet average or a generic threshold. Identify the limiting resource, compare supported class options, plan for the downtime caused by a class change, and verify application performance and cost after the change. Use Compute Optimizer only when the engine, class, metrics, and monitoring configuration meet its current requirements; consider an RDS Reserved DB Instance only after the desired capacity and steady usage are clear.</p>
