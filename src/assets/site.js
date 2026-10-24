@@ -14,16 +14,6 @@ document.querySelectorAll('[data-post-search]').forEach((input) => {
 });
 
 if (location.hostname === 'awsforengineers.com') {
-  const adScripts = [
-    {
-      src: 'https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9639896081226655',
-      crossOrigin: 'anonymous',
-    },
-    {
-      src: 'https://app.tinyadz.com/scripts/ads.js?siteId=67e41a4ea3e895aab1bf9a58',
-      type: 'module',
-    },
-  ];
   let adsStarted = false;
   let animationFramesScheduled = false;
 
@@ -43,14 +33,11 @@ if (location.hostname === 'awsforengineers.com') {
           if (document.hidden || adsStarted) return;
 
           adsStarted = true;
-          for (const { src, crossOrigin, type } of adScripts) {
-            const script = document.createElement('script');
-            script.async = true;
-            if (crossOrigin) script.crossOrigin = crossOrigin;
-            if (type) script.type = type;
-            script.src = src;
-            document.head.appendChild(script);
-          }
+          const script = document.createElement('script');
+          script.async = true;
+          script.crossOrigin = 'anonymous';
+          script.src = 'https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9639896081226655';
+          document.head.appendChild(script);
         });
       });
     }

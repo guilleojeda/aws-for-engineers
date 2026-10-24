@@ -81,37 +81,11 @@ permalink: /
 </section>
 
 <section class="section wrap">
-  <div class="section-heading centered"><h2>Level Up Your AWS Skills</h2></div>
-  <div class="offer-grid">
-    <article class="offer-card">
-      <h3>Simple AWS newsletter</h3>
-      <p>Stop copying cloud solutions, start understanding them. Join over 35k devs, tech leads, and experts learning how to architect cloud solutions, not pass exams.</p>
-      <p class="price">Free</p>
-      <a class="button button-dark" href="https://newsletter.simpleaws.dev/?utm_source=awsforengineers&utm_medium=home">Subscribe</a>
-    </article>
-    <article class="offer-card">
-      <h3>Node.js on AWS</h3>
-      <p>130-page ebook. A step-by-step journey from “I have a Node.js app, what is AWS?” to “I've containerized the app and deployed it in Amazon ECS with best practices, and it's scalable and highly available!”</p>
-      <p class="price">$10 <span>/year</span></p>
-      <a class="button button-dark" href="https://learning.simpleaws.dev/b/nodejsonaws?utm_source=awsforengineers&utm_medium=home">Buy now</a>
-    </article>
-    <article class="offer-card">
-      <h3>Deploying on AWS</h3>
-      <p>12-hour video course with 19 modules. Learn How to Leverage AWS Services and Tools to Deploy Highly Available and Scalable Applications.</p>
-      <p class="price">$150 <span>/year</span></p>
-      <a class="button button-dark" href="https://learning.simpleaws.dev/b/deployingonaws?utm_source=awsforengineers&utm_medium=home">Buy now</a>
-    </article>
+  <div class="section-heading centered">
+    <h2>Simple AWS newsletter</h2>
+    <p>Stop copying cloud solutions, start understanding them.</p>
   </div>
-</section>
-
-<section class="section section-dark">
-  <div class="wrap split">
-    <div class="big-emoji" aria-hidden="true">🙌</div>
-    <div>
-      <h2>Want to advertise with us?</h2>
-      <a class="button button-light" href="https://www.passionfroot.me/guilleojeda">Review our ads options</a>
-    </div>
-  </div>
+  <p class="centered"><a class="button button-dark" href="https://newsletter.simpleaws.dev/?utm_source=awsforengineers&utm_medium=home">Subscribe</a></p>
 </section>
 
 <section class="section wrap">
@@ -142,6 +116,6 @@ permalink: /
   <div class="section-heading centered"><h2>Meet Our Team</h2><p>We're a team of AWS experts dedicated to helping you learn AWS.</p></div>
   <div class="team-card">
     {% if imported.homeImages['Linkedin profile pic (4)'] %}<img src="{{ imported.homeImages['Linkedin profile pic (4)'] }}" alt="Guille Ojeda" eleventy:widths="170,340" sizes="170px" loading="lazy">{% endif %}
-    <div><h3><a href="{{ identity.authorPath }}" rel="author">{{ identity.author.name }}</a></h3><p class="eyebrow">{{ identity.author.jobTitle }}</p><p>{{ identity.author.description }}</p><a href="{{ identity.authorPath }}">About Guille →</a></div>
+    <div><h3><a href="{{ identity.authorPath }}" rel="author">{{ identity.author.name }}</a></h3><p class="eyebrow">{{ identity.author.jobTitle }}</p><p>{{ identity.author.description }}</p><p><a href="{{ identity.authorPath }}">About Guille →</a> · <a href="https://guilleojeda.com/" rel="me">guilleojeda.com</a></p></div>
   </div>
 </section>
