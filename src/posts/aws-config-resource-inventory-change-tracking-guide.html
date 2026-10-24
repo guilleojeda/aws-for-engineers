@@ -9,8 +9,11 @@ datePublished: "2024-06-01T00:50:52.308000+00:00"
 heroImage: "/assets/media/a8183b93854a4afcd0fe.jpg"
 permalink: "/blog/aws-config-resource-inventory-change-tracking-guide/"
 sourceUrl: "https://awsforengineers.com/blog/aws-config-resource-inventory-change-tracking-guide/"
-dateModified: "2026-10-03"
-updateNote: "Rewrote the guide to clarify AWS Config coverage, recording, compliance, aggregation, retention, and billing."
+dateModified: "2026-10-24"
+updateNote: "Earlier technical update (2026-10-03): Rewrote the guide to clarify AWS Config coverage, recording, compliance, aggregation, retention, and billing. Added an optional affiliate course recommendation; technical guidance was not re-reviewed for this update."
+courseRecommendations:
+  - course: security
+    reason: "For broader security and governance learning beyond AWS Config recording, rules, and aggregation, the course covers Config, Organizations/SCPs, IAM/STS, and CloudTrail."
 ---
 <p><a href="https://aws.amazon.com/config/" target="_blank" rel="noopener noreferrer">AWS Config</a> records the configuration state of supported AWS resources in an account and Region. Its configuration items (CIs) let you inspect recorded state over time, while AWS Config rules evaluate that state against conditions you define. The coverage depends on the resource types AWS Config supports, their availability in each Region, and the scope and frequency of your configuration recorder.</p>
 <p>Use AWS Config to answer questions such as “What configuration did this resource have?” and “Does its recorded configuration match this rule?” Pair it with services such as CloudTrail when you also need API activity and request identity.</p>

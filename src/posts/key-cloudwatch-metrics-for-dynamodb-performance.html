@@ -9,8 +9,11 @@ datePublished: "2025-06-02T06:29:06.545000+00:00"
 heroImage: "/assets/media/6590cedeb344b13f897e.jpg"
 permalink: "/blog/key-cloudwatch-metrics-for-dynamodb-performance/"
 sourceUrl: "https://awsforengineers.com/blog/key-cloudwatch-metrics-for-dynamodb-performance/"
-dateModified: "2026-10-04"
-updateNote: "Corrected metric scope, dimensions, and statistics; replaced fixed capacity rules with cause-specific throttling guidance; clarified alarm behavior, TTL metadata, and Streams/Lambda monitoring."
+dateModified: "2026-10-24"
+updateNote: "Technical guidance was last reviewed on 2026-10-04: Corrected metric scope, dimensions, and statistics; replaced fixed capacity rules with cause-specific throttling guidance; clarified alarm behavior, TTL metadata, and Streams/Lambda monitoring. Added an optional affiliate course recommendation on 2026-10-24; no technical re-review was performed."
+courseRecommendations:
+  - course: operations
+    reason: "After identifying DynamoDB throttling causes and service metrics, this course adds broader AWS monitoring and troubleshooting; keep this guide for table-, index-, and operation-specific metrics."
 ---
 <p>Amazon DynamoDB publishes service metrics to Amazon CloudWatch in the <code>AWS/DynamoDB</code> namespace. They help answer different questions: how much capacity a workload uses, whether requests are throttled, and how long successful service operations take. For a useful view, match each metric to the capacity mode, table or index, and application objective you need to monitor.</p>
 

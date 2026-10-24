@@ -9,8 +9,11 @@ datePublished: "2024-11-30T21:48:57.147000+00:00"
 heroImage: "/assets/media/8874cb9725f36faa5b15.jpg"
 permalink: "/blog/monitor-lambda-errors-with-cloudwatch/"
 sourceUrl: "https://awsforengineers.com/blog/monitor-lambda-errors-with-cloudwatch/"
-dateModified: "2026-10-04"
-updateNote: "Rebuilt the walkthrough around valid Lambda metrics, structured and plain-text Logs Insights queries, a runnable metric-math error-rate alarm, correct logging permissions, and deliberate missing-data handling."
+dateModified: "2026-10-24"
+updateNote: "Earlier technical update (2026-10-04): Rebuilt the walkthrough around valid Lambda metrics, structured and plain-text Logs Insights queries, a runnable metric-math error-rate alarm, correct logging permissions, and deliberate missing-data handling. Added an optional affiliate course recommendation; technical guidance was not re-reviewed for this update."
+courseRecommendations:
+  - course: operations
+    reason: "For a broader operational monitoring path after creating Lambda error queries and alarms, the course covers AWS monitoring, troubleshooting, and administration."
 ---
 <p>CloudWatch can show whether a Lambda function is failing, throttled, slow, or building a backlog. Use the <code>AWS/Lambda</code> metrics to detect changes, then inspect the function's CloudWatch Logs to find the invocation or application message behind them. This walkthrough creates an error-rate alarm and runs focused Logs Insights queries.</p>
 <p>The examples use one function named <code>orders-api</code> in <code>us-east-1</code>. Replace the function, Region, and notification topic with values from your account. CloudWatch Lambda metrics are emitted automatically; the function's execution role needs logging permissions only if it sends logs to CloudWatch Logs.</p>

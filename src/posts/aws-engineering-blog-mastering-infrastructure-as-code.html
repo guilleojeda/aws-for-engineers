@@ -9,8 +9,11 @@ datePublished: "2024-01-30T18:47:45.495000+00:00"
 heroImage: "/assets/media/0fa1db63eb0312493dff.jpg"
 permalink: "/blog/aws-engineering-blog-mastering-infrastructure-as-code/"
 sourceUrl: "https://awsforengineers.com/blog/aws-engineering-blog-mastering-infrastructure-as-code/"
-dateModified: "2026-10-04"
-updateNote: "Rewrote the guide to correct CloudFormation and Terraform workflows, state handling, change safety, and current AWS infrastructure-as-code practices."
+dateModified: "2026-10-24"
+updateNote: "Technical guidance was last reviewed on 2026-10-04: Rewrote the guide to correct CloudFormation and Terraform workflows, state handling, change safety, and current AWS infrastructure-as-code practices. Added an optional affiliate course recommendation on 2026-10-24; no technical re-review was performed."
+courseRecommendations:
+  - course: operations
+    reason: "For the AWS-native CloudFormation/CDK side of this comparison, this course covers infrastructure as code and AWS operations; the article separately explains Terraform state and plans."
 ---
 <p>Infrastructure as code (IaC) describes infrastructure in files that teams can review, version, and apply repeatedly. On AWS, CloudFormation and Terraform both support declarative configuration, but they track deployed resources differently and have distinct update workflows. A change set or Terraform plan previews proposed work; deployment can still fail partway through, require replacement, or affect data and dependent services. This guide compares the two tools and shows how to review changes, protect state, and keep resource ownership clear.</p>
 

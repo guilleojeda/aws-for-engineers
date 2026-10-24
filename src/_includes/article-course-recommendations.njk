@@ -1,0 +1,13 @@
+<aside class="article-course-recommendations" aria-label="Optional AWS course recommendations">
+  <p class="article-course-title"><strong>Optional next step</strong></p>
+  <p class="article-course-intro">Paid training is optional; this article stands on its own.</p>
+  <p class="article-course-disclosure">Affiliate disclosure: I may earn a commission if you buy through these links.</p>
+  {% for selectedCourse in selectedCourses %}
+    <div class="article-course-item">
+      <p class="article-course-product"><strong>{{ selectedCourse.name }}</strong>{% if selectedCourse.instructor %} · Instructor: {{ selectedCourse.instructor }}{% endif %}</p>
+      <p class="article-course-reason">{{ selectedCourse.reason }}</p>
+      {% if selectedCourse.qualification %}<p class="article-course-qualification">{{ selectedCourse.qualification }}</p>{% endif %}
+      <p class="article-course-link"><a href="{{ selectedCourse.affiliateUrl }}" rel="sponsored">View {{ selectedCourse.name }} on learn.cantrill.io →</a></p>
+    </div>
+  {% endfor %}
+</aside>

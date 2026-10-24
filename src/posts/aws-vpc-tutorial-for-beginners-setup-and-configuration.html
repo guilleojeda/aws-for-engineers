@@ -9,8 +9,11 @@ datePublished: "2024-01-01T00:31:51.866000+00:00"
 heroImage: "/assets/media/147757e4befd0c30a2ae.jpg"
 permalink: "/blog/aws-vpc-tutorial-for-beginners-setup-and-configuration/"
 sourceUrl: "https://awsforengineers.com/blog/aws-vpc-tutorial-for-beginners-setup-and-configuration/"
-dateModified: "2026-10-04"
-updateNote: "Rewrote the beginner lab around current VPC console steps, explicit public and private routes, IPv4 and IPv6 behavior, security controls, costs, and dependency-aware cleanup."
+dateModified: "2026-10-24"
+updateNote: "Technical guidance was last reviewed on 2026-10-04: Rewrote the beginner lab around current VPC console steps, explicit public and private routes, IPv4 and IPv6 behavior, security controls, costs, and dependency-aware cleanup. Added an optional affiliate course recommendation on 2026-10-24; no technical re-review was performed."
+courseRecommendations:
+  - course: architecture
+    reason: "After this bounded VPC lab, learn how VPCs, subnets, routes, security groups, and NAT fit into wider AWS architecture; this course covers those networking topics."
 ---
 <p>This tutorial creates a small VPC you can inspect without launching a server. It uses one VPC, two Availability Zones, two public subnets, and two private subnets. It creates an internet gateway but no NAT gateway, EC2 instance, VPN, or interface endpoint, so the lab keeps its cost and cleanup surface small.</p>
 <p>You will learn how a CIDR block, subnet, route table, internet gateway, security group, and network ACL fit together. The companion <a href="/blog/aws-vpc-guide-configuration-essentials/">AWS VPC configuration guide</a> covers design choices for production networks; this article stays focused on a safe first build.</p>

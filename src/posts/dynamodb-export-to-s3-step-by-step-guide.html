@@ -9,8 +9,11 @@ datePublished: "2025-03-31T02:54:04.538000+00:00"
 heroImage: "/assets/media/e35ec47ac699cbfca6dd.jpg"
 permalink: "/blog/dynamodb-export-to-s3-step-by-step-guide/"
 sourceUrl: "https://awsforengineers.com/blog/dynamodb-export-to-s3-step-by-step-guide/"
-dateModified: "2026-10-04"
-updateNote: "Corrected export prerequisites, permissions, and output formats; added current guidance for full, incremental, and filtered exports."
+dateModified: "2026-10-24"
+updateNote: "Earlier technical update (2026-10-04): Corrected export prerequisites, permissions, and output formats; added current guidance for full, incremental, and filtered exports. Added an optional affiliate course recommendation; technical guidance was not re-reviewed for this update."
+courseRecommendations:
+  - course: development
+    reason: "For broader application-development learning around DynamoDB and AWS managed services after exporting table data, the course covers DynamoDB, Lambda, API Gateway, IAM, and CI/CD examples."
 ---
 <p>DynamoDB export to Amazon S3 creates an asynchronous copy of table data at a point in time. Use it to analyze data outside DynamoDB, keep an export in another account or Region, or prepare data for a migration. Exports read from point-in-time recovery (PITR) backups, do not consume table read capacity, and require PITR to be enabled first. See AWS's <a href="https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/S3DataExport.HowItWorks.html">export overview</a>.</p>
 <p>This guide walks through a full export from the console or AWS CLI. DynamoDB also supports incremental exports for changes within a time window and filtered exports for selected items or attributes. An S3 export is a file set for offline use; it does not continuously replicate a table or restore a table by itself.</p>

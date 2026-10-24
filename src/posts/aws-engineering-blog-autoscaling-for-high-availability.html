@@ -9,8 +9,11 @@ datePublished: "2023-12-31T01:30:00.749000+00:00"
 heroImage: "/assets/media/44072994e831d2866233.jpg"
 permalink: "/blog/aws-engineering-blog-autoscaling-for-high-availability/"
 sourceUrl: "https://awsforengineers.com/blog/aws-engineering-blog-autoscaling-for-high-availability/"
-dateModified: "2026-10-04"
-updateNote: "Reframed the article around EC2 Auto Scaling's role in multi-AZ availability, measured scaling signals, safe scale-in, and verified rollouts."
+dateModified: "2026-10-24"
+updateNote: "Earlier technical update (2026-10-04): Reframed the article around EC2 Auto Scaling's role in multi-AZ availability, measured scaling signals, safe scale-in, and verified rollouts. Added an optional affiliate course recommendation; technical guidance was not re-reviewed for this update."
+courseRecommendations:
+  - course: architecture
+    reason: "For a broader solution-architecture path alongside these EC2 scaling and availability patterns, the course covers EC2, networking, storage, and architecture foundations."
 ---
 <p>Amazon EC2 Auto Scaling adjusts the number of EC2 instances in an Auto Scaling group (ASG). It can maintain a chosen capacity, react to measured demand, and replace instances that its configured health checks identify as unhealthy. Those actions help an application recover and handle changing load, but they do not make the application highly available by themselves.</p>
 <p>Availability also depends on spare capacity in healthy Availability Zones, resilient dependencies, safe handling of state, and a tested way to release changes. This guide focuses on those boundaries for an EC2 service. For a practical group setup, launch template, warmup, and troubleshooting steps, see our <a href="/blog/aws-auto-scaling-setup-best-practices-tips/">EC2 Auto Scaling setup guide</a>.</p>

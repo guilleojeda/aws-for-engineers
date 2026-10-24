@@ -9,8 +9,11 @@ datePublished: "2023-12-31T00:27:03.047000+00:00"
 heroImage: "/assets/media/8e798a83f8afb043dd99.jpg"
 permalink: "/blog/aws-s3-guide-understanding-access-management/"
 sourceUrl: "https://awsforengineers.com/blog/aws-s3-guide-understanding-access-management/"
-dateModified: "2026-10-04"
-updateNote: "Rewrote the guide with current S3 Object Ownership defaults, Block Public Access behavior, scoped IAM examples, cross-account authorization, Access Analyzer, role credentials, Access Points, presigned URLs, and SSE-KMS permissions."
+dateModified: "2026-10-24"
+updateNote: "Technical guidance was last reviewed on 2026-10-04: Rewrote the guide with current S3 Object Ownership defaults, Block Public Access behavior, scoped IAM examples, cross-account authorization, Access Analyzer, role credentials, Access Points, presigned URLs, and SSE-KMS permissions. Added an optional affiliate course recommendation on 2026-10-24; no technical re-review was performed."
+courseRecommendations:
+  - course: security
+    reason: "For deeper AWS access-control study after working through S3 identity/bucket policies, cross-account roles, Access Points, and KMS, this course covers IAM policy evaluation and S3/KMS security."
 ---
 <p>Amazon S3 permissions decide which principal can perform an action on a bucket or object. Encryption protects stored data, but it does not grant access. For a request to succeed, the relevant policies must allow it, and no applicable policy can explicitly deny it.</p>
 <p>This guide explains how identity and resource policies fit together, how to scope bucket listing separately from object reads, and how to share data without relying on public access or legacy ACLs.</p>

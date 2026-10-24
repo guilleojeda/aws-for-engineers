@@ -9,8 +9,11 @@ datePublished: "2025-05-05T04:56:05.495000+00:00"
 heroImage: "/assets/media/81e2e531581aae3e21fb.jpg"
 permalink: "/blog/schedule-dynamodb-exports-to-s3-with-lambda/"
 sourceUrl: "https://awsforengineers.com/blog/schedule-dynamodb-exports-to-s3-with-lambda/"
-dateModified: "2026-10-04"
-updateNote: "Updated the SDK v3 and scheduling flow; corrected PITR, permissions, asynchronous status, and export-limit guidance."
+dateModified: "2026-10-24"
+updateNote: "Technical guidance was last reviewed on 2026-10-04: Updated the SDK v3 and scheduling flow; corrected PITR, permissions, asynchronous status, and export-limit guidance. Added an optional affiliate course recommendation on 2026-10-24; no technical re-review was performed."
+courseRecommendations:
+  - course: development
+    reason: "After scheduling DynamoDB exports, this course extends the Lambda/DynamoDB implementation into broader AWS application-development and CI/CD skills; export and Scheduler behavior remains specific to this guide."
 ---
 <p>Use Amazon EventBridge Scheduler to invoke a short AWS Lambda function that submits a DynamoDB export job to Amazon S3. DynamoDB performs the export asynchronously, so the function records the returned export ARN and exits; it does not wait for the table data to finish copying. Check the export status before a downstream process reads the files.</p>
 <p>This walkthrough schedules full snapshots. DynamoDB exports do not consume table read capacity, but an S3 export is a separate copy for analytics, retention, or data movement. Keep point-in-time recovery (PITR) or another backup method enabled for table recovery. For a one-time export from the console or CLI, see our <a href="/blog/dynamodb-export-to-s3-step-by-step-guide/">DynamoDB export to S3 walkthrough</a>.</p>

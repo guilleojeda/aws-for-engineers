@@ -9,8 +9,11 @@ datePublished: "2024-01-31T02:47:57.261000+00:00"
 heroImage: "/assets/media/22a9d10daa651e8f2579.jpg"
 permalink: "/blog/aws-content-migration-best-practices/"
 sourceUrl: "https://awsforengineers.com/blog/aws-content-migration-best-practices/"
-dateModified: "2026-10-03"
-updateNote: "Reworked the guide around current AWS migration choices, data validation, and cutover planning."
+dateModified: "2026-10-24"
+updateNote: "Technical guidance was last reviewed on 2026-10-03: Reworked the guide around current AWS migration choices, data validation, and cutover planning. Added an optional affiliate course recommendation on 2026-10-24; no technical re-review was performed."
+courseRecommendations:
+  - course: professionalArchitecture
+    reason: "To move from data-transfer choices into workload-level migration planning, this course covers migration strategies, DMS, DataSync, Storage Gateway, and hybrid migrations."
 ---
 <p>Migrating content to AWS means moving data and changing the applications or people that depend on it. The right method depends on what you have: shared files, Amazon S3 objects, a database, or a content application that combines all three. A successful copy alone does not prove that permissions, metadata, application behavior, or recent writes made it across.</p>
 <p>This guide focuses on planning and transferring content, verifying the destination, and handing traffic over safely. Moving application code or redesigning the application may need a separate migration plan.</p>

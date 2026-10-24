@@ -9,8 +9,11 @@ datePublished: "2025-09-01T03:59:09.069000+00:00"
 heroImage: "/assets/media/2e7299eb0be77b8ba56d.jpg"
 permalink: "/blog/cloudfront-ddos-protection-aws-shield-best-practices/"
 sourceUrl: "https://awsforengineers.com/blog/cloudfront-ddos-protection-aws-shield-best-practices/"
-dateModified: "2026-10-04"
-updateNote: "Revised Shield and WAF guidance, corrected origin protection advice, and updated pricing and monitoring details."
+dateModified: "2026-10-24"
+updateNote: "Added optional course recommendation with affiliate links; technical guidance was not re-reviewed. Earlier technical update (2026-10-04): Revised Shield and WAF guidance, corrected origin protection advice, and updated pricing and monitoring details."
+courseRecommendations:
+  - course: security
+    reason: "For broader AWS security skills behind the WAF and origin controls in this guide, Security Specialty covers WAF/WebACLs, IAM, CloudTrail, GuardDuty, and related protections. It is not a Shield Advanced setup course."
 ---
 <p>Amazon CloudFront can put a managed edge network in front of a website or API, while AWS Shield and AWS WAF add different kinds of attack protection. A resilient design uses CloudFront as the intended public entry point, protects the origin from direct requests, and applies request rules that match the application. These controls reduce risk; they do not guarantee that every attack is blocked or that an application remains available under every traffic pattern.</p>
 

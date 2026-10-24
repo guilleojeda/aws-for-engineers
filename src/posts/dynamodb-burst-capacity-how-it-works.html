@@ -9,8 +9,11 @@ datePublished: "2025-03-17T04:10:58.573000+00:00"
 heroImage: "/assets/media/26f28ee3e87037ee40f1.jpg"
 permalink: "/blog/dynamodb-burst-capacity-how-it-works/"
 sourceUrl: "https://awsforengineers.com/blog/dynamodb-burst-capacity-how-it-works/"
-dateModified: "2026-10-04"
-updateNote: "Corrected the burst window and CloudWatch guidance; explained background consumption, partition limits, and capacity-mode tradeoffs."
+dateModified: "2026-10-24"
+updateNote: "Added optional course recommendation with affiliate links; technical guidance was not re-reviewed. Earlier technical update (2026-10-04): Corrected the burst window and CloudWatch guidance; explained background consumption, partition limits, and capacity-mode tradeoffs."
+courseRecommendations:
+  - course: development
+    reason: "For a broader application-development path around DynamoDB, the Developer – Associate course includes DynamoDB, Lambda, and API Gateway. This article remains the reference for burst-capacity limits and throttling metrics."
 ---
 <p>DynamoDB burst capacity is a temporary buffer that can help with brief increases in read or write traffic. For tables and indexes using provisioned capacity, DynamoDB reserves some of the unused throughput for a later spike. AWS documents retention of up to five minutes (300 seconds), but the buffer is not guaranteed: DynamoDB may also use it for background maintenance. The five-minute detail below describes unused provisioned throughput. AWS also says an on-demand table can sometimes exceed a configured maximum through burst capacity; that separate case is covered below. Treat burst capacity as extra breathing room, not as capacity you can count on. See <a href="https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/burst-adaptive-capacity.html" target="_blank" rel="nofollow noopener noreferrer">AWS documentation on burst and adaptive capacity</a>.</p>
 <p><strong>Key takeaways:</strong></p>

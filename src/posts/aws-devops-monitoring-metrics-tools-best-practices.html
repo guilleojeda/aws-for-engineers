@@ -9,8 +9,11 @@ datePublished: "2024-06-02T00:12:00.225000+00:00"
 heroImage: "/assets/media/ce531776f19d8e7932fa.jpg"
 permalink: "/blog/aws-devops-monitoring-metrics-tools-best-practices/"
 sourceUrl: "https://awsforengineers.com/blog/aws-devops-monitoring-metrics-tools-best-practices/"
-dateModified: "2026-10-04"
-updateNote: "Reworked AWS monitoring guidance for current signal types, service roles, alert design, OpenTelemetry, and monitoring as code."
+dateModified: "2026-10-24"
+updateNote: "Added optional course recommendation with affiliate links; technical guidance was not re-reviewed. Earlier technical update (2026-10-04): Reworked AWS monitoring guidance for current signal types, service roles, alert design, OpenTelemetry, and monitoring as code."
+courseRecommendations:
+  - course: operations
+    reason: "The CloudOps Engineer – Associate course provides a structured next step in AWS monitoring, administration, and troubleshooting after this cross-service monitoring guide."
 ---
 <p>A useful AWS monitoring setup answers two questions: can customers complete the work they came to do, and where should the team look when they cannot? Start with customer and business outcomes, then collect the metrics, logs, traces, and events that help detect and explain a failure. Amazon CloudWatch is the main AWS service for workload telemetry and alarms, while CloudTrail, AWS Config, security services, and AWS cost tools answer different questions.</p>
 <p>Collecting more data does not automatically improve visibility. Every signal should help someone decide whether to investigate, act, or recover. AWS recommends monitoring every important workload component, including the customer experience and the dependencies behind it; see the <a href="https://docs.aws.amazon.com/wellarchitected/latest/reliability-pillar/monitor-workload-resources.html" target="_blank" rel="noopener noreferrer">AWS Well-Architected guidance for monitoring workload resources</a>.</p>

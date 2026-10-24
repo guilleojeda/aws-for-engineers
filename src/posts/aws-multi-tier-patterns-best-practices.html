@@ -9,8 +9,11 @@ datePublished: "2025-02-03T00:20:46.341000+00:00"
 heroImage: "/assets/media/d32734bc0a1863453a37.jpg"
 permalink: "/blog/aws-multi-tier-patterns-best-practices/"
 sourceUrl: "https://awsforengineers.com/blog/aws-multi-tier-patterns-best-practices/"
-dateModified: "2026-10-04"
-updateNote: "Rewrote architecture guidance, corrected encryption, scaling, and replication claims, and added practical recovery checks and related guides."
+dateModified: "2026-10-24"
+updateNote: "Added optional course recommendation with affiliate links; technical guidance was not re-reviewed. Earlier technical update (2026-10-04): Rewrote architecture guidance, corrected encryption, scaling, and replication claims, and added practical recovery checks and related guides."
+courseRecommendations:
+  - course: architecture
+    reason: "To carry these tier and network decisions into a structured AWS design path, the Solutions Architect – Associate course covers architecture foundations, VPCs, routing, and service choices."
 ---
 <p>An AWS multi-tier architecture separates presentation, business logic, and durable data so each responsibility can be developed, secured, and scaled deliberately. The pattern is useful when those boundaries solve a real problem: protecting a database from direct client access, scaling a busy API independently of storage, or changing the user interface without rebuilding the backend.</p>
 <p>Separating tiers does not automatically provide high availability, lower costs, or strong security. Those outcomes depend on the request path, permissions, capacity, data model, and recovery procedures. This guide explains the main AWS implementation patterns and the decisions that make them work in production. For an introduction to the components, see our <a href="/blog/3-tier-architecture-on-aws-key-components/">three-tier architecture guide</a>.</p>

@@ -9,8 +9,11 @@ datePublished: "2024-05-12T03:23:14.092000+00:00"
 heroImage: "/assets/media/b54a0d3c0a3a7ec3112b.jpg"
 permalink: "/blog/s3-lifecycle-rules-automate-storage-and-cut-costs/"
 sourceUrl: "https://awsforengineers.com/blog/s3-lifecycle-rules-automate-storage-and-cut-costs/"
-dateModified: "2026-10-04"
-updateNote: "Updated lifecycle timing, transition limits and costs, versioned-object behavior, and a scoped configuration example."
+dateModified: "2026-10-24"
+updateNote: "Added optional course recommendation with affiliate links; technical guidance was not re-reviewed. Earlier technical update (2026-10-04): Updated lifecycle timing, transition limits and costs, versioned-object behavior, and a scoped configuration example."
+courseRecommendations:
+  - course: professionalArchitecture
+    reason: "For experienced AWS practitioners placing lifecycle rules within broader storage and cost design, the Solutions Architect – Professional course covers storage/network tradeoffs and cost management. This article remains the S3 Lifecycle reference."
 ---
 <p>Amazon S3 Lifecycle lets you define rules that transition or expire objects in a bucket. A rule can cover a bucket or a filtered set of objects, and can manage current versions, noncurrent versions, expired delete markers, or incomplete multipart uploads.</p>
 <p>Lifecycle rules follow object age and configured filters; they do not detect whether an object has actually been accessed. A transition set for 90 days means 90 days since the object was created or last modified, not 90 days of inactivity. For changing or unknown access patterns, compare S3 Intelligent-Tiering with age-based rules. Storage-class tradeoffs are covered in our <a href="/blog/aws-s3-getting-started-understanding-storage-classes/">Amazon S3 storage class guide</a>.</p>

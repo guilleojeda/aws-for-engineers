@@ -9,8 +9,11 @@ datePublished: "2024-03-02T01:57:33.970000+00:00"
 heroImage: "/assets/media/c1bc2e7ddd2f75a8f5da.jpg"
 permalink: "/blog/aws-lambda-getting-started-deploy-your-first-function/"
 sourceUrl: "https://awsforengineers.com/blog/aws-lambda-getting-started-deploy-your-first-function/"
-dateModified: "2026-10-04"
-updateNote: "Replaced retired runtime and IAM steps with a current Node.js 24 console walkthrough, working test event, logging guidance, and safer cleanup."
+dateModified: "2026-10-24"
+updateNote: "Earlier technical update (2026-10-04): Replaced retired runtime and IAM steps with a current Node.js 24 console walkthrough, working test event, logging guidance, and safer cleanup. Added an optional affiliate course recommendation; technical guidance was not re-reviewed for this update."
+courseRecommendations:
+  - course: development
+    reason: "To move from a console hello-world function into broader AWS application development, the course covers Lambda, API Gateway, DynamoDB, IAM, and CI/CD examples."
 ---
 <p>This walkthrough creates a small Node.js Lambda function in the AWS console, deploys it, invokes it with a test event, checks its logs, and removes the resources created for the exercise. You do not need to create an HTTP endpoint or connect another AWS service to run this example. If you want the concepts and choices before the hands-on steps, read <a href="/blog/aws-lambda-getting-started-first-steps/">AWS Lambda Fundamentals: Core Concepts and First Setup</a>.</p>
 <p>Lambda runs your handler when it is invoked and manages the underlying compute environment. Your account can incur charges for Lambda usage and CloudWatch Logs, so check the current <a href="https://aws.amazon.com/lambda/pricing/" rel="noopener noreferrer" target="_blank">Lambda pricing</a> and <a href="https://aws.amazon.com/cloudwatch/pricing/" rel="noopener noreferrer" target="_blank">CloudWatch pricing</a> for your account and usage before you begin.</p>

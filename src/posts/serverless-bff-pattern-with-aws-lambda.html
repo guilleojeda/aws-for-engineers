@@ -9,8 +9,11 @@ datePublished: "2025-06-16T08:47:43.543000+00:00"
 heroImage: "/assets/media/c45eb87a7af6294ff2bc.jpg"
 permalink: "/blog/serverless-bff-pattern-with-aws-lambda/"
 sourceUrl: "https://awsforengineers.com/blog/serverless-bff-pattern-with-aws-lambda/"
-dateModified: "2026-10-04"
-updateNote: "Rewrote the guide to clarify BFF responsibilities, request timeouts, concurrency, downstream limits, and API authorization."
+dateModified: "2026-10-24"
+updateNote: "Added optional course recommendation with affiliate links; technical guidance was not re-reviewed. Earlier technical update (2026-10-04): Rewrote the guide to clarify BFF responsibilities, request timeouts, concurrency, downstream limits, and API authorization."
+courseRecommendations:
+  - course: development
+    reason: "For a structured AWS application-development path beyond this BFF design, the Developer – Associate course covers Lambda, API Gateway, DynamoDB, IAM, and CI/CD examples."
 ---
 <p>A Backend for Frontend (BFF) is an API layer shaped around the needs of a particular client, such as a browser, mobile app, or partner integration. It can combine calls to existing services, translate their responses into a client-friendly contract, and keep internal service details away from the client. AWS Lambda can run this request-handling code without you managing application servers; Amazon API Gateway can provide the HTTP entry point.</p>
 <p>Lambda does not make an API reliable or fast by itself. A synchronous request still depends on every service it calls, each timeout along the request path, available concurrency, and the way failures are handled. This guide shows how to design those boundaries for a practical serverless BFF.</p>

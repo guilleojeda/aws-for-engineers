@@ -9,8 +9,11 @@ datePublished: "2025-02-06T00:11:03.736000+00:00"
 heroImage: "/assets/media/1ff46b28306d2b0ed368.jpg"
 permalink: "/blog/ultimate-guide-to-aws-network-performance-benchmarking/"
 sourceUrl: "https://awsforengineers.com/blog/ultimate-guide-to-aws-network-performance-benchmarking/"
-dateModified: "2026-10-04"
-updateNote: "Rebuilt the guide around repeatable tests, current EC2 bandwidth and ENA limits, safe iperf3 procedures, path MTU, and accurate monitoring signals."
+dateModified: "2026-10-24"
+updateNote: "Technical guidance was last reviewed on 2026-10-04: Rebuilt the guide around repeatable tests, current EC2 bandwidth and ENA limits, safe iperf3 procedures, path MTU, and accurate monitoring signals. Added an optional affiliate course recommendation on 2026-10-24; no technical re-review was performed."
+courseRecommendations:
+  - course: advancedNetworking
+    reason: "For broader AWS network design after measuring EC2 traffic paths, this course covers VPC routing, Transit Gateway, Direct Connect, and troubleshooting; it is advanced networking study, not an iperf benchmark course."
 ---
 <p>A network benchmark answers a specific question about a specific path and workload. There is no single “AWS network speed”: observed throughput depends on the EC2 instance, traffic direction and flow count, protocol, packet size, route, and the test hosts themselves. Measure the path your application uses, record the conditions, and compare like with like. For a broader before-and-after method, see <a href="/blog/how-to-benchmark-aws-performance-after-migration/">how to benchmark AWS performance after a migration</a>.</p>
 

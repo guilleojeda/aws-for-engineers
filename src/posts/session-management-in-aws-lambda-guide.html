@@ -6,11 +6,14 @@ title: "AWS Lambda Session Management: JWTs, Cookies, and DynamoDB"
 description: "Choose between Cognito JWTs and revocable server-side sessions in AWS Lambda, with DynamoDB TTL, secure cookies, API Gateway authorizers, and concurrency guidance."
 date: "2024-09-30"
 datePublished: "2024-09-30T18:57:44.976000+00:00"
-dateModified: "2026-10-04"
-updateNote: "Rebuilt the guide around JWTs and revocable server-side sessions, correcting DynamoDB TTL, cookie, and API Gateway authorizer guidance."
+dateModified: "2026-10-24"
+updateNote: "Earlier technical update (2026-10-04): Rebuilt the guide around JWTs and revocable server-side sessions, correcting DynamoDB TTL, cookie, and API Gateway authorizer guidance. Added an optional affiliate course recommendation; technical guidance was not re-reviewed for this update."
 heroImage: "/assets/media/cfb675d48858787dc341.jpg"
 permalink: "/blog/session-management-in-aws-lambda-guide/"
 sourceUrl: "https://awsforengineers.com/blog/session-management-in-aws-lambda-guide/"
+courseRecommendations:
+  - course: development
+    reason: "For a broader application-development path around Lambda, API Gateway, and durable session state, the course covers Lambda, API Gateway, DynamoDB, IAM, and CI/CD examples."
 ---
 <p>A Lambda execution environment can be reused, but an application must not depend on its memory or temporary files surviving for another invocation. Keep durable user session state in an external store, or use a verifiable token when server-side session state is unnecessary. AWS recommends designing standard Lambda functions to be stateless and committing permanent changes to durable services before the function exits; see <a href="https://docs.aws.amazon.com/lambda/latest/dg/concepts-application-design.html" target="_blank" rel="noopener noreferrer">AWS guidance on Lambda application design</a>.</p>
 <p>First separate two things that are often both called a “session”:</p>

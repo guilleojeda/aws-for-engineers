@@ -9,8 +9,11 @@ datePublished: "2024-07-30T18:55:14.720000+00:00"
 heroImage: "/assets/media/aaa272194a4f4cde44ac.jpg"
 permalink: "/blog/test-serverless-apps-locally-with-aws-sam-cli/"
 sourceUrl: "https://awsforengineers.com/blog/test-serverless-apps-locally-with-aws-sam-cli/"
-dateModified: "2026-10-04"
-updateNote: "Rebuilt the app and API workflow around current SAM commands, matching event payloads, and sandbox cloud checks; removed retired runtimes and invalid examples."
+dateModified: "2026-10-24"
+updateNote: "Added optional course recommendation with affiliate links; technical guidance was not re-reviewed. Earlier technical update (2026-10-04): Rebuilt the app and API workflow around current SAM commands, matching event payloads, and sandbox cloud checks; removed retired runtimes and invalid examples."
+courseRecommendations:
+  - course: development
+    reason: "The Developer – Associate course offers a broader AWS application-development path around Lambda, API Gateway, DynamoDB, IAM, and CI/CD examples after testing with SAM CLI."
 ---
 <p>AWS SAM CLI gives a serverless project two useful local entry points: a one-off function invocation with a saved event, and an HTTP server that routes requests to functions declared in the SAM template. These checks help with code, packaging, and request handling. They do not create the AWS services in the template or prove that a deployed API, event source, IAM policy, or network behaves correctly.</p>
 <p>This guide assumes you have a SAM project and Docker running. If you need to install the tools or create a starter project, use our <a href="/blog/aws-sam-local-setup-guide/">AWS SAM local setup guide</a>.</p>

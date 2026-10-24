@@ -9,8 +9,11 @@ datePublished: "2024-07-09T01:34:11.782000+00:00"
 heroImage: "/assets/media/c4e2e72d6dccb393838b.jpg"
 permalink: "/blog/aws-fault-injection-service-simulate-outages-test-resilience/"
 sourceUrl: "https://awsforengineers.com/blog/aws-fault-injection-service-simulate-outages-test-resilience/"
-dateModified: "2026-10-04"
-updateNote: "Reworked FIS actions, targeting, guardrails, recovery, and cost guidance."
+dateModified: "2026-10-24"
+updateNote: "Technical guidance was last reviewed on 2026-10-04: Reworked FIS actions, targeting, guardrails, recovery, and cost guidance. Added an optional affiliate course recommendation on 2026-10-24; no technical re-review was performed."
+courseRecommendations:
+  - course: operations
+    reason: "After planning a bounded fault experiment, this course offers broader AWS monitoring, troubleshooting, and workload-operations study; it is not an FIS experiment tutorial."
 ---
 <p><a href="https://docs.aws.amazon.com/fis/latest/userguide/what-is.html" target="_blank" rel="noopener noreferrer">AWS Fault Injection Service (AWS FIS)</a> runs controlled experiments against real AWS resources. An experiment tests a specific reliability hypothesis, such as whether a service stays within its latency objective when one test instance stops. The result applies only to the actions, resources, and workload conditions you tested.</p>
 <p>For a first experiment, choose one reversible fault, target a single test resource, define a measurable steady state, configure a CloudWatch alarm stop condition, and decide how the resource will recover before you start.</p>

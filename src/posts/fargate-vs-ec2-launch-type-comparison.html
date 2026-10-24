@@ -9,8 +9,11 @@ datePublished: "2025-03-27T01:27:03.541000+00:00"
 heroImage: "/assets/media/f830e19d68d808f36e50.jpg"
 permalink: "/blog/fargate-vs-ec2-launch-type-comparison/"
 sourceUrl: "https://awsforengineers.com/blog/fargate-vs-ec2-launch-type-comparison/"
-dateModified: "2026-10-04"
-updateNote: "Reframed the choice around ECS capacity providers, corrected scaling and task-feature claims, and updated billing and purchase options."
+dateModified: "2026-10-24"
+updateNote: "Added optional course recommendation with affiliate links; technical guidance was not re-reviewed. Earlier technical update (2026-10-04): Reframed the choice around ECS capacity providers, corrected scaling and task-feature claims, and updated billing and purchase options."
+courseRecommendations:
+  - course: professionalArchitecture
+    reason: "For experienced readers who want a broader architecture path after comparing ECS capacity choices, the Solutions Architect – Professional course covers complex workload design and includes ECS/EKS in its checked curriculum. This is not a detailed Fargate or ECS configuration course."
 ---
 <p><strong>For Amazon ECS, choose Fargate when you want AWS to manage the compute capacity for each task; choose EC2 when your tasks need instance-level control or features such as GPUs.</strong> Either option can scale the number of service tasks. With EC2, you also plan and operate the instance fleet, although an Auto Scaling group capacity provider can manage much of its scaling.</p>
 <p>This guide compares Fargate with customer-managed EC2 capacity for ECS. ECS also offers <a href="https://docs.aws.amazon.com/AmazonECS/latest/developerguide/managed-instances-capacity-providers-concept.html" target="_blank" rel="noopener noreferrer">Amazon ECS Managed Instances</a>, a separate EC2-based capacity option where AWS manages more of the instance operations.</p>

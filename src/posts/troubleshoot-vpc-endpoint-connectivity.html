@@ -9,8 +9,11 @@ datePublished: "2025-09-11T01:46:24.032000+00:00"
 heroImage: "/assets/media/8d3022fbcf7bec13c482.jpg"
 permalink: "/blog/troubleshoot-vpc-endpoint-connectivity/"
 sourceUrl: "https://awsforengineers.com/blog/troubleshoot-vpc-endpoint-connectivity/"
-dateModified: "2026-10-04"
-updateNote: "Rebuilt the diagnosis around endpoint type, DNS, routing, network controls, and authorization."
+dateModified: "2026-10-24"
+updateNote: "Added optional course recommendation with affiliate links; technical guidance was not re-reviewed. Earlier technical update (2026-10-04): Rebuilt the diagnosis around endpoint type, DNS, routing, network controls, and authorization."
+courseRecommendations:
+  - course: advancedNetworking
+    reason: "For readers with Associate-level AWS networking knowledge who want a broader path after this endpoint diagnosis, the Advanced Networking – Specialty course covers VPC routing, Transit Gateway, VPN, Direct Connect, and network troubleshooting."
 ---
 <p>Start by identifying the endpoint type. A gateway endpoint and an interface endpoint use different network paths, so the same DNS, route-table, and security-group checks do not apply to both. An endpoint marked <code>Available</code> is provisioned; that status alone does not prove that a request can reach the service or is authorized. For a broader review of VPC routes and security controls, see the <a href="/blog/aws-vpc-guide-configuration-essentials/">AWS VPC configuration guide</a>.</p>
 

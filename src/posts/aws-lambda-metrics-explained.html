@@ -9,8 +9,11 @@ datePublished: "2025-03-03T05:10:25.595000+00:00"
 heroImage: "/assets/media/a18444e18ce69f37b97e.jpg"
 permalink: "/blog/aws-lambda-metrics-explained/"
 sourceUrl: "https://awsforengineers.com/blog/aws-lambda-metrics-explained/"
-dateModified: "2026-10-04"
-updateNote: "Revised Lambda metric definitions, billing and log guidance, concurrency controls, trigger-specific error handling, and tracing advice against current AWS documentation."
+dateModified: "2026-10-24"
+updateNote: "Earlier technical update (2026-10-04): Revised Lambda metric definitions, billing and log guidance, concurrency controls, trigger-specific error handling, and tracing advice against current AWS documentation. Added an optional affiliate course recommendation; technical guidance was not re-reviewed for this update."
+courseRecommendations:
+  - course: operations
+    reason: "For broader operational monitoring after interpreting Lambda metrics and logs, the course covers AWS monitoring, troubleshooting, and workload administration."
 ---
 <p><strong>AWS Lambda metrics help you see how often functions run, how long they process events, when they fail, and whether concurrency or an event source is falling behind.</strong> Start with the standard metrics in CloudWatch, then use invocation logs for details such as billed duration, memory use, and initialization time.</p>
 <p>Lambda publishes its standard function metrics to the <code>AWS/Lambda</code> namespace in CloudWatch at one-minute intervals. Those metrics are aggregates, not a record of every invocation. A long-running invocation can take several minutes to appear in the metric graph, so allow for that delay when investigating a recent change. See AWS's <a href="https://docs.aws.amazon.com/lambda/latest/dg/monitoring-metrics.html" target="_blank" rel="noopener noreferrer">Lambda metrics overview</a>.</p>

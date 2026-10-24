@@ -9,8 +9,11 @@ datePublished: "2025-02-27T06:45:12.296000+00:00"
 heroImage: "/assets/media/90d049bd79ff5f352de9.jpg"
 permalink: "/blog/how-to-set-up-cloudwatch-alarms-for-lambda/"
 sourceUrl: "https://awsforengineers.com/blog/how-to-set-up-cloudwatch-alarms-for-lambda/"
-dateModified: "2026-10-04"
-updateNote: "Reworked Lambda metric definitions, alarm math and evaluation, notification setup, and async failure monitoring."
+dateModified: "2026-10-24"
+updateNote: "Added optional course recommendation with affiliate links; technical guidance was not re-reviewed. Earlier technical update (2026-10-04): Reworked Lambda metric definitions, alarm math and evaluation, notification setup, and async failure monitoring."
+courseRecommendations:
+  - course: operations
+    reason: "The CloudOps Engineer – Associate course offers a broader path in AWS monitoring, administration, and troubleshooting after this Lambda alarm setup guide."
 ---
 <p>CloudWatch alarms can notify you when an AWS Lambda function starts failing, slows down, or runs into a capacity limit. A useful alarm matches the metric to a service objective, uses the right statistic and dimensions, and has a clear response. This guide covers the standard Lambda metrics, threshold and missing-data choices, SNS notifications, and a concrete AWS CLI example.</p>
 <ul>

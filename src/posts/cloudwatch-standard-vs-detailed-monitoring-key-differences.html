@@ -9,8 +9,11 @@ datePublished: "2024-09-05T02:08:09.052000+00:00"
 heroImage: "/assets/media/0daebc1f04aeefe13d63.jpg"
 permalink: "/blog/cloudwatch-standard-vs-detailed-monitoring-key-differences/"
 sourceUrl: "https://awsforengineers.com/blog/cloudwatch-standard-vs-detailed-monitoring-key-differences/"
-dateModified: "2026-10-04"
-updateNote: "Corrected EC2 metric intervals and exceptions, separated custom metric resolution, and updated cost, alarm, scaling, and setup guidance."
+dateModified: "2026-10-24"
+updateNote: "Added optional course recommendation with affiliate links; technical guidance was not re-reviewed. Earlier technical update (2026-10-04): Corrected EC2 metric intervals and exceptions, separated custom metric resolution, and updated cost, alarm, scaling, and setup guidance."
+courseRecommendations:
+  - course: operations
+    reason: "The CloudOps Engineer – Associate course offers broader AWS monitoring and administration training after this EC2 metric-cadence comparison."
 ---
 <p>For an Amazon EC2 instance, <strong>basic monitoring</strong> sends most instance metrics to CloudWatch every five minutes; <strong>detailed monitoring</strong> sends supported instance metrics every minute for an additional charge. The choice controls how often EC2 publishes its metrics. It does not add operating-system memory or free-disk metrics, and it is separate from the standard or high resolution you can choose when publishing custom metrics.</p>
 <p>AWS documentation calls the EC2 options basic and detailed monitoring. This guide compares those EC2 settings, explains exceptions, and shows when a one-minute signal is useful. Other AWS services can use different metric intervals and separate options with names such as enhanced monitoring.</p>

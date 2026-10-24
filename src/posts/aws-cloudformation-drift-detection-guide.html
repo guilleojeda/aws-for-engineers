@@ -9,8 +9,11 @@ datePublished: "2024-09-06T00:37:01.970000+00:00"
 heroImage: "/assets/media/304a0c897528e172a9a1.jpg"
 permalink: "/blog/aws-cloudformation-drift-detection-guide/"
 sourceUrl: "https://awsforengineers.com/blog/aws-cloudformation-drift-detection-guide/"
-dateModified: "2026-10-03"
-updateNote: "Reworked the detection and remediation workflow for current drift-aware change sets and coverage limits."
+dateModified: "2026-10-24"
+updateNote: "Added optional course recommendation with affiliate links; technical guidance was not re-reviewed. Earlier technical update (2026-10-03): Reworked the detection and remediation workflow for current drift-aware change sets and coverage limits."
+courseRecommendations:
+  - course: operations
+    reason: "For broader infrastructure operations after checking drift, the CloudOps Engineer – Associate course covers CloudFormation/CDK, AWS administration, and troubleshooting. This article remains the CloudFormation-specific reference."
 ---
 <p>AWS CloudFormation drift detection compares the current configuration of stack resources with the expected values in the stack template and its parameters. Start a stack check, wait for its asynchronous operation to finish, then inspect each checked resource's differences. Detection reports drift; it does not fix it. Coverage is limited to supported resource types and properties explicitly set in the template, so an <code>IN_SYNC</code> result is not proof that every resource or setting in your account matches your intent. <a href="https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/using-cfn-stack-drift.html" target="_blank">AWS explains the comparison and its limits</a>.</p>
 

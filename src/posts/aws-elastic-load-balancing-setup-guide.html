@@ -9,8 +9,11 @@ datePublished: "2024-05-30T19:09:23.277000+00:00"
 heroImage: "/assets/media/8ee5c4fdcbc31a0b8d93.jpg"
 permalink: "/blog/aws-elastic-load-balancing-setup-guide/"
 sourceUrl: "https://awsforengineers.com/blog/aws-elastic-load-balancing-setup-guide/"
-dateModified: "2026-10-04"
-updateNote: "Rebuilt the guide as a multi-AZ Application Load Balancer setup, correcting network, TLS, health-check, Auto Scaling, and cost guidance."
+dateModified: "2026-10-24"
+updateNote: "Added optional course recommendation with affiliate links; technical guidance was not re-reviewed. Earlier technical update (2026-10-04): Rebuilt the guide as a multi-AZ Application Load Balancer setup, correcting network, TLS, health-check, Auto Scaling, and cost guidance."
+courseRecommendations:
+  - course: architecture
+    reason: "For a broader design path after configuring this load balancer, the Solutions Architect – Associate course covers VPCs, subnets, routes, security groups, and AWS service architecture."
 ---
 <p>Elastic Load Balancing (ELB) distributes client traffic across registered targets, but a load balancer alone does not make an application highly available. This guide shows how to configure an Application Load Balancer (ALB) for an EC2 web service, terminate HTTPS at the load balancer, and verify the path to healthy targets. It assumes you already have an AWS account, a VPC, and an application that can run on replaceable EC2 instances.</p>
 <p>If you need a refresher on EC2 instances, VPCs, and security groups, start with our <a href="/blog/aws-ec2-basics-core-concepts-explained/">EC2 basics guide</a>. For a broader explanation of how load balancing and Auto Scaling support availability, see <a href="/blog/aws-engineering-blog-autoscaling-for-high-availability/">EC2 Auto Scaling and high availability</a>.</p>

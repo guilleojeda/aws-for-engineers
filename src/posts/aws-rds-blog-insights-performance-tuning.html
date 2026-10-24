@@ -9,8 +9,11 @@ datePublished: "2023-12-30T17:53:07.392000+00:00"
 heroImage: "/assets/media/7d3a4ef552f650b2ace9.jpg"
 permalink: "/blog/aws-rds-blog-insights-performance-tuning/"
 sourceUrl: "https://awsforengineers.com/blog/aws-rds-blog-insights-performance-tuning/"
-dateModified: "2026-10-04"
-updateNote: "Replaced generic tuning rules with workload-led guidance, current Database Insights details, and engine-specific query, index, and parameter caveats."
+dateModified: "2026-10-24"
+updateNote: "Earlier technical update (2026-10-04): Replaced generic tuning rules with workload-led guidance, current Database Insights details, and engine-specific query, index, and parameter caveats. Added an optional affiliate course recommendation; technical guidance was not re-reviewed for this update."
+courseRecommendations:
+  - course: operations
+    reason: "For a broader operations path alongside this engine-specific RDS tuning loop, the course covers workload monitoring, troubleshooting, and AWS administration."
 ---
 <p><strong>Start with the operation that is slow and the conditions under which it slows down.</strong> Amazon RDS performance tuning is a measured loop: establish a baseline, find the limiting part of the workload, change one likely cause, and compare the same workload again.</p>
 <p>RDS manages database infrastructure, but query plans, schemas, connection patterns, and many settings still depend on the database engine and version. The steps below apply across RDS engines; exact metrics, features, parameter groups, and change behavior vary by engine, deployment type, instance class, storage, and Region.</p>

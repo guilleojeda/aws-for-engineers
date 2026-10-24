@@ -9,8 +9,11 @@ datePublished: "2025-05-22T05:41:24.930000+00:00"
 heroImage: "/assets/media/bf9ce28bc3993fc3aac3.jpg"
 permalink: "/blog/automated-disaster-recovery-testing-with-aws/"
 sourceUrl: "https://awsforengineers.com/blog/automated-disaster-recovery-testing-with-aws/"
-dateModified: "2026-10-03"
-updateNote: "Reworked the DR testing guide to distinguish DRS drills, backup restore tests, application validation, and fault injection experiments."
+dateModified: "2026-10-24"
+updateNote: "Added optional course recommendation with affiliate links; technical guidance was not re-reviewed. Earlier technical update (2026-10-03): Reworked the DR testing guide to distinguish DRS drills, backup restore tests, application validation, and fault injection experiments."
+courseRecommendations:
+  - course: professionalArchitecture
+    reason: "If you are designing the architecture behind these drills, the Solutions Architect – Professional course covers workload reliability and disaster recovery. It complements the DRS and AWS Backup procedures here rather than replacing their service-specific guidance."
 ---
 <p>A successful backup job or a server that boots in a recovery Region does not by itself prove that an application can recover. A useful disaster recovery (DR) test follows a chosen recovery point through infrastructure startup, dependency checks, application validation, and the steps operators would take to restore service.</p>
 <p>This guide shows how to combine AWS Elastic Disaster Recovery (AWS DRS) recovery drills, AWS Backup restore testing, and application-level checks. It also explains where AWS Fault Injection Service (AWS FIS) fits: FIS tests how a workload responds to injected faults, while DRS drills and backup restore tests exercise recovery from replicated data or backups.</p>

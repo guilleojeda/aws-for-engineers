@@ -9,8 +9,11 @@ datePublished: "2024-07-08T00:15:32.152000+00:00"
 heroImage: "/assets/media/74cb4efbc1f46de9d285.jpg"
 permalink: "/blog/9-serverless-network-security-best-practices/"
 sourceUrl: "https://awsforengineers.com/blog/9-serverless-network-security-best-practices/"
-dateModified: "2026-10-03"
-updateNote: "Revised AWS guidance for Lambda networking, API security, data protection, and monitoring."
+dateModified: "2026-10-24"
+updateNote: "Added optional course recommendation with affiliate links; technical guidance was not re-reviewed. Earlier technical update (2026-10-03): Revised AWS guidance for Lambda networking, API security, data protection, and monitoring."
+courseRecommendations:
+  - course: security
+    reason: "For broader AWS security skills after the IAM, VPC, data-protection, and monitoring controls here, Security Specialty covers IAM/STS, CloudTrail, KMS, WAF, GuardDuty, and related security services. Use it for skills learning and check the current exam-version qualification before buying for certification preparation."
 ---
 <p>Serverless removes the need to manage servers, but it does not remove application security work. For AWS Lambda workloads, you still choose who can invoke each function, what its code can access, which network paths it can use, and how data and failures are handled. This guide covers nine practical controls for those decisions, with a focus on the boundaries around Lambda, API Gateway, and AWS data services.</p>
 <p>A VPC is one tool in that design, not a default security switch. Every Lambda function runs in a Lambda-managed VPC; configuring access to a VPC in your account gives the function paths to selected private resources. Whether a function needs that connection depends on its dependencies and network requirements, as the <a href="https://docs.aws.amazon.com/lambda/latest/dg/configuration-vpc.html">Lambda VPC documentation</a> explains.</p>

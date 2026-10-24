@@ -9,8 +9,11 @@ datePublished: "2025-09-25T02:42:19.430000+00:00"
 heroImage: "/assets/media/8eb3dffb7965e95e65a8.jpg"
 permalink: "/blog/troubleshooting-aws-direct-connect-step-by-step/"
 sourceUrl: "https://awsforengineers.com/blog/troubleshooting-aws-direct-connect-step-by-step/"
-dateModified: "2026-10-04"
-updateNote: "Reworked the fault isolation steps for physical links, VLANs, BGP, routing, metrics, and encryption."
+dateModified: "2026-10-24"
+updateNote: "Earlier technical update (2026-10-04): Reworked the fault isolation steps for physical links, VLANs, BGP, routing, metrics, and encryption. Added an optional affiliate course recommendation; technical guidance was not re-reviewed for this update."
+courseRecommendations:
+  - course: advancedNetworking
+    reason: "For an advanced networking path beyond layer-by-layer Direct Connect diagnosis, the course covers Direct Connect, VPNs, Transit Gateway, BGP, and routing."
 ---
 <p>Troubleshoot AWS Direct Connect in order: physical connection, VLAN and peer reachability, BGP, then routes to the workload. A physical connection can be up while a virtual interface or BGP session is down; an established BGP session can still lack the route needed by an application. Direct Connect traffic is not encrypted in transit by default. For the differences between Direct Connect and IPsec Site-to-Site VPN, see <a href="/blog/aws-direct-connect-vs-vpn-key-differences/">Direct Connect vs. Site-to-Site VPN</a>.</p>
 

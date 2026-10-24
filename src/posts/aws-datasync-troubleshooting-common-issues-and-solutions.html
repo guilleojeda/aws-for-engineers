@@ -9,8 +9,11 @@ datePublished: "2024-05-01T10:27:35.398000+00:00"
 heroImage: "/assets/media/8f9843d1b4b9d363f78c.jpg"
 permalink: "/blog/aws-datasync-troubleshooting-common-issues-and-solutions/"
 sourceUrl: "https://awsforengineers.com/blog/aws-datasync-troubleshooting-common-issues-and-solutions/"
-dateModified: "2026-10-03"
-updateNote: "Replaced outdated option advice with a phase-based guide to agent, network, storage, task, and verification failures."
+dateModified: "2026-10-24"
+updateNote: "Earlier technical update (2026-10-03): Replaced outdated option advice with a phase-based guide to agent, network, storage, task, and verification failures. Added an optional affiliate course recommendation; technical guidance was not re-reviewed for this update."
+courseRecommendations:
+  - course: professionalArchitecture
+    reason: "For the migration architecture around these DataSync failure checks, the course covers DataSync, Storage Gateway, DMS demonstrations, and the AWS 6 Rs."
 ---
 <p>When an AWS DataSync transfer fails, start with the task execution record and follow the failing phase to the agent, network path, storage location, or task option. This guide uses read-only AWS CLI commands to inspect a run, then shows what to correct before you retry. For a broader migration plan, see <a href="/blog/aws-content-migration-best-practices/">AWS Content Migration Best Practices</a>.</p>
 <h2 id="troubleshooting-steps">1. Read the task and execution state</h2>

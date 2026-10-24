@@ -9,8 +9,11 @@ datePublished: "2024-07-31T00:47:16.960000+00:00"
 heroImage: "/assets/media/d5d5d46ee378cfbcb9f0.jpg"
 permalink: "/blog/multi-region-active-active-architecture-on-aws-guide/"
 sourceUrl: "https://awsforengineers.com/blog/multi-region-active-active-architecture-on-aws-guide/"
-dateModified: "2026-10-04"
-updateNote: "Rewrote the guide to clarify regional independence, traffic failover, DynamoDB consistency modes, Aurora writer limitations, and recovery testing."
+dateModified: "2026-10-24"
+updateNote: "Technical guidance was last reviewed on 2026-10-04: Rewrote the guide to clarify regional independence, traffic failover, DynamoDB consistency modes, Aurora writer limitations, and recovery testing. Added an optional affiliate course recommendation on 2026-10-24; no technical re-review was performed."
+courseRecommendations:
+  - course: professionalArchitecture
+    reason: "This guide compares multi-Region traffic, data consistency, failover, and recovery objectives; this course covers complex AWS architecture, disaster recovery, networking, and storage tradeoffs."
 ---
 <p>Multi-region active-active architecture runs an application in two or more AWS Regions, with each participating Region serving production traffic. It can reduce latency for geographically distributed users and keep some operations available during a regional impairment. Those benefits depend on the application, its data model, and the capacity left after a failure.</p>
 <p>The most important distinction is between <strong>an active-active application tier</strong> and <strong>a database that accepts writes in multiple Regions</strong>. You can run application servers everywhere while still depending on one database writer. Moving traffic alone will not restore writes if that writer is unavailable.</p>

@@ -9,8 +9,11 @@ datePublished: "2025-04-24T01:11:09.300000+00:00"
 heroImage: "/assets/media/2724b6d507e4e9cd0b47.jpg"
 permalink: "/blog/how-to-benchmark-aws-performance-after-migration/"
 sourceUrl: "https://awsforengineers.com/blog/how-to-benchmark-aws-performance-after-migration/"
-dateModified: "2026-10-04"
-updateNote: "Reworked the guide around repeatable before-and-after tests, current AWS telemetry, bottleneck diagnosis, and cost comparison."
+dateModified: "2026-10-24"
+updateNote: "Earlier technical update (2026-10-04): Reworked the guide around repeatable before-and-after tests, current AWS telemetry, bottleneck diagnosis, and cost comparison. Added an optional affiliate course recommendation; technical guidance was not re-reviewed for this update."
+courseRecommendations:
+  - course: operations
+    reason: "For a structured operations path after comparing migration performance with workload telemetry, the course covers AWS monitoring, troubleshooting, and workload administration."
 ---
 <p>A migration can change response times, capacity, reliability, and operating cost even when the application passes its smoke tests. To understand the difference, compare the old and AWS environments under the same representative workload, record how each test was run, and connect user-facing results to service metrics.</p>
 <p>This guide explains how to build that comparison. A load generator creates traffic; CloudWatch metrics, application logs, and traces measure how the workload responds. Those tools have different jobs.</p>

@@ -9,8 +9,11 @@ datePublished: "2024-08-01T00:26:57.131000+00:00"
 heroImage: "/assets/media/c4d35b7ebe6710f9336c.jpg"
 permalink: "/blog/migrate-legacy-apps-to-aws-containers-7-strategies/"
 sourceUrl: "https://awsforengineers.com/blog/migrate-legacy-apps-to-aws-containers-7-strategies/"
-dateModified: "2026-10-04"
-updateNote: "Reworked the seven strategies, corrected AWS service and platform guidance, and added current migration, security, and rollout references."
+dateModified: "2026-10-24"
+updateNote: "Added optional course recommendation with affiliate links; technical guidance was not re-reviewed. Earlier technical update (2026-10-04): Reworked the seven strategies, corrected AWS service and platform guidance, and added current migration, security, and rollout references."
+courseRecommendations:
+  - course: professionalArchitecture
+    reason: "For experienced readers taking this pilot into a wider migration plan, the Solutions Architect – Professional course covers the 6 Rs, hybrid migration, complex workload design, and ECS/EKS at a broad level. It is not a detailed container migration tutorial."
 ---
 <p>Containerizing a legacy application can make its deployment more repeatable, but a container does not repair unsupported software, remove dependencies, or make local state durable. Start with the application’s real behavior and constraints, then choose the smallest migration that meets the reason you are moving it.</p>
 <p>This guide covers seven practical strategies: assess target fit and choose a pilot; keep the existing deployment unit for the first move; adapt the application and split components only where there is a clear reason; plan data and persistent storage separately; make image builds and releases repeatable; secure the image, workload identity, and network; and measure the migrated service before tuning it. You can apply them in stages; not every application needs a rewrite or a microservices design.</p>

@@ -9,8 +9,11 @@ datePublished: "2024-05-31T00:58:43.749000+00:00"
 heroImage: "/assets/media/0fa63c0b6d1aeec44ade.jpg"
 permalink: "/blog/aws-serverless-migration-legacy-app-modernization-guide/"
 sourceUrl: "https://awsforengineers.com/blog/aws-serverless-migration-legacy-app-modernization-guide/"
-dateModified: "2026-10-04"
-updateNote: "Rewrote the guide to compare Lambda, Fargate, and rehosting; added a staged migration plan and clarified Lambda durable execution, invocation limits, and cost considerations."
+dateModified: "2026-10-24"
+updateNote: "Technical guidance was last reviewed on 2026-10-04: Rewrote the guide to compare Lambda, Fargate, and rehosting; added a staged migration plan and clarified Lambda durable execution, invocation limits, and cost considerations. Added an optional affiliate course recommendation on 2026-10-24; no technical re-review was performed."
+courseRecommendations:
+  - course: professionalArchitecture
+    reason: "For the architecture choices behind rehosting, Fargate, Lambda, and staged modernization, this course covers complex workload design and migration strategies including the 6 Rs; it is broader than an implementation tutorial."
 ---
 <p>A legacy application can move to AWS without becoming a collection of microservices. Modernization is a series of choices about where each workload should run, which behavior should change, and how to prove the change is safe. AWS Lambda can suit bounded, event-driven work and supported checkpointed workflows; Amazon ECS on AWS Fargate can run containerized services and longer processes; rehosting or retaining an application can be the right first step when compatibility or migration risk matters more than redesign.</p>
 <p>Use this guide to choose a first workload, test it against real constraints, and cut it over with a recovery path. Serverless can reduce infrastructure management, but availability and savings depend on the design, workload, dependencies, and operating model.</p>

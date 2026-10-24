@@ -9,8 +9,11 @@ datePublished: "2024-08-01T00:37:57.087000+00:00"
 heroImage: "/assets/media/5c558ef7d146cb9af1a3.jpg"
 permalink: "/blog/aws-auto-scaling-setup-best-practices-tips/"
 sourceUrl: "https://awsforengineers.com/blog/aws-auto-scaling-setup-best-practices-tips/"
-dateModified: "2026-10-03"
-updateNote: "Reworked the guide around EC2 Auto Scaling groups, corrected AWS service distinctions and scaling guidance, and added setup and troubleshooting steps."
+dateModified: "2026-10-24"
+updateNote: "Added optional course recommendation with affiliate links; technical guidance was not re-reviewed. Earlier technical update (2026-10-03): Reworked the guide around EC2 Auto Scaling groups, corrected AWS service distinctions and scaling guidance, and added setup and troubleshooting steps."
+courseRecommendations:
+  - course: operations
+    reason: "The CloudOps Engineer – Associate course offers structured learning in AWS administration, monitoring, and troubleshooting that builds on this EC2 Auto Scaling setup and operations guide."
 ---
 <p>Amazon EC2 Auto Scaling adjusts the number of EC2 instances in an Auto Scaling group to match demand, maintain a chosen baseline, or replace unhealthy instances. This guide walks through a practical EC2 setup and explains how to choose scaling policies, set health checks and warmup, and investigate failed scaling actions.</p>
 <p>AWS uses similar names for separate scaling services. For EC2 virtual machines, use <a href="https://docs.aws.amazon.com/autoscaling/ec2/userguide/auto-scaling-groups.html" target="_blank" rel="noopener noreferrer">Amazon EC2 Auto Scaling</a>. For supported resources such as ECS service desired count, Lambda provisioned concurrency, DynamoDB provisioned capacity, and Aurora read replica count, use <a href="https://docs.aws.amazon.com/autoscaling/application/userguide/integrated-services-list.html" target="_blank" rel="noopener noreferrer">Application Auto Scaling</a> or the scaling controls in the resource's own service.</p>

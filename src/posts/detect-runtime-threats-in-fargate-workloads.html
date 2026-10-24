@@ -9,8 +9,11 @@ datePublished: "2025-09-15T02:37:38.652000+00:00"
 heroImage: "/assets/media/f1ee511914b2e9da0df2.jpg"
 permalink: "/blog/detect-runtime-threats-in-fargate-workloads/"
 sourceUrl: "https://awsforengineers.com/blog/detect-runtime-threats-in-fargate-workloads/"
-dateModified: "2026-10-04"
-updateNote: "Corrected GuardDuty Fargate support and deployment details, added prerequisites and coverage checks, and clarified finding delivery and detection limits."
+dateModified: "2026-10-24"
+updateNote: "Technical guidance was last reviewed on 2026-10-04: Corrected GuardDuty Fargate support and deployment details, added prerequisites and coverage checks, and clarified finding delivery and detection limits. Added an optional affiliate course recommendation on 2026-10-24; no technical re-review was performed."
+courseRecommendations:
+  - course: security
+    reason: "This guide configures GuardDuty ECS-on-Fargate runtime monitoring, verifies sidecar coverage, and routes findings; this course covers GuardDuty and related AWS security services for broader skills, with its current exam-version limit shown alongside the link."
 ---
 <p>Amazon GuardDuty Runtime Monitoring can detect suspicious process, file, and network activity in supported <strong>Amazon ECS tasks on AWS Fargate</strong>. For Fargate, GuardDuty manages a security agent that is added as a sidecar when a task starts. You do not install a host agent because Fargate does not provide access to the underlying host.</p>
 <p>This guide covers ECS on Fargate. GuardDuty does not support EKS clusters running on Fargate. The feature is a detection control: it creates findings for investigation, but it does not by itself block a process, isolate a task, or fix a compromised image.</p>

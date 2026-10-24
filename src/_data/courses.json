@@ -24,6 +24,18 @@
       "url": "https://learn.cantrill.io/p/aws-certified-advanced-networking-specialty",
       "instructor": "Adrian Cantrill",
       "qualification": "The provider course page covers ANS-C01. AWS's final ANS-C01 exam date is December 31, 2026; no new Advanced Networking credentials will be issued after retirement. Check the current AWS exam page before planning a certification attempt."
+    },
+    "security": {
+      "name": "Security – Specialty",
+      "url": "https://learn.cantrill.io/p/aws-certified-security-specialty",
+      "instructor": "Adrian Cantrill",
+      "qualification": "The provider's curriculum still names SCS-C02 and expects Associate-level AWS knowledge. AWS's current Security Specialty exam is SCS-C03; use this recommendation for broader security skills and confirm current exam coverage before buying for certification preparation."
+    },
+    "professionalArchitecture": {
+      "name": "Solutions Architect – Professional",
+      "url": "https://learn.cantrill.io/p/aws-certified-solutions-architect-professional",
+      "instructor": "Adrian Cantrill",
+      "qualification": "The provider lists SAP-C02 and recommends Associate-level AWS knowledge. AWS opens SAP-C03 registration on October 27, 2026; the final SAP-C02 exam date is November 16, 2026. Confirm course coverage for your target exam version."
     }
   }
 }

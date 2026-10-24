@@ -9,8 +9,11 @@ datePublished: "2024-05-31T00:25:42.849000+00:00"
 heroImage: "/assets/media/ebe00c887f4e05aed769.jpg"
 permalink: "/blog/10-best-practices-for-end-to-end-testing-aws-apps/"
 sourceUrl: "https://awsforengineers.com/blog/10-best-practices-for-end-to-end-testing-aws-apps/"
-dateModified: "2026-10-03"
-updateNote: "Reframed the guide around deployed workflows, cloud test isolation, asynchronous behavior, permissions, CI feedback, and cleanup."
+dateModified: "2026-10-24"
+updateNote: "Earlier technical update (2026-10-03): Reframed the guide around deployed workflows, cloud test isolation, asynchronous behavior, permissions, CI feedback, and cleanup. Added an optional affiliate course recommendation; technical guidance was not re-reviewed for this update."
+courseRecommendations:
+  - course: development
+    reason: "To extend this deployed-workflow testing guide into broader AWS application development, the course covers Lambda, API Gateway, DynamoDB, IAM, and CI/CD examples."
 ---
 <p>End-to-end (E2E) testing checks whether a complete application workflow produces the expected result through the same entry point a user or client uses. For an AWS application, that can mean sending a request to a deployed API, passing through configured services, and verifying the resulting response and stored record.</p>
 <p>A passing E2E test is evidence for that workflow in that test environment. It does not replace unit tests, focused integration tests, load tests, or security testing. The practices below help make AWS end-to-end tests useful, repeatable, and safe to run.</p>

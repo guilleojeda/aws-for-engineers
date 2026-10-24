@@ -9,8 +9,11 @@ datePublished: "2024-11-11T14:13:24.942000+00:00"
 heroImage: "/assets/media/d51416cd199dcbc4e108.jpg"
 permalink: "/blog/aws-cloudwatch-grafana-setup-guide/"
 sourceUrl: "https://awsforengineers.com/blog/aws-cloudwatch-grafana-setup-guide/"
-dateModified: "2026-10-03"
-updateNote: "Rewrote the setup for managed and self-hosted Grafana with current IAM, query, cross-account, alerting, and cost guidance."
+dateModified: "2026-10-24"
+updateNote: "Earlier technical update (2026-10-03): Rewrote the setup for managed and self-hosted Grafana with current IAM, query, cross-account, alerting, and cost guidance. Added an optional affiliate course recommendation; technical guidance was not re-reviewed for this update."
+courseRecommendations:
+  - course: operations
+    reason: "For a structured next step after building CloudWatch and Grafana dashboards, the course covers AWS monitoring, troubleshooting, and workload administration."
 ---
 <p>Grafana’s built-in Amazon CloudWatch data source can query CloudWatch metrics and logs for dashboards and alerts. Choose <strong>Amazon Managed Grafana</strong> if you want AWS to operate the Grafana service, or connect a self-hosted Grafana server using an IAM role or another temporary-credential provider. In both cases, AWS credentials stay on the Grafana server side; browser users do not send AWS keys to CloudWatch.</p>
 <p>This guide walks through the identity setup, the CloudWatch data source, one metrics query, one Logs Insights query, and ways to control access and query costs. Grafana includes the CloudWatch data source, so a separate plugin installation is not needed in current Grafana versions. <a href="https://grafana.com/docs/grafana/latest/datasources/aws-cloudwatch/" target="_blank" rel="noopener noreferrer">Grafana’s CloudWatch data source documentation</a> describes supported metrics, logs, and alerting features.</p>

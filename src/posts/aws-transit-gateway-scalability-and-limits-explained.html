@@ -9,8 +9,11 @@ datePublished: "2024-05-13T06:20:36.178000+00:00"
 heroImage: "/assets/media/98b521e141d6f4da2684.jpg"
 permalink: "/blog/aws-transit-gateway-scalability-and-limits-explained/"
 sourceUrl: "https://awsforengineers.com/blog/aws-transit-gateway-scalability-and-limits-explained/"
-dateModified: "2026-10-04"
-updateNote: "Corrected route and attachment quota scope, added per-AZ bandwidth and packet rates, updated PMTUD behavior, and replaced generic monitoring and pricing claims."
+dateModified: "2026-10-24"
+updateNote: "Earlier technical update (2026-10-04): Corrected route and attachment quota scope, added per-AZ bandwidth and packet rates, updated PMTUD behavior, and replaced generic monitoring and pricing claims. Added an optional affiliate course recommendation; technical guidance was not re-reviewed for this update."
+courseRecommendations:
+  - course: advancedNetworking
+    reason: "For deeper network design after reviewing Transit Gateway routes, quotas, and per-AZ capacity, the course covers Transit Gateway, Direct Connect, VPNs, BGP, and advanced VPC routing."
 ---
 <p>AWS Transit Gateway scales across attachments, route tables, and Availability Zones. Its published maximums have different scopes and increase paths, and a quota or throughput figure is not a promise of end-to-end application performance. This article summarizes current AWS quota guidance and shows what to measure as a network grows. For route selection and segmentation, see <a href="/blog/aws-transit-gateway-route-tables-explained/">AWS Transit Gateway route tables explained</a>.</p>
 <p>Unless a quota is marked otherwise, AWS lists Transit Gateway quotas by Region. Confirm the default and adjustment path for the account and Region you plan to use in the <a href="https://docs.aws.amazon.com/vpc/latest/tgw/transit-gateway-quotas.html" target="_blank" rel="noopener noreferrer">current Transit Gateway quotas</a> page and Service Quotas before designing around a ceiling.</p>

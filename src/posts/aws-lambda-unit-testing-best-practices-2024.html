@@ -9,8 +9,11 @@ datePublished: "2024-07-07T00:32:03.490000+00:00"
 heroImage: "/assets/media/e98b1191fdc4cc73874e.jpg"
 permalink: "/blog/aws-lambda-unit-testing-best-practices-2024/"
 sourceUrl: "https://awsforengineers.com/blog/aws-lambda-unit-testing-best-practices-2024/"
-dateModified: "2026-10-04"
-updateNote: "Rebuilt the guide around Node.js handler tests, injected dependencies, realistic event fixtures, SQS partial failures, and the limits of local tests."
+dateModified: "2026-10-24"
+updateNote: "Technical guidance was last reviewed on 2026-10-04: Rebuilt the guide around Node.js handler tests, injected dependencies, realistic event fixtures, SQS partial failures, and the limits of local tests. Added an optional affiliate course recommendation on 2026-10-24; no technical re-review was performed."
+courseRecommendations:
+  - course: development
+    reason: "For the next step beyond isolated Node.js handler tests, this course provides broader AWS application-development study through Lambda and CI/CD examples; it is not a unit-testing guide."
 ---
 <p>A useful AWS Lambda unit test calls your handler or application logic with a representative event and controlled dependencies. It checks input handling, business rules, and error responses without calling AWS.</p>
 <p>This guide uses Node.js and an Amazon SQS event to show the approach. AWS distinguishes mock tests, local emulation, and cloud tests in its <a href="https://docs.aws.amazon.com/lambda/latest/dg/testing-guide.html" rel="noopener noreferrer" target="_blank">Lambda testing guidance</a>. For complete workflows in a deployed environment, see our <a href="/blog/10-best-practices-for-end-to-end-testing-aws-apps/">guide to end-to-end testing AWS applications</a>.</p>

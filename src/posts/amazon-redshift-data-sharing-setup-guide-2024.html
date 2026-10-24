@@ -9,8 +9,11 @@ datePublished: "2024-05-11T07:22:43.214000+00:00"
 heroImage: "/assets/media/4437a2c1c5d471055147.jpg"
 permalink: "/blog/amazon-redshift-data-sharing-setup-guide-2024/"
 sourceUrl: "https://awsforengineers.com/blog/amazon-redshift-data-sharing-setup-guide-2024/"
-dateModified: "2026-10-03"
-updateNote: "Corrected setup, permissions, encryption, and cross-account guidance."
+dateModified: "2026-10-24"
+updateNote: "Technical guidance was last reviewed on 2026-10-03: Corrected setup, permissions, encryption, and cross-account guidance. Added an optional affiliate course recommendation on 2026-10-24; no technical re-review was performed."
+courseRecommendations:
+  - course: professionalArchitecture
+    reason: "For a broader architecture path after setting up a Redshift share, this course covers multi-account, analytics, storage, and resilience decisions, including Redshift architecture; it is not a datashare SQL tutorial."
 ---
 <p>Amazon Redshift data sharing lets one warehouse, the <strong>producer</strong>, expose selected live database objects to another warehouse, the <strong>consumer</strong>. The consumer queries producer data without making a second copy. This guide walks through a read-only share between two warehouses, then covers cross-account and cross-Region access and the separate write-sharing feature. See the <a href="https://docs.aws.amazon.com/redshift/latest/dg/datashare-overview.html" target="_blank" rel="noopener noreferrer">Amazon Redshift data sharing overview</a> for the full set of supported patterns.</p>
 <p>The SQL examples assume the producer database already contains a schema named <code>public</code> and a table named <code>orders</code>. Replace the example names and namespace IDs with values from your own warehouses. If you are new to Redshift databases and queries, start with our <a href="/blog/aws-redshift-tutorial-for-beginners-first-steps/">Amazon Redshift first-steps guide</a>.</p>

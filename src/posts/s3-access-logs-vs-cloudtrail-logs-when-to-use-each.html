@@ -9,8 +9,11 @@ datePublished: "2025-05-12T02:24:19.687000+00:00"
 heroImage: "/assets/media/3403a484b868e2777091.jpg"
 permalink: "/blog/s3-access-logs-vs-cloudtrail-logs-when-to-use-each/"
 sourceUrl: "https://awsforengineers.com/blog/s3-access-logs-vs-cloudtrail-logs-when-to-use-each/"
-dateModified: "2026-10-04"
-updateNote: "Updated coverage, delivery, identity, and destination guidance against current AWS documentation; removed repetitive text and stale FAQ structured data."
+dateModified: "2026-10-24"
+updateNote: "Technical guidance was last reviewed on 2026-10-04: Updated coverage, delivery, identity, and destination guidance against current AWS documentation; removed repetitive text and stale FAQ structured data. Added an optional affiliate course recommendation on 2026-10-24; no technical re-review was performed."
+courseRecommendations:
+  - course: security
+    reason: "This guide distinguishes S3 request records from CloudTrail API events and data-event selectors; this course covers CloudTrail, IAM, and S3/KMS security for a broader audit and security path."
 ---
 <p>Use <strong>AWS CloudTrail</strong> when you need an audit trail of AWS API activity, including S3 bucket changes and selected object operations. Use <strong>Amazon S3 server access logging</strong> when you need detailed request records for a bucket, such as response codes, timing, or requests that failed authentication. The two overlap, but their event coverage and delivery guarantees differ.</p>
 <p>AWS recommends CloudTrail for logging S3 bucket-level and object-level actions. For object activity, however, CloudTrail data events are not enabled by default. Server access logs can add useful request detail, but AWS delivers them on a best-effort basis, so they are not a complete accounting of every request.</p>

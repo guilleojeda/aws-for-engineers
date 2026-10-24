@@ -6,11 +6,14 @@ title: "AWS Serverless Cost Allocation: Tagging Best Practices"
 description: "Learn how AWS resource tags feed cost reports, where serverless charges escape tag attribution, and how to allocate shared Lambda and API costs."
 date: "2024-09-05"
 datePublished: "2024-09-05T01:47:57.743000+00:00"
-dateModified: "2026-10-04"
-updateNote: "Rewrote AWS cost allocation guidance, corrected tag coverage and enforcement limits, and added current backfill and shared-cost procedures."
+dateModified: "2026-10-24"
+updateNote: "Earlier technical update (2026-10-04): Rewrote AWS cost allocation guidance, corrected tag coverage and enforcement limits, and added current backfill and shared-cost procedures. Added an optional affiliate course recommendation; technical guidance was not re-reviewed for this update."
 heroImage: "/assets/media/9d6a725fcb61645c4de6.jpg"
 permalink: "/blog/aws-serverless-cost-allocation-tagging-best-practices/"
 sourceUrl: "https://awsforengineers.com/blog/aws-serverless-cost-allocation-tagging-best-practices/"
+courseRecommendations:
+  - course: operations
+    reason: "For a structured operations path after applying deployment-time tags and shared-cost controls, the course covers AWS administration, operations, and infrastructure as code."
 ---
 <p>AWS tags can show which team or workload owns a serverless resource, and activated cost allocation tags can expose that metadata in billing tools. They do not change how Lambda, API Gateway, DynamoDB, or S3 meters usage, and they do not assign every bill line to a resource. Build tagging around the charges AWS can identify, then give shared and untagged costs an explicit allocation rule.</p>
 

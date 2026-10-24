@@ -6,11 +6,14 @@ title: "AWS Performance Insights: RDS Monitoring with Database Insights"
 description: "Performance Insights' console retired on July 31, 2026. Learn how CloudWatch Database Insights monitors RDS load, waits, SQL, retention modes, and bottlenecks."
 date: "2024-05-31"
 datePublished: "2024-05-31T01:04:43.138000+00:00"
-dateModified: "2026-10-04"
-updateNote: "Updated the RDS monitoring guide for the Performance Insights console retirement and current Database Insights guidance."
+dateModified: "2026-10-24"
+updateNote: "Added optional course recommendation with affiliate links; technical guidance was not re-reviewed. Earlier technical update (2026-10-04): Updated the RDS monitoring guide for the Performance Insights console retirement and current Database Insights guidance."
 heroImage: "/assets/media/22583a15439850679db4.jpg"
 permalink: "/blog/aws-performance-insights-monitoring-rds-databases/"
 sourceUrl: "https://awsforengineers.com/blog/aws-performance-insights-monitoring-rds-databases/"
+courseRecommendations:
+  - course: operations
+    reason: "The CloudOps Engineer – Associate course provides a broader AWS monitoring and troubleshooting path after using Database Insights to investigate RDS load. This article covers the current RDS monitoring experience in detail."
 ---
 <p>If you used Amazon RDS Performance Insights to investigate a slow database, the monitoring experience has moved. AWS ended the Performance Insights console experience on July 31, 2026, and migrated its users to CloudWatch Database Insights. The Performance Insights API remains available. This guide explains how to use Database Insights to find what is driving database load, read the signals correctly, and choose a safe next step.</p>
 <p>The most useful starting point is the database load chart. It breaks active sessions down by wait event, SQL statement, host, or user. Pair that view with CloudWatch resource metrics and application latency: Database Insights helps explain database activity, while those other signals help show whether the issue is CPU capacity, storage, a lock, a workload change, or something upstream.</p>

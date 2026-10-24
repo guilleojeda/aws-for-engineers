@@ -9,8 +9,11 @@ datePublished: "2024-07-30T18:49:14.724000+00:00"
 heroImage: "/assets/media/0229bda590c15612ae15.jpg"
 permalink: "/blog/nodejs-unit-testing-for-aws-lambda-functions/"
 sourceUrl: "https://awsforengineers.com/blog/nodejs-unit-testing-for-aws-lambda-functions/"
-dateModified: "2026-10-04"
-updateNote: "Rewrote the guide with runnable Node.js tests, dependency injection, AWS SDK v3, and clearer unit and integration test boundaries."
+dateModified: "2026-10-24"
+updateNote: "Earlier technical update (2026-10-04): Rewrote the guide with runnable Node.js tests, dependency injection, AWS SDK v3, and clearer unit and integration test boundaries. Added an optional affiliate course recommendation; technical guidance was not re-reviewed for this update."
+courseRecommendations:
+  - course: development
+    reason: "To extend isolated Lambda unit tests into broader AWS application development, the course covers Lambda, API Gateway, DynamoDB, IAM, and CI/CD examples."
 ---
 <p>A useful Lambda unit test calls your handler or business logic in isolation, supplies known input, replaces external dependencies with controlled test doubles, and checks the result. This guide builds one executable example with Node.js’s built-in test runner and the AWS SDK for JavaScript v3. The tests run without AWS credentials or network access.</p>
 <p>Start with the Lambda <a href="/blog/aws-lambda-getting-started-first-steps/">event and handler model</a> if those concepts are new. Unit tests assume you already know what event shape your function accepts.</p>

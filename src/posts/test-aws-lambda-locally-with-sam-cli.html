@@ -9,8 +9,11 @@ datePublished: "2025-06-09T06:20:04.965000+00:00"
 heroImage: "/assets/media/4790f347430f6adb125a.jpg"
 permalink: "/blog/test-aws-lambda-locally-with-sam-cli/"
 sourceUrl: "https://awsforengineers.com/blog/test-aws-lambda-locally-with-sam-cli/"
-dateModified: "2026-10-04"
-updateNote: "Rewrote the Lambda walkthrough with current SAM invocation, event, environment, and debugger guidance; clarified credential and local-test limits."
+dateModified: "2026-10-24"
+updateNote: "Technical guidance was last reviewed on 2026-10-04: Rewrote the Lambda walkthrough with current SAM invocation, event, environment, and debugger guidance; clarified credential and local-test limits. Added an optional affiliate course recommendation on 2026-10-24; no technical re-review was performed."
+courseRecommendations:
+  - course: development
+    reason: "After local SAM checks, use this course for a broader application-development path through Lambda, API Gateway, DynamoDB, IAM, and CI/CD; it is not a SAM CLI course."
 ---
 <p><code>sam local invoke</code> runs a Lambda function from an AWS SAM template on your computer, using a Lambda-like runtime container and a test event you provide. It is useful for checking handler logic and debugging a specific input before deploying. It does not reproduce the function's AWS execution role or the services around it; code that calls AWS can still reach real resources with credentials available to the local run.</p>
 <p>This walkthrough assumes you already have a SAM project and Docker running. For installation and a first Hello World project, see the <a href="/blog/aws-sam-local-setup-guide/">AWS SAM local setup guide</a>.</p>

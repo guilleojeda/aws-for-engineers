@@ -9,8 +9,11 @@ datePublished: "2024-05-13T02:12:32.603000+00:00"
 heroImage: "/assets/media/de3ec024cf6807269924.jpg"
 permalink: "/blog/top-10-ebs-performance-bottlenecks-and-solutions/"
 sourceUrl: "https://awsforengineers.com/blog/top-10-ebs-performance-bottlenecks-and-solutions/"
-dateModified: "2026-10-04"
-updateNote: "Rewrote the guide with current EBS limits, CloudWatch diagnostics, and workload-specific fixes."
+dateModified: "2026-10-24"
+updateNote: "Earlier technical update (2026-10-04): Rewrote the guide with current EBS limits, CloudWatch diagnostics, and workload-specific fixes. Added an optional affiliate course recommendation; technical guidance was not re-reviewed for this update."
+courseRecommendations:
+  - course: architecture
+    reason: "For broader EC2 and storage architecture learning after diagnosing volume and instance bottlenecks, the course covers EC2, storage, and AWS solution design."
 ---
 <p>Amazon EBS performance depends on the volume, the EC2 instance that carries its I/O, and the guest operating system and application. A volume can be below its limit while the instance is saturated, or provisioned for more work than the application sends. Diagnose the constrained layer before changing volume type, IOPS, or throughput.</p>
 <p>This guide covers ten common causes and shows how to distinguish them using CloudWatch and Linux signals. For a repeatable method to compare storage changes against a representative workload, see our <a href="/blog/hpc-workload-profiling-on-aws-best-practices/">HPC workload profiling guide</a>.</p>

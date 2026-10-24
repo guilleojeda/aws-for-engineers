@@ -9,8 +9,11 @@ datePublished: "2025-04-21T01:40:13.229000+00:00"
 heroImage: "/assets/media/3e3fc73b05c1988696dc.jpg"
 permalink: "/blog/how-to-reduce-dynamodb-throttling-issues/"
 sourceUrl: "https://awsforengineers.com/blog/how-to-reduce-dynamodb-throttling-issues/"
-dateModified: "2026-10-04"
-updateNote: "Rewrote throttling diagnosis, capacity guidance, monitoring, pagination, batch handling, and retry examples using current DynamoDB behavior."
+dateModified: "2026-10-24"
+updateNote: "Earlier technical update (2026-10-04): Rewrote throttling diagnosis, capacity guidance, monitoring, pagination, batch handling, and retry examples using current DynamoDB behavior. Added an optional affiliate course recommendation; technical guidance was not re-reviewed for this update."
+courseRecommendations:
+  - course: development
+    reason: "For broader application-development learning after diagnosing DynamoDB capacity, key-distribution, and retry behavior, the course covers DynamoDB, Lambda, API Gateway, IAM, and CI/CD examples."
 ---
 <p>DynamoDB throttles a request when it reaches a throughput or service limit. The fix depends on which resource and limit are involved: adding table capacity will not clear a hot key, an undersized global secondary index, or a configured on-demand maximum. Start with the throttling reason and affected resource, then change the matching part of the workload or table design.</p>
 <ul>

@@ -9,8 +9,11 @@ datePublished: "2024-11-30T21:19:57.133000+00:00"
 heroImage: "/assets/media/f4c69f6180ab1665b249.jpg"
 permalink: "/blog/lambda-error-monitoring-best-practices/"
 sourceUrl: "https://awsforengineers.com/blog/lambda-error-monitoring-best-practices/"
-dateModified: "2026-10-04"
-updateNote: "Rewrote the monitoring guidance to distinguish Lambda execution errors from handled outcomes and throttles, explain trigger-specific retries and failure destinations, and align metrics, logs, alarms, and tracing guidance with current AWS documentation."
+dateModified: "2026-10-24"
+updateNote: "Added optional course recommendation with affiliate links; technical guidance was not re-reviewed. Earlier technical update (2026-10-04): Rewrote the monitoring guidance to distinguish Lambda execution errors from handled outcomes and throttles, explain trigger-specific retries and failure destinations, and align metrics, logs, alarms, and tracing guidance with current AWS documentation."
+courseRecommendations:
+  - course: operations
+    reason: "For broader AWS monitoring and operations learning after this Lambda-specific error guide, the CloudOps Engineer – Associate course covers monitoring, troubleshooting, and administration."
 ---
 <p>Useful Lambda error monitoring starts with the invocation path. The CloudWatch <code>Errors</code> metric counts function or runtime errors; it does not count every unsuccessful business outcome, request rejected before the handler runs, or record-level failure that a batch handler reports as a normal response. Retries and recovery also depend on whether a caller invokes the function synchronously, Lambda queues an asynchronous event, or an event source mapping polls a queue or stream.</p>
 <p>Use function metrics to detect a change, logs to explain an invocation, and source-specific metrics to see delivery or backlog problems. For a console and CLI walkthrough that creates an error-rate alarm and runs Logs Insights queries, see <a href="/blog/monitor-lambda-errors-with-cloudwatch/">Monitor Lambda Errors with CloudWatch</a>. For definitions and dimensions of the standard metrics, see <a href="/blog/aws-lambda-metrics-explained/">AWS Lambda metrics in CloudWatch</a>.</p>

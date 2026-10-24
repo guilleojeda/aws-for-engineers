@@ -9,8 +9,11 @@ datePublished: "2025-05-29T06:36:12.660000+00:00"
 heroImage: "/assets/media/c7c877637c7ccc113d5a.jpg"
 permalink: "/blog/5-patterns-for-resilient-serverless-state-management/"
 sourceUrl: "https://awsforengineers.com/blog/5-patterns-for-resilient-serverless-state-management/"
-dateModified: "2026-10-03"
-updateNote: "Updated AWS service guarantees for DynamoDB consistency and transactions, Lambda retries, Step Functions workflows, queue buffering, event sourcing, and sidecars."
+dateModified: "2026-10-24"
+updateNote: "Added optional course recommendation with affiliate links; technical guidance was not re-reviewed. Earlier technical update (2026-10-03): Updated AWS service guarantees for DynamoDB consistency and transactions, Lambda retries, Step Functions workflows, queue buffering, event sourcing, and sidecars."
+courseRecommendations:
+  - course: development
+    reason: "For a structured AWS application-development path beyond these state and retry patterns, the Developer – Associate course covers Lambda, API Gateway, DynamoDB, IAM, and CI/CD examples. This article remains the detailed reference for queues, sagas, and event history."
 ---
 <p><strong>Serverless compute does not remove application state; it changes where durable state belongs.</strong> A standard AWS Lambda function should not depend on memory or temporary files surviving its invocation, even though Lambda may reuse an execution environment. Store business data in a durable service and make each request safe to retry. AWS also offers <a href="https://docs.aws.amazon.com/lambda/latest/dg/lambda-functions-chapter.html" target="_blank" rel="noopener noreferrer">Durable Functions</a> for checkpointed workflows that can run for up to a year. Their checkpoints preserve workflow progress; they do not replace a durable system of record or make an external business operation atomic.</p>
 <p>The five patterns below address different boundaries: keeping current state, coordinating work across services, buffering accepted work, rebuilding read models from events, and adding a helper process to a container workload. They can be combined, but each needs a clear source of truth and a defined response to retries, concurrent writes, and partial failure.</p>

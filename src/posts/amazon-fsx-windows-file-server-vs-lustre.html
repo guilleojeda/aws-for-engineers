@@ -6,11 +6,14 @@ title: "Amazon FSx for Windows File Server vs. FSx for Lustre"
 description: "Compare Amazon FSx for Windows File Server and FSx for Lustre by protocol, Active Directory, availability, performance, S3 integration, backups, and cost."
 date: "2024-05-03"
 datePublished: "2024-05-03T00:57:41.621000+00:00"
-dateModified: "2026-10-03"
-updateNote: "Replaced outdated claims with a practical, documentation-based service comparison."
+dateModified: "2026-10-24"
+updateNote: "Earlier technical update (2026-10-03): Replaced outdated claims with a practical, documentation-based service comparison. Added an optional affiliate course recommendation; technical guidance was not re-reviewed for this update."
 heroImage: "/assets/media/39dae2fb70978722df89.jpg"
 permalink: "/blog/amazon-fsx-windows-file-server-vs-lustre/"
 sourceUrl: "https://awsforengineers.com/blog/amazon-fsx-windows-file-server-vs-lustre/"
+courseRecommendations:
+  - course: architecture
+    reason: "To extend this file-system comparison into broader AWS storage and solution design, the course covers architecture foundations alongside EC2, networking, and storage."
 ---
 <p>Amazon FSx for Windows File Server and Amazon FSx for Lustre are managed file systems, but they serve different clients and workloads. Choose Windows File Server when applications need SMB shares, Windows file semantics, or Active Directory authentication. Choose Lustre when Linux compute jobs need parallel access to a large shared dataset and high aggregate throughput, often with Amazon S3 as the durable data repository.</p>
 <p>Start with the protocol and application requirements. These services are not drop-in alternatives: changing file protocols, permissions, or data workflows can require application and operational changes.</p>

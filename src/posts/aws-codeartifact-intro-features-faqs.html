@@ -9,8 +9,11 @@ datePublished: "2024-05-01T12:57:07.058000+00:00"
 heroImage: "/assets/media/d9f6b26960ba125f64c2.jpg"
 permalink: "/blog/aws-codeartifact-intro-features-faqs/"
 sourceUrl: "https://awsforengineers.com/blog/aws-codeartifact-intro-features-faqs/"
-dateModified: "2026-10-03"
-updateNote: "Revised supported formats, repository design, IAM and token guidance, package-origin controls, cleanup, and pricing against current AWS documentation."
+dateModified: "2026-10-24"
+updateNote: "Technical guidance was last reviewed on 2026-10-03: Revised supported formats, repository design, IAM and token guidance, package-origin controls, cleanup, and pricing against current AWS documentation. Added an optional affiliate course recommendation on 2026-10-24; no technical re-review was performed."
+courseRecommendations:
+  - course: development
+    reason: "Once private package access works, extend it into AWS application build/deploy workflows; this course covers Lambda, API Gateway, DynamoDB, IAM, and CI/CD examples, not CodeArtifact setup."
 ---
 <p><a href="https://aws.amazon.com/codeartifact/" rel="noopener noreferrer" target="_blank">AWS CodeArtifact</a> is a managed repository for storing, publishing, and sharing software packages. It gives package managers such as npm, pip, Maven, and NuGet a repository endpoint for internal packages and, when configured, packages fetched from public registries. You do not operate the repository servers yourself.</p>
 <p>CodeArtifact supports Cargo, generic, Maven, npm, NuGet, PyPI, Ruby, and Swift package formats. It does not support Docker images; use <a href="https://docs.aws.amazon.com/AmazonECR/latest/userguide/Registries.html" rel="noopener noreferrer" target="_blank">Amazon Elastic Container Registry (ECR)</a> for Docker and OCI container images. <a href="https://docs.aws.amazon.com/codeartifact/latest/ug/packages-overview.html" rel="noopener noreferrer" target="_blank">AWS lists the supported package formats and publishing tools</a>.</p>

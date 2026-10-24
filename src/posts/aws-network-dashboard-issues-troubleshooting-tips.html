@@ -6,11 +6,14 @@ title: "AWS Network Dashboard Issues: Troubleshooting Guide"
 description: "Troubleshoot missing or misleading AWS network dashboard data by checking CloudWatch metrics, Network Manager setup, IAM access, and VPC Flow Logs."
 date: "2024-09-06"
 datePublished: "2024-09-06T00:17:00.266000+00:00"
-dateModified: "2026-10-04"
-updateNote: "Separated CloudWatch, Network Manager, and AWS Health dashboards and corrected metric, Flow Logs, permission, and connectivity troubleshooting."
+dateModified: "2026-10-24"
+updateNote: "Earlier technical update (2026-10-04): Separated CloudWatch, Network Manager, and AWS Health dashboards and corrected metric, Flow Logs, permission, and connectivity troubleshooting. Added an optional affiliate course recommendation; technical guidance was not re-reviewed for this update."
 heroImage: "/assets/media/0da5644ca3fe9f43e291.jpg"
 permalink: "/blog/aws-network-dashboard-issues-troubleshooting-tips/"
 sourceUrl: "https://awsforengineers.com/blog/aws-network-dashboard-issues-troubleshooting-tips/"
+courseRecommendations:
+  - course: operations
+    reason: "For broader operations practice behind these CloudWatch, Network Manager, and Flow Logs investigations, the course covers AWS monitoring, troubleshooting, and administration."
 ---
 <p>A blank or misleading AWS network dashboard can have several causes, but AWS does not provide one service named “Network Dashboard.” The page may be an <a href="https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/CloudWatch_Dashboards.html" target="_blank" rel="noopener noreferrer">Amazon CloudWatch dashboard</a>, the AWS Network Manager view for transit gateway networks, or the AWS Health Dashboard. Each one displays different information. Identify the page and the signal you expect before enabling more data collection.</p>
 <p><span id="related-video-from-youtube" aria-hidden="true"></span>Use the checks below to trace the issue from the dashboard back to its account, Region, resource, metric, or log source.</p>

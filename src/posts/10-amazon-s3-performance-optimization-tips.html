@@ -9,8 +9,11 @@ datePublished: "2024-07-07T00:26:03.530000+00:00"
 heroImage: "/assets/media/8f45d96f322928a2ccab.jpg"
 permalink: "/blog/10-amazon-s3-performance-optimization-tips/"
 sourceUrl: "https://awsforengineers.com/blog/10-amazon-s3-performance-optimization-tips/"
-dateModified: "2026-10-03"
-updateNote: "Corrected outdated prefix and S3 Select advice; refreshed transfer limits, storage-class guidance, caching, and monitoring."
+dateModified: "2026-10-24"
+updateNote: "Technical guidance was last reviewed on 2026-10-03: Corrected outdated prefix and S3 Select advice; refreshed transfer limits, storage-class guidance, caching, and monitoring. Added an optional affiliate course recommendation on 2026-10-24; no technical re-review was performed."
+courseRecommendations:
+  - course: architecture
+    reason: "For a broader storage-design path beyond these S3 performance techniques, this course covers AWS storage and architecture tradeoffs."
 ---
 <p>Amazon S3 performance depends on the bottleneck: request rate, bytes transferred, network distance, repeated reads, or the application doing the work. Start by measuring that path, then choose the matching change. S3 scales automatically, but high throughput still depends on sensible request concurrency, workload placement, and retry behavior. AWS’s <a href="https://docs.aws.amazon.com/AmazonS3/latest/userguide/optimizing-performance.html" target="_blank" rel="noopener noreferrer">S3 performance guidance</a> is a useful reference as limits and features evolve.</p>
 

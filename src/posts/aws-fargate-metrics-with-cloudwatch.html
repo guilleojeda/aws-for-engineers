@@ -9,8 +9,11 @@ datePublished: "2025-09-08T11:57:19.355000+00:00"
 heroImage: "/assets/media/2dab8afcc830e1bcfd5a.jpg"
 permalink: "/blog/aws-fargate-metrics-with-cloudwatch/"
 sourceUrl: "https://awsforengineers.com/blog/aws-fargate-metrics-with-cloudwatch/"
-dateModified: "2026-10-04"
-updateNote: "Corrected ECS metric namespaces, Fargate storage prerequisites, Container Insights setup, and scaling guidance."
+dateModified: "2026-10-24"
+updateNote: "Earlier technical update (2026-10-04): Corrected ECS metric namespaces, Fargate storage prerequisites, Container Insights setup, and scaling guidance. Added an optional affiliate course recommendation; technical guidance was not re-reviewed for this update."
+courseRecommendations:
+  - course: operations
+    reason: "For ongoing ECS/Fargate monitoring beyond these metric and alarm choices, the course covers AWS workload monitoring, troubleshooting, and administration."
 ---
 <p>For an <strong>Amazon ECS service on AWS Fargate</strong>, CloudWatch receives service-level CPU and memory utilization metrics automatically. Enable <strong>CloudWatch Container Insights</strong> when you need additional network, storage, or task-level detail. The namespace and dimensions tell you what each metric actually represents: a service average is useful for alerting and scaling, while task and container metrics help find an outlier.</p>
 <p>This guide covers ECS on Fargate. ECS on EC2 and EKS on Fargate have different infrastructure and monitoring details, so their metrics should not be inferred from the examples here.</p>

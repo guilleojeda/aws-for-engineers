@@ -9,8 +9,11 @@ datePublished: "2025-06-12T06:44:14.561000+00:00"
 heroImage: "/assets/media/e340003b686af8fd05d8.jpg"
 permalink: "/blog/predictive-scaling-for-ec2-auto-scaling/"
 sourceUrl: "https://awsforengineers.com/blog/predictive-scaling-for-ec2-auto-scaling/"
-dateModified: "2026-10-04"
-updateNote: "Rewrote the guide with current forecast behavior, supported metrics, a forecast-only AWS CLI setup, and capacity guardrails."
+dateModified: "2026-10-24"
+updateNote: "Technical guidance was last reviewed on 2026-10-04: Rewrote the guide with current forecast behavior, supported metrics, a forecast-only AWS CLI setup, and capacity guardrails. Added an optional affiliate course recommendation on 2026-10-24; no technical re-review was performed."
+courseRecommendations:
+  - course: operations
+    reason: "For the operations around recurring EC2 demand, this course covers CloudOps monitoring and administration; it complements the article’s forecast-only evaluation, warmup, and scale-out configuration."
 ---
 <p>Amazon EC2 Auto Scaling predictive scaling forecasts recurring demand and can add instances before a familiar daily or weekly increase. It is useful when traffic follows repeatable patterns or instances take long enough to initialize that reactive scaling alone would arrive late. It cannot anticipate a one-off spike that has no signal in the history, and its active mode does not scale in. For a side-by-side decision guide, see <a href="/blog/predictive-scaling-vs-dynamic-scaling-in-aws/">predictive versus dynamic scaling</a>.</p>
 

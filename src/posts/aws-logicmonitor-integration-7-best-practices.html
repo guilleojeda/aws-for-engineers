@@ -9,8 +9,11 @@ datePublished: "2024-10-01T00:17:44.871000+00:00"
 heroImage: "/assets/media/ec38193e661028a10d7d.jpg"
 permalink: "/blog/aws-logicmonitor-integration-7-best-practices/"
 sourceUrl: "https://awsforengineers.com/blog/aws-logicmonitor-integration-7-best-practices/"
-dateModified: "2026-10-04"
-updateNote: "Reworked the seven practices using current AWS and LogicMonitor documentation; corrected IAM, collection, retention, billing, and cost guidance."
+dateModified: "2026-10-24"
+updateNote: "Added optional course recommendation with affiliate links; technical guidance was not re-reviewed. Earlier technical update (2026-10-04): Reworked the seven practices using current AWS and LogicMonitor documentation; corrected IAM, collection, retention, billing, and cost guidance."
+courseRecommendations:
+  - course: operations
+    reason: "If you want broader AWS-native operations learning after connecting LogicMonitor, the CloudOps Engineer – Associate course covers monitoring, administration, and troubleshooting. This article remains the LogicMonitor-specific integration guide."
 ---
 <p>LogicMonitor connects to AWS through an IAM role, discovers the resources you select, and collects supported cloud metrics through AWS APIs such as CloudWatch. A self-managed LogicMonitor Collector is optional: placed inside your AWS network with access to the hosts it monitors, it adds operating-system and application visibility when you need those details.</p>
 <p>A reliable AWS LogicMonitor integration starts with narrowly scoped access and a deliberate monitoring plan. These seven practices help you keep the data useful, the alerts actionable, and the costs understandable.</p>

@@ -9,8 +9,11 @@ datePublished: "2025-05-26T06:26:28.634000+00:00"
 heroImage: "/assets/media/c66755a046f301a6b62d.jpg"
 permalink: "/blog/how-to-use-cloudwatch-metrics-to-lower-lambda-costs/"
 sourceUrl: "https://awsforengineers.com/blog/how-to-use-cloudwatch-metrics-to-lower-lambda-costs/"
-dateModified: "2026-10-04"
-updateNote: "Corrected Lambda metric and billing guidance, separated invocation logs and Lambda Insights, and replaced pricing estimates with a measurement workflow."
+dateModified: "2026-10-24"
+updateNote: "Earlier technical update (2026-10-04): Corrected Lambda metric and billing guidance, separated invocation logs and Lambda Insights, and replaced pricing estimates with a measurement workflow. Added an optional affiliate course recommendation; technical guidance was not re-reviewed for this update."
+courseRecommendations:
+  - course: operations
+    reason: "For operational monitoring practice after using Lambda metrics, logs, and billing data to test cost changes, the course covers AWS monitoring, troubleshooting, and administration."
 ---
 <p>CloudWatch can show which AWS Lambda functions run often, take longer than expected, or use provisioned capacity unevenly. Those signals help you find candidates for cost review, but standard Lambda metrics are not a bill: memory use and billed duration for individual invocations come from logs, while actual charges should be checked in AWS billing data.</p>
 

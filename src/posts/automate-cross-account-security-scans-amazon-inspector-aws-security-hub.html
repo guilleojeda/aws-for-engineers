@@ -9,8 +9,11 @@ datePublished: "2024-05-30T19:05:23.037000+00:00"
 heroImage: "/assets/media/9bbd47e8ce72c477e228.jpg"
 permalink: "/blog/automate-cross-account-security-scans-amazon-inspector-aws-security-hub/"
 sourceUrl: "https://awsforengineers.com/blog/automate-cross-account-security-scans-amazon-inspector-aws-security-hub/"
-dateModified: "2026-10-03"
-updateNote: "Updated Inspector organization coverage, Security Hub CSPM integration, and finding remediation guidance."
+dateModified: "2026-10-24"
+updateNote: "Earlier technical update (2026-10-03): Updated Inspector organization coverage, Security Hub CSPM integration, and finding remediation guidance. Added an optional affiliate course recommendation; technical guidance was not re-reviewed for this update."
+courseRecommendations:
+  - course: security
+    reason: "For broader security learning after configuring organization-wide Inspector coverage and Security Hub findings, the course covers Inspector, Security Hub, IAM/STS, Organizations, and KMS."
 ---
 <p><strong>Amazon Inspector automatically scans supported AWS workloads across an organization, while AWS Security Hub helps teams review and prioritize the findings.</strong> Some scan types rescan continuously; others use resource-specific intervals or scan-on-push settings. Reliable coverage depends on enabling the right scan types in every account and Region, then checking which resources are actually eligible.</p>
 <p>AWS Security Hub is now a broader security operations experience that correlates signals from services such as Amazon Inspector, GuardDuty, Security Hub Cloud Security Posture Management (Security Hub CSPM), and Macie. Security Hub CSPM remains the posture management capability that receives Inspector findings. This guide focuses on Inspector scanning and that finding integration; the broader Security Hub experience can add correlated exposure views.</p>

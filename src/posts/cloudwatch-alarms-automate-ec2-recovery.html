@@ -9,8 +9,11 @@ datePublished: "2024-05-02T01:57:56.197000+00:00"
 heroImage: "/assets/media/f548d1a62dabd6275314.jpg"
 permalink: "/blog/cloudwatch-alarms-automate-ec2-recovery/"
 sourceUrl: "https://awsforengineers.com/blog/cloudwatch-alarms-automate-ec2-recovery/"
-dateModified: "2026-10-04"
-updateNote: "Rewrote the guide with current EC2 recovery modes, eligibility checks, alarm configuration, IAM, and recovery limits."
+dateModified: "2026-10-24"
+updateNote: "Earlier technical update (2026-10-04): Rewrote the guide with current EC2 recovery modes, eligibility checks, alarm configuration, IAM, and recovery limits. Added an optional affiliate course recommendation; technical guidance was not re-reviewed for this update."
+courseRecommendations:
+  - course: operations
+    reason: "For broader operations training after configuring EC2 status-check recovery and CloudWatch alarms, the course covers AWS monitoring, troubleshooting, and administration."
 ---
 <p>Amazon EC2 has two ways to recover an instance when an underlying host problem causes a system status check to fail: simplified automatic recovery and CloudWatch action-based recovery. Simplified recovery is enabled by default for supported instances. A CloudWatch alarm is an optional way to choose the alarm threshold and receive notifications. Neither mechanism repairs a guest operating system or application failure, and neither guarantees that recovery will succeed.</p>
 

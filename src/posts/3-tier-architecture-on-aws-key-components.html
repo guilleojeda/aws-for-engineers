@@ -9,8 +9,11 @@ datePublished: "2025-01-30T18:47:20.076000+00:00"
 heroImage: "/assets/media/d2fa89673063c660d5a1.jpg"
 permalink: "/blog/3-tier-architecture-on-aws-key-components/"
 sourceUrl: "https://awsforengineers.com/blog/3-tier-architecture-on-aws-key-components/"
-dateModified: "2026-10-03"
-updateNote: "Reworked the architecture guidance to clarify logical tiers, network placement, private access, and availability trade-offs."
+dateModified: "2026-10-24"
+updateNote: "Added optional course recommendation with affiliate links; technical guidance was not re-reviewed. Earlier technical update (2026-10-03): Reworked the architecture guidance to clarify logical tiers, network placement, private access, and availability trade-offs."
+courseRecommendations:
+  - course: architecture
+    reason: "To extend this deployment into a broader AWS architecture path, the Solutions Architect – Associate course covers foundations including VPCs, subnets, routing, security groups, NAT, EC2, and storage."
 ---
 <p>A 3-tier architecture on AWS separates an application's presentation, application logic, and data responsibilities. A common web path is an internet-facing Application Load Balancer (ALB), compute in private subnets, and a database that accepts connections from the application tier.</p>
 <p>The tiers describe <strong>logical responsibilities</strong>. They do not require three subnets, three VPCs, or one AWS service per tier. Subnets are network boundaries, while services such as CloudFront, Amazon EC2, AWS Lambda, Amazon RDS, and DynamoDB are implementation choices. The pattern can make ownership and access paths easier to reason about, but it does not automatically make an application secure, highly available, scalable, or inexpensive.</p>

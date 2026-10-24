@@ -19,6 +19,10 @@ isPost: true
     <ol>{% for section in outline.sections %}<li><a href="{{ section.id | sectionHref }}">{{ section.label | safe }}</a></li>{% endfor %}</ol>
   </details>{% endif %}
   <div class="article-body">{{ outline.content | safe }}</div>
+  {% if courseRecommendations is defined %}
+    {% set selectedCourses = courseRecommendations | resolveCourseRecommendations(courses) %}
+    {% if selectedCourses | length %}{% include "article-course-recommendations.njk" %}{% endif %}
+  {% endif %}
   <div class="article-tail">
     <section class="article-author" aria-label="About the author">
       <h2><a href="{{ identity.authorPath }}" rel="author">{{ identity.author.name }}</a></h2>

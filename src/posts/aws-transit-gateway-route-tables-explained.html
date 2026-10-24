@@ -9,8 +9,11 @@ datePublished: "2024-05-03T02:10:12.771000+00:00"
 heroImage: "/assets/media/495c26e669da941b78c4.jpg"
 permalink: "/blog/aws-transit-gateway-route-tables-explained/"
 sourceUrl: "https://awsforengineers.com/blog/aws-transit-gateway-route-tables-explained/"
-dateModified: "2026-10-04"
-updateNote: "Rebuilt the guide around attachment association vs. propagation, routing in both directions, segmentation, route priority, blackholes, peering, and practical troubleshooting."
+dateModified: "2026-10-24"
+updateNote: "Added optional course recommendation with affiliate links; technical guidance was not re-reviewed. Earlier technical update (2026-10-04): Rebuilt the guide around attachment association vs. propagation, routing in both directions, segmentation, route priority, blackholes, peering, and practical troubleshooting."
+courseRecommendations:
+  - course: advancedNetworking
+    reason: "For deeper network design after this Transit Gateway routing guide, the Advanced Networking – Specialty course covers Transit Gateway, Direct Connect, VPNs, BGP, advanced VPC routing, and troubleshooting."
 ---
 <p>A <a href="https://aws.amazon.com/transit-gateway/" target="_blank" rel="noopener noreferrer">Transit Gateway (TGW) route table</a> selects the next attachment for packets that enter a transit gateway. It works alongside VPC subnet route tables; it does not replace them. A working connection needs a forward route at every routing layer and a return path.</p>
 <p>This guide explains how association and propagation differ, how to segment traffic, and how to trace a packet through both VPC and transit gateway routes. For current service quotas and per-AZ capacity, see <a href="/blog/aws-transit-gateway-scalability-and-limits-explained/">Transit Gateway scalability and limits</a>.</p>

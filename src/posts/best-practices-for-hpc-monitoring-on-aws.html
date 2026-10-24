@@ -9,8 +9,11 @@ datePublished: "2025-02-10T00:34:48.449000+00:00"
 heroImage: "/assets/media/1724a78e0db55df18bc7.jpg"
 permalink: "/blog/best-practices-for-hpc-monitoring-on-aws/"
 sourceUrl: "https://awsforengineers.com/blog/best-practices-for-hpc-monitoring-on-aws/"
-dateModified: "2026-10-04"
-updateNote: "Rewrote the guide for current AWS metric coverage, scheduler signals, and cost-aware monitoring; removed unsupported savings claims and thresholds."
+dateModified: "2026-10-24"
+updateNote: "Earlier technical update (2026-10-04): Rewrote the guide for current AWS metric coverage, scheduler signals, and cost-aware monitoring; removed unsupported savings claims and thresholds. Added an optional affiliate course recommendation; technical guidance was not re-reviewed for this update."
+courseRecommendations:
+  - course: operations
+    reason: "For structured operational monitoring practice alongside these HPC signals, the course covers AWS monitoring, troubleshooting, and workload administration."
 ---
 <p>HPC monitoring on AWS should answer three questions: is the cluster healthy, are jobs progressing as expected, and what is limiting a representative run? CloudWatch provides service metrics, logs, dashboards, and alarms, but no single default feed shows instance health, scheduler state, GPU use, filesystem pressure, and MPI communication together.</p>
 <p>Build visibility in layers. Start with AWS resource metrics, add host and scheduler data where needed, then use application profiling to explain how a job spends its time. Tie each signal to a decision or response so a dashboard stays useful as compute fleets scale up and down.</p>

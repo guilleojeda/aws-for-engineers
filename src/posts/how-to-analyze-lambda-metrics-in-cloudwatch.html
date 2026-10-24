@@ -9,8 +9,11 @@ datePublished: "2025-05-08T02:46:38.580000+00:00"
 heroImage: "/assets/media/9020bb2e1c38c3a6abab.jpg"
 permalink: "/blog/how-to-analyze-lambda-metrics-in-cloudwatch/"
 sourceUrl: "https://awsforengineers.com/blog/how-to-analyze-lambda-metrics-in-cloudwatch/"
-dateModified: "2026-10-04"
-updateNote: "Rewrote the guide around CloudWatch dimensions, statistics, metric math, and diagnostic patterns; corrected Lambda error, duration, cold-start, memory, and billing distinctions."
+dateModified: "2026-10-24"
+updateNote: "Added optional course recommendation with affiliate links; technical guidance was not re-reviewed. Earlier technical update (2026-10-04): Rewrote the guide around CloudWatch dimensions, statistics, metric math, and diagnostic patterns; corrected Lambda error, duration, cold-start, memory, and billing distinctions."
+courseRecommendations:
+  - course: operations
+    reason: "The CloudOps Engineer – Associate course extends these Lambda metrics into broader AWS monitoring, administration, and troubleshooting skills."
 ---
 <p>Amazon CloudWatch gives you aggregate metrics for AWS Lambda, such as how many invocations ran, how many returned errors, how long function code took, and how many requests were throttled. Choose the function version and statistic that match the question, then use invocation logs or traces when an aggregate metric cannot explain an individual request.</p>
 <p>Lambda publishes standard function metrics in the <code>AWS/Lambda</code> namespace at one-minute intervals. You do not need to add permissions to the function role for these metrics, and Lambda does not charge extra for them. Lambda invocation metrics are aggregates, not per-invocation records. For these metrics, the timestamp reflects when the invocation started, while CloudWatch may not show the data until the invocation finishes. Allow for that reporting delay when looking at the latest data. See AWS's <a href="https://docs.aws.amazon.com/lambda/latest/dg/monitoring-metrics.html" target="_blank" rel="noopener noreferrer">Lambda metrics overview</a> and <a href="https://docs.aws.amazon.com/lambda/latest/dg/monitoring-metrics-view.html" target="_blank" rel="noopener noreferrer">metric viewing guide</a>.</p>

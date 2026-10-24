@@ -9,8 +9,11 @@ datePublished: "2024-05-14T02:10:03.592000+00:00"
 heroImage: "/assets/media/31bb90e144e97f186beb.jpg"
 permalink: "/blog/mysql-to-amazon-rds-migration-guide/"
 sourceUrl: "https://awsforengineers.com/blog/mysql-to-amazon-rds-migration-guide/"
-dateModified: "2026-10-04"
-updateNote: "Rewrote the guide with current RDS version support, supported import paths, consistent dump caveats, DMS limits, and a controlled cutover and rollback plan."
+dateModified: "2026-10-24"
+updateNote: "Added optional course recommendation with affiliate links; technical guidance was not re-reviewed. Earlier technical update (2026-10-04): Rewrote the guide with current RDS version support, supported import paths, consistent dump caveats, DMS limits, and a controlled cutover and rollback plan."
+courseRecommendations:
+  - course: professionalArchitecture
+    reason: "For engineers moving from this MySQL cutover procedure into broader migration architecture, the Solutions Architect – Professional course includes DMS examples and hybrid migration design. Keep using this guide and current AWS matrices for exact MySQL version and task limits."
 ---
 <p>Moving a self-managed MySQL database to Amazon RDS for MySQL is a database migration, not a copy of server files. Choose a path that fits the source version, data size, change rate, and allowed write outage; then test the target and rehearse cutover before production traffic moves.</p>
 

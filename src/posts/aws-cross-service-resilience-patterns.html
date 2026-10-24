@@ -9,8 +9,11 @@ datePublished: "2024-05-12T01:21:13.983000+00:00"
 heroImage: "/assets/media/18a139cf608718dfb823.jpg"
 permalink: "/blog/aws-cross-service-resilience-patterns/"
 sourceUrl: "https://awsforengineers.com/blog/aws-cross-service-resilience-patterns/"
-dateModified: "2026-10-03"
-updateNote: "Reworked failure handling, queue and event retry semantics, regional recovery limits, and resilience testing guidance."
+dateModified: "2026-10-24"
+updateNote: "Added optional course recommendation with affiliate links; technical guidance was not re-reviewed. Earlier technical update (2026-10-03): Reworked failure handling, queue and event retry semantics, regional recovery limits, and resilience testing guidance."
+courseRecommendations:
+  - course: professionalArchitecture
+    reason: "For experienced readers taking these failure-boundary patterns into broader workload design, the Solutions Architect – Professional course covers complex architectures, reliability, and disaster recovery. This is a wider architecture path, not a tutorial for each queue, retry, or database behavior."
 ---
 <p>A request that crosses several AWS services can fail even when no service is completely down. A dependency may respond slowly, accept a write but lose the response, throttle only part of its traffic, or recover while queued work is still building up. Resilience depends on what each boundary does with that failure: wait, retry, queue, reject, fail over, or record work for recovery.</p>
 <p>Start by defining the failure you need to survive and what successful recovery means for each user operation. The recovery time objective (RTO) is the target time to restore service. The recovery point objective (RPO) sets how much recent data loss the workload can tolerate, usually measured in time. Then make each dependency's retry and data behavior explicit. AWS services provide useful building blocks, but a queue, replica, health check, or retry policy does not by itself make the whole workflow recoverable.</p>

@@ -9,8 +9,11 @@ datePublished: "2025-06-05T06:13:44.386000+00:00"
 heroImage: "/assets/media/fbef9ec90d7bdf6e471b.jpg"
 permalink: "/blog/top-5-use-cases-for-s3-cross-region-replication/"
 sourceUrl: "https://awsforengineers.com/blog/top-5-use-cases-for-s3-cross-region-replication/"
-dateModified: "2026-10-04"
-updateNote: "Reworked the five use cases and clarified replication timing, routing, recovery limits, permissions, and cost tradeoffs."
+dateModified: "2026-10-24"
+updateNote: "Technical guidance was last reviewed on 2026-10-04: Reworked the five use cases and clarified replication timing, routing, recovery limits, permissions, and cost tradeoffs. Added an optional affiliate course recommendation on 2026-10-24; no technical re-review was performed."
+courseRecommendations:
+  - course: professionalArchitecture
+    reason: "CRR supplies asynchronous object copies; this course broadens the decision into multi-Region architecture, storage, recovery, and cross-account design, rather than replacing this S3 replication guide."
 ---
 <p>Amazon S3 Cross-Region Replication (CRR) automatically copies eligible objects from a source bucket to one or more buckets in other AWS Regions. It is useful when an application needs another regional copy of its data, but replication alone does not route requests, create an application failover plan, or guarantee that every copy is current.</p>
 <p>Here are five situations where CRR can help, along with the design decisions that make each one work.</p>

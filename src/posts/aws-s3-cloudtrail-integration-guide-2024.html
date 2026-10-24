@@ -9,8 +9,11 @@ datePublished: "2024-09-30T18:51:44.997000+00:00"
 heroImage: "/assets/media/3e737eb1270afeb5e845.jpg"
 permalink: "/blog/aws-s3-cloudtrail-integration-guide-2024/"
 sourceUrl: "https://awsforengineers.com/blog/aws-s3-cloudtrail-integration-guide-2024/"
-dateModified: "2026-10-04"
-updateNote: "Rewrote the guide to distinguish CloudTrail management and S3 data events, scope object logging, secure S3 delivery, and verify log integrity."
+dateModified: "2026-10-24"
+updateNote: "Added optional course recommendation with affiliate links; technical guidance was not re-reviewed. Earlier technical update (2026-10-04): Rewrote the guide to distinguish CloudTrail management and S3 data events, scope object logging, secure S3 delivery, and verify log integrity."
+courseRecommendations:
+  - course: security
+    reason: "For broader AWS audit and data-protection skills after configuring S3 object-event logging, Security Specialty covers CloudTrail, S3 encryption, IAM, and KMS. This guide remains the specific selector and delivery workflow reference."
 ---
 <p>To audit Amazon S3 with AWS CloudTrail, create a trail that delivers events to an S3 log bucket, then choose which S3 object data events to record. CloudTrail records bucket configuration changes as management events, but object operations such as <code>GetObject</code> and <code>PutObject</code> are data events that you must select explicitly. Event history alone does not show S3 object activity.</p>
 <p>This guide walks through a multi-Region trail, a narrowly scoped S3 data-event selector, the permissions CloudTrail needs to deliver logs, and ways to inspect and protect those records. For more on S3 identity and bucket-policy permissions, see our <a href="/blog/aws-s3-guide-understanding-access-management/">S3 access management guide</a>.</p>

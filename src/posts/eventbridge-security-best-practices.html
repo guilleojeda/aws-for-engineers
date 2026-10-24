@@ -9,8 +9,11 @@ datePublished: "2025-03-13T01:30:03.864000+00:00"
 heroImage: "/assets/media/b8224e88124f4ea15097.jpg"
 permalink: "/blog/eventbridge-security-best-practices/"
 sourceUrl: "https://awsforengineers.com/blog/eventbridge-security-best-practices/"
-dateModified: "2026-10-04"
-updateNote: "Rewrote IAM, encryption, private networking, audit, and failure-handling guidance; distinguished the new Custom event bus from Classic buses."
+dateModified: "2026-10-24"
+updateNote: "Earlier technical update (2026-10-04): Rewrote IAM, encryption, private networking, audit, and failure-handling guidance; distinguished the new Custom event bus from Classic buses. Added an optional affiliate course recommendation; technical guidance was not re-reviewed for this update."
+courseRecommendations:
+  - course: security
+    reason: "For broader security study across the publishing, routing, encryption, audit, and failure boundaries in this guide, the course covers IAM/STS, Organizations, KMS, CloudTrail, and AWS security services."
 ---
 <p>Securing Amazon EventBridge means controlling three separate paths: who can publish events, who can configure their routing, and what EventBridge may invoke. Encryption protects stored and transmitted data, but an authorized subscriber or target can still receive the payload. Start with those access boundaries, then protect every copy of the event in targets, dead-letter queues, archives, and logs.</p>
 <p><strong>Check your bus type first.</strong> AWS introduced an enhanced <a href="https://aws.amazon.com/about-aws/whats-new/2026/09/eventbridge-relaunches-custom-event-buses/">Custom event bus in September 2026</a>. It uses subscribers, built-in retention, and optional ordered delivery. The default bus and <em>Custom event bus – Classic</em> use rules and targets. Both remain available, but their resource ARNs, delivery permissions, encryption configuration, and monitoring differ. This guide identifies the relevant model where that distinction affects security.</p>

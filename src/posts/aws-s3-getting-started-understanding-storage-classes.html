@@ -9,8 +9,11 @@ datePublished: "2023-12-29T20:23:27.486000+00:00"
 heroImage: "/assets/media/f11de5f563c79b73557f.jpg"
 permalink: "/blog/aws-s3-getting-started-understanding-storage-classes/"
 sourceUrl: "https://awsforengineers.com/blog/aws-s3-getting-started-understanding-storage-classes/"
-dateModified: "2026-10-04"
-updateNote: "Rewrote the guide to compare current S3 storage classes, access and restore behavior, lifecycle constraints, and cost tradeoffs."
+dateModified: "2026-10-24"
+updateNote: "Earlier technical update (2026-10-04): Rewrote the guide to compare current S3 storage classes, access and restore behavior, lifecycle constraints, and cost tradeoffs. Added an optional affiliate course recommendation; technical guidance was not re-reviewed for this update."
+courseRecommendations:
+  - course: architecture
+    reason: "For broader AWS storage and solution-architecture learning after comparing S3 access and recovery trade-offs, the course covers architecture foundations and storage."
 ---
 <p>Amazon S3 storage classes let you choose how each object is stored based on how often it is read, how quickly it must be available, and how much resilience the workload needs. The lowest storage rate alone does not determine the lowest total cost: retrieval, requests, lifecycle transitions, minimum storage durations, and extra copies can also matter.</p>
 <p>A general purpose bucket can contain objects in different storage classes. If you do not specify a class when uploading an object, Amazon S3 uses S3 Standard. You can set a class on upload or use an S3 Lifecycle rule to transition eligible objects later. Start by identifying your access pattern and recovery requirement, then compare the full cost for your Region on the <a href="https://aws.amazon.com/s3/pricing/" target="_blank" rel="noopener noreferrer">Amazon S3 pricing page</a>.</p>

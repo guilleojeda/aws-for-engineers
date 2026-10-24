@@ -9,8 +9,11 @@ datePublished: "2025-03-25T09:34:00.583000+00:00"
 heroImage: "/assets/media/585bb86ea79f1f486882.jpg"
 permalink: "/blog/aws-sam-pipelines-setup-guide/"
 sourceUrl: "https://awsforengineers.com/blog/aws-sam-pipelines-setup-guide/"
-dateModified: "2026-10-04"
-updateNote: "Clarified per-stage AWS credentials, GitHub OIDC branch trust, starter test gates, CloudFormation capabilities, and rollback recovery."
+dateModified: "2026-10-24"
+updateNote: "Added optional course recommendation with affiliate links; technical guidance was not re-reviewed. Earlier technical update (2026-10-04): Clarified per-stage AWS credentials, GitHub OIDC branch trust, starter test gates, CloudFormation capabilities, and rollback recovery."
+courseRecommendations:
+  - course: development
+    reason: "For a structured AWS application-development path beyond configuring this SAM pipeline, the Developer – Associate course includes Lambda, API Gateway, DynamoDB, IAM, and CI/CD examples. This guide remains the SAM Pipelines setup reference."
 ---
 <p>AWS SAM Pipelines generates a starter continuous integration and delivery (CI/CD) configuration for a serverless application. The setup has two separate jobs: <code>sam pipeline bootstrap</code> creates or connects the AWS resources that a deployment stage needs, while <code>sam pipeline init</code> writes a pipeline configuration for your CI/CD provider. Run <code>sam pipeline init --bootstrap</code> for the guided flow that combines them.</p>
 <p>The generated pipeline is a starting point. AWS describes the starter as a two-stage deployment, and you must inspect the generated files to confirm what runs before production. Test commands and production approvals need explicit configuration; a job name alone does not mean that tests or an approval gate are active.</p>

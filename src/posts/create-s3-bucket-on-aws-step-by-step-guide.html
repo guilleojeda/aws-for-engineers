@@ -9,8 +9,11 @@ datePublished: "2024-05-30T19:13:22.898000+00:00"
 heroImage: "/assets/media/f02cdcc44e7d014d2d5b.jpg"
 permalink: "/blog/create-s3-bucket-on-aws-step-by-step-guide/"
 sourceUrl: "https://awsforengineers.com/blog/create-s3-bucket-on-aws-step-by-step-guide/"
-dateModified: "2026-10-04"
-updateNote: "Rewrote the guide with current S3 bucket naming, private defaults, Region-specific creation, upload checks, and safe cleanup steps."
+dateModified: "2026-10-24"
+updateNote: "Earlier technical update (2026-10-04): Rewrote the guide with current S3 bucket naming, private defaults, Region-specific creation, upload checks, and safe cleanup steps. Added an optional affiliate course recommendation; technical guidance was not re-reviewed for this update."
+courseRecommendations:
+  - course: architecture
+    reason: "To continue from private bucket setup into wider AWS storage and architecture choices, the course covers storage alongside core solution-design foundations."
 ---
 <p>This guide shows how to create a private Amazon S3 general purpose bucket, upload a test object, verify it, and clean up. You can use the AWS Management Console or the AWS CLI. S3 encrypts new objects by default, and new buckets keep public access blocked unless you deliberately change those settings.</p>
 <p>An S3 bucket is a container in one AWS Region. It holds objects, each identified by a key such as <code>reports/2026/summary.csv</code>. The slashes in a key act as prefixes that the console displays like folders; they are not separate folders in the bucket. For a broader introduction, see AWS's <a href="https://docs.aws.amazon.com/AmazonS3/latest/userguide/Welcome.html" target="_blank" rel="noopener noreferrer">Amazon S3 overview</a>.</p>

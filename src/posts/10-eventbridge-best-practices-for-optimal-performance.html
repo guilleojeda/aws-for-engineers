@@ -9,8 +9,11 @@ datePublished: "2024-07-31T00:53:17.639000+00:00"
 heroImage: "/assets/media/ed26be81df2f1004f377.jpg"
 permalink: "/blog/10-eventbridge-best-practices-for-optimal-performance/"
 sourceUrl: "https://awsforengineers.com/blog/10-eventbridge-best-practices-for-optimal-performance/"
-dateModified: "2026-10-03"
-updateNote: "Rewrote the guide to correct EventBridge delivery, batching, retry, and monitoring guidance; added current service distinctions, limits, replay considerations, and AWS documentation."
+dateModified: "2026-10-24"
+updateNote: "Technical guidance was last reviewed on 2026-10-03: Rewrote the guide to correct EventBridge delivery, batching, retry, and monitoring guidance; added current service distinctions, limits, replay considerations, and AWS documentation. Added an optional affiliate course recommendation on 2026-10-24; no technical re-review was performed."
+courseRecommendations:
+  - course: development
+    reason: "After designing event delivery, this course offers a broader AWS application-development path through Lambda, API Gateway, DynamoDB, IAM, and CI/CD examples; it is not EventBridge-specific."
 ---
 <p>Amazon EventBridge can route events, connect a supported source directly to a target, or invoke an API on a schedule. Those jobs use different EventBridge features, and their delivery limits and recovery behavior differ. Use the practices below to choose the right feature, avoid lost or repeated work, and measure delivery rather than assuming a successful publish means the target completed its work.</p>
 <p><strong>Quick guide:</strong> use an event bus for event routing, Pipes for a point-to-point source-to-target connection, and EventBridge Scheduler for one-time or recurring time-based invocations. For each path, test filters, handle per-entry publish results, make side effects safe to repeat, and monitor the target.</p>

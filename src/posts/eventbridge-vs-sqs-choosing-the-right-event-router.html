@@ -9,8 +9,11 @@ datePublished: "2025-02-17T01:13:33.922000+00:00"
 heroImage: "/assets/media/16cb4c22676dbda9c750.jpg"
 permalink: "/blog/eventbridge-vs-sqs-choosing-the-right-event-router/"
 sourceUrl: "https://awsforengineers.com/blog/eventbridge-vs-sqs-choosing-the-right-event-router/"
-dateModified: "2026-10-04"
-updateNote: "Rewrote the comparison for current Custom and Classic EventBridge buses, SQS delivery semantics, retry boundaries, quotas, and pricing."
+dateModified: "2026-10-24"
+updateNote: "Technical guidance was last reviewed on 2026-10-04: Rewrote the comparison for current Custom and Classic EventBridge buses, SQS delivery semantics, retry boundaries, quotas, and pricing. Added an optional affiliate course recommendation on 2026-10-24; no technical re-review was performed."
+courseRecommendations:
+  - course: development
+    reason: "After choosing between event routing and worker queues, continue into AWS application-development skills with Lambda, API Gateway, DynamoDB, and IAM examples; this is broader than an EventBridge/SQS guide."
 ---
 <p>Choose Amazon EventBridge when events need to reach independently configured consumers based on their content. Choose Amazon SQS when workers need a durable queue of work they can receive, process, and delete at their own pace. Use both when you need routing across services and an explicit work queue for each consumer.</p>
 <p>The comparison changed in September 2026. The new <a href="https://aws.amazon.com/about-aws/whats-new/2026/09/eventbridge-relaunches-custom-event-buses/">EventBridge Custom event bus</a> adds retained events, consumer-owned subscribers, and configurable ordered delivery. The default bus and <em>Custom event bus – Classic</em> remain available with rules and targets. Claims that EventBridge never retains events or cannot deliver them in order are no longer accurate without specifying the bus type.</p>

@@ -9,8 +9,11 @@ datePublished: "2025-04-07T02:31:18.569000+00:00"
 heroImage: "/assets/media/e6800efd197f2c06f37d.jpg"
 permalink: "/blog/rightsizing-rds-instances-step-by-step-guide/"
 sourceUrl: "https://awsforengineers.com/blog/rightsizing-rds-instances-step-by-step-guide/"
-dateModified: "2026-10-04"
-updateNote: "Reworked the guide with current RDS metrics, Compute Optimizer eligibility, Database Insights, and safer class-change guidance."
+dateModified: "2026-10-24"
+updateNote: "Earlier technical update (2026-10-04): Reworked the guide with current RDS metrics, Compute Optimizer eligibility, Database Insights, and safer class-change guidance. Added an optional affiliate course recommendation; technical guidance was not re-reviewed for this update."
+courseRecommendations:
+  - course: operations
+    reason: "For broader operations practice after measuring and changing RDS capacity, the course covers AWS workload monitoring, troubleshooting, and administration."
 ---
 <p>Right-sizing an Amazon RDS DB instance means choosing a class that meets the database and application’s performance needs without paying for unused capacity. Low average CPU alone does not prove that an instance is oversized: memory pressure, storage waits, connections, workload peaks, and application latency can all affect the decision.</p>
 <p>Use this sequence:</p>

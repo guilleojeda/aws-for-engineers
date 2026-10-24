@@ -9,8 +9,11 @@ datePublished: "2025-04-17T01:07:13.940000+00:00"
 heroImage: "/assets/media/abf12b9ddb122edd316e.jpg"
 permalink: "/blog/aws-vpc-traffic-mirroring-packet-capture-basics/"
 sourceUrl: "https://awsforengineers.com/blog/aws-vpc-traffic-mirroring-packet-capture-basics/"
-dateModified: "2026-10-04"
-updateNote: "Corrected source and target support, filter direction and priority, VXLAN encapsulation, MTU and bandwidth limits, encryption caveats, pricing, verification, and cleanup guidance using current AWS documentation."
+dateModified: "2026-10-24"
+updateNote: "Earlier technical update (2026-10-04): Corrected source and target support, filter direction and priority, VXLAN encapsulation, MTU and bandwidth limits, encryption caveats, pricing, verification, and cleanup guidance using current AWS documentation. Added an optional affiliate course recommendation; technical guidance was not re-reviewed for this update."
+courseRecommendations:
+  - course: advancedNetworking
+    reason: "For a broader network-engineering path after capturing and interpreting VPC traffic, the course covers advanced VPC networking, routing, and network troubleshooting."
 ---
 <p><strong>AWS VPC Traffic Mirroring copies selected packets from an elastic network interface (ENI) to a monitoring appliance.</strong> It is useful for threat detection, packet-level troubleshooting, and traffic analysis when flow records do not provide enough detail. The copy is sent out of band, so it does not replace the original packet path, but it still consumes source capacity and can be dropped during congestion.</p>
 <p>The useful mental model is a four-part relationship:</p>

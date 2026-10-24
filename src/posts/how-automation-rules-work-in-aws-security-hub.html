@@ -9,8 +9,11 @@ datePublished: "2025-03-10T04:15:08.012000+00:00"
 heroImage: "/assets/media/eba60d046eae65a00b87.jpg"
 permalink: "/blog/how-automation-rules-work-in-aws-security-hub/"
 sourceUrl: "https://awsforengineers.com/blog/how-automation-rules-work-in-aws-security-hub/"
-dateModified: "2026-10-04"
-updateNote: "Rewrote outdated rule actions and ordering, separated Security Hub CSPM and ASFF rules from OCSF-based Security Hub automations, and added a supported CLI example with EventBridge response guidance."
+dateModified: "2026-10-24"
+updateNote: "Technical guidance was last reviewed on 2026-10-04: Rewrote outdated rule actions and ordering, separated Security Hub CSPM and ASFF rules from OCSF-based Security Hub automations, and added a supported CLI example with EventBridge response guidance. Added an optional affiliate course recommendation on 2026-10-24; no technical re-review was performed."
+courseRecommendations:
+  - course: security
+    reason: "This guide separates Security Hub CSPM finding updates from EventBridge response workflows; this course covers Security Hub, IAM, CloudTrail, and related AWS security controls."
 ---
 <p><strong>AWS Security Hub CSPM automation rules match finding fields and update selected fields; they do not execute remediation against AWS resources.</strong> Use them to normalize severity, add context, change workflow status, or suppress findings. For CSPM, use EventBridge when a finding must trigger a notification or an external response workflow.</p>
 <p>AWS now documents two automation rule models. This guide focuses on Security Hub Cloud Security Posture Management (Security Hub CSPM), whose findings use the AWS Security Finding Format (ASFF). The newer AWS Security Hub experience has a separate rule model based on Open Cybersecurity Schema Framework (OCSF) findings. The criteria, actions, APIs, and Region behavior differ, so use the guide for the service and finding format you operate.</p>

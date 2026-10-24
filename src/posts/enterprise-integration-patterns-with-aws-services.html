@@ -9,8 +9,11 @@ datePublished: "2025-02-24T06:24:31.367000+00:00"
 heroImage: "/assets/media/d483feafcb6d450d46bd.jpg"
 permalink: "/blog/enterprise-integration-patterns-with-aws-services/"
 sourceUrl: "https://awsforengineers.com/blog/enterprise-integration-patterns-with-aws-services/"
-dateModified: "2026-10-04"
-updateNote: "Rewrote the guide to distinguish integration patterns from AWS service features, clarify delivery and workflow failure semantics, and add current AWS documentation."
+dateModified: "2026-10-24"
+updateNote: "Added optional course recommendation with affiliate links; technical guidance was not re-reviewed. Earlier technical update (2026-10-04): Rewrote the guide to distinguish integration patterns from AWS service features, clarify delivery and workflow failure semantics, and add current AWS documentation."
+courseRecommendations:
+  - course: development
+    reason: "For a structured AWS application-development path after comparing these integration patterns, the Developer – Associate course covers Lambda, API Gateway, DynamoDB, IAM, and CI/CD examples. The article covers a wider set of queues, event buses, and orchestration patterns than the checked course syllabus."
 ---
 <p>Enterprise Integration Patterns describe recurring ways that independent systems exchange requests, messages, and events. AWS services provide building blocks for those patterns, but a service name is not a guarantee about the behavior of the whole workflow. A queue can buffer work without making a handler safe to retry; a router can deliver an event without proving that a business operation completed.</p>
 <p>Start with the communication need and the failure boundary. Decide whether a caller must wait for a response, whether one message has one worker or many subscribers, whether work needs a durable backlog, and whether a workflow must coordinate several steps. Then select the AWS features that fit those requirements.</p>

@@ -9,8 +9,11 @@ datePublished: "2025-03-06T00:51:08.170000+00:00"
 heroImage: "/assets/media/cd0e8b249b487f75e85f.jpg"
 permalink: "/blog/how-to-monitor-ec2-with-cloudwatch/"
 sourceUrl: "https://awsforengineers.com/blog/how-to-monitor-ec2-with-cloudwatch/"
-dateModified: "2026-10-04"
-updateNote: "Corrected EC2 metric intervals and permissions, and added current agent, alarm, and status-check guidance."
+dateModified: "2026-10-24"
+updateNote: "Added optional course recommendation with affiliate links; technical guidance was not re-reviewed. Earlier technical update (2026-10-04): Corrected EC2 metric intervals and permissions, and added current agent, alarm, and status-check guidance."
+courseRecommendations:
+  - course: operations
+    reason: "For a structured next step beyond EC2 metrics and agent setup, the CloudOps Engineer – Associate course covers AWS monitoring and workload administration."
 ---
 <p>Amazon EC2 sends built-in instance metrics to Amazon CloudWatch, including CPU, network traffic, and status checks. Basic monitoring is on by default: most EC2 metrics arrive every five minutes, while status-check metrics arrive every minute. Enable detailed monitoring when you need one-minute data for supported EC2 metrics.</p>
 <p>EC2 does not report the guest operating system's memory use or filesystem space by default. Install the CloudWatch agent for those signals. Then match alarm periods to each metric's publishing interval, and use the correct response for the kind of failure an alarm detects.</p>

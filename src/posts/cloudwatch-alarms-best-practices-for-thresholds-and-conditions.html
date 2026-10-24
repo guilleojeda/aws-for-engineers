@@ -9,8 +9,11 @@ datePublished: "2024-09-05T01:51:57.309000+00:00"
 heroImage: "/assets/media/5da507386a03a72c6ad0.jpg"
 permalink: "/blog/cloudwatch-alarms-best-practices-for-thresholds-and-conditions/"
 sourceUrl: "https://awsforengineers.com/blog/cloudwatch-alarms-best-practices-for-thresholds-and-conditions/"
-dateModified: "2026-10-04"
-updateNote: "Updated alarm guidance for evaluation timing, missing data, percentiles, metric math, composites, and action behavior."
+dateModified: "2026-10-24"
+updateNote: "Technical guidance was last reviewed on 2026-10-04: Updated alarm guidance for evaluation timing, missing data, percentiles, metric math, composites, and action behavior. Added an optional affiliate course recommendation on 2026-10-24; no technical re-review was performed."
+courseRecommendations:
+  - course: operations
+    reason: "For the broader operations behind alarm design, this course covers AWS monitoring and troubleshooting; this guide remains focused on alarm metrics, evaluation periods, missing data, and actions."
 ---
 <p>A useful <a href="https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/CloudWatch_Alarms.html" target="_blank" rel="noopener noreferrer">Amazon CloudWatch alarm</a> detects a condition that matters to a workload and gives someone or something a clear next step. Set the threshold from a service objective, a known resource limit, or an operational failure condition. Then tune the period, number of breaching data points, and missing-data behavior to match how the metric is published and how quickly the team must respond.</p>
 <ul>
