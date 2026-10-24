@@ -1,0 +1,29 @@
+{
+  "affiliateCode": "212820_ppf2onij",
+  "products": {
+    "architecture": {
+      "name": "Solutions Architect – Associate (SAA-C03)",
+      "url": "https://learn.cantrill.io/p/aws-certified-solutions-architect-associate-saa-c03",
+      "instructor": "James Lee",
+      "qualification": "The course follows SAA-C03. AWS's exam guide targets candidates with at least one year of hands-on cloud-solution design experience."
+    },
+    "development": {
+      "name": "Developer – Associate",
+      "url": "https://learn.cantrill.io/p/aws-certified-developer-associate",
+      "instructor": "James Lee",
+      "qualification": "The provider currently lists DVA-C02. AWS opens DVA-C03 registration on October 27, 2026; the final DVA-C02 exam date is November 30, 2026. Check course coverage for your target exam version."
+    },
+    "operations": {
+      "name": "CloudOps Engineer – Associate",
+      "url": "https://learn.cantrill.io/p/aws-certified-cloudops-engineer-associate",
+      "instructor": "James Lee",
+      "qualification": "The provider lists the current CloudOps Engineer course. AWS describes its exam audience as people with about one year of experience deploying, managing, and operating AWS workloads."
+    },
+    "advancedNetworking": {
+      "name": "Advanced Networking – Specialty",
+      "url": "https://learn.cantrill.io/p/aws-certified-advanced-networking-specialty",
+      "instructor": "Adrian Cantrill",
+      "qualification": "The provider course page covers ANS-C01. AWS's final ANS-C01 exam date is December 31, 2026; no new Advanced Networking credentials will be issued after retirement. Check the current AWS exam page before planning a certification attempt."
+    }
+  }
+}

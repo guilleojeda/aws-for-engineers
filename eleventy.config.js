@@ -2,6 +2,7 @@ import { eleventyImageTransformPlugin } from "@11ty/eleventy-img";
 import { createHash } from "node:crypto";
 import { readFileSync } from "node:fs";
 import { articleOutline } from "./scripts/article-outline.mjs";
+import { resolveCourseRecommendations } from "./scripts/course-recommendations.mjs";
 
 export default function (eleventyConfig) {
   eleventyConfig.addPlugin(eleventyImageTransformPlugin, {
@@ -52,6 +53,14 @@ export default function (eleventyConfig) {
   eleventyConfig.addFilter("topicArticleCount", (topic) =>
     topic.sections.reduce((count, section) => count + section.slugs.length, 0),
   );
+  eleventyConfig.addFilter("resolveCourseRecommendations", (...args) => {
+    try {
+      return resolveCourseRecommendations(...args);
+    } catch (error) {
+      console.error(error.message);
+      throw error;
+    }
+  });
   eleventyConfig.addFilter("topicsForArticle", (topics, url) =>
     topics.filter((topic) => topic.sections.some((section) =>
       section.slugs.some((slug) => url === `/blog/${slug}/`),

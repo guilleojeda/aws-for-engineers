@@ -3,6 +3,11 @@ layout: base.njk
 title: AWS for Engineers
 description: The best guides and tutorials for software engineers to learn AWS. Tips and guides for developers and software engineers.
 permalink: /
+courseRecommendations:
+  - course: architecture
+    reason: "For a structured foundation in AWS architecture, VPCs, subnets, routing, compute, and storage."
+  - course: development
+    reason: "For application developers studying AWS services and patterns for building, deploying, and debugging cloud applications."
 ---
 <section class="hero">
   <div class="wrap hero-inner">
@@ -46,6 +51,23 @@ permalink: /
       {% endfor %}
     </div>
     <p class="centered"><a href="/topics/">View all topic guides</a></p>
+  </div>
+</section>
+
+<section class="section course-section">
+  <div class="wrap">
+    <div class="section-heading centered">
+      <h2>Recommended AWS courses</h2>
+      <p>Choose a structured path alongside our free guides. Paid training is optional; the articles remain free.</p>
+    </div>
+    {% set selectedCourses = courseRecommendations | resolveCourseRecommendations(courses) %}
+    <div class="course-grid">
+      {% for course in selectedCourses %}
+      {% set selectedCourse = course %}
+      {% include "course-recommendation.njk" %}
+      {% endfor %}
+    </div>
+    <p class="centered course-page-link"><a href="/certifications/">Choose a course for your goals →</a></p>
   </div>
 </section>
 

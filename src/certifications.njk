@@ -1,0 +1,52 @@
+---
+layout: base.njk
+title: AWS certifications and recommended courses
+description: Compare AWS certification goals and find verified optional courses for architecture, development, cloud operations, and advanced networking.
+permalink: /certifications/
+courseRecommendations:
+  - course: architecture
+    reason: "A broad starting path through AWS fundamentals, architecture choices, VPCs, subnets, routing, security groups, and NAT gateways."
+    pathTitle: "Foundations and architecture"
+    examUrl: "https://docs.aws.amazon.com/aws-certification/latest/solutions-architect-associate-03/solutions-architect-associate-03.html"
+    examLinkText: "Read the official SAA-C03 exam guide"
+  - course: development
+    reason: "A structured path for developers using AWS services such as Lambda, API Gateway, DynamoDB, and delivery pipelines."
+    pathTitle: "Application development"
+    examUrl: "https://aws.amazon.com/certification/certified-developer-associate/"
+    examLinkText: "Read AWS's Developer Associate exam information"
+  - course: operations
+    reason: "For learners focused on monitoring, troubleshooting, infrastructure as code, security controls, and operating AWS workloads."
+    pathTitle: "Cloud operations"
+    examUrl: "https://aws.amazon.com/certification/certified-cloudops-engineer-associate/"
+    examLinkText: "Read AWS's CloudOps Engineer Associate exam information"
+  - course: advancedNetworking
+    reason: "For experienced AWS practitioners who want deeper practice with hybrid networks, BGP, VPNs, Transit Gateway, Direct Connect, and routing."
+    pathTitle: "Advanced networking and specialty study"
+    examUrl: "https://aws.amazon.com/certification/certified-advanced-networking-specialty/"
+    examLinkText: "Read AWS's Advanced Networking Specialty exam information"
+---
+<article class="certifications wrap">
+  <header class="certifications-header">
+    <h1>AWS certifications and recommended courses</h1>
+    <p>Start with the kind of work you want to do. These courses are optional paid training; you can also learn from our <a href="/topics/">free AWS topic guides</a>.</p>
+    <p>Use the official AWS exam pages for current objectives and eligibility. Course pages below describe the provider's current materials, which may not match every newer exam version.</p>
+    <p>Compare the <a href="/blog/aws-developer-vs-solutions-architect-certifications/">Developer and Solutions Architect certification paths</a> if you're deciding between application development and architecture.</p>
+  </header>
+
+  {% set selectedCourses = courseRecommendations | resolveCourseRecommendations(courses) %}
+  {% for course in selectedCourses %}
+  <section class="course-path">
+    <h2>{{ course.pathTitle }}</h2>
+    <p><a class="course-reference" href="{{ course.examUrl }}">{{ course.examLinkText }}</a></p>
+    <div class="course-grid">
+      {% set selectedCourse = course %}
+      {% include "course-recommendation.njk" %}
+    </div>
+  </section>
+  {% endfor %}
+
+  <aside class="certifications-note">
+    <h2>Keep the exam version in view</h2>
+    <p>AWS can change or retire exams. Use the linked official AWS information to confirm the exam version and availability before buying a course for certification preparation. These courses can also support broader skills learning.</p>
+  </aside>
+</article>
