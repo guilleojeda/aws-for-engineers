@@ -6,7 +6,6 @@ import { siteRenderingFailures } from "./site-rendering-check.mjs";
 
 const siteScript = readFileSync(new URL("../src/assets/site.js", import.meta.url), "utf8");
 const adsenseUrl = "https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9639896081226655";
-const tinyAdsUrl = "https://app.tinyadz.com/scripts/ads.js?siteId=67e41a4ea3e895aab1bf9a58";
 
 function createSite({ hostname = "awsforengineers.com", readyState = "loading", hidden = false } = {}) {
   const frames = [];
@@ -34,7 +33,7 @@ function createSite({ hostname = "awsforengineers.com", readyState = "loading", 
     querySelector(selector) {
       return selector === "[data-search-status]" ? status : null;
     },
-    createElement: () => ({}),
+    createElement: () => ({ type: "" }),
     head: { appendChild: (script) => scripts.push(script) },
     addEventListener(event, listener) {
       documentListeners.set(event, [...(documentListeners.get(event) || []), listener]);
@@ -84,7 +83,7 @@ test("render checker requires one exact inline stylesheet and rejects stylesheet
   assert.ok(siteRenderingFailures(valid.replace(`site.js?v=${version}`, "site.js"), css, version).some((issue) => issue.includes("current deferred site.js")));
 });
 
-test("local hosts keep search working and never schedule production ads", () => {
+test("only the exact production host schedules ads while local and preview hosts keep search local", () => {
   const site = createSite({ hostname: "localhost", readyState: "complete" });
   assert.equal(site.frames.length, 0);
   assert.equal(site.scripts.length, 0);
@@ -94,6 +93,16 @@ test("local hosts keep search working and never schedule production ads", () => 
   assert.equal(site.cards[0].hidden, false);
   assert.equal(site.cards[1].hidden, true);
   assert.equal(site.status.textContent, "1 article shown");
+
+  for (const hostname of [
+    "127.0.0.1",
+    "d1234567890abc.cloudfront.net",
+    "www.awsforengineers.com",
+  ]) {
+    const preview = createSite({ hostname, readyState: "complete" });
+    assert.equal(preview.frames.length, 0, `${hostname} must not schedule production ads`);
+    assert.equal(preview.scripts.length, 0, `${hostname} must not insert production scripts`);
+  }
 });
 
 test("production ads wait for load and two visible animation frames, then load once with existing attributes", () => {
@@ -103,20 +112,21 @@ test("production ads wait for load and two visible animation frames, then load o
 
   site.document.readyState = "complete";
   site.windowListeners.get("load").listener();
+  site.windowListeners.get("load").listener();
+  assert.equal(site.frames.length, 1, "repeated load events must not queue duplicate loading");
   assert.equal(site.scripts.length, 0);
   site.flushFrame();
   assert.equal(site.scripts.length, 0);
   site.flushFrame();
 
-  assert.deepEqual(site.scripts.map((script) => script.src), [adsenseUrl, tinyAdsUrl]);
-  assert.ok(site.scripts.every((script) => script.async === true));
+  assert.deepEqual(site.scripts.map((script) => script.src), [adsenseUrl]);
+  assert.equal(site.scripts[0].async, true);
   assert.equal(site.scripts[0].crossOrigin, "anonymous");
-  assert.equal(site.scripts[0].type, undefined);
-  assert.equal(site.scripts[1].type, "module");
+  assert.equal(site.scripts[0].type, "", "AdSense should use the default classic script type");
 
   site.dispatchDocument("visibilitychange");
   site.windowListeners.get("load").listener();
-  assert.equal(site.scripts.length, 2);
+  assert.equal(site.scripts.length, 1);
 });
 
 test("an already-complete production document uses the same two-frame schedule", () => {
@@ -125,7 +135,7 @@ test("an already-complete production document uses the same two-frame schedule",
   site.flushFrame();
   assert.equal(site.scripts.length, 0);
   site.flushFrame();
-  assert.equal(site.scripts.length, 2);
+  assert.equal(site.scripts.length, 1);
 });
 
 test("a hidden document resumes ad loading when visible, including when hidden between frames", () => {
@@ -142,7 +152,7 @@ test("a hidden document resumes ad loading when visible, including when hidden b
   initiallyHidden.dispatchDocument("visibilitychange");
   initiallyHidden.flushFrame();
   initiallyHidden.flushFrame();
-  assert.equal(initiallyHidden.scripts.length, 2);
+  assert.equal(initiallyHidden.scripts.length, 1);
 
   const hiddenDuringFirstFrame = createSite({ readyState: "complete" });
   hiddenDuringFirstFrame.document.hidden = true;
@@ -152,7 +162,18 @@ test("a hidden document resumes ad loading when visible, including when hidden b
   hiddenDuringFirstFrame.dispatchDocument("visibilitychange");
   hiddenDuringFirstFrame.flushFrame();
   hiddenDuringFirstFrame.flushFrame();
-  assert.equal(hiddenDuringFirstFrame.scripts.length, 2);
+  assert.equal(hiddenDuringFirstFrame.scripts.length, 1);
+
+  const hiddenDuringSecondFrame = createSite({ readyState: "complete" });
+  hiddenDuringSecondFrame.flushFrame();
+  hiddenDuringSecondFrame.document.hidden = true;
+  hiddenDuringSecondFrame.flushFrame();
+  assert.equal(hiddenDuringSecondFrame.scripts.length, 0);
+  hiddenDuringSecondFrame.document.hidden = false;
+  hiddenDuringSecondFrame.dispatchDocument("visibilitychange");
+  hiddenDuringSecondFrame.flushFrame();
+  hiddenDuringSecondFrame.flushFrame();
+  assert.equal(hiddenDuringSecondFrame.scripts.length, 1);
 
   const canceledInBackground = createSite({ readyState: "complete" });
   canceledInBackground.flushFrame();
@@ -162,5 +183,5 @@ test("a hidden document resumes ad loading when visible, including when hidden b
   canceledInBackground.dispatchDocument("visibilitychange");
   canceledInBackground.flushFrame();
   canceledInBackground.flushFrame();
-  assert.equal(canceledInBackground.scripts.length, 2);
+  assert.equal(canceledInBackground.scripts.length, 1);
 });

@@ -123,6 +123,27 @@ for (const file of pages) {
   if (/(?:app|assets)\.seobotai\.com|unicornplatform\.com|mars-images\.imgix\.net/.test(html)) {
     failures.push(`Old platform dependency in generated HTML: ${name}`);
   }
+  if (/tinyadz/i.test(html)) failures.push(`Discontinued TinyAdz integration in generated HTML: ${name}`);
+  if (/https?:\/\/(?:www\.)?passionfroot\.me\//i.test(html)) failures.push(`Retired advertising sales link: ${name}`);
+  if (/https?:\/\/learning\.simpleaws\.dev\/b\/(?:nodejsonaws|deployingonaws)(?:[/?"#]|&)/i.test(html)) failures.push(`Retired product purchase link: ${name}`);
+  if (!html.includes("https://www.googletagmanager.com/gtag/js?id=G-NQSBTTBL2Q")) failures.push(`Missing existing Analytics configuration: ${name}`);
+  if (!/<meta\b[^>]*name="google-adsense-account"[^>]*content="ca-pub-9639896081226655"/.test(html)) failures.push(`Missing existing AdSense publisher meta: ${name}`);
+  if (name === "index.html") {
+    const newsletter = [...html.matchAll(/<section\b[^>]*>([\s\S]*?)<\/section>/g)]
+      .find(([, section]) => /<h2\b[^>]*>\s*Simple AWS newsletter\s*<\/h2>/.test(section))?.[1] || "";
+    if (!/<p\b[^>]*>\s*Stop copying cloud solutions, start understanding them\.\s*<\/p>/.test(newsletter)) failures.push("Homepage newsletter is missing its approved description");
+    const subscribe = [...newsletter.matchAll(/<a\b([^>]*)>([\s\S]*?)<\/a>/g)].find(([, attrs, text]) =>
+      attribute(attrs, "href")?.replaceAll("&amp;", "&") === "https://newsletter.simpleaws.dev/?utm_source=awsforengineers&utm_medium=home" && text.trim() === "Subscribe",
+    );
+    if (!subscribe) failures.push("Homepage newsletter is missing its existing Subscribe destination and attribution");
+    const personalLink = [...html.matchAll(/<a\b([^>]*)>([\s\S]*?)<\/a>/g)].find(([, attrs, text]) =>
+      attribute(attrs, "href") === "https://guilleojeda.com/" && text.trim() === "guilleojeda.com",
+    );
+    if (!personalLink) failures.push("Homepage is missing the visible personal-site link");
+    if (/class="[^"]*\boffer-(?:grid|card)\b/.test(html)) failures.push("Homepage retains the displaced product-card layout");
+    if (/<h[23]\b[^>]*>\s*(?:Node\.js on AWS|Deploying on AWS|AWS Made Simple and Fun)\s*<\/h[23]>/i.test(html)) failures.push("Homepage retains a retired product promotion");
+    if (/Want to advertise with us\?/i.test(html)) failures.push("Homepage retains the retired advertising inquiry");
+  }
   if (/fonts\.(?:googleapis|gstatic)\.com/.test(html)) failures.push(`External font dependency: ${name}`);
   const fontPreload = [...html.matchAll(/<link\b[^>]*>/g)].map(([tag]) => tag).find((tag) =>
     attribute(tag, "rel") === "preload" && attribute(tag, "href") === "/assets/fonts/sora-latin.woff2" &&
@@ -179,9 +200,10 @@ for (const file of pages) {
   }
   if (name.startsWith("blog/") && !name.includes("/page/") && name !== "blog/index.html") {
     if (!/<article class="article wrap">/.test(html)) failures.push(`Missing article container: ${name}`);
-    const advertisement = html.match(/<aside\b[^>]*aria-label="Advertisement"[^>]*>([\s\S]*?)<\/aside>/)?.[1];
-    if (!advertisement || !/<div\b[^>]*class="tinyadz"[^>]*><\/div>/.test(advertisement)) failures.push(`Missing accessible advertisement container or TinyAds target: ${name}`);
-    if (/<div\b[^>]*class="tinyadz"[^>]*aria-label=|<div\b[^>]*aria-label=[^>]*class="tinyadz"/.test(html)) failures.push(`TinyAds target has a prohibited accessible name: ${name}`);
+    if (/<aside\b[^>]*aria-label="Advertisement"/.test(html)) failures.push(`Retired advertisement placeholder remains: ${name}`);
+    const tail = html.match(/<div class="article-tail">([\s\S]*?)<\/article>/)?.[1] || "";
+    if (!/<section class="article-author" aria-label="About the author">/.test(tail) || !tail.includes(`href="${identity.authorPath}"`)) failures.push(`Missing retained article author summary: ${name}`);
+    if (!/<a\b[^>]*href="\/blog\/"[^>]*>← Read more articles<\/a>/.test(tail)) failures.push(`Missing retained article navigation: ${name}`);
     if (!/<meta property="og:image"/.test(html)) failures.push(`Missing social image: ${name}`);
     const body = (html.match(/<div class="article-body">([\s\S]*?)<div class="article-tail">/)?.[1] || "")
       .replace(/<(script|style|textarea)\b[^>]*>[\s\S]*?<\/\1\s*>|<!--[\s\S]*?-->/gi, "");
@@ -238,6 +260,11 @@ for (const file of pages) {
     }
   }
   if (name === "authors/guille-ojeda/index.html") {
+    const biography = html.match(/<div class="author-profile-body">([\s\S]*?)<h2\b/)?.[1] || "";
+    if (/Node\.js on AWS|AWS Made Simple and Fun|\bbooks\b/i.test(biography)) failures.push("Author biography retains outdated book promotion");
+    if (!/<a\b[^>]*href="https:\/\/newsletter\.simpleaws\.dev\/"[^>]*>Simple AWS newsletter<\/a>/.test(biography)) failures.push("Author biography is missing the newsletter reference");
+    if (!/<a\b[^>]*href="https:\/\/guilleojeda\.com\/"[^>]*>[^<]+<\/a>/.test(biography)) failures.push("Author biography is missing the personal-site reference");
+    if (!biography.includes("developed with AI assistance") || !biography.includes("responsible for their authorship and published content")) failures.push("Author biography is missing the retained AI-assistance disclosure");
     const profileSchemas = schemas.filter((schema) => schema["@type"] === "ProfilePage");
     if (profileSchemas.length !== 1) failures.push("Expected one ProfilePage");
     const profile = profileSchemas[0];
@@ -258,6 +285,8 @@ if (!existsSync(join(root, "robots.txt"))) failures.push("Missing robots.txt");
 if (!existsSync(join(root, "404.html"))) failures.push("Missing 404.html");
 const stylesheet = readFileSync(join(root, "assets/site.css"), "utf8");
 if (/fonts\.(?:googleapis|gstatic)\.com/.test(stylesheet)) failures.push("External font dependency in stylesheet");
+const builtScript = readFileSync(join(root, "assets/site.js"), "utf8");
+if (/tinyadz/i.test(builtScript)) failures.push("Discontinued TinyAdz integration in published site.js");
 for (const subset of ["latin", "latin-ext"]) {
   const url = `/assets/fonts/sora-${subset}.woff2`;
   if (!existsSync(targetFor(url)) || !stylesheet.includes(url)) failures.push(`Missing local Sora font: ${subset}`);
