@@ -1,0 +1,20 @@
+---
+permalink: /article-index.json
+eleventyExcludeFromCollections: true
+---
+{
+  "schemaVersion": 1,
+  "source": { "id": "aws-for-engineers", "label": "AWS for Engineers" },
+  "articles": [
+{% for post in collections.posts %}    {
+      "title": {{ post.data.title | jsonScript | safe }},
+      "language": "en",
+      "publishedAt": {{ (post.data.datePublished or post.data.date) | jsonScript | safe }},
+      "url": {{ ("https://awsforengineers.com" + post.url) | jsonScript | safe }},
+      "author": {
+        "name": {{ identity.author.name | jsonScript | safe }},
+        "url": {{ identity.author.url | jsonScript | safe }}
+      }
+    }{% if not loop.last %},{% endif %}
+{% endfor %}  ]
+}
